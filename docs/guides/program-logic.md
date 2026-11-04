@@ -410,8 +410,7 @@ on core's `wp`. VCVio presents its expectation reading this way, as an
 ## Charges and budgets
 
 The cost API itself (charges, budgets, worst-case costs, and their transport through lenses and
-handlers) is in
-[interaction cost](cost.md). This section covers its program-logic side.
+handlers) is in [interaction cost](cost.md). This section covers its program-logic side.
 
 `OpSpec.charge c` (`PolyFun/PFunctor/Free/Cost/Value.lean`) reads a call at `a` as costing `c a`,
 followed by its worst continuation: `c a + ⨆ b, k b`. Its fold is the worst-case charge-to-go of
@@ -450,13 +449,33 @@ There are two ways to state such a bound as a core triple.
   call. With ranks that hold a bad-event indicator plus the remaining budget, it is the union
   bound over the calls. `triple_liftM_ranked` is the subtractive natural-number budget, where a
   call at `a` moves the rank from `k + c a` to `k`, and `triple_liftM_ranked_total` its
-  unit-charge case. `IsRollBound.prod` and `IsRollBound.pi` pair budgets or take a family of them,
-  and `triple_liftM_invariant` is the unranked case: a handler that preserves an assertion
-  preserves it through every simulated program.
+  unit-charge case. `triple_liftM_of_isChargeBound` is the same over a charge bound in any cost
+  type, with ranks indexed by the amount spent. `IsRollBound.prod` and `IsRollBound.pi` pair
+  budgets or take a family of them, and `triple_liftM_invariant` is the unranked case: a handler
+  that preserves an assertion preserves it through every simulated program.
 
 `PolyFunTest/Do/Charge.lean` checks both forms on a coin interface. The ranked triple is
 instantiated in the upper-bound reading, where it bounds a simulated program's charge, and over a
 counting `StateT` handler with a budget that charges only one of two operations.
+
+`PolyFun/PFunctor/Free/WP/Budget.lean` gives charge bounds two readings that `vcgen` steps through
+call by call.
+
+- **Instrumented runs.** `h.withCharge c` keeps the amount spent as `StateT` state, and
+  `Handler.withCharge_eq_modify` (`@[spec]`) exposes a call as `modify (· + c a)` followed by
+  `h a`. Core's `StateT` rules and loop `invariants` then apply unchanged, under any base reading.
+  Under the demonic reading of `FreeM`, a triple about the instrumented run of the identity handler
+  is a bound on the charge of every completed path (`Handler.triple_liftM_id_withCharge_iff`). To
+  unfold `liftM` through a program, pass `FreeM.liftM_lift_bind'`, `FreeM.liftM_ite` and
+  `FreeM.liftM_pure` to `vcgen` as rules rather than rewriting with `simp` first: `simp` reduces
+  the value type of each call, which the rules then no longer match. This is the recommended route.
+- **The budget reading.** `FreeM.budgetWPMonad c B` reads `FreeM P` over predicates on the amount
+  spent, and its triples are exactly charge bounds (`isChargeBound_iff_triple`). Its call rule
+  `FreeM.Spec.lift_budget` is stated with the lattice connectives `⊓` and `⨅`, which `vcgen`
+  splits. The reading fixes `c` and `B`, so install it with `attribute [local instance]`.
+
+`PolyFunTest/Do/Budget.lean` checks both: the budget of a two-call program, the spend of a `for`
+loop and of a branching program, and the conversion to completed-path bounds.
 
 `OpSpec.charge` reads cost off the syntax of a free program: its fold is the worst case over
 every branch, whether or not an interpretation reaches it. `MonadAttach.chargedFoldlM`

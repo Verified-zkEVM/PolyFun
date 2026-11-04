@@ -15,7 +15,9 @@ with its universal property `foldFreeM_unique` and substitution law `foldFreeM_b
 adds the constructor-spelled node equations for the fold and for `FreeM.map`, which supplement
 cslib's `(lift a).bind` spellings and universe-polymorphic functor laws.
 Heterogeneous map composition and bind-after-map laws support changes of leaf universe.
-Monadic interpretation and handler fusion use cslib's `FreeM.liftM` and `IsMonadHom` API.
+Monadic interpretation and handler fusion use cslib's `FreeM.liftM` and `IsMonadHom` API; the
+primed `liftM_lift_bind'` and `liftM_lift'` leave the call's value type unindexed, so that `simp`
+also fires on programs over concrete interfaces, and `liftM_ite` interprets a conditional.
 -/
 
 public section
@@ -54,5 +56,27 @@ theorem foldFreeM_liftBind (onValue : α → β) (onEffect : (a : P.A) → (P.B 
     foldFreeM onValue onEffect (FreeM.liftBind a cont) =
       onEffect a fun b => foldFreeM onValue onEffect (cont b) :=
   rfl
+
+/-- `FreeM.liftM_lift_bind` with the bound value type left unindexed, so that `simp` fires on
+programs over concrete interfaces, whose direction types have been reduced. -/
+@[simp]
+theorem liftM_lift_bind' {m : Type uB → Type v} [Monad m] {γ : Type uB}
+    (interp : (a : P.A) → m (P.B a)) (a : P.A) (cont : P.B a → FreeM P γ) :
+    FreeM.liftM interp (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) cont) =
+      interp a >>= fun u => (cont u).liftM interp :=
+  FreeM.liftM_lift_bind interp a cont
+
+/-- `FreeM.liftM_lift` with the value type left unindexed, for concrete interfaces. -/
+@[simp]
+theorem liftM_lift' {m : Type uB → Type v} [Monad m] [LawfulMonad m]
+    (interp : (a : P.A) → m (P.B a)) (a : P.A) :
+    FreeM.liftM (α := no_index (P.B a)) interp (FreeM.lift a) = interp a :=
+  FreeM.liftM_lift interp a
+
+/-- Interpreting a conditional program interprets the chosen branch. -/
+theorem liftM_ite {m : Type uB → Type v} [Monad m] {γ : Type uB}
+    (interp : (a : P.A) → m (P.B a)) (c : Prop) [Decidable c] (x y : FreeM P γ) :
+    FreeM.liftM interp (if c then x else y) = if c then x.liftM interp else y.liftM interp :=
+  apply_ite _ c x y
 
 end PFunctor.FreeM

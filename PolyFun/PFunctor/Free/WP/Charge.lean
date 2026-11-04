@@ -31,6 +31,8 @@ leaf. This module states its `ℕ∞` laws in fold form and connects roll budget
   bad-event indicator plus the remaining budget, it is the union bound over the calls.
   `triple_liftM_ranked` is the subtractive natural-number budget (a call at `a` consumes `c a`)
   and `triple_liftM_ranked_total` the unit-charge one.
+* `triple_liftM_of_isChargeBound`: the same over a charge bound in any cost type, with ranks
+  indexed by the amount spent.
 * `triple_liftM_invariant`: the unranked case, in which every call preserves one assertion.
 
 Under the upper-bound reading `(OpSpec.charge c).toUpperWPMonad (OpSpec.charge_mono c)`, a triple
@@ -120,6 +122,23 @@ theorem triple_liftM_of_isRollBound {B : Type*} (handler : (a : P.A) → n (P.B 
     rw [isRollBound_lift_bind_iff] at hx
     change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
     exact Triple.bind _ _ _ (hstep a b hx.1) fun u => ih u (cost a b) (hx.2 u)
+
+/-- **Ranked simulation over a charge bound**, in spent-amount form and over any cost type. If a
+call at `a` admitted with `s` spent turns rank `Φ s` into rank `Φ (s + c a)`, and every rank
+within budget entails the final assertion `Φ₀`, then a program within budget `B`, starting from
+`s` spent, maps rank `Φ s` to `Φ₀`. With `Φ s` reading "the handler state records at most `s`"
+this bounds the state of a counting handler by the budget. -/
+theorem triple_liftM_of_isChargeBound {ω : Type*} [Add ω] [LE ω] [Zero ω]
+    (handler : (a : P.A) → n (P.B a)) {c : P.A → ω} {B : ω} (Φ : ω → Pred) (Φ₀ : Pred)
+    (E : EPred) (hstep : ∀ a s, s + c a ≤ B → Triple (handler a) (Φ s) (fun _ => Φ (s + c a)) E)
+    (hdrop : ∀ s, s ≤ B → Lean.Order.PartialOrder.rel (Φ s) Φ₀)
+    (x : FreeM P α) (s : ω) (hx : x.IsChargeBound c B s) :
+    Triple (x.liftM handler) (Φ s) (fun _ => Φ₀) E := by
+  induction x using FreeM.rec generalizing s with
+  | pure x => exact Triple.pure x (hdrop s hx)
+  | liftBind a r ih =>
+    change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
+    exact Triple.bind _ _ _ (hstep a s hx.1) fun u => ih u (s + c a) (hx.2 u)
 
 /-- **Ranked simulation.** If every call at `a` consumes `c a` units of rank, then a program
 within budget `k` maps rank `k` to rank `0`, after dropping unspent rank. -/
