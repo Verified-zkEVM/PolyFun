@@ -21,7 +21,7 @@ A structural bound bounds every completed path (`charge_le_of_isChargeBound`). T
 every reachable call to have an answer (`isChargeBound_of_forall_charge_le`, under
 `ProgramProgress`): a call with no answers ends no completed path, but `IsChargeBound` still
 charges it. The worst-case cost is at least the charge of every completed path
-(`charge_le_cost`).
+(`charge_le_cost`), and under `ProgramProgress` it is their supremum (`cost_eq_iSup_charge`).
 
 The completed-path reading has its own calculus, valid for any ordered cost type, including
 signed weights, for which a prefix may overspend a budget that every completed path respects:
@@ -136,6 +136,30 @@ theorem charge_le_cost [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMono
     rcases p with ⟨b, p⟩
     rw [charge_liftBind, cost_liftBind]
     exact add_le_add le_rfl ((ih b p).trans (le_iSup (fun b => cost c (r b)) b))
+
+/-- When every reachable call has an answer, the worst-case cost is the supremum of the charges of
+the completed paths. Without that hypothesis it fails: a call whose answer type is empty is charged
+by the cost, but ends no completed path. -/
+theorem cost_eq_iSup_charge [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω]
+    [AddSupDistrib ω] {x : FreeM P α} (hx : x.ProgramProgress) :
+    cost c x = ⨆ p : Path x, charge c x p := by
+  refine le_antisymm ?_ (iSup_le (charge_le_cost x))
+  induction x using FreeM.rec with
+  | pure a => exact le_iSup (fun p : Path (FreeM.pure a : FreeM P α) => charge c _ p) PUnit.unit
+  | liftBind a r ih =>
+    obtain ⟨⟨b₀⟩, hr⟩ := hx
+    have : Nonempty (P.B a) := ⟨b₀⟩
+    rw [cost_liftBind]
+    calc c a + ⨆ b, cost c (r b)
+        ≤ c a + ⨆ b, ⨆ p : Path (r b), charge c (r b) p :=
+          add_le_add le_rfl (iSup_mono fun b => ih b (hr b))
+      _ ≤ ⨆ b, (c a + ⨆ p : Path (r b), charge c (r b) p) := add_iSup_le_iSup_add _ _
+      _ ≤ ⨆ b, ⨆ p : Path (r b), (c a + charge c (r b) p) := iSup_mono fun b => by
+          have := (hr b).nonempty_path
+          exact add_iSup_le_iSup_add _ _
+      _ ≤ ⨆ q : Path (FreeM.liftBind a r), charge c (FreeM.liftBind a r) q :=
+          iSup_le fun b => iSup_le fun p =>
+            le_iSup (fun q : Path (FreeM.liftBind a r) => charge c (FreeM.liftBind a r) q) ⟨b, p⟩
 
 /-! ## The completed-path calculus -/
 

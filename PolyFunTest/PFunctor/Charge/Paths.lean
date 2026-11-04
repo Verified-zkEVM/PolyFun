@@ -16,7 +16,8 @@ Checks for `PolyFun.PFunctor.Free.Path.Charge`:
 
 * with signed weights, a prefix overspends a budget that every completed path respects, so the
   completed-path reading is not derived from the structural bound;
-* a call with no answers ends no completed path;
+* a call with no answers ends no completed path, so the worst-case cost is the supremum of path
+  charges only when every call has an answer;
 * the completed-path bound transfers through a free handler, keeping the output;
 * relabelling into a sum with a charge that ignores the other summand keeps path charges;
 * charging distinct keys is subadditive and below the additive charge;
@@ -62,6 +63,13 @@ def stuck : FreeM Dead PEmpty := FreeM.lift ()
 example (p : Path stuck) : Path.charge (fun _ => (1 : ℕ)) stuck p ≤ 0 :=
   p.1.elim
 
+/-- So the worst-case cost, which charges the call, is not the supremum of the path charges:
+`cost_eq_iSup_charge` needs every reachable call to have an answer. -/
+example : cost (fun _ => (1 : ℕ∞)) stuck ≠ ⨆ p : Path stuck, Path.charge (fun _ => 1) stuck p := by
+  have hempty : IsEmpty (Path stuck) := ⟨fun p => p.1.elim⟩
+  rw [iSup_of_empty]
+  simp [stuck]
+
 /-! ## Transfer through a handler -/
 
 abbrev Coin : PFunctor := ⟨Unit, fun _ => Bool⟩
@@ -76,6 +84,11 @@ theorem doubled_path (a : Coin.A) (r : Path (doubled a)) :
   rcases r with ⟨b, b', ⟨⟩⟩
   change (1 : ℤ) + (1 + 0) ≤ 2
   decide
+
+/-- When every call has an answer, the worst-case cost is the supremum of the path charges. -/
+example {α : Type} (x : FreeM Coin α) (hx : x.ProgramProgress) :
+    cost (fun _ => (1 : ℕ∞)) x = ⨆ p : Path x, Path.charge (fun _ => 1) x p :=
+  Path.cost_eq_iSup_charge hx
 
 example {α : Type} (x : FreeM Coin α) (n : ℤ)
     (hx : ∀ p : Path x, Path.charge (fun _ => (2 : ℤ)) x p ≤ n) (q : Path (x.liftM doubled)) :
