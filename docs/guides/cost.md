@@ -279,6 +279,33 @@ continuation stays within the interrupted program's budget (`IsChargeBound.runUn
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
 
+## Layers and certified implementations
+
+A cost argument usually spans layers. A specification is priced by its calls, an algorithm
+implements each call by operations, and the operations run as instructions or gates. Each link
+between two layers is a **certified implementation** (`PolyFun/PFunctor/Handler/Certified.lean`):
+
+- an implementation of the upper interface `P` by programs over the lower interface `Q`;
+- an **exchange** `E : ω →+o ω'` that converts prices, such as "one hash is two compressions";
+- a certificate that each call at `a` is implemented within `E (c a)`.
+
+`Handler.Certified P Q c d` packages the three. Bounds transfer along it: a program within `B` is
+simulated within `E B` (`Certified.transfer`), and in value form a simulated program costs at most
+`E` of the original's cost (`Certified.cost_liftM_le`). Certified implementations compose, and so
+do their exchanges (`Certified.comp`), so a chain of layers gives a bound at the bottom by
+composition, without unfolding the programs. A reduction runs a setup program, the source program
+through a certified handler, and a finishing program; its bound is affine in the source budget,
+`setupCost + E B + finishCost` (`CostedReduction.run_isChargeBound`).
+
+Stateful packages are certified the same way (`PolyFun/PFunctor/Handler/Stateful/Charge.lean`):
+`Stateful.WithinCharge` bounds each call from every state, lifts stateless certificates
+(`WithinCharge.lift`), and composes along `Stateful.link` (`WithinCharge.link`).
+
+The upper-bound readings share one transfer principle: if each implementation is observed below the
+spec of its call, the simulated program is observed below the program (`wpFold_liftM_le`).
+`costWith_liftM_le` is an instance. The budget reading is its dual, which is why its transfer
+lemmas are proved directly.
+
 ## Measured and budgeted programs
 
 `MeasuredProgram Input Result ω` (`PolyFun/PFunctor/Free/Cost/Measured.lean`) computes a function
