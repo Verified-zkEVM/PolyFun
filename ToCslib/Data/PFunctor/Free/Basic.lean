@@ -17,7 +17,8 @@ cslib's `(lift a).bind` spellings and universe-polymorphic functor laws.
 Heterogeneous map composition and bind-after-map laws support changes of leaf universe.
 Monadic interpretation and handler fusion use cslib's `FreeM.liftM` and `IsMonadHom` API; the
 primed `liftM_lift_bind'` and `liftM_lift'` leave the call's value type unindexed, so that `simp`
-also fires on programs over concrete interfaces, and `liftM_ite` interprets a conditional.
+also fires on programs over concrete interfaces, and `liftM_ite` / `liftM_dite` interpret a
+conditional.
 -/
 
 public section
@@ -78,5 +79,13 @@ theorem liftM_ite {m : Type uB → Type v} [Monad m] {γ : Type uB}
     (interp : (a : P.A) → m (P.B a)) (c : Prop) [Decidable c] (x y : FreeM P γ) :
     FreeM.liftM interp (if c then x else y) = if c then x.liftM interp else y.liftM interp :=
   apply_ite _ c x y
+
+/-- Interpreting a dependent conditional program interprets the chosen branch. -/
+theorem liftM_dite {m : Type uB → Type v} [Monad m] {γ : Type uB}
+    (interp : (a : P.A) → m (P.B a)) (c : Prop) [Decidable c] (x : c → FreeM P γ)
+    (y : ¬ c → FreeM P γ) :
+    FreeM.liftM interp (if h : c then x h else y h) =
+      if h : c then (x h).liftM interp else (y h).liftM interp :=
+  apply_dite _ c x y
 
 end PFunctor.FreeM
