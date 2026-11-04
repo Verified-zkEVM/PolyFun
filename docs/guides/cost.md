@@ -265,6 +265,9 @@ is the potential makes at most as many target calls as it grows.
   raises it by at most `B`. Counters, logs, caches and tables are such measures.
 - A run through a deterministic handler returns the output and the charge of the one path that
   handler picks (`run_liftM_withCharge_id`), so its worst case is its actual cost.
+- An expected-cost reading, which belongs downstream with probability, transfers through a handler
+  only from a per-call bound that holds for every call argument and every handler state. A bound
+  that holds only on average can fail once later calls depend on earlier answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
