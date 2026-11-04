@@ -6,7 +6,7 @@ realizability. It extends Mathlib and CSLib. Cryptographic interpretations,
 probability semantics, distinguishing advantage, and scheme-specific proofs
 belong in [VCVio](https://github.com/Verified-zkEVM/VCVio).
 
-`AGENTS.md` is the canonical agent guide; `CLAUDE.md` is its symlink.
+`AGENTS.md` is the canonical agent guide, and `CLAUDE.md` is its symlink.
 Human readers should start with [README.md](README.md) and the
 [documentation hub](docs/README.md). [CONTRIBUTING.md](CONTRIBUTING.md)
 is the attribution and contribution policy.
@@ -19,10 +19,12 @@ lake build
 ./scripts/validate.sh --lint --test --axioms
 ```
 
-The wrapper builds production and example libraries plus the executable entry point, checks module/import/docs
-integrity, and optionally runs linters, regressions, both separate consumers, CLI/filesystem tests, and
-the zero-debt axiom gate. See [validation](docs/development/validation.md).
-`lake test` builds `PolyFunTest`; `lake lint` covers production and example
+The wrapper builds the production and example libraries and the executable entry point. It
+checks module, import, and documentation integrity. Its flags add linters, regressions, both
+separate consumers, CLI and filesystem tests, and the zero-debt axiom gate. See
+[validation](docs/development/validation.md).
+
+`lake test` builds `PolyFunTest`. `lake lint` covers the production and example
 libraries, with tests excluded. Use `lake lint -- --trace` after a fresh build
 to inspect the environment checks.
 
@@ -48,13 +50,13 @@ boundary. Imports flow downward and must remain acyclic.
 | `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order, bitvector and polynomial lemmas |
 | `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
 | `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
-| `PolyFunTest/` | Regression tests; may import tutorials, with no reverse production dependency |
+| `PolyFunTest/` | Regression tests, which may import tutorials. No production library imports them |
 
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
 and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
-CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`; extend them.
+CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`. Extend them.
 `ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, probability
-or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`; PolyFun never
+or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`, and PolyFun never
 imports a backend. `scripts/check-modules.sh` enforces both directions.
 
 ## Semantic boundaries
@@ -62,15 +64,15 @@ imports a backend. `scripts/check-modules.sh` enforces both directions.
 - Parameterize generic effects by an abstract monad. Keep oracle/probability
   interpretations, security policy and concrete protocol runtime semantics downstream.
 - `TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`. Its `done` and
-  `node` are `@[match_pattern, reducible]` wrappers; preserve pattern matching
+  `node` are `@[match_pattern, reducible]` wrappers. Preserve pattern matching
   and definitional equality with the substrate.
 - A coarse activation observation is not a packet-aware or probabilistic
   security observation. The structural open-process bridge does not assert
   real/ideal membership, quantitative bounds, sampler realizability, or a link
-  to `CorruptionModel`; those need explicit instances. Follow the
+  to `CorruptionModel`. Those properties need explicit instances. Follow the
   [open-system contract](docs/guides/open-systems.md).
 - `StepClass` representations need not exist for every type. Fix boundary
-  encodings; distinguish admissible local steps from whole-program resource
+  encodings, and distinguish admissible local steps from whole-program resource
   bounds. Named cryptographic adversary classes remain downstream. See
   [realizability](docs/guides/realizability.md).
 
@@ -82,28 +84,32 @@ blank line, module docstring. Use `public section` for the intended API,
 dependencies, and `import all` for proof access to opaque bodies. Expose reducer
 bodies individually when definitional equality is part of the public contract.
 Broad `@[expose] public section` is forbidden under `PolyFun/Interaction/`.
-`import all` opens bodies only inside the library that owns them: tests may
-open `ComplexityBackends`, nothing opens a backend from `PolyFun/`, a backend
-never opens `PolyFun` or `ToCslib`, and `ToCslib/`, `Examples/`,
-`PolyFunParliamentMain.lean`, the consumer packages and `PolyFunTest/ModuleAPI/`
-canaries open nothing (`scripts/check-modules.sh`). Use ordinary-import
-canaries and the separate documentation consumer to check public equations; see
-[module APIs](docs/development/module-api.md).
 
-Follow Mathlib naming (`{head_symbol}_{operation}_{rhs_form}`); structures use
+`import all` opens bodies only inside the library that owns them
+(`scripts/check-modules.sh`):
+
+- Tests may open `ComplexityBackends`.
+- Nothing opens a backend from `PolyFun/`, and a backend never opens `PolyFun` or `ToCslib`.
+- `ToCslib/`, `Examples/`, `PolyFunParliamentMain.lean`, the consumer packages, and the
+  `PolyFunTest/ModuleAPI/` canaries open nothing.
+
+Use ordinary-import canaries and the separate documentation consumer to check
+public equations. See [module APIs](docs/development/module-api.md).
+
+Follow Mathlib naming (`{head_symbol}_{operation}_{rhs_form}`). Structures use
 UpperCamelCase. Keep files below 1500 lines unless explicitly opted out.
-`autoImplicit = false` is global in `lakefile.toml`; declare variables and do
+`autoImplicit = false` is global in `lakefile.toml`. Declare variables, and do
 not repeat that option per file. Lean, Mathlib and CSLib versions stay in sync.
 
 Do not add `sorry`, `admit`, or non-standard axioms to finished work. Use `stop`
 only when explicitly preserving partial proof work during a refactor. The axiom
-baseline must stay empty; update mode refuses to record taint.
+baseline must stay empty, and update mode refuses to record taint.
 
 Do not disable linters to suppress errors, locally or globally. The narrow
 exception is declaration-scoped `set_option linter.checkUnivs false in` for
 mathematically intentional independent universes, with an adjacent explanation.
 Per-declaration `@[nolint ...]` needs `Batteries.Tactic.Lint` imported. The pinned
-CSLib `topNamespace` checker is unregistered; do not add a local replacement or
+CSLib `topNamespace` checker is unregistered. Do not add a local replacement or
 namespace exceptions for its module-system limitations. See
 [lint policy](docs/development/linting.md).
 
@@ -120,12 +126,12 @@ through CSLib's `IsMonadHom`. See [program logic](docs/guides/program-logic.md).
 ## Attribution and documentation
 
 Copyright headers always name **PolyFun Contributors**. Preserve the human
-`Authors:` line on ordinary edits; change it only for new or materially replaced
+`Authors:` line on ordinary edits. Change it only for new or materially replaced
 files. Do not add separate AI attribution. Follow the exact policy and header
 in [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Docstrings describe current definitions, assumptions and live sibling APIs;
-avoid removed names, change history and reactive wording. Use Mathlib-style
+Docstrings describe current definitions, assumptions and live sibling APIs.
+Avoid removed names, change history and reactive wording. Use Mathlib-style
 `/-! ## Title -/` section comments, never ASCII banners. Cite public papers
 through [REFERENCES.md](REFERENCES.md).
 
@@ -135,16 +141,28 @@ learnings into the existing docs, and keep one-time reviews and migration maps
 outside the tracked tree. The [maintenance contract](docs/README.md#maintenance-contract)
 and [review guide](docs/development/review-hardening.md) apply to every change.
 
+## Writing
+
+Before you draft or revise prose, follow the
+[writing workflow](docs/development/write-technical-prose.md). Apply it to documentation, docstrings, comments,
+commit messages, PR and issue text, and review comments. The
+[writing guide](docs/development/writing.md) gives advice. Keep claims, hypotheses, uncertainty,
+and requirement strength unchanged. CONTRIBUTING owns the contribution requirements.
+
+You can use `scripts/check-writing.py` for optional suggestions on changed prose and drafts.
+Read each suggestion in context. Leave clear, correct text alone.
+
 ## Generated files and scripts
 
-`PolyFun.lean`, `ToCslib.lean` and `ComplexityBackends.lean` are generated; never
-hand-edit them. Stage new/deleted/renamed source files before running
-`./scripts/update-lib.sh`, `./scripts/update-lib.sh ToCslib` or
-`./scripts/update-lib.sh ComplexityBackends`. See
+`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean` and `PolyFunIO.lean` are
+generated. Never hand-edit them. Stage new, deleted and renamed source files before
+you run `./scripts/update-lib.sh`. Pass `ToCslib`, `ComplexityBackends` or `PolyFunIO`
+to regenerate another umbrella. See
 [generated files](docs/development/generated-files.md).
+
 Tutorial modules use a glob target and need no generated umbrella. The optional
 case-study root `Examples/Parliament.lean` is generated with
-`./scripts/update-lib.sh Examples.Parliament`; stage new case-study modules first.
+`./scripts/update-lib.sh Examples.Parliament`. Stage new case-study modules first.
 Core libraries may not import examples, tests, or `PolyFunParliamentMain`.
 
 Add repository scripts only for concrete recurring workflows under

@@ -12,7 +12,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 | Familiar with Lean libraries | [Repository map](reference/repo-map.md), then [choose a computation model](guides/computation-models.md) |
 | Modeling interaction | [Interfaces and protocol shapes](guides/interaction.md), [execution](guides/execution.md), [open composition](guides/open-systems.md) |
 | Coming from VCVio | [Ownership and API correspondence](guides/polyfun-and-vcvio.md) |
-| Contributing | [Contribution guide](../CONTRIBUTING.md), [validation](development/validation.md), [module APIs](development/module-api.md) |
+| Contributing | [Contribution guide](../CONTRIBUTING.md), [validation](development/validation.md), [module APIs](development/module-api.md), [writing standard](development/writing.md) |
 
 ## Tutorials and examples
 
@@ -52,15 +52,19 @@ The Lean source is authoritative for definitions and theorem assumptions.
 [review practices](development/review-hardening.md),
 [troubleshooting](development/troubleshooting.md), and
 [upstream obligations](development/upstream.md) document contributor workflows.
-[AGENTS.md](../AGENTS.md) is the canonical agent guide;
+[AGENTS.md](../AGENTS.md) is the canonical agent guide, and
 [CONTRIBUTING.md](../CONTRIBUTING.md) is the human contribution guide.
+
+The [writing standard](development/writing.md), its [vocabulary](development/writing-vocabulary.md),
+and the [writing workflow](development/write-technical-prose.md) apply to all prose: documentation,
+docstrings, comments, commit messages, and PR, issue, and review text.
 
 ## Maintenance contract
 
 Each topic has one owning guide. Change that guide in the same PR as a public
 API, command, import boundary, or source-layout change. Source wins when prose
 and declarations disagree. Keep executable teaching material in `Examples/`
-and regressions in `PolyFunTest/`; keep links and README excerpts checked by
+and regressions in `PolyFunTest/`. Keep links and README excerpts checked by
 `scripts/check-docs-integrity.py`.
 
 Document present behavior and explicit assumptions. Preserve useful design
