@@ -10,6 +10,7 @@ public import PolyFun.PFunctor.Free.Cost.Value
 public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Sum
+public import Mathlib.Control.Monad.Writer
 
 /-!
 # Charges through handlers
@@ -158,6 +159,86 @@ theorem supp_run_liftM_id_withCharge [AddMonoid ω] (c : P.A → ω) {α : Type 
       exact ⟨⟨b, p⟩, by rw [add_assoc]; rfl⟩
     · rintro ⟨⟨b, p⟩, rfl⟩
       exact ⟨b, p, by rw [add_assoc]; rfl⟩
+
+/-! ### Writer instrumentation -/
+
+/-- The structural support of a mapped program is the image of the support. -/
+theorem _root_.PFunctor.FreeM.supp_map_eq_image {α β : Type*} (f : α → β) (x : FreeM P α) :
+    FreeM.supp (FreeM.map f x) = f '' FreeM.supp x := by
+  induction x using FreeM.rec with
+  | pure a => exact (Set.image_singleton).symm
+  | liftBind a r ih =>
+    change (⋃ b, FreeM.supp (FreeM.map f (r b))) = f '' ⋃ b, FreeM.supp (r b)
+    rw [Set.image_iUnion]
+    exact Set.iUnion_congr ih
+
+/-- Instrument a handler with a charge in a writer: a call at `a` writes `c a`. The log lives in
+`Multiplicative ω`, so it accumulates the sum of the charges. -/
+def withChargeW [Monad m] [AddMonoid ω] (h : Handler m P) (c : P.A → ω) :
+    Handler (WriterT (Multiplicative ω) m) P :=
+  fun a => WriterT.mk ((fun b => (b, Multiplicative.ofAdd (c a))) <$> h a)
+
+@[simp]
+theorem run_withChargeW [Monad m] [AddMonoid ω] (h : Handler m P) (c : P.A → ω) (a : P.A) :
+    (h.withChargeW c a).run = (fun b => (b, Multiplicative.ofAdd (c a))) <$> h a :=
+  rfl
+
+/-- Forgetting the log of any handler into a writer recovers the run of the handler with its logs
+forgotten. -/
+theorem fst_map_run_liftM_writerT [Monad m] [LawfulMonad m] {w : Type uB} [Monoid w]
+    (h : Handler (WriterT w m) P) {α : Type uB} (x : FreeM P α) :
+    Prod.fst <$> (x.liftM h).run = x.liftM fun a => Prod.fst <$> (h a).run := by
+  induction x using FreeM.rec with
+  | pure a =>
+    change Prod.fst <$> (pure (a, (1 : w)) : m (α × w)) = pure a
+    rw [map_pure]
+  | liftBind a r ih =>
+    change Prod.fst <$> ((h a).run >>= fun p =>
+        (fun q : _ × w => (q.1, p.2 * q.2)) <$> ((r p.1).liftM h).run) =
+      (Prod.fst <$> (h a).run) >>= fun b => (r b).liftM fun a => Prod.fst <$> (h a).run
+    simp only [map_bind, Functor.map_map, bind_map_left]
+    exact bind_congr fun p => ih p.1
+
+/-- **Deterministic runs, writer form.** Running a program through a handler into `Id`
+instrumented with a charge in a writer returns the output of the one path the handler picks and
+logs that path's charge. -/
+theorem run_liftM_withChargeW_id [AddMonoid ω] (h : Handler Id P) (c : P.A → ω) {α : Type uB}
+    (x : FreeM P α) :
+    (x.liftM (h.withChargeW c)).run.run =
+      (FreeM.output x (FreeM.Path.ofHandler (fun a => (h a).run) x),
+        Multiplicative.ofAdd
+          (FreeM.Path.charge c x (FreeM.Path.ofHandler (fun a => (h a).run) x))) := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    change ((fun q : _ × Multiplicative ω => (q.1, Multiplicative.ofAdd (c a) * q.2)) <$>
+      ((r (h a).run).liftM (h.withChargeW c)).run).run = _
+    rw [Id.run_map, ih]
+    rfl
+
+/-- **The program's own log.** Run through the identity handler instrumented with a charge in a
+writer, a program returns, on each completed path, its output together with that path's charge. -/
+theorem supp_run_liftM_id_withChargeW [AddMonoid ω] (c : P.A → ω) {α : Type uB} (x : FreeM P α) :
+    FreeM.supp (x.liftM ((Handler.id P).withChargeW c)).run =
+      Set.range fun p : FreeM.Path x =>
+        (FreeM.output x p, Multiplicative.ofAdd (FreeM.Path.charge c x p)) := by
+  induction x using FreeM.rec with
+  | pure a =>
+    ext z
+    change z = (a, 1) ↔ _
+    exact ⟨fun h => ⟨⟨⟩, h.symm⟩, fun ⟨_, h⟩ => h.symm⟩
+  | liftBind a r ih =>
+    change FreeM.supp (FreeM.liftBind a fun b =>
+      FreeM.map (fun q : _ × Multiplicative ω => (q.1, Multiplicative.ofAdd (c a) * q.2))
+        ((r b).liftM ((Handler.id P).withChargeW c)).run) = _
+    ext z
+    simp only [FreeM.supp, Set.mem_iUnion, FreeM.supp_map_eq_image, ih, Set.mem_image,
+      Set.mem_range]
+    constructor
+    · rintro ⟨b, _, ⟨p, rfl⟩, rfl⟩
+      exact ⟨⟨b, p⟩, rfl⟩
+    · rintro ⟨⟨b, p⟩, rfl⟩
+      exact ⟨b, _, ⟨p, rfl⟩, rfl⟩
 
 /-- Run a handler under a budget: a call at `a` that would bring the amount spent above `B`
 fails; any other call is charged and run. -/
@@ -316,6 +397,73 @@ theorem Path.exists_run_liftM_amortized {σ : Type uB} (h : Handler (StateT σ (
         _ = Φ (output _ sp.2).2 + (c a + Path.charge c (r _) p) := by ac_rfl
 
 end Amortized
+
+/-! ## Pausing runs -/
+
+section Pausing
+
+variable {σ : Type*}
+
+/-- Run a program, answering each call through `h` or pausing. On `none` the run stops and returns
+the pending call with its continuation, leaving the state unchanged. -/
+def runUntil (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))) :
+    FreeM P α → σ → FreeM Q ((α ⊕ (Σ a : P.A, (P.B a → FreeM P α))) × σ)
+  | .pure x, state => .pure (.inl x, state)
+  | .liftBind a next, state => FreeM.bind (h a state) fun r =>
+      r.elim (.pure (.inr ⟨a, next⟩, state)) fun p => runUntil h (next p.1) p.2
+
+@[simp]
+theorem runUntil_pure (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))) (x : α) (state : σ) :
+    runUntil h (.pure x) state = .pure (.inl x, state) :=
+  rfl
+
+theorem runUntil_liftBind (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))) (a : P.A)
+    (next : P.B a → FreeM P α) (state : σ) :
+    runUntil h (.liftBind a next) state = FreeM.bind (h a state) fun r =>
+      r.elim (.pure (.inr ⟨a, next⟩, state)) fun p => runUntil h (next p.1) p.2 :=
+  rfl
+
+variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedCancelAddMonoid ω]
+
+/-- **Amortized budget for a pausing run.** Suppose a nonnegative potential `Φ` on the handler
+state pays for the gap between the two charges: whenever the caller can afford a call at `a`, its
+step stays within the target budget `T` and ends with `spent + Φ next ≤ spent₀ + Φ now + c a`, where
+a pause keeps the state. Then a program within budget `B` from `s` runs within `T` from `e`,
+provided `e + Φ state + B ≤ T + s`. -/
+theorem IsChargeBound.runUntil {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} (Φ : σ → ω)
+    (hΦ : ∀ state, 0 ≤ Φ state) {c : P.A → ω} {d : Q.A → ω} {B T : ω}
+    (hstep : ∀ a state e, e + Φ state + c a ≤ T →
+      wpFold (OpSpec.budget d T) (h a state)
+        (fun r e' => e' + Φ (r.elim state Prod.snd) ≤ e + Φ state + c a) e)
+    {x : FreeM P α} {s : ω} (hx : x.IsChargeBound c B s) {e : ω} {state : σ}
+    (hT : e + Φ state + B ≤ T + s) : (FreeM.runUntil h x state).IsChargeBound d T e := by
+  induction x using FreeM.rec generalizing s e state with
+  | pure a =>
+    have hs : s ≤ B := hx
+    have h₁ : e + Φ state + s ≤ T + s := (add_le_add le_rfl hs).trans hT
+    exact (le_add_of_nonneg_right (hΦ state)).trans (le_of_add_le_add_right h₁)
+  | liftBind a r ih =>
+    have hs : s + c a ≤ B := hx.1
+    have hpre : e + Φ state + c a ≤ T := by
+      refine le_of_add_le_add_right (a := s) ?_
+      calc e + Φ state + c a + s = e + Φ state + (s + c a) := by ac_rfl
+        _ ≤ e + Φ state + B := add_le_add le_rfl hs
+        _ ≤ T + s := hT
+    change wpFold (OpSpec.budget d T) (FreeM.bind (h a state) _) (fun _ s' => s' ≤ T) e
+    rw [wpFold_bind']
+    refine wpFold_mono (OpSpec.budget_monotone d T) (h a state) (fun r e' hr => ?_) e
+      (hstep a state e hpre)
+    rcases r with _ | ⟨b, state'⟩
+    · change e' + Φ state ≤ e + Φ state + c a at hr
+      exact (le_add_of_nonneg_right (hΦ state)).trans (hr.trans hpre)
+    · change e' + Φ state' ≤ e + Φ state + c a at hr
+      refine ih b (hx.2 b) ?_
+      calc e' + Φ state' + B ≤ e + Φ state + c a + B := add_le_add hr le_rfl
+        _ = e + Φ state + B + c a := by ac_rfl
+        _ ≤ T + s + c a := add_le_add hT le_rfl
+        _ = T + (s + c a) := add_assoc _ _ _
+
+end Pausing
 
 /-! ## Resource growth in any monad -/
 

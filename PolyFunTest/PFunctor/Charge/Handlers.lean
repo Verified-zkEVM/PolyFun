@@ -89,6 +89,15 @@ example : ((flips.liftM (answer.withCharge fun _ => (3 : ℕ))).run 0).run =
   rw [Handler.run_liftM_withCharge_id, zero_add]
   rfl
 
+/-- The writer form logs the same charge as the state form. -/
+example : (flips.liftM (answer.withChargeW chgN)).run.run = (true, Multiplicative.ofAdd 4) := rfl
+
+/-- On each completed path, the writer log is that path's charge. -/
+example {α : Type} (x : FreeM Coin α) :
+    FreeM.supp (x.liftM ((Handler.id Coin).withChargeW chgN)).run =
+      Set.range fun p : Path x => (output x p, Multiplicative.ofAdd (Path.charge chgN x p)) :=
+  Handler.supp_run_liftM_id_withChargeW chgN x
+
 /-! ## Gates -/
 
 /-- Within budget the gate is transparent; with budget `3` the second call is refused. -/
@@ -148,5 +157,31 @@ example {α : Type} (x : FreeM Keys α) (σ₀ : Finset ℕ) (q : Path ((x.liftM
   have hp : Path.charge (fun _ => (0 : ℕ)) x p = 0 :=
     Path.charge_map_addMonoidHom (c := fun _ : Keys.A => (0 : ℕ)) (0 : ℕ →+ ℕ) x p
   simpa [hp] using hle
+
+/-! ## A pausing run -/
+
+/-- Answer the first `k` calls with one target call each, then pause. -/
+def gate (k : ℕ) (a : Keys.A) (used : ℕ) : FreeM Keys (Option (Keys.B a × ℕ)) :=
+  if used < k then .liftBind a fun b => .pure (some (b, used + 1)) else .pure none
+
+/-- Free calls cost nothing. -/
+theorem isChargeBound_free {α : Type} (x : FreeM Keys α) :
+    x.IsChargeBound (fun _ => (0 : ℕ)) 0 0 := by
+  induction x using FreeM.rec with
+  | pure a => exact le_rfl
+  | liftBind a r ih => exact ⟨le_rfl, ih⟩
+
+/-- Whatever the program, a run through `gate k` makes at most `k` target calls: the potential
+`k - used` pays for each one. -/
+example {α : Type} (k : ℕ) (x : FreeM Keys α) :
+    (runUntil (gate k) x 0).IsChargeBound (fun _ => 1) k 0 := by
+  refine IsChargeBound.runUntil (B := 0) (c := fun _ => 0) (fun used => k - used)
+    (fun _ => Nat.zero_le _) (fun a used e he => ?_) (isChargeBound_free x) (by omega)
+  unfold gate
+  split_ifs with hk
+  · exact ⟨by change e + 1 ≤ k; omega,
+      fun _ => by change e + 1 + (k - (used + 1)) ≤ e + (k - used) + 0; omega⟩
+  · change e + (k - used) ≤ e + (k - used) + 0
+    omega
 
 end PolyFunTest.ChargeHandlers
