@@ -45,7 +45,7 @@ lake exe polyfun-axiomsweep --root PolyFunAxiomSweepTestFixtures.Unimported --ou
 
 cmp "$TAINTED_REPORT" "$TAINTED_REPORT_2"
 
-python3 - "$CLEAN_REPORT" "$TAINTED_REPORT" "$UNIMPORTED_REPORT" <<'PY'
+uv run --no-project --python 3.12 python - "$CLEAN_REPORT" "$TAINTED_REPORT" "$UNIMPORTED_REPORT" <<'PY'
 import json
 import sys
 
