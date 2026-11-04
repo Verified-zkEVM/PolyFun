@@ -12,6 +12,7 @@ public import PolyFun.PFunctor.Bound
 public import PolyFun.PFunctor.Dynamical.Responder.Reindex
 public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Resumption
+public import ToCslib.Data.PFunctor.Free.Basic
 
 /-!
 # Lift equations over concrete polynomial abbreviations
@@ -70,6 +71,18 @@ example (query : Query.A) (next : Nat → FreeM Query Nat) (budget : Nat) :
 example {α : Type 1} (query : Query.A) (next : Nat → FreeM Query α) :
     ((FreeM.lift query).bind next).ProgramProgress ↔
       Nonempty Nat ∧ ∀ answer, (next answer).ProgramProgress := by
+  simp
+
+/-! ## Interpreting free programs -/
+
+example {m : Type → Type} [Monad m] [LawfulMonad m] (interp : (a : Query.A) → m (Query.B a))
+    (query : Query.A) : FreeM.liftM interp (FreeM.lift query) = interp query := by
+  simp
+
+example {m : Type → Type} [Monad m] (interp : (a : Query.A) → m (Query.B a)) (query : Query.A)
+    (next : Nat → FreeM Query Nat) :
+    FreeM.liftM interp (FreeM.lift query >>= next) =
+      interp query >>= fun answer => (next answer).liftM interp := by
   simp
 
 /-! ## Responders, resumptions and interaction trees -/
