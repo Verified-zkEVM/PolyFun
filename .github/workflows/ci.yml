@@ -78,7 +78,6 @@ jobs:
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
-
       - name: Set up Lean environment
         uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
         with:
@@ -133,7 +132,6 @@ jobs:
         with:
           version: "0.13.6"
           enable-cache: false
-
 
       # Paths and keys must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
@@ -202,7 +200,6 @@ jobs:
         with:
           version: "0.13.6"
           enable-cache: false
-
 
       # Paths and keys must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
