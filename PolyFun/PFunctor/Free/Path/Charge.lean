@@ -238,6 +238,46 @@ theorem charge_mapLens_eq_map {ω' : Type w'} [AddMonoid ω] [AddMonoid ω']
   rw [charge_pullMapLens, ← charge_map_addMonoidHom]
   exact congrArg (charge · x _) (funext hcd)
 
+/-- The charge of a path under a sum of charges is the sum of its charges. -/
+theorem charge_finsetSum [AddCommMonoid ω] {ι : Type*} (s : Finset ι) (c : ι → P.A → ω)
+    (x : FreeM P α) (p : Path x) :
+    charge (fun a => ∑ i ∈ s, c i a) x p = ∑ i ∈ s, charge (c i) x p := by
+  induction x using FreeM.rec with
+  | pure a => exact Finset.sum_const_zero.symm
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change (∑ i ∈ s, c i a) + charge _ (r b) p = ∑ i ∈ s, (c i a + charge (c i) (r b) p)
+    rw [ih b p, Finset.sum_add_distrib]
+
+/-- A coordinate of a vector-valued path charge is the charge of that coordinate. -/
+theorem charge_apply {ι : Type*} {ν : ι → Type w} [∀ i, AddMonoid (ν i)] (c : P.A → ∀ i, ν i)
+    (x : FreeM P α) (p : Path x) (i : ι) :
+    charge c x p i = charge (fun a => c a i) x p := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change (c a + charge c (r b) p) i = c a i + charge _ (r b) p
+    rw [Pi.add_apply, ih b p]
+
+/-- **Sequencing relabelled programs.** A program relabelled into a common interface, followed by
+relabelled continuations, has every completed path within the sum of the two path budgets, when the
+common charge agrees with the source charges along the relabellings. -/
+theorem charge_bind_mapLens_le [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
+    {R : PFunctor.{uA₂, uB₂}} {β : Type v'} {Q : α → PFunctor.{uA, uB}} (x : FreeM P α)
+    (l : Lens P R) (y : (a : α) → FreeM (Q a) β) (l' : (a : α) → Lens (Q a) R)
+    {c : P.A → ω} {d : (a : α) → (Q a).A → ω} {e : R.A → ω} {B₁ B₂ : ω}
+    (hc : ∀ a, e (l.toFunA a) = c a) (hd : ∀ m a, e ((l' m).toFunA a) = d m a)
+    (hx : ∀ p, charge c x p ≤ B₁) (hy : ∀ m p, charge (d m) (y m) p ≤ B₂)
+    (q : Path (FreeM.bind (x.mapLens l) fun m => (y m).mapLens (l' m))) :
+    charge e _ q ≤ B₁ + B₂ := by
+  refine (charge_splitBind (c := e) (x.mapLens l) (fun m => (y m).mapLens (l' m)) q).trans_le
+    (add_le_add ?_ ?_)
+  · rw [charge_pullMapLens, show e ∘ l.toFunA = c from funext hc]
+    exact hx _
+  · rw [charge_pullMapLens, show e ∘ (l' _).toFunA = d _ from funext (hd _)]
+    exact hy _ _
+
 section Refinement
 
 variable [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω] {Q : PFunctor.{uA₂, uB}}
@@ -330,5 +370,43 @@ theorem chargeDec_le_length_nsmul [AddCommMonoid ω] [Preorder ω] [IsOrderedAdd
     exact add_le_add hd.1 (ih b (ds b) (hd.2 b) p)
 
 end Path
+
+/-! ## Running with the charge of the path taken -/
+
+/-- Run a free program and return the charge of the completed path it takes: the charge analogue
+of `withPathLength`. -/
+def withPathCharge [Add ω] [Zero ω] (c : P.A → ω) (program : FreeM P α) : FreeM P ω :=
+  FreeM.map (Path.charge c program) (withPath program)
+
+@[simp]
+theorem withPathCharge_pure [Add ω] [Zero ω] (c : P.A → ω) (x : α) :
+    withPathCharge c (pure x : FreeM P α) = pure 0 :=
+  rfl
+
+theorem withPathCharge_liftBind [Add ω] [Zero ω] (c : P.A → ω) (a : P.A)
+    (next : P.B a → FreeM P α) :
+    withPathCharge c (FreeM.liftBind a next) =
+      FreeM.liftBind a fun answer => FreeM.map (c a + ·) (withPathCharge c (next answer)) := by
+  unfold withPathCharge
+  change FreeM.liftBind a (fun answer =>
+      FreeM.map (Path.charge c (FreeM.liftBind a next))
+        (FreeM.map (fun path : Path (next answer) =>
+          (⟨answer, path⟩ : Path (FreeM.liftBind a next)))
+          (withPath (next answer)))) =
+    FreeM.liftBind a (fun answer =>
+      FreeM.map (c a + ·) (FreeM.map (Path.charge c (next answer)) (withPath (next answer))))
+  apply congrArg (FreeM.liftBind a)
+  funext answer
+  rw [← FreeM.comp_map, ← FreeM.comp_map]
+  apply congrArg (fun f => FreeM.map f (withPath (next answer)))
+  funext tail
+  rfl
+
+/-- The length of the path taken is its unit charge. -/
+theorem withPathLength_eq_withPathCharge (program : FreeM P α) :
+    withPathLength program = withPathCharge (fun _ => 1) program := by
+  unfold withPathLength withPathCharge
+  exact congrArg (fun f => FreeM.map f (withPath program)) (funext (Path.length_eq_charge_one _))
+
 
 end PFunctor.FreeM
