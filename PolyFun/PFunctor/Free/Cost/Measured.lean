@@ -36,38 +36,9 @@ budgets graded by `Multiplicative ω`, it is a `GradedMonad`: `gbind` adds budge
 
 @[expose] public section
 
-universe u w
+universe u v w uA uB
 
 namespace PFunctor.FreeM
-
-/-! ## Deterministic paths through binds and relabellings -/
-
-section Deterministic
-
-variable {P : PFunctor.{u, u}} {α β : Type u}
-
-/-- The path an answering function picks through a sequence passes through the path it picks
-through the first part. -/
-theorem output_bind_ofHandler (choose : (a : P.A) → P.B a) (x : FreeM P α)
-    (f : α → FreeM P β) :
-    output (FreeM.bind x f) (Path.ofHandler choose (FreeM.bind x f)) =
-      output (f (output x (Path.ofHandler choose x)))
-        (Path.ofHandler choose (f (output x (Path.ofHandler choose x)))) := by
-  induction x using FreeM.rec with
-  | pure a => rfl
-  | liftBind a r ih => exact ih (choose a)
-
-/-- Relabelling along a lens, the path an answering function picks is the path the pulled-back
-answering function picks. -/
-theorem output_mapLens_ofHandler {Q : PFunctor.{u, u}} (l : Lens P Q)
-    (choose : (a : Q.A) → Q.B a) (x : FreeM P α) :
-    output (x.mapLens l) (Path.ofHandler choose (x.mapLens l)) =
-      output x (Path.ofHandler (fun a => l.toFunB a (choose (l.toFunA a))) x) := by
-  induction x using FreeM.rec with
-  | pure a => rfl
-  | liftBind a r ih => exact ih _
-
-end Deterministic
 
 /-! ## Measured programs -/
 
@@ -86,11 +57,11 @@ structure MeasuredProgram (Input Result : Type u) (ω : Type w) where
   /-- The operations the program may call. -/
   Op : Type u
   /-- The answers to an operation, which may depend on the view. -/
-  Ans : View → Op → Type u
+  spec : View → Op → Type u
   /-- The program of each view. -/
-  program : (v : View) → FreeM ⟨Op, Ans v⟩ Result
+  program : (v : View) → FreeM ⟨Op, spec v⟩ Result
   /-- The deterministic answers of each view. -/
-  answer : (v : View) → (o : Op) → Ans v o
+  answer : (v : View) → (o : Op) → spec v o
   /-- The price of each operation. -/
   cost : Op → ω
 
@@ -104,11 +75,8 @@ def run (M : MeasuredProgram Input Result ω) (i : Input) : Result :=
 
 /-- The run is the output of the path the answers pick. -/
 theorem run_eq_output (M : MeasuredProgram Input Result ω) (i : Input) :
-    M.run i = output (M.program (M.view i)) (Path.ofHandler (M.answer (M.view i)) _) := by
-  unfold run
-  induction M.program (M.view i) using FreeM.rec with
-  | pure a => rfl
-  | liftBind a r ih => exact ih _
+    M.run i = output (M.program (M.view i)) (Path.ofHandler (M.answer (M.view i)) _) :=
+  (output_ofHandler _ _).symm
 
 /-- The program computes `f`. -/
 def Realizes (M : MeasuredProgram Input Result ω) (f : Input → Result) : Prop :=
@@ -128,7 +96,7 @@ def ofFun (f : Input → Result) : MeasuredProgram Input Result ω where
   View := Input
   view := id
   Op := PEmpty
-  Ans _ _ := PEmpty
+  spec _ _ := PEmpty
   program v := pure (f v)
   answer _ o := o.elim
   cost o := o.elim
@@ -143,19 +111,20 @@ theorem costAtMost_ofFun [Add ω] [Zero ω] [Preorder ω] (f : Input → Result)
 
 /-- The answers of the composite interface, which does not depend on the view: each operation is
 tagged with the view it belongs to, `inner`'s or `outer`'s. -/
-def CompAns (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
+def CompSpec (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
     (_ : inner.View) : (Σ _ : inner.View, inner.Op) ⊕ (Σ _ : outer.View, outer.Op) → Type u
-  | .inl ⟨v, o⟩ => inner.Ans v o
-  | .inr ⟨v', o⟩ => outer.Ans v' o
+  | .inl ⟨v, o⟩ => inner.spec v o
+  | .inr ⟨v', o⟩ => outer.spec v' o
 
 /-- The inclusion of `inner`'s interface at view `v` into the composite interface. -/
 def innerLens (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
-    (v : inner.View) : Lens ⟨inner.Op, inner.Ans v⟩ ⟨_, CompAns outer inner v⟩ :=
+    (v : inner.View) : Lens ⟨inner.Op, inner.spec v⟩ ⟨_, CompSpec outer inner v⟩ :=
   ⟨fun o => Sum.inl ⟨v, o⟩, fun _ b => b⟩
 
 /-- The inclusion of `outer`'s interface at view `v'` into the composite interface. -/
 def outerLens (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input Mid ω)
-    (v : inner.View) (v' : outer.View) : Lens ⟨outer.Op, outer.Ans v'⟩ ⟨_, CompAns outer inner v⟩ :=
+    (v : inner.View) (v' : outer.View) :
+    Lens ⟨outer.Op, outer.spec v'⟩ ⟨_, CompSpec outer inner v⟩ :=
   ⟨fun o => Sum.inr ⟨v', o⟩, fun _ b => b⟩
 
 /-- Run `inner`, compute `outer`'s view from the actual intermediate result without charging it,
@@ -166,7 +135,7 @@ def comp (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgram Input 
   View := inner.View
   view := inner.view
   Op := (Σ _ : inner.View, inner.Op) ⊕ (Σ _ : outer.View, outer.Op)
-  Ans := CompAns outer inner
+  spec := CompSpec outer inner
   program v := (inner.program v).mapLens (innerLens outer inner v) >>= fun m =>
     (outer.program (outer.view m)).mapLens (outerLens outer inner v (outer.view m))
   answer _
@@ -184,16 +153,17 @@ theorem run_comp (outer : MeasuredProgram Mid Result ω) (inner : MeasuredProgra
 
 /-- The composite realizes the composite function. -/
 theorem Realizes.comp {outer : MeasuredProgram Mid Result ω} {inner : MeasuredProgram Input Mid ω}
-    {g : Mid → Result} {f : Input → Mid} (ho : outer.Realizes g) (hi : inner.Realizes f) :
+    {f : Input → Mid} {g : Mid → Result} (hg : outer.Realizes g) (hf : inner.Realizes f) :
     (outer.comp inner).Realizes (g ∘ f) := fun i => by
-  rw [run_comp, Function.comp_apply, hi i, ho]
+  rw [run_comp, Function.comp_apply, hf i, hg]
 
 /-- Composite budgets add: the inner budget, then the outer one. Arguments come in the order of
 `comp`, outer first. -/
 theorem CostAtMost.comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
-    {outer : MeasuredProgram Mid Result ω} {inner : MeasuredProgram Input Mid ω} {B₁ B₂ : ω}
-    (ho : outer.CostAtMost B₂) (hi : inner.CostAtMost B₁) :
-    (outer.comp inner).CostAtMost (B₁ + B₂) := by
+    {outer : MeasuredProgram Mid Result ω} {inner : MeasuredProgram Input Mid ω}
+    {outerBudget innerBudget : ω} (ho : outer.CostAtMost outerBudget)
+    (hi : inner.CostAtMost innerBudget) :
+    (outer.comp inner).CostAtMost (innerBudget + outerBudget) := by
   intro v
   exact Path.charge_bind_mapLens_le _ _ _ _ (fun _ => rfl) (fun _ _ => rfl) (hi v)
     fun m => ho (outer.view m)
@@ -246,8 +216,8 @@ def contramap [Add ω] [Zero ω] [LE ω] {Input' : Type u} {f : Input → Result
   ⟨M.program.contramap g, M.budget, M.realizes.contramap g, M.costAtMost.contramap g⟩
 
 /-- Compose budgeted programs; budgets add. -/
-def comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω] {g : Mid → Result}
-    {f : Input → Mid} (outer : BudgetedProgram g ω) (inner : BudgetedProgram f ω) :
+def comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω] {f : Input → Mid}
+    {g : Mid → Result} (outer : BudgetedProgram g ω) (inner : BudgetedProgram f ω) :
     BudgetedProgram (g ∘ f) ω :=
   ⟨outer.program.comp inner.program, inner.budget + outer.budget,
     outer.realizes.comp inner.realizes, outer.costAtMost.comp inner.costAtMost⟩
@@ -258,15 +228,18 @@ end BudgetedProgram
 
 section Graded
 
-variable {P : PFunctor.{u, u}} {ω : Type u} [AddCommMonoid ω] [PartialOrder ω]
-  [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable {P : PFunctor.{uA, uB}} {ω : Type w}
 
 /-- Free programs within budget `B`. -/
-def Budgeted (c : P.A → ω) (B : Multiplicative ω) (α : Type u) : Type u :=
+def Budgeted [Add ω] [LE ω] [Zero ω] (c : P.A → ω) (B : Multiplicative ω) (α : Type v) :
+    Type (max uA uB v) :=
   {x : FreeM P α // x.IsChargeBound c (Multiplicative.toAdd B)}
 
+variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+
 /-- Budgeted programs form a graded monad: sequencing adds budgets. -/
-instance (c : P.A → ω) : GradedMonad (Multiplicative ω) (Budgeted c) where
+instance Budgeted.instGradedMonad (c : P.A → ω) :
+    GradedMonad (Multiplicative ω) (Budgeted c) where
   gpure a := ⟨pure a, isChargeBound_pure a⟩
   gbind x f := ⟨FreeM.bind x.1 fun a => (f a).1, IsChargeBound.bind x.2 fun a => (f a).2⟩
 
