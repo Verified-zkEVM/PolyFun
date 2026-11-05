@@ -357,6 +357,7 @@ public import PolyFun.PFunctor.Free.Except
 public import PolyFun.PFunctor.Free.Fold
 public import PolyFun.PFunctor.Free.HandlerMachine
 public import PolyFun.PFunctor.Free.Measure
+public import PolyFun.PFunctor.Free.Measure.Expectation
 public import PolyFun.PFunctor.Free.Measure.Kernel
 public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
 public import PolyFun.PFunctor.Free.Measure.Path

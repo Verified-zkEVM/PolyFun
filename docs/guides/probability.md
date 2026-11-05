@@ -79,6 +79,14 @@ the rest of `ToCslib`, they import no PolyFun module.
   map out of a discrete result type (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two
   independent runs, the first with a discrete result type, denote the product measure
   (`denote_bind_bind_prod_mk_eq_prod`).
+- **The expectation algebra**
+  ([`Free/Measure/Expectation`](../../PolyFun/PFunctor/Free/Measure/Expectation.lean)).
+  `expectationAlgebra ν` collapses a program with values in `ℝ≥0∞` to the integral of those values
+  under its measure fold. It is an ordered monad algebra, so PolyFun's program-logic bridges make
+  it an exact weakest-precondition interpretation in which `wp x post` is the expected value of
+  `post` (`expectationAlgebra_μ_bind_pure`). Under subprobability answers it restricts to the
+  probability carrier `Set.Iic (1 : ℝ≥0∞)` (`probabilityAlgebra`). `open scoped
+  PFunctor.FreeM.Expectation` installs the algebra of `PFunctor.AnswerMeasure`.
 - **Kernel handlers**
   ([`Free/Measure/Kernel`](../../PolyFun/PFunctor/Free/Measure/Kernel.lean),
   [`Free/Measure/Kernel/Transport`](../../PolyFun/PFunctor/Free/Measure/Kernel/Transport.lean),
