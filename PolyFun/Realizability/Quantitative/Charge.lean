@@ -8,7 +8,7 @@ module
 
 public import PolyFun.Realizability.Quantitative
 public import PolyFun.PFunctor.Dynamical.DynComputation.Charge
-public import Mathlib.Algebra.Order.Monoid.Unbundled.Pow
+public import ToCslib.Algebra.Order.Hom.Multiples
 
 /-!
 # Interface charges on quantitative realizations
@@ -18,7 +18,8 @@ never charges *answering* a query: answers come from the environment. Interface 
 exactly those calls. This module connects the two accountings.
 
 * `ExecutionTrace.charge c` prices the calls of an execution prefix, generalizing `length` (the
-  unit charge, `charge_one`) and `queryCount` (an indicator charge).
+  unit charge, `length_eq_charge_one`) and `queryCount` (the indicator charge of one interface,
+  `queryCount_eq_charge`).
 * A charge bound on the machine bounds the charge of every execution prefix
   (`ExecutionTrace.charge_le_of_isChargeBound`), and a machine implementing a program family within
   budget is such a machine (`DynComputation.Implements.isChargeBound_init_iff`).
@@ -60,13 +61,24 @@ def charge [Add ω] [Zero ω] (c : p.A → ω) {start finish : R.machine.State} 
   | .query (position := position) _ _ tail => c position + tail.charge c
 
 /-- The unit charge counts the calls. -/
-theorem charge_one {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
-    trace.charge (fun _ => (1 : ℕ)) = trace.length := by
+theorem length_eq_charge_one {start finish : R.machine.State}
+    (trace : ExecutionTrace R start finish) : trace.length = trace.charge (fun _ => (1 : ℕ)) := by
   induction trace with
   | nil => rfl
   | query view_eq direction tail ih =>
     simp only [charge, length, ih]
     omega
+
+/-- Counting the calls to one interface is its indicator charge. -/
+theorem queryCount_eq_charge {label : Type*} [DecidableEq label] (labelOf : p.A → label)
+    (interface : label) {start finish : R.machine.State} (trace : ExecutionTrace R start finish) :
+    trace.queryCount labelOf interface =
+      trace.charge (fun a => if labelOf a = interface then (1 : ℕ) else 0) := by
+  induction trace with
+  | nil => rfl
+  | @query state position next finish view_eq direction tail ih =>
+    simp only [queryCount, charge, ih]
+    split <;> omega
 
 /-- A charge bound on the machine bounds the charge of every execution prefix from that state. -/
 theorem charge_le_of_isChargeBound [AddCommMonoid ω] [PartialOrder ω] {c : p.A → ω} {B s : ω}
@@ -91,13 +103,6 @@ end ExecutionTrace
 variable {R : QuantitativeRealization Q bd} {ω : Type uω} [AddCommMonoid ω] [PartialOrder ω]
   [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
 
-/-- Scaling a natural-number count by a price, as a monotone additive map. -/
-def nsmulOrderHom (K : ω) : ℕ →+o ω where
-  toFun n := n • K
-  map_zero' := zero_nsmul K
-  map_add' a b := add_nsmul K a b
-  monotone' _ _ h := nsmul_le_nsmul_left zero_le h
-
 /-- A run bound bounds the charge of the implemented programs by the query budget times the
 largest price. -/
 theorem RunsWithin.isChargeBound {bound : α → ExecutionCost} {program : α → FreeM p β}
@@ -106,7 +111,7 @@ theorem RunsWithin.isChargeBound {bound : α → ExecutionCost} {program : α �
     (program input).IsChargeBound c ((bound input).queries • K) := by
   have hunit := (FreeM.isChargeBound_one_iff_isTotalRollBound _ _).2
     (h.isTotalRollBound implements input)
-  have hK := hunit.map (nsmulOrderHom K)
+  have hK := hunit.map (OrderAddMonoidHom.multiples K zero_le)
   rw [map_zero] at hK
   refine hK.mono_charge fun a => ?_
   change c a ≤ (1 : ℕ) • K

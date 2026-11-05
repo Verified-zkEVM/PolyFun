@@ -350,16 +350,16 @@ The lowest links reach machines and backend cost.
   (`RefinesVia.isChargeBound`). The machine of the run refines it (`refinesVia_ofFreeM`), any
   machine in lockstep simulation with that run does too (`RefinesVia.of_isSimulation`), and a
   machine refining an inner package's runs refines through the linked package
-  (`RefinesVia.link`). Steps a machine takes per call must be visible calls of its interface; a
-  block simulation with hidden internal steps is not yet available.
+  (`RefinesVia.link`). Steps a machine takes per call must be visible calls of its interface:
+  `RefinesVia` relates each call to a run of visible operations, with no hidden internal steps.
 - **Realizations.** A quantitative realization charges its machine's backend work, but never the
   answering of a query (`PolyFun/Realizability/Quantitative/Charge.lean`). `ExecutionTrace.charge`
   prices the calls of an execution prefix, and a charge bound on the machine bounds it
   (`ExecutionTrace.charge_le_of_isChargeBound`). If the machine implements a program within `B`
   and answering a call at `a` costs at most `π a ≤ φ (c a)` units of work, every conforming prefix
   costs at most the run bound plus `φ B` work with its calls paid for
-  (`RunsWithinUnder.executionCost_add_charge_le`). Here `π` is a price function; per-operation
-  realizers whose costs are `π` are not yet part of the realization layer.
+  (`RunsWithinUnder.executionCost_add_charge_le`). Here `π` is a price function supplied by the
+  caller; the realization layer has no per-operation realizers that produce it.
 
 ## Measured and budgeted programs
 

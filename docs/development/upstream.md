@@ -115,6 +115,10 @@ rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums b
 `cost_bound` uses it to evaluate worst-case costs over finite answer types. It belongs beside
 Mathlib's `iSup_bool_eq`.
 
+`ToCslib/Algebra/Order/Hom/Multiples.lean` packages `n ↦ n • a` as a monotone additive map from
+`ℕ` (`OrderAddMonoidHom.multiples`), the ordered form of Mathlib's `multiplesHom`; it belongs beside
+that declaration.
+
 `ToCslib/Order/AddSupDistrib.lean` names the hypothesis that addition distributes over nonempty
 suprema (`AddSupDistrib`), with the `ℕ∞` and pointwise instances, and the constant supremum
 `iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves both separately for

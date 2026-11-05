@@ -27,9 +27,9 @@ specification over `E`, implemented by an algorithm or machine model over `M`, e
   the original family through the linked package (`RefinesVia.link`), and the certificates compose
   along `link` (`Stateful.WithinCharge.link`).
 
-The transfer is exact for machines that answer a call with a bounded run of visible operations.
-A machine that takes several internal steps per call makes those steps visible as calls of its own
-interface, as `ITree.toDynComputation` does for silent steps.
+Every step of the machine is a call of its interface, so the transfer covers machines whose work
+per source call is visible. A machine with internal steps makes them visible as calls of its own
+interface first, as `ITree.toDynComputation` does for silent steps.
 -/
 
 @[expose] public section
