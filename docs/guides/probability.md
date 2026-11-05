@@ -73,6 +73,14 @@ measure-valued instances of those parameters.
   `PFunctor.FreeM.denote` is the fold under it. Over discrete answers the fold preserves bind
   and map (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two independent runs denote
   the product measure (`denote_bind_bind_prod_mk_eq_prod`).
+- **The expectation algebra**
+  ([`Free/Expectation`](../../PolyFunProbability/PFunctor/Free/Expectation.lean)).
+  `expectationAlgebra ν` collapses a program with values in `ℝ≥0∞` to the integral of those values
+  under its measure fold. It is an ordered monad algebra, so PolyFun's program-logic bridges make
+  it an exact weakest-precondition interpretation in which `wp x post` is the expected value of
+  `post` (`expectationAlgebra_μ_bind_pure`). Under subprobability answers it restricts to the
+  probability carrier `Set.Iic (1 : ℝ≥0∞)` (`probabilityAlgebra`). `open scoped
+  PFunctor.FreeM.Expectation` installs the algebra of `PFunctor.AnswerMeasure`.
 - **Kernel handlers**
   ([`Free/Kernel`](../../PolyFunProbability/PFunctor/Free/Kernel.lean),
   [`Free/Kernel/Transport`](../../PolyFunProbability/PFunctor/Free/Kernel/Transport.lean),
