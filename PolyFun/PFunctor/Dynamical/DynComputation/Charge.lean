@@ -53,7 +53,7 @@ def ImplementsWithinCharge [Add ω] [LE ω] [Zero ω] (M : DynComputation.{u} p 
     (program : α → FreeM p β) (c : p.A → ω) (B : ω) : Prop :=
   M.Implements program ∧ ∀ input, (program input).IsChargeBound c B
 
-variable [AddCommMonoid ω] [PartialOrder ω] {c : p.A → ω} {B s : ω}
+variable [Add ω] [Zero ω] [Preorder ω] {c : p.A → ω} {B s : ω}
 
 /-- The bound of a machine is the resumption bound of its behaviour. -/
 theorem isChargeBound_iff_behavior (M : DynComputation.{u} p α β) (state : M.State) :
