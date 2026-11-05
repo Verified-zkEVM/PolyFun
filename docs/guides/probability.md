@@ -1,8 +1,9 @@
 # Probability
 
 PolyFun interprets its programs measure-theoretically, as Giry interpretations with Mathlib's
-`Measure` and `Kernel`. The measure modules live beside the constructions they interpret. They
-contain no cryptographic security notions; those belong in [VCVio](polyfun-and-vcvio.md).
+`Measure` and `Kernel`. The measure modules live beside the constructions they interpret, and
+`import PolyFun` loads them. They contain no cryptographic security notions; those belong in
+[VCVio](polyfun-and-vcvio.md).
 
 ## Scope
 
@@ -64,6 +65,31 @@ the rest of `ToCslib`, they import no PolyFun module.
   `IsSubprobabilityKernel κ` bounds every fibre. Constant, restricted, pushed-forward,
   pulled-back, composed and product kernels keep the bound, and every Markov kernel is a
   subprobability kernel.
+- **Answer measures and the measure fold**
+  ([`PFunctor/Measure`](../../PolyFun/PFunctor/Measure.lean),
+  [`Free/Measure`](../../PolyFun/PFunctor/Free/Measure.lean)).
+  `PFunctor.AnswerMeasure` assigns a probability measure to the answers of each operation, and
+  `PFunctor.FreeM.denote` folds a free program into a measure on its results with `Measure.bind`.
+  An unmeasurable continuation denotes zero, so every program denotes a subprobability measure,
+  and over discrete answers a probability measure. Over discrete answers the fold preserves bind
+  and map (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two independent runs denote
+  the product measure (`denote_bind_bind_prod_mk_eq_prod`).
+- **Kernel handlers**
+  ([`Free/Measure/Kernel`](../../PolyFun/PFunctor/Free/Measure/Kernel.lean),
+  [`Free/Measure/Kernel/Transport`](../../PolyFun/PFunctor/Free/Measure/Kernel/Transport.lean),
+  [`Wiring/Measure`](../../PolyFun/PFunctor/Wiring/Measure.lean)).
+  A `KernelHandler P S` samples each operation's answer together with a successor state.
+  `PFunctor.FreeM.runKernel` extends it to a kernel from initial states to results and final
+  states, and it agrees with first interpreting a free handler's implementations
+  (`runKernel_liftM`). Almost-everywhere state invariants and state projections transport from
+  single steps to whole programs. `Wiring.runKernel` interprets recursive polynomial wiring.
+- **Path measures**
+  ([`Free/Measure/Path`](../../PolyFun/PFunctor/Free/Measure/Path.lean)).
+  `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path
+  length, bounded by a total roll bound (`expectedQueryCount_le_of_isTotalRollBound`).
+
+The measure modules keep the names and namespaces of the declarations they took over from VCVio,
+so VCVio can import them without renaming.
 
 ## Relation to VCVio and to interaction cost
 
