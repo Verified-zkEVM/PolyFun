@@ -49,8 +49,9 @@ second request is `6` and the result is `(6, 12)`.
 
 Handlers can also keep state, report failure, or issue requests in another
 interface. Those choices are expressed by the target monad: for example,
-`StateT σ m`, `ExceptT ε m`, or `FreeM Q`. A probabilistic interpretation adds
-probability semantics downstream; the request tree itself has no probabilities.
+`StateT σ m`, `ExceptT ε m`, or `FreeM Q`. A probabilistic interpretation reads the tree as a
+measure (see the [probability guide](../guides/probability.md)); the request tree itself has no
+probabilities.
 
 ## Keep exploring
 

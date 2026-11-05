@@ -64,9 +64,10 @@ representation.
 - `Execution/` — reactive processes, request networks, routing and execution assemblies
 - `Open/` — open composition, contexts, observations and generic emulation judgments
 
-Probability semantics, oracle interpretations, and cryptographic security definitions are
-provided by downstream VCVio. `TypeTree` describes well-founded protocol shapes; the
-potentially infinite computation datatype `ITree` lives in its own subtree.
+Oracle interpretations and cryptographic security definitions are provided by downstream
+VCVio, and measure interpretations belong in PolyFun's `Measure` companions. `TypeTree`
+describes well-founded protocol shapes; the potentially infinite computation datatype `ITree`
+lives in its own subtree.
 
 ## References
 
