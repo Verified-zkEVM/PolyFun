@@ -115,7 +115,8 @@ the source and its result proofs.
   it saves, it also builds `PolyFunTest`, `polyfun-parliament` and Batteries' `runLinter`, which only
   the other jobs use. It saves the build cache on every run. It saves the dependency cache when the
   list of dependency build outputs changes: new pins, or a PolyFun import that first reaches a
-  dependency module. A newer push to `main` waits for the running job rather than cancelling its
+  dependency module. New pins start the dependency cache empty, so the old pins' outputs do not
+  accumulate in it. A newer push to `main` waits for the running job rather than cancelling its
   save. A nightly clean build of `main` skips the build cache, so nothing passes only because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,

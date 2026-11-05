@@ -28,8 +28,8 @@ concurrency:
 # everything importing it, is rebuilt. Lake regenerates `*.setup.json` files per build and never
 # reads old ones, so they are not cached.
 #
-# Only the `build` job on `main` saves either cache, after it also builds what only `Lint` and `Test`
-# use:
+# Only the `build` job on `main` saves either cache, after it also builds what only `Lint` and
+# `Test` use:
 # - Dependencies (`.lake/packages`, including Mathlib's oleans, the cslib build and dependency C
 #   objects) are saved when the list of their build outputs changes. The pins change that list, and
 #   so does a PolyFun import that first reaches a dependency module.
@@ -68,11 +68,10 @@ jobs:
           # Saved keys end in a hash of the output list, so this key never matches and the restore
           # takes the newest entry for these pins.
           key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
-          # On a dependency bump, start from the previous packages; Lake checks out the new
-          # revisions and rebuilds only the packages that changed.
+          # No fallback to other pins: the old pins' build outputs would stay in the cache through
+          # every bump, and `lake exe cache get` replaces Mathlib's outputs either way.
           restore-keys: |
             lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-            lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
         if: env.CLEAN_BUILD != 'true'
@@ -120,8 +119,8 @@ jobs:
           outputs="$(find .lake/packages -path '*/.lake/build/*' -type f ! -name '*.setup.json' ! -name lock -printf '%P\n' | LC_ALL=C sort | sha256sum | cut -c1-16)"
           echo "key=$KEY_PREFIX-$outputs" >> "$GITHUB_OUTPUT"
 
-      # Cache entries are immutable, so a changed output list needs a new key. For fixed pins the list
-      # only grows, because each run starts from the newest entry, so a key never comes back.
+      # Cache entries are immutable, so a changed output list needs a new key. For fixed pins the
+      # list only grows, because each run starts from the newest entry, so a key never comes back.
       - name: Save dependency cache
         if: success() && github.ref == 'refs/heads/main' && steps.deps-outputs.outputs.key != steps.deps-cache.outputs.cache-matched-key
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -171,7 +170,6 @@ jobs:
           key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-            lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
         if: env.CLEAN_BUILD != 'true'
@@ -240,7 +238,6 @@ jobs:
           key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
             lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
-            lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
         if: env.CLEAN_BUILD != 'true'
