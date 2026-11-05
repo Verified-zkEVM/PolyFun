@@ -101,6 +101,12 @@ The two readings agree in canonically ordered monoids:
   which holds for `ℕ∞` and pointwise);
 - `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound in `ℕ∞`.
 
+Over restricted answers, `costUnder c allows x` is the fold of `OpSpec.chargeUnder c allows`, which
+follows CatCrypt-core's `chargeUnder`: the worst continuation is taken over the allowed answers
+only. It is `cost` when every answer is allowed (`costUnder_true`), at most `cost` in general
+(`costUnder_le_cost`), and a restricted budget bounds it exactly when addition distributes over
+suprema (`isChargeBoundUnder_iff_costUnder_le`).
+
 ## Accounting boundary
 
 A charge bound is a bound on interface use, relative to an accounting boundary. It charges the
