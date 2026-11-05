@@ -40,23 +40,6 @@ universe uA uA₂ uA₃ uB w w' w''
 
 namespace PFunctor
 
-namespace FreeM
-
-variable {P : PFunctor.{uA, uB}} {α : Type uB} {ω : Type w} {ω' : Type w'}
-
-/-- Exchanging prices along a monotone additive map costs no more than exchanging the cost. -/
-theorem cost_comp_le [AddCommMonoid ω] [CompleteLattice ω] [AddCommMonoid ω']
-    [CompleteLattice ω'] [IsOrderedAddMonoid ω'] (E : ω →+o ω') (c : P.A → ω) (x : FreeM P α) :
-    cost (E ∘ c) x ≤ E (cost c x) := by
-  induction x using FreeM.rec with
-  | pure a => simp
-  | liftBind a r ih =>
-    rw [cost_liftBind, cost_liftBind, map_add]
-    exact add_le_add le_rfl
-      (iSup_le fun b => (ih b).trans (E.monotone' (le_iSup (fun b => cost c (r b)) b)))
-
-end FreeM
-
 namespace Handler
 
 variable {ω : Type w} {ω' : Type w'} {ω'' : Type w''}
