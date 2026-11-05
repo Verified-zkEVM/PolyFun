@@ -347,6 +347,17 @@ theorem costUnder_true (x : FreeM P α) : costUnder c (fun _ _ => True) x = cost
   rw [costUnder, OpSpec.chargeUnder_true]
   rfl
 
+/-- The restricted cost is the worst-case cost of the program relabelled to the allowed answers. -/
+theorem costUnder_eq_cost_restrict (x : FreeM P α) :
+    costUnder c allows x = cost (P := P.restrict allows) c (x.restrict allows) := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rw [costUnder_liftBind, iSup_subtype']
+    change _ = c a + ⨆ b : {b // allows a b},
+      cost (P := P.restrict allows) c ((r b.1).restrict allows)
+    simp only [ih]
+
 variable [IsOrderedAddMonoid ω]
 
 /-- Allowing fewer answers lowers the restricted cost. -/
@@ -363,6 +374,40 @@ theorem costUnder_mono_allows (hle : ∀ a b, allows' a b → allows a b) (x : F
 theorem costUnder_le_cost (x : FreeM P α) : costUnder c allows x ≤ cost c x := by
   rw [← costUnder_true]
   exact costUnder_mono_allows (fun _ _ _ => trivial) x
+
+/-- The restricted fold splits off the continuation at the results the program can return along
+allowed answers. -/
+theorem wpFold_chargeUnder_le_costUnder_add {y : FreeM P β} {I : β → Prop}
+    (hI : wpFold (OpSpec.demonicUnder allows) y I) (k : β → ω) :
+    wpFold (OpSpec.chargeUnder c allows) y k ≤ costUnder c allows y + ⨆ b, ⨆ (_ : I b), k b := by
+  induction y using FreeM.rec with
+  | pure b => simpa using le_iSup₂_of_le (f := fun b (_ : I b) => k b) b hI le_rfl
+  | liftBind a r ih =>
+    change c a + ⨆ b, ⨆ (_ : allows a b), wpFold (OpSpec.chargeUnder c allows) (r b) k ≤
+      (c a + ⨆ b, ⨆ (_ : allows a b), costUnder c allows (r b)) + _
+    rw [add_assoc]
+    exact add_le_add le_rfl (iSup₂_le fun b hb => (ih b (hI b hb)).trans
+      (add_le_add (le_iSup₂_of_le (f := fun b (_ : allows a b) => costUnder c allows (r b)) b hb
+        le_rfl) le_rfl))
+
+/-- **Simulation overhead over allowed answers.** If every result each implementation can return
+along the target's allowed answers is an allowed source answer, a simulated program costs, over the
+target's allowed answers, at most the program over the source's allowed answers with each call
+charged the restricted worst case of its implementation. -/
+theorem costUnder_liftM_le {Q : PFunctor.{uA₂, uB₂}} {γ : Type uB} (d : Q.A → ω)
+    {allowsQ : (q : Q.A) → Q.B q → Prop} (handler : (a : P.A) → FreeM Q (P.B a))
+    (hout : ∀ a, wpFold (OpSpec.demonicUnder allowsQ) (handler a) (allows a)) (x : FreeM P γ) :
+    costUnder d allowsQ (x.liftM handler) ≤
+      costUnder (fun a => costUnder d allowsQ (handler a)) allows x := by
+  induction x using FreeM.rec with
+  | pure a => exact le_rfl
+  | liftBind a r ih =>
+    change wpFold (OpSpec.chargeUnder d allowsQ)
+      (FreeM.bind (handler a) fun b => (r b).liftM handler) (fun _ => 0) ≤ _
+    rw [wpFold_bind']
+    refine (wpFold_chargeUnder_le_costUnder_add (hout a) _).trans ?_
+    rw [costUnder_liftBind]
+    exact add_le_add le_rfl (iSup₂_mono fun b _ => ih b)
 
 variable [CanonicallyOrderedAdd ω]
 
