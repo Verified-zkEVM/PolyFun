@@ -348,8 +348,9 @@ encodings.
 `executionCost` charges a realization's backend work, never the answering of a visible query: answers
 come from the environment. Interface charges price exactly those calls, and
 `PolyFun/Realizability/Quantitative/Charge.lean` connects the two accountings.
-`ExecutionTrace.charge c` prices the calls of a prefix, generalizing `length` (`charge_one`) and
-`queryCount`. A charge bound on the machine bounds the charge of every prefix
+`ExecutionTrace.charge c` prices the calls of a prefix, generalizing `length`
+(`length_eq_charge_one`) and `queryCount`, the indicator charge of one interface
+(`queryCount_eq_charge`). A charge bound on the machine bounds the charge of every prefix
 (`ExecutionTrace.charge_le_of_isChargeBound`), and `RunsWithin.isChargeBound` bounds an
 implemented program's charge by the query budget times the largest price.
 `RunsWithinUnder.executionCost_add_charge_le` adds the two parts: if the machine implements a

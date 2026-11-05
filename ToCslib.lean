@@ -6,6 +6,7 @@ Authors: Devon Tuma, Quang Dao
 
 module
 
+public import ToCslib.Algebra.Order.Hom.Multiples
 public import ToCslib.Algebra.Polynomial
 public import ToCslib.Algebra.PolynomialGrowth
 public import ToCslib.Control.ForIn
