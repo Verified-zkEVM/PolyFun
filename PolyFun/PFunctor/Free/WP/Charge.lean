@@ -71,7 +71,7 @@ theorem isTotalRollBound_iff_wpFold_charge (x : FreeM P α) (n : ℕ) :
 
 /-- The charge fold splits off the continuation: the charge-to-go is at most the program's own
 charge plus the worst continuation value. This is `costWith_le_cost_add` in `ℕ∞`. -/
-theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB₂}} (c : Q.A → ℕ∞) {β : Type uB} (y : FreeM Q β)
+theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB₂}} (c : Q.A → ℕ∞) {β : Type v} (y : FreeM Q β)
     (k : β → ℕ∞) :
     wpFold (OpSpec.charge c) y k ≤ wpFold (OpSpec.charge c) y (fun _ => 0) + ⨆ b, k b :=
   costWith_le_cost_add y k
