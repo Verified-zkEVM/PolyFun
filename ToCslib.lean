@@ -16,6 +16,7 @@ public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
+public import ToCslib.Order.AddSupDistrib
 public import ToCslib.Order.Admissible
 public import ToCslib.Order.DiscreteOmegaCompletePartialOrder
 public import ToCslib.Order.LeanOrder

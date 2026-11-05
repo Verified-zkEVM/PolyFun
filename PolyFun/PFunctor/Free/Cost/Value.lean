@@ -1,27 +1,28 @@
 /-
 Copyright (c) 2026 PolyFun Contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
-Authors: Devon Tuma
+Authors: Devon Tuma, Bas Spitters
 -/
 
 module
 
 public import PolyFun.PFunctor.Free.Cost
-public import Mathlib.Data.ENat.Lattice
+public import ToCslib.Order.AddSupDistrib
 
 /-!
 # Worst-case cost of free programs
 
 `cost c x` is the worst-case cost of `x : FreeM P α` under a charge `c : P.A → ω`: the fold of
 `OpSpec.charge c`, which reads a call at `a` as `c a` followed by its worst continuation, with
-zero leaves. It lives in a complete lattice such as `ℕ∞`, `ℝ≥0∞` or `ι → ℕ∞`. `costWith c x k`
+zero leaves. It lives in a complete lattice such as `ℕ∞` or `ι → ℕ∞`. `costWith c x k`
 charges each leaf `a` the extra amount `k a`, which makes sequencing exact: `cost c (x >>= f)` is
 `costWith c x fun a => cost c (f a)` (`cost_bind`).
 
 The value form is the computational one: its equations reduce the cost of a concrete `do` program
 to arithmetic by `simp` (see `cost_bound`). It relates to the budget `IsChargeBound` in canonically
 ordered monoids: `isChargeBound_of_cost_le` holds in general, and `cost_le_of_isChargeBound` needs
-addition to distribute over nonempty suprema (`AddSupDistrib`, which holds in `ℕ∞` and pointwise).
+addition to distribute over nonempty suprema (`AddSupDistrib`, which holds in `ℕ∞` and pointwise,
+from `ToCslib.Order.AddSupDistrib`).
 `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound on the cost in `ℕ∞`.
 
 Costs transport along lenses (`cost_mapLens_le`, with equality when the lens reaches every answer)
@@ -59,8 +60,8 @@ theorem charge_mono {R : Type w} [CompleteLattice R] [Add R] [AddLeftMono R] (c 
   exact hk b
 
 /-- The worst-case charge reading over the allowed answers: a call at `a` costs `c a`, followed
-by the worst continuation at an answer `b` with `allows a b`. This follows CatCrypt-core's
-`OpSpec.chargeUnder`; with every answer allowed it is `charge` (`chargeUnder_true`). -/
+by the worst continuation at an answer `b` with `allows a b`. With every answer allowed it is
+`charge` (`chargeUnder_true`). -/
 noncomputable def chargeUnder {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R)
     (allows : (a : P.A) → P.B a → Prop) : OpSpec P R :=
   fun a k => c a + ⨆ b, ⨆ (_ : allows a b), k b
@@ -78,35 +79,6 @@ theorem chargeUnder_true {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R
 
 end OpSpec
 
-/-! ## Distributivity of addition over suprema -/
-
-/-- Addition on the left distributes over suprema of nonempty sets. This is the hypothesis under
-which a structural charge bound bounds the worst-case cost (`FreeM.cost_le_of_isChargeBound`): the
-bound checks every branch separately, while the cost takes the supremum first. It holds in `ℕ∞`,
-in `ℝ≥0∞` and pointwise in families. -/
-class AddSupDistrib (ω : Type w) [Add ω] [CompleteLattice ω] : Prop where
-  add_sSup_le (a : ω) {s : Set ω} (hs : s.Nonempty) : a + sSup s ≤ ⨆ b ∈ s, a + b
-
-theorem add_iSup_le_iSup_add {ω : Type w} [Add ω] [CompleteLattice ω] [AddSupDistrib ω]
-    {ι : Sort*} [Nonempty ι] (a : ω) (f : ι → ω) : a + ⨆ i, f i ≤ ⨆ i, a + f i := by
-  rw [← sSup_range]
-  refine (AddSupDistrib.add_sSup_le a (Set.range_nonempty f)).trans ?_
-  exact iSup₂_le fun _ ⟨i, hi⟩ => hi ▸ le_iSup (fun i => a + f i) i
-
-instance : AddSupDistrib ℕ∞ where
-  add_sSup_le _ _ hs := (ENat.add_sSup hs).le
-
-instance {ι : Type*} {ω : ι → Type w} [∀ i, Add (ω i)] [∀ i, CompleteLattice (ω i)]
-    [∀ i, AddSupDistrib (ω i)] : AddSupDistrib (∀ i, ω i) where
-  add_sSup_le a s hs i := by
-    have : Nonempty s := hs.to_subtype
-    rw [Pi.add_apply, sSup_apply, iSup_apply]
-    refine (add_iSup_le_iSup_add (a i) fun f : s => (f : ∀ i, ω i) i).trans ?_
-    refine iSup_le fun f => ?_
-    refine le_trans ?_ (le_iSup _ (f : ∀ i, ω i))
-    rw [iSup_apply]
-    exact le_iSup (fun _ : (f : ∀ i, ω i) ∈ s => (a + f) i) f.2
-
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α β : Type v} {ω : Type w}
@@ -117,14 +89,16 @@ section Cost
 
 variable [AddCommMonoid ω] [CompleteLattice ω] {c c' : P.A → ω}
 
+omit [AddCommMonoid ω] in
 /-- The worst-case cost of `x` when each leaf `a` costs `k a` in addition to the calls on the way
 to it: the fold of `OpSpec.charge c`. -/
-noncomputable def costWith (c : P.A → ω) (x : FreeM P α) (k : α → ω) : ω :=
+noncomputable def costWith [Add ω] (c : P.A → ω) (x : FreeM P α) (k : α → ω) : ω :=
   wpFold (OpSpec.charge c) x k
 
+omit [AddCommMonoid ω] in
 /-- The worst-case cost of `x`: the largest total charge of the calls along a branch, where a
 call at `a` costs `c a`. -/
-noncomputable def cost (c : P.A → ω) (x : FreeM P α) : ω :=
+noncomputable def cost [Add ω] [Zero ω] (c : P.A → ω) (x : FreeM P α) : ω :=
   costWith c x fun _ => 0
 
 theorem costWith_eq_wpFold (c : P.A → ω) (x : FreeM P α) (k : α → ω) :
@@ -297,11 +271,6 @@ variable [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
 
 omit [IsOrderedAddMonoid ω] in
 @[simp]
-theorem iSup_zero_eq_zero {ι : Sort*} : (⨆ _ : ι, (0 : ω)) = 0 := by
-  rw [← bot_eq_zero, iSup_bot]
-
-omit [IsOrderedAddMonoid ω] in
-@[simp]
 theorem cost_lift (a : P.A) : cost (α := no_index (P.B a)) c (FreeM.lift a) = c a := by
   change c a + ⨆ _ : P.B a, (0 : ω) = c a
   rw [iSup_zero_eq_zero, add_zero]
@@ -352,10 +321,11 @@ section Under
 
 variable {allows allows' : (a : P.A) → P.B a → Prop}
 
+omit [AddCommMonoid ω] in
 /-- The worst-case cost of `x` over the answers that `allows` admits: the fold of
 `OpSpec.chargeUnder c allows`. -/
-noncomputable def costUnder (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) :
-    ω :=
+noncomputable def costUnder [Add ω] [Zero ω] (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop)
+    (x : FreeM P α) : ω :=
   wpFold (OpSpec.chargeUnder c allows) x fun _ => 0
 
 @[simp, freeM_unfold]
@@ -474,11 +444,12 @@ theorem cost_mapLens_of_surjective {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
     cost c (x.mapLens l) = cost (c ∘ l.toFunA) x :=
   costWith_mapLens_of_surjective l hl c x _
 
-variable {Q : PFunctor.{uA₂, uB}} {α : Type uB}
+variable {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
 
+omit [AddCommMonoid ω] [IsOrderedAddMonoid ω] in
 /-- The worst-case cost of a handler's implementation of the call at `a`. -/
-noncomputable def handlerCost (d : Q.A → ω) (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) :
-    ω :=
+noncomputable def handlerCost [Add ω] [Zero ω] (d : Q.A → ω)
+    (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) : ω :=
   cost d (handler a)
 
 /-- **Simulation overhead.** A program simulated through a free handler costs at most the program

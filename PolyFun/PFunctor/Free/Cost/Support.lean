@@ -146,7 +146,8 @@ theorem callsIn_iff_forall_mayCall (x : FreeM P α) :
     · intro h
       exact ⟨h a' (Or.inl rfl), fun b a hb => h a (Or.inr ⟨b, hb⟩)⟩
 
-/-- The calls occurring in a program form the least set it calls only in. -/
+/-- A program calls only in the set of calls occurring in it; it is the least such set
+(`callsIn_iff_forall_mayCall`). -/
 theorem callsIn_setOf_mayCall (x : FreeM P α) : CallsIn x {a | x.MayCall a} :=
   (callsIn_iff_forall_mayCall x).2 fun _ h => h
 

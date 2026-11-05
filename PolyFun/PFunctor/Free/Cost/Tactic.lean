@@ -45,7 +45,7 @@ syntax (name := costBound) "cost_bound" (" [" simpArg,* "]")? : tactic
 macro_rules
   | `(tactic| cost_bound $[[$args,*]]?) => do
     let args := (args.map (·.getElems)).getD #[]
-    `(tactic| (simp [isChargeBound_freeM_pure_iff, Fin.iSup_succ, Fin.iSup_zero, iSup_bool_eq,
+    `(tactic| (simp [isChargeBound_freeM_pure_iff, Fin.iSup_succ, iSup_of_empty, iSup_bool_eq,
         iSup_option, iSup_sum, $args,*]
         <;> (try norm_num [Fin.iSup_succ]) <;> (try omega)))
 

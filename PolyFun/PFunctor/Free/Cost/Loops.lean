@@ -12,9 +12,10 @@ public import PolyFun.PFunctor.Free.Cost.Value
 # Charge bounds of loops
 
 A loop over a list whose body stays within a budget per iteration stays within the sum of those
-budgets, or `xs.length • B` for a uniform budget `B`. This holds for `List.forM`, `List.mapM`,
-`List.foldlM` and `List.forIn`, the forms that `for` loops in `do` blocks elaborate to, both for
-structural charge bounds and for worst-case costs.
+budgets (`isChargeBound_forM`, `isChargeBound_mapM`), or `xs.length • B` for a uniform budget `B`.
+The uniform form is the one for `List.foldlM` and `List.forIn`, whose bodies depend on the
+accumulated state. These are the forms that `for` loops in `do` blocks elaborate to. For worst-case
+costs, `cost_forM_le` bounds `forM` by the sum and `cost_forIn_le` bounds `forIn` uniformly.
 
 Early exit in `forIn` only shortens a branch, so the bound is the same. The cost bounds are
 inequalities: a branch that ends at a call with no answer never reaches the next iteration.
@@ -22,11 +23,11 @@ inequalities: a branch that ends at a call with no answer never reaches the next
 
 @[expose] public section
 
-universe uA uB v w
+universe uA uB v v' w
 
 namespace PFunctor.FreeM
 
-variable {P : PFunctor.{uA, uB}} {ω : Type w} {γ : Type v} {β : Type uB}
+variable {P : PFunctor.{uA, uB}} {ω : Type w} {γ : Type v} {β : Type v'}
 
 section Bound
 

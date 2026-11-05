@@ -101,11 +101,11 @@ The two readings agree in canonically ordered monoids:
   which holds for `ℕ∞` and pointwise);
 - `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound in `ℕ∞`.
 
-Over restricted answers, `costUnder c allows x` is the fold of `OpSpec.chargeUnder c allows`, which
-follows CatCrypt-core's `chargeUnder`: the worst continuation is taken over the allowed answers
-only. It is `cost` when every answer is allowed (`costUnder_true`), at most `cost` in general
-(`costUnder_le_cost`), and a restricted budget bounds it exactly when addition distributes over
-suprema (`isChargeBoundUnder_iff_costUnder_le`).
+Over restricted answers, `costUnder c allows x` is the fold of `OpSpec.chargeUnder c allows`,
+which takes the worst continuation over the allowed answers only. It is `cost` when every answer
+is allowed (`costUnder_true`) and at most `cost` in general (`costUnder_le_cost`). When addition
+distributes over suprema, a restricted budget is a bound on `costUnder`
+(`isChargeBoundUnder_iff_costUnder_le`).
 
 ## Accounting boundary
 
@@ -175,21 +175,24 @@ within the sum of their per-iteration budgets, or `xs.length • B` for a unifor
 
 **Lenses.** A bound with the pulled-back charge bounds the relabelled program
 (`IsChargeBound.mapLens`), and the two agree when the lens reaches every answer
-(`isChargeBound_mapLens_iff`). In value form, `cost_mapLens_le` and `cost_mapLens_of_surjective`.
+(`isChargeBound_mapLens_iff`). In value form, `cost_mapLens_le` bounds the cost of the relabelled
+program, with equality when the lens reaches every answer (`cost_mapLens_of_surjective`).
 Roll bounds transport the same way (`IsRollBound.mapLens`,
 `isRollBound_mapLens_iff`).
 
 **Free handlers.** If each implementation `h a` stays within `c a` under the target charge `d`,
 simulating a program within budget through `h` stays within the same budget
 (`IsChargeBound.liftM`). With a uniform step bound `k`, a program of `n` calls is simulated within
-`n • k` (`IsChargeBound.liftM_nsmul`). In value form, a simulated program costs at most the original with each
-call charged the worst case of its implementation, `handlerCost` (`cost_liftM_le`).
+`n • k` (`IsChargeBound.liftM_nsmul`). In value form, a simulated program costs at most the
+original with each call charged the worst case of its implementation, `handlerCost`
+(`cost_liftM_le`).
 
 ## Proving bounds
 
 - **Concrete programs.** `cost_bound [defs]` (`PolyFun/PFunctor/Free/Cost/Tactic.lean`) unfolds
   the definitions and runs `simp` with the cost equations and with finite-supremum unfolding
-  (`Fin.iSup_succ`, `iSup_bool_eq`, `iSup_option`, `iSup_sum`). Then `norm_num` and `omega` handle
-  the arithmetic. It decides budgets and computes worst-case costs of `do` programs over finite
-  answer types.
+  (`Fin.iSup_succ`, `iSup_of_empty`, `iSup_bool_eq`, `iSup_option`, `iSup_sum`). Then `norm_num`
+  and `omega` handle the arithmetic. It proves budgets and evaluates worst-case costs of concrete
+  `do` programs over finite answer types, and returns any goal it cannot close in simplified
+  form.
 - **Loops with a symbolic number of iterations.** Use the loop lemmas.
