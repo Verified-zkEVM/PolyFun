@@ -37,7 +37,7 @@ answer): this is how peak space, stack depth or live width are bounded by `+1`/`
 
 @[expose] public section
 
-universe uA uB v w
+universe uA uB v v' w
 
 namespace PFunctor
 
@@ -146,7 +146,7 @@ theorem isEventChargeBound_lift_iff (a : P.A) :
 
 /-- Sequencing, exactly: the continuation starts from whatever amount each branch of `x` has
 spent. -/
-theorem isEventChargeBound_bind_iff {γ : Type v} (x : FreeM P α) (f : α → FreeM P γ) :
+theorem isEventChargeBound_bind_iff {γ : Type v'} (x : FreeM P α) (f : α → FreeM P γ) :
     IsEventChargeBound (FreeM.bind x f) e B s ↔
       wpFold (OpSpec.eventBudget e B) x (fun a s' => IsEventChargeBound (f a) e B s') s := by
   unfold IsEventChargeBound
@@ -159,7 +159,7 @@ theorem isEventChargeBound_bind_iff' {β : Type v} (x : FreeM P α) (f : α → 
   isEventChargeBound_bind_iff x f
 
 @[simp]
-theorem isEventChargeBound_map_iff {γ : Type v} (f : α → γ) (x : FreeM P α) :
+theorem isEventChargeBound_map_iff {γ : Type v'} (f : α → γ) (x : FreeM P α) :
     IsEventChargeBound (FreeM.map f x) e B s ↔ IsEventChargeBound x e B s := by
   induction x using FreeM.rec generalizing s with
   | pure a => exact Iff.rfl
