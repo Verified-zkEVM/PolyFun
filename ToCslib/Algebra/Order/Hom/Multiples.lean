@@ -14,9 +14,10 @@ public import Mathlib.Algebra.Order.Group.Nat
 # Multiples as a monotone additive map
 
 `OrderAddMonoidHom.multiples a ha` is `n ↦ n • a` from `ℕ`, as a monotone additive map, for an
-element `a` with `0 ≤ a` of an ordered additive monoid. It is the ordered form of Mathlib's
-`multiplesHom`, and scales a call count by a price: a natural-number bound pushes forward along it
-to a bound in any cost type. It belongs beside `multiplesHom`.
+element `a` with `0 ≤ a` of a preordered additive monoid whose addition is monotone on the left. It
+is the ordered form of Mathlib's `multiplesHom`, and scales a call count by a price: a
+natural-number bound pushes forward along it to a bound in any cost type. It belongs beside
+`multiplesHom`.
 -/
 
 public section
@@ -25,7 +26,7 @@ universe u
 
 namespace OrderAddMonoidHom
 
-variable {ω : Type u} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+variable {ω : Type u} [AddMonoid ω] [Preorder ω] [AddLeftMono ω]
 
 /-- `n ↦ n • a`, as a monotone additive map from `ℕ`. -/
 @[expose] def multiples (a : ω) (ha : 0 ≤ a) : ℕ →+o ω where

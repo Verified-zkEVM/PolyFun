@@ -34,13 +34,13 @@ interface first, as `ITree.toDynComputation` does for silent steps.
 
 @[expose] public section
 
-universe u v uE uM uI uG w
+universe u v uE uM uMB uI uIB uG w
 
 namespace PFunctor.DynSystem.DynComputation
 
 open PFunctor.Handler
 
-variable {S T : Type u} {E : PFunctor.{uE, u}} {M : PFunctor.{uM, u}} {I : PFunctor.{uI, u}}
+variable {S T : Type u} {E : PFunctor.{uE, u}} {M : PFunctor.{uM, uMB}} {I : PFunctor.{uI, uIB}}
   {G : Type uG} {α : Type u}
 
 /-- The machine `L` implements, from each input `g`, the run of `x g` through the stateful
@@ -66,7 +66,8 @@ theorem RefinesVia.of_isSimulation (L : DynComputation.{v} M G (α × S))
 
 /-- **Composition through a linked package.** A machine refining the outer package's runs of `x`
 through an inner package refines `x` through the linked package, after reassociating the state. -/
-theorem RefinesVia.link {outer : Stateful (FreeM M) S E} {inner : Stateful (FreeM I) T M}
+theorem RefinesVia.link {M : PFunctor.{uM, u}} {outer : Stateful (FreeM M) S E}
+    {inner : Stateful (FreeM I) T M}
     {x : G → FreeM E α} {σ₀ : G → S} {τ₀ : G → T}
     {L : DynComputation.{v} I G ((α × S) × T)}
     (hL : L.RefinesVia inner (fun g => outer.run (x g) (σ₀ g)) τ₀) :
@@ -78,7 +79,7 @@ theorem RefinesVia.link {outer : Stateful (FreeM M) S E} {inner : Stateful (Free
   rw [Stateful.run_link]
   exact h
 
-variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+variable {ω : Type w} [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
   [CanonicallyOrderedAdd ω]
 
 /-- **Transfer to the machine.** If the package answers each call within its price and each
