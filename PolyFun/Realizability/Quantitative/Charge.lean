@@ -81,7 +81,7 @@ theorem queryCount_eq_charge {label : Type*} [DecidableEq label] (labelOf : p.A 
     split <;> omega
 
 /-- A charge bound on the machine bounds the charge of every execution prefix from that state. -/
-theorem charge_le_of_isChargeBound [AddCommMonoid ω] [PartialOrder ω] {c : p.A → ω} {B s : ω}
+theorem charge_le_of_isChargeBound [AddMonoid ω] [Preorder ω] {c : p.A → ω} {B s : ω}
     {start finish : R.machine.State} (trace : ExecutionTrace R start finish)
     (h : R.machine.IsChargeBound c B start s) : s + trace.charge c ≤ B := by
   induction trace generalizing s with
@@ -100,8 +100,8 @@ theorem charge_le_of_isChargeBound [AddCommMonoid ω] [PartialOrder ω] {c : p.A
 
 end ExecutionTrace
 
-variable {R : QuantitativeRealization Q bd} {ω : Type uω} [AddCommMonoid ω] [PartialOrder ω]
-  [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable {R : QuantitativeRealization Q bd} {ω : Type uω} [AddMonoid ω] [Preorder ω]
+  [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω]
 
 /-- A run bound bounds the charge of the implemented programs by the query budget times the
 largest price. -/
@@ -118,7 +118,7 @@ theorem RunsWithin.isChargeBound {bound : α → ExecutionCost} {program : α �
   rw [one_nsmul]
   exact hc a
 
-omit [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω] in
+omit [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω] in
 /-- **The bridge to backend cost.** If the machine of a realization implements a program family
 within budget `B` under `c`, and answering a call at `a` costs at most `π a ≤ φ (c a)` units of
 work, then every conforming execution prefix, with its calls paid for, costs at most the run bound
