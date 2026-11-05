@@ -37,7 +37,23 @@ Merge native stacks from the bottom using GitHub's supported stack merge API.
 GitHub rebases and retargets the remaining pull requests automatically; manual
 base changes are rejected while a pull request belongs to a native stack. See
 [GitHub's stack merge documentation](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/merging-stacked-pull-requests).
-Keep the reviewed revisions locally, compare the resulting trees and incremental
+
+- **Merging.** The legacy synchronous merge endpoint cannot merge a stacked pull
+  request. Use `PUT /repos/Verified-zkEVM/PolyFun/pulls/N/merge-async` with
+  `merge_method` set to `squash` or `rebase` (the repository allows no merge
+  commits) and `sha` set to the reviewed head. It answers with a UUID; poll
+  `GET …/pulls/N/merge-async/UUID` while `status` is `pending`. Branch rules are
+  evaluated when the merge runs, so a rule failure shows as `failed`.
+- **Membership.** A stacked pull request's REST resource has a `stack` object
+  with the stack's number and size and the pull request's position.
+- **Changing a base.** Dissolve the stack with
+  `POST /repos/Verified-zkEVM/PolyFun/stacks/STACK/unstack`, change the base, and
+  re-form it with `POST /repos/Verified-zkEVM/PolyFun/stacks`, listing
+  `pull_requests` from bottom to top; each base must be the head of the pull
+  request below it.
+
+See GitHub's REST reference for [asynchronous merges](https://docs.github.com/en/rest/pulls/pulls#merge-a-pull-request-asynchronously)
+and [stacks](https://docs.github.com/en/rest/pulls/stacks). Keep the reviewed revisions locally, compare the resulting trees and incremental
 diffs after each rebase, and check validation and CI for the new candidate head.
 A successful check on an earlier revision is not evidence that a changed tree
 was validated.
@@ -136,6 +152,11 @@ alias, so a swap first checks that downstream consumers use neither name. A
 renamed structure field keeps an alias for its projection only: `where` and
 `{ field := … }` syntax cannot use an alias, so a field rename first checks
 that no downstream consumer builds the structure with the old field name.
+
+The rest of the compatibility policy breaks cleanly. A module move leaves no
+`deprecated_module` shim, and a lemma with little use may be removed without an
+alias. There is no breaking-changes log, and CI builds no downstream repository,
+so a downstream project meets a break when it bumps its PolyFun pin.
 
 `CofreeP` and `FreeP`, like cslib's `C`, are documented exceptions to the case
 rule: they keep their capitalization because they act as notation for the
