@@ -230,6 +230,15 @@ theorem wpFold_mapLens {Q : PFunctor.{uA₂, uB₂}} (f : Lens P Q) (Φ : OpSpec
     simp only [ih]
     rfl
 
+/-- Allowing fewer answers keeps a demonic postcondition. -/
+theorem wpFold_demonicUnder_mono_allows {allows allows' : (a : P.A) → P.B a → Prop}
+    (hle : ∀ a b, allows' a b → allows a b) {x : FreeM P α} {post : α → Prop}
+    (h : wpFold (OpSpec.demonicUnder allows) x post) :
+    wpFold (OpSpec.demonicUnder allows') x post := by
+  induction x with
+  | pure a => exact h
+  | lift_bind a r ih => exact fun b hb => ih b (h b (hle a b hb))
+
 /-! ## Reachable outputs under an operationalization -/
 
 /-- Outputs reachable when each operation may return exactly the responses admitted by

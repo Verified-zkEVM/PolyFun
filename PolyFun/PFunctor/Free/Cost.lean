@@ -220,6 +220,14 @@ theorem isChargeBound_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → Fre
       s + c a ≤ B ∧ ∀ b, IsChargeBound (r b) c B (s + c a) :=
   Iff.rfl
 
+/-- **Merging a tick.** A call whose answer is ignored adds its charge to the amount spent before
+what follows, when the call has an answer. Without one, the left side holds for every continuation
+once the call is affordable. -/
+theorem isChargeBound_liftBind_const_iff (a : P.A) [Nonempty (P.B a)] (y : FreeM P α) :
+    IsChargeBound (FreeM.liftBind a fun _ => y) c B s ↔
+      s + c a ≤ B ∧ IsChargeBound y c B (s + c a) :=
+  and_congr_right fun _ => forall_const _
+
 @[simp]
 theorem isChargeBound_lift_iff (a : P.A) :
     IsChargeBound (α := no_index (P.B a)) (FreeM.lift a) c B s ↔ s + c a ≤ B :=
@@ -530,11 +538,20 @@ theorem isChargeBound_mapLens_iff (l : Lens P Q) (hl : ∀ a, Function.Surjectiv
     obtain ⟨d, rfl⟩ := hl a b
     exact (ih _).1 (h d)
 
+/-- Lifting an interface to larger universes keeps bounds, with the charge read through
+`ULift.down`. A tick interface lifted this way can be priced alongside an interface whose answers
+live in a larger universe. -/
+theorem isChargeBound_mapLens_ulift_iff {x : FreeM P α} {c : P.A → ω} :
+    IsChargeBound (P := PFunctor.ulift.{uA, uB, uA₂, uB₂} P)
+        (x.mapLens (Lens.Equiv.ulift (P := P)).invLens) (c ∘ ULift.down) B s ↔
+      IsChargeBound x c B s :=
+  isChargeBound_mapLens_iff (Lens.Equiv.ulift (P := P)).invLens fun _ b => ⟨ULift.up b, rfl⟩
+
 end Transfer
 
 section Handler
 
-variable {Q : PFunctor.{uA₂, uB}} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+variable {Q : PFunctor.{uA₂, uB₂}} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
   {α : Type uB} {B s : ω}
 
 /-- **Free-handler transfer.** If the implementation of each call at `a` stays within `c a` under
@@ -784,7 +801,7 @@ theorem IsChargeBoundUnder.add_left {x : FreeM P α} (h : IsChargeBoundUnder x c
 within its call's charge along the target's allowed answers, and every result it can return along
 those answers is an allowed source answer, then simulating a program within `B` along the source's
 allowed answers stays within `B` along the target's. -/
-theorem IsChargeBoundUnder.liftM {Q : PFunctor.{uA₂, uB}} {γ : Type uB}
+theorem IsChargeBoundUnder.liftM {Q : PFunctor.{uA₂, uB₂}} {γ : Type uB}
     (handler : (a : P.A) → FreeM Q (P.B a)) {d : Q.A → ω} {allowsQ : (q : Q.A) → Q.B q → Prop}
     (hstep : ∀ a, IsChargeBoundUnder (handler a) d allowsQ (c a))
     (hout : ∀ a, wpFold (OpSpec.demonicUnder allowsQ) (handler a) (allows a))

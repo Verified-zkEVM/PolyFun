@@ -116,7 +116,8 @@ A bound presented as a resource contract needs more than the laws of this guide:
 ## Laws
 
 **Sequencing.** `isChargeBound_bind_iff` is exact: the continuation starts from the amount spent
-at each leaf. `IsChargeBound.bind` adds budgets, and `IsChargeBound.bind_of_le` lets the
+at each leaf. A call whose answer is ignored, such as a tick, merges into what follows when it has
+an answer (`isChargeBound_liftBind_const_iff`). `IsChargeBound.bind` adds budgets, and `IsChargeBound.bind_of_le` lets the
 continuation start from any amount within a bound.
 
 **Monotonicity.** `IsChargeBound.mono`, `.mono_charge` and `.mono_spent`.
