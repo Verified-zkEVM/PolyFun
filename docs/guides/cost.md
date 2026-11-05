@@ -255,7 +255,8 @@ of every completed path by the source charge plus the growth of the potential. A
 is the potential makes at most as many target calls as it grows. A handler that may pause
 (`runUntil`, returning the pending call and its continuation) has the budget form of the same
 argument: a nonnegative potential that pays for each step gives a target budget, whatever the
-program's own charge (`IsChargeBound.runUntil`).
+program's own charge (`IsChargeBound.runUntil`), and every paused continuation stays within the
+interrupted program's budget (`IsChargeBound.runUntil_paused`).
 
 **Handlers into any monad.**
 

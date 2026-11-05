@@ -184,4 +184,11 @@ example {α : Type} (k : ℕ) (x : FreeM Keys α) :
   · change e + (k - used) ≤ e + (k - used) + 0
     omega
 
+/-- A paused continuation never needs more than the interrupted program's budget. -/
+example {α : Type} (k n : ℕ) (x : FreeM Keys α) (hx : x.IsChargeBound (fun _ => (1 : ℕ)) n)
+    {a : Keys.A} {kont : Keys.B a → FreeM Keys α} {used : ℕ}
+    (hz : (Sum.inr ⟨a, kont⟩, used) ∈ FreeM.supp (runUntil (gate k) x 0)) :
+    (FreeM.liftBind a kont).IsChargeBound (fun _ => (1 : ℕ)) n :=
+  hx.runUntil_paused hz
+
 end PolyFunTest.ChargeHandlers
