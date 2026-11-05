@@ -21,7 +21,9 @@ Checks that one notion of charge bound covers the models PolyFun connects to fre
   rounds;
 * a machine built from a free program has the bound of the program, and implements it within a
   charge;
-* free silent steps of an interaction tree do not change its bound;
+* a resumption embedding a free program has the program's bound, and indexed programs have a
+  worst-case cost that unfolds call by call;
+* free silent steps of an interaction tree do not change its bound, and charged ones spend;
 * resource records (`ExecutionCost`) serve as a cost type.
 -/
 
@@ -64,11 +66,36 @@ example (h : (DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).Implem
       ((DynSystem.DynComputation.ofFreeM fun _ : Unit => flipTwice).init ()) :=
   h.isChargeBound ()
 
+/-- The embedding of a free program into resumptions keeps its bound, and a larger budget keeps
+any resumption bound. -/
+example : (FreeM.toResumption flipTwice).IsChargeBound (fun _ => (1 : ℕ)) 2 :=
+  (Resumption.isChargeBound_toResumption_iff flipTwice).2 (by cost_bound [flipTwice])
+
+example : ¬ (FreeM.toResumption flipTwice).IsChargeBound (fun _ => (1 : ℕ)) 1 := by
+  rw [Resumption.isChargeBound_toResumption_iff]
+  cost_bound [flipTwice]
+
+example (r : Resumption Coin Bool) (h : r.IsChargeBound (fun _ => (1 : ℕ)) 2) :
+    r.IsChargeBound (fun _ => (1 : ℕ)) 3 :=
+  h.mono (by decide)
+
+/-- A worst-case cost on indexed programs unfolds one call at a time. -/
+example {I : Type} {P : IPFunctor.Endo I} {X : I → Type} {s : I} (c : (s : I) → P.A s → ℕ∞)
+    (a : P.A s) (r : (b : P.B s a) → IPFunctor.IFreeM P X (P.src s a b)) :
+    IPFunctor.IFreeM.cost c (IPFunctor.IFreeM.liftBind a r) = c s a + ⨆ b, (r b).cost c :=
+  IPFunctor.IFreeM.cost_liftBind c a r
+
 /-- A silent step before a visible call is free. -/
 example (k : Bool → ITree Coin Bool) (n : ℕ) :
     (ITree.step (ITree.query (F := Coin) () k)).IsChargeBound (fun _ => (1 : ℕ)) n ↔
       (ITree.query (F := Coin) () k).IsChargeBound (fun _ => (1 : ℕ)) n :=
   ITree.isChargeBound_step_iff _
+
+/-- A silent step charged `1` spends one unit before the call. -/
+example (k : Bool → ITree Coin Bool) (n s : ℕ) :
+    (ITree.step (ITree.query (F := Coin) () k)).IsChargeBound (fun _ => (1 : ℕ)) n s 1 ↔
+      s + 1 ≤ n ∧ (ITree.query (F := Coin) () k).IsChargeBound (fun _ => (1 : ℕ)) n (s + 1) 1 :=
+  ITree.isChargeBound_step_iff_add _
 
 /-- Resource records as costs: each call is one query with three units of traffic. -/
 example : flipTwice.IsChargeBound (fun _ => ExecutionCost.query 2 1) ⟨0, 2, 6, 0, 0⟩ := by

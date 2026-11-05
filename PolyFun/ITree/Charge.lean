@@ -17,9 +17,10 @@ charges each visible call at `a` by `c a` and each silent step by `tau`, which d
 It is the safety reading of the resumption-with-tau encoding, in which a silent step is a call
 of `y`.
 
-With `tau = 0`, silent steps are free and a bound does not see them (`isChargeBound_step_iff`), so
-weakly bisimilar trees have the same bounds. With `tau = 1` and unit charges, the bound counts every
-step, which is the fuel of `ITree.toDynComputation` (`isChargeBound_iff_toDynComputation`).
+With `tau = 0`, silent steps are free and a bound does not see them (`isChargeBound_step_iff`);
+in general a silent step costs `tau` (`isChargeBound_step_iff_add`). With `tau = 1` and unit
+charges, the bound counts every step, which is the fuel of `ITree.toDynComputation`
+(`isChargeBound_iff_toDynComputation`).
 -/
 
 @[expose] public section
@@ -49,7 +50,7 @@ theorem isChargeBound_query_iff [CanonicallyOrderedAdd ω] (a : F.A) (next : F.B
   rw [IsChargeBound, toResumptionWithTau_query, PFunctor.Resumption.isChargeBound_query_iff]
   rfl
 
-theorem isChargeBound_step_iff' [CanonicallyOrderedAdd ω] (t : ITree F α) :
+theorem isChargeBound_step_iff_add [CanonicallyOrderedAdd ω] (t : ITree F α) :
     (ITree.step t).IsChargeBound c B s tau ↔ s + tau ≤ B ∧ t.IsChargeBound c B (s + tau) tau := by
   rw [IsChargeBound, toResumptionWithTau_step, PFunctor.Resumption.isChargeBound_query_iff]
   exact and_congr_right fun _ => ⟨fun h => h PUnit.unit, fun h _ => h⟩
@@ -58,7 +59,7 @@ theorem isChargeBound_step_iff' [CanonicallyOrderedAdd ω] (t : ITree F α) :
 @[simp]
 theorem isChargeBound_step_iff [CanonicallyOrderedAdd ω] (t : ITree F α) :
     (ITree.step t).IsChargeBound c B s ↔ t.IsChargeBound c B s := by
-  rw [isChargeBound_step_iff', add_zero]
+  rw [isChargeBound_step_iff_add, add_zero]
   exact ⟨fun h => h.2, fun h => ⟨PFunctor.Resumption.IsChargeBound.spent_le h, h⟩⟩
 
 /-- The bound of a tree is the bound of its machine over `F + y`, whose silent steps are calls
