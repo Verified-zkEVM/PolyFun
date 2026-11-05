@@ -60,13 +60,11 @@ end Lens
 
 namespace TraceList
 
-variable [AddMonoid ω]
-
 /-- The additive valuation of an event trace: the sum of the charges of its events. -/
-def charge (e : P.Idx → ω) (t : TraceList P) : ω :=
+def charge [Add ω] [Zero ω] (e : P.Idx → ω) (t : TraceList P) : ω :=
   ((FreeMonoid.toList t).map e).sum
 
-variable (e : P.Idx → ω)
+variable [AddMonoid ω] (e : P.Idx → ω)
 
 @[simp]
 theorem charge_one : charge e (1 : TraceList P) = 0 :=
@@ -88,10 +86,6 @@ theorem charge_of (i : P.Idx) : charge e (FreeMonoid.of i) = e i := by
 @[simp]
 theorem charge_mul (s t : TraceList P) : charge e (s * t) = charge e s + charge e t := by
   simp [charge]
-
-end TraceList
-
-namespace TraceList
 
 section Fresh
 
@@ -132,7 +126,6 @@ theorem freshCharge_antitone {K K' : Finset P.A} (hK : K ⊆ K') (t : TraceList 
   Finset.sum_le_sum_of_subset (Finset.sdiff_subset_sdiff (subset_refl _) hK)
 
 end Fresh
-
 
 end TraceList
 

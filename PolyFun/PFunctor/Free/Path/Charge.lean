@@ -28,11 +28,11 @@ The completed-path reading has its own calculus, valid for any ordered cost type
 signed weights, for which a prefix may overspend a budget that every completed path respects:
 
 * `splitBind` splits a path through `x.bind f` into a path through `x` and a path through the
-  continuation at its output, and the charge adds (`charge_splitBind`);
+  continuation at its output, `joinBind` is its inverse (`splitBind_joinBind`,
+  `joinBind_splitBind`), and the charge adds (`charge_splitBind`, `charge_joinBind`);
 * paths pull back along lenses and leaf maps with the pulled-back charge (`charge_pullMapLens`,
   `charge_pullMap`), and along a lens whose charges agree up to an additive map the charge is
   that map applied (`charge_mapLens_eq_map`);
-* `joinBind` is its inverse, and the charge adds (`charge_joinBind`);
 * a path through a simulated program refines to a path through the source program with the
   same output and at least its charge, when each implementation is within its call's charge on
   every completed path (`exists_path_liftM`, `charge_liftM_le_of_forall`), also for bounds
@@ -45,13 +45,13 @@ signed weights, for which a prefix may overspend a budget that every completed p
 
 Charges that depend on the node rather than the operation are decorations: `Path.chargeDec`
 sums the weights a `Decoration (fun _ => ω)` puts on the nodes along a path. It generalizes
-`Path.charge` (`chargeDec_ofCharge`), and node weights at most `b` bound it by `length • b`
-(`chargeDec_le_length_nsmul`).
+`Path.charge` through the decoration `Decoration.ofCharge` (`chargeDec_ofCharge`), and node weights
+at most `bound` (`Decoration.AllLE`) bound it by `length • bound` (`chargeDec_le_length_nsmul`).
 -/
 
 @[expose] public section
 
-universe uA uB uA₂ uB₂ v v' w w'
+universe uA uB uA₂ uB₂ uA₃ uB₃ v v' w w'
 
 namespace PFunctor.FreeM
 
@@ -226,6 +226,24 @@ theorem charge_joinBind [AddMonoid ω] {β : Type v'} (x : FreeM P α) (f : α �
     rw [ih b p q, add_assoc]
     rfl
 
+@[simp]
+theorem splitBind_joinBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) → (p : Path x) →
+    (q : Path (f (output x p))) → splitBind x f (joinBind x f p q) = ⟨p, q⟩
+  | .pure _, _, ⟨⟩, _ => rfl
+  | .liftBind _ r, f, ⟨b, p⟩, q => by
+      simp only [joinBind, splitBind]
+      generalize hs : splitBind (r b) f (joinBind (r b) f p q) = t
+      obtain rfl : t = ⟨p, q⟩ := hs.symm.trans (splitBind_joinBind (r b) f p q)
+      rfl
+
+@[simp]
+theorem joinBind_splitBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) →
+    (q : Path (FreeM.bind x f)) → joinBind x f (splitBind x f q).1 (splitBind x f q).2 = q
+  | .pure _, _, _ => rfl
+  | .liftBind _ r, f, ⟨b, q⟩ => by
+      simp only [splitBind, joinBind, joinBind_splitBind]
+      rfl
+
 theorem output_pullMapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) (x : FreeM P α)
     (q : Path (x.mapLens l)) : output x (pullMapLens l x q) = output (x.mapLens l) q := by
   induction x using FreeM.rec with
@@ -296,7 +314,7 @@ theorem charge_apply {ι : Type*} {ν : ι → Type w} [∀ i, AddMonoid (ν i)]
 relabelled continuations, has every completed path within the sum of the two path budgets, when the
 common charge agrees with the source charges along the relabellings. -/
 theorem charge_bind_mapLens_le [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
-    {R : PFunctor.{uA₂, uB₂}} {β : Type v'} {Q : α → PFunctor.{uA, uB}} (x : FreeM P α)
+    {R : PFunctor.{uA₂, uB₂}} {β : Type v'} {Q : α → PFunctor.{uA₃, uB₃}} (x : FreeM P α)
     (l : Lens P R) (y : (a : α) → FreeM (Q a) β) (l' : (a : α) → Lens (Q a) R)
     {c : P.A → ω} {d : (a : α) → (Q a).A → ω} {e : R.A → ω} {B₁ B₂ : ω}
     (hc : ∀ a, e (l.toFunA a) = c a) (hd : ∀ m a, e ((l' m).toFunA a) = d m a)
@@ -406,13 +424,29 @@ theorem forall_charge_le_iff_ofHandler [∀ a, Subsingleton (P.B a)] [Add ω] [Z
     (∀ p : Path x, charge c x p ≤ B) ↔ charge c x (Path.ofHandler choose x) ≤ B :=
   ⟨fun h => h _, fun h p => Subsingleton.elim (Path.ofHandler choose x) p ▸ h⟩
 
+end Path
+
 /-! ## Charges that depend on the node -/
 
+namespace Displayed.Decoration
+
 /-- The node weights of `x` read off the charge of each node's operation. -/
-def decorationOfCharge [Add ω] [Zero ω] (c : P.A → ω) :
-    (x : FreeM P α) → Displayed.Decoration (fun _ => ω) x
+def ofCharge (c : P.A → ω) : (x : FreeM P α) → Decoration (fun _ => ω) x
   | .pure _ => PUnit.unit
-  | .liftBind a r => ⟨c a, fun b => decorationOfCharge c (r b)⟩
+  | .liftBind a r => ⟨c a, fun b => ofCharge c (r b)⟩
+
+/-- Every node weight is at most `bound`. -/
+def AllLE [LE ω] (bound : ω) : (x : FreeM P α) → Decoration (fun _ => ω) x → Prop
+  | .pure _, _ => True
+  | .liftBind _ r, ⟨w, ds⟩ => w ≤ bound ∧ ∀ b, AllLE bound (r b) (ds b)
+
+end Displayed.Decoration
+
+namespace Path
+
+open Displayed
+
+variable {c : P.A → ω}
 
 /-- The total weight of the nodes along a completed path. -/
 def chargeDec [Add ω] [Zero ω] :
@@ -420,24 +454,19 @@ def chargeDec [Add ω] [Zero ω] :
   | .pure _, _, _ => 0
   | .liftBind _ r, ⟨w, ds⟩, ⟨b, p⟩ => w + chargeDec (r b) (ds b) p
 
-/-- Every node weight is at most `b`. -/
-def DecorationLE [LE ω] (bound : ω) : (x : FreeM P α) → Displayed.Decoration (fun _ => ω) x → Prop
-  | .pure _, _ => True
-  | .liftBind _ r, ⟨w, ds⟩ => w ≤ bound ∧ ∀ b, DecorationLE bound (r b) (ds b)
-
 /-- Position charges are the node weights read off the operations. -/
 theorem chargeDec_ofCharge [Add ω] [Zero ω] (x : FreeM P α) (p : Path x) :
-    chargeDec x (decorationOfCharge c x) p = charge c x p := by
+    chargeDec x (Decoration.ofCharge c x) p = charge c x p := by
   induction x using FreeM.rec with
   | pure a => rfl
   | liftBind a r ih =>
     rcases p with ⟨b, p⟩
     exact congrArg (c a + ·) (ih b p)
 
-/-- Node weights at most `b` bound a path's weight by its length times `b`. -/
+/-- Node weights at most `bound` bound a path's weight by its length times `bound`. -/
 theorem chargeDec_le_length_nsmul [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
     {bound : ω} (x : FreeM P α) (d : Displayed.Decoration (fun _ => ω) x)
-    (hd : DecorationLE bound x d) (p : Path x) : chargeDec x d p ≤ length x p • bound := by
+    (hd : Decoration.AllLE bound x d) (p : Path x) : chargeDec x d p ≤ length x p • bound := by
   induction x using FreeM.rec with
   | pure a => exact (zero_nsmul bound).ge
   | liftBind a r ih =>
@@ -485,6 +514,5 @@ theorem withPathLength_eq_withPathCharge (program : FreeM P α) :
     withPathLength program = withPathCharge (fun _ => 1) program := by
   unfold withPathLength withPathCharge
   exact congrArg (fun f => FreeM.map f (withPath program)) (funext (Path.length_eq_charge_one _))
-
 
 end PFunctor.FreeM

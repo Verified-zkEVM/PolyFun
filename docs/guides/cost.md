@@ -125,8 +125,9 @@ additive valuation of the path's event trace (`charge_eq_traceList_charge`), and
 `Path.length` (`length_eq_charge_one`).
 
 - A budget bounds every completed path (`charge_le_of_isChargeBound`), and so does the worst-case
-  cost (`charge_le_cost`). When every reachable call has an answer, the worst-case cost is the
-  supremum of the path charges (`cost_eq_iSup_charge`).
+  cost (`charge_le_cost`). When every reachable call has an answer and addition distributes over
+  suprema (`AddSupDistrib`), the worst-case cost is the supremum of the path charges
+  (`cost_eq_iSup_charge`).
 - The converse needs every reachable call to have an answer (`isChargeBound_of_forall_charge_le`,
   under `ProgramProgress`): a call with no answers ends no completed path but is still charged.
 - With signed weights the readings differ even then: a prefix may overspend a budget that every
@@ -136,7 +137,8 @@ additive valuation of the path's event trace (`charge_eq_traceList_charge`), and
 The calculus:
 
 - `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the
-  continuation at its output, and the charge adds (`charge_splitBind`).
+  continuation at its output, and `Path.joinBind` is its inverse (`splitBind_joinBind`,
+  `joinBind_splitBind`). The charge adds (`charge_splitBind`, `charge_joinBind`).
 - Paths pull back along lenses and leaf maps (`charge_pullMapLens`, `charge_pullMap`); along a
   lens whose charges agree up to an additive map, the charge is that map applied
   (`charge_mapLens_eq_map`).
@@ -148,16 +150,16 @@ The calculus:
   implementation returning the answer taken (`exists_path_liftM_iff`, with `Demand`).
 - With subsingleton answers there is exactly one path (`forall_charge_le_iff_ofHandler`).
 - A program relabelled into a common interface, followed by relabelled continuations, has every
-  path within the sum of the two path budgets (`charge_bind_mapLens_le`). Composites of measured
-  programs, over any presentation of the common interface, are instances.
+  path within the sum of the two path budgets (`charge_bind_mapLens_le`), over any presentation of
+  the common interface.
 - Charges of sums and coordinates distribute (`charge_finsetSum`, `charge_apply`), and
   `withPathCharge c x` runs `x` and returns the charge of the path taken, generalizing
   `withPathLength`.
 
 **Node weights.** A charge that depends on the node rather than the operation is a decoration:
 `Path.chargeDec` sums the weights a `Decoration (fun _ => ω)` puts on the nodes along a path. It
-generalizes `Path.charge` (`chargeDec_ofCharge`), and node weights at most `b` bound it by
-`length • b` (`chargeDec_le_length_nsmul`). On a `TypeTree`, these are budgets per round.
+generalizes `Path.charge` through `Decoration.ofCharge` (`chargeDec_ofCharge`), and node weights
+at most `bound` (`Decoration.AllLE`) bound it by `length • bound` (`chargeDec_le_length_nsmul`).
 
 **Non-additive valuations.** Some costs are not additive under sequencing.
 `TraceList.freshCharge w K t` (`PolyFun/PFunctor/Charge.lean`) charges each position of `t`
