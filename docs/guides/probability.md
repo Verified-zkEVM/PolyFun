@@ -1,14 +1,15 @@
 # Probability
 
-PolyFun's measure-theoretic interpretations are Giry interpretations with Mathlib's `Measure` and
-`Kernel`. Their modules belong beside the constructions they interpret. They contain no
-cryptographic security notions; those belong in [VCVio](polyfun-and-vcvio.md). The first measure
-modules are staged Mathlib lemmas on subprobability measures and kernels.
+PolyFun interprets its programs measure-theoretically, as Giry interpretations with Mathlib's
+`Measure` and `Kernel`. The measure modules live beside the constructions they interpret, and
+`import PolyFun` loads them. They contain no cryptographic security notions; those belong in
+[VCVio](polyfun-and-vcvio.md).
 
 ## Scope
 
 The measure modules hold statements about measures that need no security notion: subprobability
-measures and kernels. Security experiments, distinguishing advantage, adversary classes, negligibility,
+measures and kernels, and the measures and kernels that free programs, kernel handlers and their
+paths denote. Security experiments, distinguishing advantage, adversary classes, negligibility,
 hardness assumptions, named reductions and schemes stay downstream.
 
 A generic construction takes a monad, a semantic carrier or an observation as a parameter, and
@@ -35,8 +36,9 @@ the measure modules supply measure-valued instances of those parameters.
 
 The measure interpretation of a construction lives in a `Measure` companion beside it, in the
 measure home of its area. An area is a directory that holds one kind of construction, together with
-its subdirectories. No area of `PolyFun/` has a measure module yet. A measure interpretation of a
-kind of construction that has none starts a new area. Each area whose constructions get
+its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
+interfaces), `PFunctor/Free/` (free programs) and `PFunctor/Wiring/` (polynomial wiring). A measure
+interpretation of another kind of construction starts a new area. Each area whose constructions get
 a measure interpretation has one measure home: `<area>/Measure.lean` holds the area's main measure
 module, and `<area>/Measure/` holds the others.
 
@@ -44,7 +46,7 @@ A subdirectory of an area uses the area's home, unless it is an area itself. Fre
 therefore have one home: a measure reading of their paths, weakest preconditions or costs
 (`Free/Path`, `Free/WP`, `Free/Cost`) belongs in `PFunctor/Free/Measure/`, not in a companion under
 `Free/Path/`, `Free/WP/` or `Free/Cost/`. Polynomial wiring is an area of its own, although it
-sits inside `PFunctor/`, so its measure module belongs at `PFunctor/Wiring/Measure.lean`.
+sits inside `PFunctor/`, so its measure module is `PFunctor/Wiring/Measure.lean`.
 
 The staged lemmas are about Mathlib's and core's types, not about PolyFun constructions, so they
 live in `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's. Like
@@ -62,12 +64,38 @@ the rest of `ToCslib`, they import no PolyFun module.
   `IsSubprobabilityKernel κ` bounds every fibre. Constant, restricted, pushed-forward,
   pulled-back, composed and product kernels keep the bound, and every Markov kernel is a
   subprobability kernel.
+- **Answer measures and the measure fold**
+  ([`PFunctor/Measure`](../../PolyFun/PFunctor/Measure.lean),
+  [`Free/Measure`](../../PolyFun/PFunctor/Free/Measure.lean)).
+  `PFunctor.AnswerMeasure` assigns a probability measure to the answers of each operation, and
+  `PFunctor.FreeM.denote` folds a free program into a measure on its results with `Measure.bind`.
+  An unmeasurable continuation denotes zero, so every program denotes a subprobability measure,
+  and over discrete answers a probability measure. Over discrete answers, the fold preserves bind
+  and map out of a discrete result type (`denote_bind_of_discrete`, `denote_map_of_discrete`), and
+  two independent runs, the first with a discrete result type, denote the product measure
+  (`denote_bind_bind_prod_mk_eq_prod`).
+- **Kernel handlers**
+  ([`Free/Measure/Kernel`](../../PolyFun/PFunctor/Free/Measure/Kernel.lean),
+  [`Free/Measure/Kernel/Transport`](../../PolyFun/PFunctor/Free/Measure/Kernel/Transport.lean),
+  [`Wiring/Measure`](../../PolyFun/PFunctor/Wiring/Measure.lean)).
+  A `KernelHandler P S` samples each operation's answer together with a successor state.
+  `PFunctor.FreeM.runKernel` extends it to a kernel from initial states to results and final
+  states, and it agrees with first interpreting a free handler's implementations
+  (`runKernel_liftM`). Almost-everywhere state invariants and state projections transport from
+  single steps to whole programs. `Wiring.runKernel` interprets recursive polynomial wiring.
+- **Path measures**
+  ([`Free/Measure/Path`](../../PolyFun/PFunctor/Free/Measure/Path.lean)).
+  `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path
+  length, bounded by a total roll bound (`expectedQueryCount_le_of_isTotalRollBound`).
+
+The measure modules keep the names and namespaces of the declarations they took over from VCVio,
+so VCVio can import them without renaming.
 
 ## Relation to VCVio and to interaction cost
 
-VCVio interprets oracle computations measure-theoretically. Its `OracleComp` programs are
-PolyFun free programs, and its `evalDist`, `Pr{…}[…]` notation and `EvalDistSemantics` class read
-their measures.
+VCVio specializes these interpretations to oracle computations. Its `OracleComp` programs are
+PolyFun free programs, and its `evalDist`, `Pr{…}[…]` notation and `EvalDistSemantics` class
+read the measures defined here.
 
 The interaction-cost modules are probability-free. An expected cost is a measure-valued reading
 of the same programs, so it belongs in a measure companion.
