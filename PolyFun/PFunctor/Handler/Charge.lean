@@ -9,6 +9,7 @@ module
 public import PolyFun.PFunctor.Free.Cost.Value
 public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Handler.Free
+public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Sum
 public import Mathlib.Control.Monad.Writer
 
@@ -22,11 +23,25 @@ costs of `PolyFun.PFunctor.Free.Cost` to the runs of programs through handlers.
 
 `h.WithinCharge d c` says that the implementation `h a` of each call at `a` stays within `c a`
 under the target charge `d`. Simulating a program within budget through such a handler stays
-within the same budget (`FreeM.IsChargeBound.liftM`), also for stateful handlers whose step
-bound holds from every state (`FreeM.IsChargeBound.run_liftM`). Identity, lens and sum handlers
-are within their obvious charges, and certificates compose (`WithinCharge.comp`). In value form,
+within the same budget (`FreeM.IsChargeBound.liftM`). Identity, lens and sum handlers are within
+their obvious charges, and certificates compose (`WithinCharge.comp`). In value form,
 `handlerCost d h` is the worst-case cost of each implementation, with equations for identity, lens
 and sum handlers and the bound `handlerCost_comp_le` for composites.
+
+## Stateful handlers
+
+For a handler into `StateT σ (FreeM Q)` whose step bound holds from every state, the same transfer
+holds (`FreeM.IsChargeBound.run_liftM`). When the step's target charge depends on the state, a
+potential pays for it: `Path.exists_run_liftM_amortized` bounds the target charge of every
+completed path by the source charge plus the growth of the potential.
+
+## Pausing runs
+
+`FreeM.runUntil h x state` runs `x` through a handler that may decline a call, returning either the
+output or the pending call with its continuation. `FreeM.IsChargeBound.runUntil` is the budget form
+of the amortized transfer: a nonnegative potential that pays for each step gives the run a target
+budget. Every paused continuation stays within the budget of the program it interrupts
+(`FreeM.IsChargeBound.runUntil_paused`).
 
 ## Running in any monad
 
@@ -36,17 +51,15 @@ every possible result of a run of a program within budget `B`, the amount spent 
 (`FreeM.IsChargeBound.le_of_canReturn_run_liftM_withCharge`). This is an instance of resource
 growth (`FreeM.IsChargeBound.le_of_canReturn_run_liftM`): if each call at `a` raises a measure `f`
 of the handler state by at most `c a`, then a program within budget `B` raises it by at most `B`.
+`h.withChargeW c` logs the charges in a writer instead; it is writer tracing of the charge
+(`withChargeW_eq_withTraceBefore`).
 
 `run_liftM_withCharge_id` evaluates a run through a deterministic handler: it returns the output
 and the charge of the one path that handler picks.
 
-`Path.exists_run_liftM_amortized` is the amortized transfer: a potential on the handler state
-that pays for each step's target charge bounds the target charge of every completed path by the
-source charge plus the potential's growth.
-
 `h.withBudget c B` refuses a call that would spend more than `B`, and `h.withBudgetOr c B fallback`
-answers it with a fallback instead. On a program within budget it
-never refuses (`run_liftM_withBudget_of_isChargeBound`).
+answers it with a fallback instead. On a program within budget neither intervenes
+(`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
 -/
 
 @[expose] public section
@@ -173,21 +186,12 @@ theorem run_withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) (a : P.A)
     (h.withChargeW c a).run = (fun b => (b, Multiplicative.ofAdd (c a))) <$> h a :=
   rfl
 
-/-- Forgetting the log of any handler into a writer recovers the run of the handler with its logs
-forgotten. -/
-theorem fst_map_run_liftM_writerT [Monad m] [LawfulMonad m] {w : Type uB} [Monoid w]
-    (h : Handler (WriterT w m) P) {α : Type uB} (x : FreeM P α) :
-    Prod.fst <$> (x.liftM h).run = x.liftM fun a => Prod.fst <$> (h a).run := by
-  induction x using FreeM.rec with
-  | pure a =>
-    change Prod.fst <$> (pure (a, (1 : w)) : m (α × w)) = pure a
-    rw [map_pure]
-  | liftBind a r ih =>
-    change Prod.fst <$> ((h a).run >>= fun p =>
-        (fun q : _ × w => (q.1, p.2 * q.2)) <$> ((r p.1).liftM h).run) =
-      (Prod.fst <$> (h a).run) >>= fun b => (r b).liftM fun a => Prod.fst <$> (h a).run
-    simp only [map_bind, Functor.map_map, bind_map_left]
-    exact bind_congr fun p => ih p.1
+/-- Charging in a writer is writer tracing of the charge, logged before each call. -/
+theorem withChargeW_eq_withTraceBefore [Monad m] [LawfulMonad m] [AddMonoid ω] (h : Handler m P)
+    (c : P.A → ω) : h.withChargeW c = h.withTraceBefore fun a => Multiplicative.ofAdd (c a) := by
+  funext a
+  apply WriterT.ext
+  simp [withTraceBefore_apply, run_withChargeW, MonadWriter.tell]
 
 /-- **Deterministic runs, writer form.** Running a program through a handler into `Id`
 instrumented with a charge in a writer returns the output of the one path the handler picks and
@@ -298,7 +302,7 @@ theorem handlerCost_ofLens (l : Lens P Q) (d : Q.A → ω) :
     FreeM.handlerCost d (ofLens l) = d ∘ l.toFunA :=
   funext fun a => by
     change d (l.toFunA a) + ⨆ _ : Q.B (l.toFunA a), (0 : ω) = d (l.toFunA a)
-    rw [FreeM.iSup_zero_eq_zero, add_zero]
+    rw [iSup_zero_eq_zero, add_zero]
 
 omit [CanonicallyOrderedAdd ω] in
 @[simp]
@@ -462,7 +466,8 @@ variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedCancelAddM
 state pays for the gap between the two charges: whenever the caller can afford a call at `a`, its
 step stays within the target budget `T` and ends with `spent + Φ next ≤ spent₀ + Φ now + c a`, where
 a pause keeps the state. Then a program within budget `B` from `s` runs within `T` from `e`,
-provided `e + Φ state + B ≤ T + s`. -/
+provided `e + Φ state + B ≤ T + s`. The proof cancels the amount spent, so the cost type is a
+cancellative ordered monoid such as `ℕ`, `ℤ` or `ι → ℕ`, not `ℕ∞`. -/
 theorem IsChargeBound.runUntil {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} (Φ : σ → ω)
     (hΦ : ∀ state, 0 ≤ Φ state) {c : P.A → ω} {d : Q.A → ω} {B T : ω}
     (hstep : ∀ a state e, e + Φ state + c a ≤ T →
@@ -484,7 +489,7 @@ theorem IsChargeBound.runUntil {h : (a : P.A) → σ → FreeM Q (Option (P.B a 
         _ ≤ T + s := hT
     change wpFold (OpSpec.budget d T) (FreeM.bind (h a state) _) (fun _ s' => s' ≤ T) e
     rw [wpFold_bind']
-    refine wpFold_mono (OpSpec.budget_monotone d T) (h a state) (fun r e' hr => ?_) e
+    refine wpFold_mono (OpSpec.budget_mono d T) (h a state) (fun r e' hr => ?_) e
       (hstep a state e hpre)
     rcases r with _ | ⟨b, state'⟩
     · change e' + Φ state ≤ e + Φ state + c a at hr

@@ -38,4 +38,11 @@ theorem fst_map_run_liftM_withTraceAppend (handler : Handler m p)
   funext operation
   simp [withTraceAppend_apply]
 
+/-- Forgetting the log of any handler into a writer recovers the run of the handler with its logs
+forgotten. -/
+theorem fst_map_run_liftM_writerT {w : Type u} [Monoid w] (h : Handler (WriterT w m) p)
+    (x : FreeM p α) :
+    Prod.fst <$> (x.liftM h).run = x.liftM fun a => Prod.fst <$> (h a).run :=
+  FreeM.liftM_natural h (WriterT.eraseHom (1 : w) (· * ·)) x
+
 end PFunctor.Handler

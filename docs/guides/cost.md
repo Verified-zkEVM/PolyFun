@@ -254,24 +254,26 @@ on the state, a potential pays for it: `Path.exists_run_liftM_amortized` bounds 
 of every completed path by the source charge plus the growth of the potential. A cache whose size
 is the potential makes at most as many target calls as it grows. A handler that may pause
 (`runUntil`, returning the pending call and its continuation) has the budget form of the same
-argument: a nonnegative potential that pays for each step gives a target budget, whatever the
-program's own charge (`IsChargeBound.runUntil`), and every paused continuation stays within the
-interrupted program's budget (`IsChargeBound.runUntil_paused`).
+argument: a nonnegative potential that pays for each step turns the program's budget into a
+target budget (`IsChargeBound.runUntil`, in a cancellative cost type such as `ℕ`), and every paused
+continuation stays within the interrupted program's budget (`IsChargeBound.runUntil_paused`).
 
 **Handlers into any monad.**
 
 - `h.withCharge c` keeps the amount spent as `StateT` state, and forgetting it recovers the
-  handler (`fst_map_run_liftM_withCharge`). `h.withChargeW c` logs it in a writer instead
-  (`fst_map_run_liftM_writerT`, `run_liftM_withChargeW_id`, `supp_run_liftM_id_withChargeW`).
+  handler (`fst_map_run_liftM_withCharge`). `h.withChargeW c` logs it in a writer instead, as
+  writer tracing of the charge (`withChargeW_eq_withTraceBefore`, `fst_map_run_liftM_writerT`,
+  `run_liftM_withChargeW_id`, `supp_run_liftM_id_withChargeW`).
 - On every possible result of a run of a program within budget `B`, the amount spent is at most
   `B` (`IsChargeBound.le_of_canReturn_run_liftM_withCharge`).
 - That is an instance of resource growth (`IsChargeBound.le_of_canReturn_run_liftM`): if each call
   at `a` raises a measure of the handler state by at most `c a`, a program within budget `B`
   raises it by at most `B`. Counters, logs, caches and tables are such measures.
 - A run through a deterministic handler returns the output and the charge of the one path that
-  handler picks (`run_liftM_withCharge_id`), so its worst case is its actual cost.
-- An expected-cost reading, which belongs downstream with probability, transfers through a handler
-  only from a per-call bound that holds for every call argument and every handler state. A bound
+  handler picks (`run_liftM_withCharge_id`): the instrumentation measures that path, not the
+  program's worst case.
+- An expected-cost reading needs a probability semantics, which this guide does not cover. It
+  transfers through a handler only from a per-call bound that holds for every call argument and every handler state. A bound
   that holds only on average can fail once later calls depend on earlier answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes

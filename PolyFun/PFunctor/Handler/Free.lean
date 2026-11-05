@@ -22,9 +22,6 @@ through `first`, then runs that program through `second : Handler m Q`. With
 it is the precomposition that implements one interface in terms of another and
 then runs the result. `id_comp` is the left-identity law for free handlers;
 `comp_id`, `comp_assoc` and `liftM_comp` hold for any `LawfulMonad m`.
-
-`h.comapLens l` pulls a handler back along a lens, and `liftM_mapLens_eq_comapLens` says that
-interpreting a relabelled program is interpreting the original through the pulled-back handler.
 -/
 
 @[expose] public section
@@ -64,23 +61,6 @@ theorem liftM_ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} (l : Lens P
   induction x with
   | pure _ => rfl
   | lift_bind a k ih => exact congrArg (FreeM.liftBind (l.toFunA a)) (funext fun d => ih _)
-
-/-- Pull a handler back along a lens: a call at `a` is answered by the handler at `l.toFunA a`,
-with the answer translated back by `l.toFunB a`. -/
-def comapLens {m : Type u → Type v} [Functor m] {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
-    (h : Handler m Q) (l : Lens P Q) : Handler m P :=
-  fun a => l.toFunB a <$> h (l.toFunA a)
-
-@[simp] theorem comapLens_apply {m : Type u → Type v} [Functor m] {P : PFunctor.{uA, u}}
-    {Q : PFunctor.{uA', u}} (h : Handler m Q) (l : Lens P Q) (a : P.A) :
-    h.comapLens l a = l.toFunB a <$> h (l.toFunA a) :=
-  rfl
-
-/-- Interpreting a relabelled program interprets the original through the pulled-back handler. -/
-theorem liftM_mapLens_eq_comapLens {m : Type u → Type v} [Monad m] [LawfulMonad m]
-    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}} (h : Handler m Q) (l : Lens P Q) {α : Type u}
-    (x : FreeM P α) : (x.mapLens l).liftM h = x.liftM (h.comapLens l) :=
-  FreeM.liftM_mapLens l h x
 
 /-- Composition of a free handler with a handler into any monad, in categorical
 order: `second.comp first` first interprets by `first`, then by `second`. With

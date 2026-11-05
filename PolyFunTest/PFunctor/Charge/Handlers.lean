@@ -15,13 +15,16 @@ public import PolyFun.PFunctor.Handler.Charge
 Checks for `PolyFun.PFunctor.Handler.Charge`:
 
 * a handler that implements each call by two calls is within twice the charge, and simulating
-  through it doubles a unit budget, statelessly and through a counting state;
+  through it doubles a unit budget, statelessly and through a counting state; composing it with
+  itself is within four times the charge, in budget and in value form;
 * instrumented runs stay within budget, and a run through a deterministic handler is the output
   and charge of the path it picks;
 * the budget gate is transparent within budget and refuses beyond it, and the gate with a
   fallback answers beyond it;
 * a caching handler makes a target call only on a miss, which grows its cache, so the amortized
-  transfer bounds its target calls by the growth of the cache.
+  transfer bounds its target calls by the growth of the cache;
+* a pausing run makes at most as many target calls as its potential pays for, with or without a
+  charge on the source program, and a paused continuation keeps the program's budget.
 -/
 
 public section
@@ -42,6 +45,22 @@ def doubled : Handler (FreeM Coin) Coin := fun _ => do
 
 example : doubled.WithinCharge (fun _ => (1 : ℕ)) (fun _ => 2) := fun _ => by
   cost_bound [doubled]
+
+/-- Certificates compose: doubling twice is within four times the charge. -/
+example : (doubled.comp doubled).WithinCharge (fun _ => (1 : ℕ)) (fun _ => 4) :=
+  Handler.WithinCharge.comp (d := fun _ => 2) (fun _ => by cost_bound [doubled])
+    (fun _ => by cost_bound [doubled])
+
+/-- In value form, the composite costs at most the cost of its parts. -/
+example : FreeM.handlerCost (fun _ => (1 : ℕ∞)) (doubled.comp doubled) ≤ fun _ => 4 := by
+  refine (Handler.handlerCost_comp_le doubled doubled _).trans fun a => ?_
+  have h2 : FreeM.handlerCost (fun _ => (1 : ℕ∞)) doubled = fun _ => 2 := by
+    funext a
+    simp [FreeM.handlerCost, doubled]
+    norm_num
+  rw [h2]
+  simp [FreeM.handlerCost, doubled]
+  norm_num
 
 /-- Doubling a natural-number budget. -/
 def double : ℕ →+o ℕ where
@@ -183,6 +202,17 @@ example {α : Type} (k : ℕ) (x : FreeM Keys α) :
       fun _ => by change e + 1 + (k - (used + 1)) ≤ e + (k - used) + 0; omega⟩
   · change e + (k - used) ≤ e + (k - used) + 0
     omega
+
+/-- Answer every call by one target call, never pausing. -/
+def relay (a : Keys.A) (used : ℕ) : FreeM Keys (Option (Keys.B a × ℕ)) :=
+  .liftBind a fun b => .pure (some (b, used))
+
+/-- With a nonzero source charge: relaying keeps a unit budget, with the zero potential. -/
+example {α : Type} (n : ℕ) (x : FreeM Keys α) (hx : x.IsChargeBound (fun _ => 1) n) :
+    (runUntil relay x 0).IsChargeBound (fun _ => 1) n 0 :=
+  IsChargeBound.runUntil (h := relay) (d := fun _ => 1) (fun _ => (0 : ℕ)) (fun _ => le_rfl)
+    (fun _ _ e he => ⟨by simpa using he, fun _ => by change e + 1 + 0 ≤ e + 0 + 1; omega⟩) hx
+    (by simp)
 
 /-- A paused continuation never needs more than the interrupted program's budget. -/
 example {α : Type} (k n : ℕ) (x : FreeM Keys α) (hx : x.IsChargeBound (fun _ => (1 : ℕ)) n)
