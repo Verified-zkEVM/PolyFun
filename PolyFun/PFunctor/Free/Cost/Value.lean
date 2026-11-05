@@ -87,25 +87,24 @@ variable {P : PFunctor.{uA, uB}} {α β : Type v} {ω : Type w}
 
 section Cost
 
-variable [AddCommMonoid ω] [CompleteLattice ω] {c c' : P.A → ω}
+variable [Add ω] [CompleteLattice ω] {c c' : P.A → ω}
 
-omit [AddCommMonoid ω] in
 /-- The worst-case cost of `x` when each leaf `a` costs `k a` in addition to the calls on the way
 to it: the fold of `OpSpec.charge c`. -/
-noncomputable def costWith [Add ω] (c : P.A → ω) (x : FreeM P α) (k : α → ω) : ω :=
+noncomputable def costWith (c : P.A → ω) (x : FreeM P α) (k : α → ω) : ω :=
   wpFold (OpSpec.charge c) x k
 
-omit [AddCommMonoid ω] in
 /-- The worst-case cost of `x`: the largest total charge of the calls along a branch, where a
 call at `a` costs `c a`. -/
-noncomputable def cost [Add ω] [Zero ω] (c : P.A → ω) (x : FreeM P α) : ω :=
+noncomputable def cost [Zero ω] (c : P.A → ω) (x : FreeM P α) : ω :=
   costWith c x fun _ => 0
 
 theorem costWith_eq_wpFold (c : P.A → ω) (x : FreeM P α) (k : α → ω) :
     costWith c x k = wpFold (OpSpec.charge c) x k :=
   rfl
 
-theorem cost_eq_costWith (c : P.A → ω) (x : FreeM P α) : cost c x = costWith c x fun _ => 0 :=
+theorem cost_eq_costWith [Zero ω] (c : P.A → ω) (x : FreeM P α) :
+    cost c x = costWith c x fun _ => 0 :=
   rfl
 
 @[simp, freeM_unfold]
@@ -181,6 +180,8 @@ theorem costWith_dite (p : Prop) [Decidable p] (x : p → FreeM P α) (y : ¬ p 
       if h : p then costWith c (x h) k else costWith c (y h) k := by
   split <;> rfl
 
+variable [Zero ω]
+
 @[simp, freeM_unfold]
 theorem cost_pure (a : α) : cost c (pure a : FreeM P α) = 0 :=
   rfl
@@ -189,6 +190,7 @@ theorem cost_pure (a : α) : cost c (pure a : FreeM P α) = 0 :=
 theorem cost_freeM_pure (a : α) : cost c (FreeM.pure a : FreeM P α) = 0 :=
   rfl
 
+omit [Zero ω] in
 /-- **Merging a tick.** A call whose answer is ignored adds its charge to what follows, when the
 call has an answer. Without one, the left side is `c a`. -/
 theorem costWith_liftBind_const (a : P.A) [Nonempty (P.B a)] (y : FreeM P α) (k : α → ω) :
@@ -229,10 +231,17 @@ theorem cost_dite (p : Prop) [Decidable p] (x : p → FreeM P α) (y : ¬ p → 
     cost c (if h : p then x h else y h) = if h : p then cost c (x h) else cost c (y h) := by
   split <;> rfl
 
+end Cost
+
+section CostAlgebra
+
+variable [AddMonoid ω] [CompleteLattice ω] {c c' : P.A → ω}
+
 section Ordered
 
-variable [IsOrderedAddMonoid ω]
+variable [AddLeftMono ω] [AddRightMono ω]
 
+omit [AddRightMono ω] in
 /-- The worst-case cost is monotone in the leaf costs. -/
 @[gcongr]
 theorem costWith_mono (x : FreeM P α) {k k' : α → ω} (hk : k ≤ k') :
@@ -282,30 +291,30 @@ theorem cost_bind_le_of_wpFold {γ : Type v'} {x : FreeM P α} {f : α → FreeM
     exact add_le_add le_rfl (iSup_le fun b => (ih b (hI b)).trans
       (add_le_add (le_iSup (fun b => cost c (r b)) b) le_rfl))
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- Exchanging prices along a monotone additive map costs no more than exchanging the cost. -/
-theorem cost_comp_le {ω' : Type w'} [AddCommMonoid ω'] [CompleteLattice ω'] [IsOrderedAddMonoid ω']
+theorem cost_comp_le {ω' : Type w'} [AddMonoid ω'] [CompleteLattice ω'] [AddLeftMono ω']
     (E : ω →+o ω') (c : P.A → ω) (x : FreeM P α) : cost (E ∘ c) x ≤ E (cost c x) := by
   induction x using FreeM.rec with
   | pure a => simp
   | liftBind a r ih =>
     rw [cost_liftBind, cost_liftBind, map_add]
-    exact add_le_add le_rfl
-      (iSup_le fun b => (ih b).trans (E.monotone' (le_iSup (fun b => cost c (r b)) b)))
+    exact add_le_add_right
+      (iSup_le fun b => (ih b).trans (E.monotone' (le_iSup (fun b => cost c (r b)) b))) _
 
 end Ordered
 
 section Canonical
 
-variable [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω]
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 @[simp]
 theorem cost_lift (a : P.A) : cost (α := no_index (P.B a)) c (FreeM.lift a) = c a := by
   change c a + ⨆ _ : P.B a, (0 : ω) = c a
   rw [iSup_zero_eq_zero, add_zero]
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 theorem cost_liftObj (x : P.Obj α) : cost c (FreeM.liftObj x) = c x.1 := by
   change c x.1 + ⨆ _ : P.B x.1, (0 : ω) = c x.1
   rw [iSup_zero_eq_zero, add_zero]
@@ -326,7 +335,7 @@ theorem IsChargeBound.of_cost_le {x : FreeM P α} {B : ω} (h : cost c x ≤ B) 
     IsChargeBound x c B :=
   isChargeBound_of_cost_le (by rwa [zero_add])
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- **From the budget to the value**, where addition distributes over nonempty suprema. -/
 theorem cost_le_of_isChargeBound [AddSupDistrib ω] {x : FreeM P α} {B s : ω}
     (h : IsChargeBound x c B s) : s + cost c x ≤ B := by
@@ -351,7 +360,7 @@ section Under
 
 variable {allows allows' : (a : P.A) → P.B a → Prop}
 
-omit [AddCommMonoid ω] in
+omit [AddMonoid ω] in
 /-- The worst-case cost of `x` over the answers that `allows` admits: the fold of
 `OpSpec.chargeUnder c allows`. -/
 noncomputable def costUnder [Add ω] [Zero ω] (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop)
@@ -388,7 +397,7 @@ theorem costUnder_eq_cost_restrict (x : FreeM P α) :
       cost (P := P.restrict allows) c ((r b.1).restrict allows)
     simp only [ih]
 
-variable [IsOrderedAddMonoid ω]
+variable [AddLeftMono ω] [AddRightMono ω]
 
 /-- Allowing fewer answers lowers the restricted cost. -/
 theorem costUnder_mono_allows (hle : ∀ a b, allows' a b → allows a b) (x : FreeM P α) :
@@ -430,7 +439,7 @@ theorem costUnder_bind_le_of_wpFold {γ : Type v'} {x : FreeM P α} {f : α → 
   rw [wpFold_bind']
   exact wpFold_chargeUnder_le_costUnder_add hI _
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- **Merging a tick over allowed answers.** A call whose answer is ignored adds its charge to what
 follows, when some answer is allowed. -/
 theorem costUnder_liftBind_const {a : P.A} (h : ∃ b, allows a b) (y : FreeM P α) :
@@ -471,7 +480,7 @@ theorem isChargeBoundUnder_of_costUnder_le {x : FreeM P α} {B s : ω}
     exact le_trans (add_le_add le_rfl
       (le_iSup₂ (f := fun b (_ : allows a b) => costUnder c allows (r b)) b hb)) h
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- **From the restricted budget to the restricted value**, where addition distributes over
 nonempty suprema. -/
 theorem costUnder_le_of_isChargeBoundUnder [AddSupDistrib ω] {x : FreeM P α} {B s : ω}
@@ -493,7 +502,7 @@ theorem isChargeBoundUnder_iff_costUnder_le [AddSupDistrib ω] {x : FreeM P α} 
 
 end Under
 
-end Cost
+end CostAlgebra
 
 /-- A natural-number budget is a bound on the worst-case cost in `ℕ∞`. -/
 theorem isChargeBound_iff_cost_natCast_le {x : FreeM P α} {c : P.A → ℕ} {n : ℕ} :
@@ -502,7 +511,7 @@ theorem isChargeBound_iff_cost_natCast_le {x : FreeM P α} {c : P.A → ℕ} {n 
 
 section CostTransfer
 
-variable [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω]
+variable [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω]
 
 /-- Relabelling along a lens costs at most the program with the pulled-back charge. -/
 theorem costWith_mapLens_le {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) (c : Q.A → ω)
@@ -519,7 +528,7 @@ theorem cost_mapLens_le {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) (c : Q.A �
     (x : FreeM P α) : cost c (x.mapLens l) ≤ cost (c ∘ l.toFunA) x :=
   costWith_mapLens_le l c x _
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- When every answer of the target is reached by the lens, relabelling preserves the cost. -/
 theorem costWith_mapLens_of_surjective {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
     (hl : ∀ a, Function.Surjective (l.toFunB a)) (c : Q.A → ω) (x : FreeM P α) (k : α → ω) :
@@ -532,7 +541,7 @@ theorem costWith_mapLens_of_surjective {Q : PFunctor.{uA₂, uB₂}} (l : Lens P
     exact (hl a).iSup_comp (fun b => costWith (c ∘ l.toFunA) (r b) k) ▸
       iSup_congr fun d => ih _
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 theorem cost_mapLens_of_surjective {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
     (hl : ∀ a, Function.Surjective (l.toFunB a)) (c : Q.A → ω) (x : FreeM P α) :
     cost c (x.mapLens l) = cost (c ∘ l.toFunA) x :=
@@ -540,7 +549,7 @@ theorem cost_mapLens_of_surjective {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
 
 variable {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
 
-omit [AddCommMonoid ω] [IsOrderedAddMonoid ω] in
+omit [AddMonoid ω] [AddLeftMono ω] [AddRightMono ω] in
 /-- The worst-case cost of a handler's implementation of the call at `a`. -/
 noncomputable def handlerCost [Add ω] [Zero ω] (d : Q.A → ω)
     (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) : ω :=

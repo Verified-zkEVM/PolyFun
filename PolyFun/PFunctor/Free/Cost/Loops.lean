@@ -31,7 +31,7 @@ variable {P : PFunctor.{uA, uB}} {ω : Type w} {γ : Type v} {β : Type v'}
 
 section Bound
 
-variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω]
   {c : P.A → ω}
 
 /-- A `forM` loop stays within the sum of the budgets of its iterations. -/
@@ -92,7 +92,8 @@ end Bound
 
 section Cost
 
-variable [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω]
+  [CanonicallyOrderedAdd ω]
   {c : P.A → ω}
 
 omit [CanonicallyOrderedAdd ω] in

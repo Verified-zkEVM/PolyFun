@@ -40,7 +40,7 @@ variable {P : PFunctor.{uA, uB}} {α : Type v} {ω : Type w}
 
 section Bound
 
-variable [AddCommMonoid ω] [PartialOrder ω] {c : P.A → ω} {B L s : ω}
+variable [Add ω] [Zero ω] [Preorder ω] {c : P.A → ω} {B L s : ω}
 
 /-- **Sequencing on reachable results.** If `x` stays within `L ≤ B` and the continuation at
 every result `x` can return stays within `B` from any amount at most `L`, then `x >>= f` stays
@@ -67,32 +67,39 @@ theorem IsChargeBound.bind_of_le_of_wpFold {β : Type v'} {x : FreeM P α} {f : 
   | pure a => exact hf a hI s hx
   | liftBind a r ih => exact ⟨hx.1.trans hL, fun b => ih b (hx.2 b) (hI b)⟩
 
+end Bound
+
+section CanonicalBound
+
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω]
+  {c : P.A → ω} {s : ω}
+
 /-- **Budgets add under sequencing at an invariant.** -/
-theorem IsChargeBound.bind_of_wpFold [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
-    {β : Type v'} {x : FreeM P α} {f : α → FreeM P β} {I : α → Prop} {B₁ B₂ : ω}
+theorem IsChargeBound.bind_of_wpFold {β : Type v'} {x : FreeM P α} {f : α → FreeM P β}
+    {I : α → Prop} {B₁ B₂ : ω}
     (hx : IsChargeBound x c B₁ s) (hI : wpFold (OpSpec.demonic P) x I)
     (hf : ∀ a, I a → IsChargeBound (f a) c B₂) :
     IsChargeBound (FreeM.bind x f) c (B₁ + B₂) s := by
   refine hx.bind_of_le_of_wpFold hI le_self_add fun a ha s' hs' => ?_
   have := (hf a ha).add_left s'
   rw [add_zero] at this
-  exact this.mono (add_le_add hs' le_rfl)
+  exact this.mono (by gcongr)
 
 /-- **Budgets add under sequencing on reachable results.** -/
-theorem IsChargeBound.bind_supp [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω] {β : Type v'}
+theorem IsChargeBound.bind_supp {β : Type v'}
     {x : FreeM P α} {f : α → FreeM P β} {B₁ B₂ : ω} (hx : IsChargeBound x c B₁ s)
     (hf : ∀ a ∈ x.supp, IsChargeBound (f a) c B₂) :
     IsChargeBound (FreeM.bind x f) c (B₁ + B₂) s := by
   refine hx.bind_of_le_supp le_self_add fun a ha s' hs' => ?_
   have := (hf a ha).add_left s'
   rw [add_zero] at this
-  exact this.mono (add_le_add hs' le_rfl)
+  exact this.mono (by gcongr)
 
-end Bound
+end CanonicalBound
 
 section Cost
 
-variable [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω] {c : P.A → ω}
+variable [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω] {c : P.A → ω}
 
 /-- The leaf costs split off over reachable results only. -/
 theorem costWith_le_cost_add_supp (x : FreeM P α) (k : α → ω) :
@@ -185,7 +192,7 @@ theorem IsChargeBound.congr_charge [Add ω] [LE ω] [Zero ω] {c c' : P.A → ω
     exact and_congr_right fun _ => forall_congr' fun b => ih b (hS.2 b)
 
 /-- Charges agreeing on the positions a program calls give the same cost. -/
-theorem costWith_congr_charge [AddCommMonoid ω] [CompleteLattice ω] {c c' : P.A → ω}
+theorem costWith_congr_charge [Add ω] [CompleteLattice ω] {c c' : P.A → ω}
     {x : FreeM P α} (hS : x.CallsIn S) (hc : ∀ a ∈ S, c a = c' a) (k : α → ω) :
     costWith c x k = costWith c' x k := by
   induction x using FreeM.rec with
@@ -207,7 +214,7 @@ theorem liftM_congr_of_callsIn {m : Type uB → Type v'} [Monad m] {α : Type uB
 
 /-- **Free-handler transfer on the positions called.** Step certificates are needed only on
 `S`. -/
-theorem IsChargeBound.liftM_of_callsIn [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+theorem IsChargeBound.liftM_of_callsIn [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
     {Q : PFunctor.{uA₂, uB₂}} {α : Type uB} (h : (a : P.A) → FreeM Q (P.B a)) {c : P.A → ω}
     {d : Q.A → ω} {B s : ω} (hstep : ∀ a ∈ S, IsChargeBound (h a) d (c a)) {x : FreeM P α}
     (hS : x.CallsIn S) (hx : x.IsChargeBound c B s) : (x.liftM h).IsChargeBound d B s := by
