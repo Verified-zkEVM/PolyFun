@@ -42,7 +42,7 @@ noncomputable def cost [Add ω] [Zero ω] [CompleteLattice ω] (c : p.A → ω)
 
 section Bound
 
-variable [AddCommMonoid ω] [PartialOrder ω] {c : p.A → ω} {B s : ω}
+variable [Add ω] [Zero ω] [Preorder ω] {c : p.A → ω} {B s : ω}
 
 @[simp]
 theorem isChargeBound_pure_iff (result : β) :
@@ -90,8 +90,8 @@ theorem IsChargeBound.mono {r : Resumption p β} {B' : ω} (h : r.IsChargeBound 
 end Bound
 
 /-- The safety reading is the value bound, where addition distributes over nonempty suprema. -/
-theorem isChargeBound_iff_cost_le [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω]
-    [CanonicallyOrderedAdd ω] [AddSupDistrib ω] {c : p.A → ω} {B : ω} {r : Resumption p β} :
+theorem isChargeBound_iff_cost_le [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω]
+    [AddRightMono ω] [CanonicallyOrderedAdd ω] [AddSupDistrib ω] {c : p.A → ω} {B : ω} {r : Resumption p β} :
     r.IsChargeBound c B ↔ cost c r ≤ B := by
   simp only [IsChargeBound, cost, iSup_le_iff, FreeM.isChargeBound_iff_cost_le]
 
