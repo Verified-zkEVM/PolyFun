@@ -16,12 +16,14 @@ A stateful package `Stateful (FreeM Q) σ P` answers each call of `P` with a `Q`
 updates a private state. It is within a charge when, from every state, the program answering a
 call at `a` stays within `c a` under the target charge `d` (`Stateful.WithinCharge`).
 
-* A stateless certificate lifts to any state (`WithinCharge.lift`).
+* A stateless certificate lifts to any state (`Handler.WithinCharge.lift`).
+* A certificate pushes forward along a change of cost type (`Stateful.WithinCharge.map`), which
+  plays the role of the exchange of a certified handler.
 * Certificates compose along `Stateful.link`, which runs the outer package's programs through the
-  inner package (`WithinCharge.link`). Linked packages are the stateful cross-layer links: a
-  protocol implemented by a stateful algorithm, implemented in turn by a stateful machine model.
+  inner package (`Stateful.WithinCharge.link`). Linked packages are the stateful cross-layer links:
+  a protocol implemented by a stateful algorithm, implemented in turn by a stateful machine model.
 * A program within budget, run through a certified package from any state, is within the same
-  budget (`WithinCharge.run`), by `FreeM.IsChargeBound.run_liftM`.
+  budget (`Stateful.WithinCharge.run`), by `FreeM.IsChargeBound.run_liftM`.
 -/
 
 @[expose] public section
@@ -45,12 +47,11 @@ def WithinCharge [Add ω] [LE ω] [Zero ω] (h : Stateful (FreeM M) S E) (d : M.
 variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
 
 omit [IsOrderedAddMonoid ω] in
-/-- A stateless certificate holds from every state of the lifted package. -/
-theorem WithinCharge.lift {h : Handler (FreeM M) E}
-    {d : M.A → ω} {c : E.A → ω} (hh : h.WithinCharge d c) :
-    (Stateful.lift (S := S) h).WithinCharge d c := by
-  intro a s
-  simpa [Stateful.lift] using hh a
+/-- A certificate pushes forward along a monotone additive map of cost types. -/
+theorem WithinCharge.map {ω' : Type*} [AddCommMonoid ω'] [PartialOrder ω']
+    {h : Stateful (FreeM M) S E} {d : M.A → ω} {c : E.A → ω} (hh : h.WithinCharge d c)
+    (φ : ω →+o ω') : h.WithinCharge (φ ∘ d) (φ ∘ c) := fun a s => by
+  simpa using (hh a s).map φ
 
 /-- **Certificates compose along `link`.** If the outer package answers each call within `c a`
 under `d`, and the inner package answers each of those calls within `d` under `e`, the linked
@@ -70,6 +71,15 @@ theorem WithinCharge.run {h : Stateful (FreeM M) S E} {d : M.A → ω} {c : E.A 
   hx.run_liftM h hh σ₀
 
 end Stateful
+
+variable {S : Type u} {E : PFunctor.{uE, u}} {M : PFunctor.{uM, u}} {ω : Type w}
+
+/-- A stateless certificate holds from every state of the lifted package. -/
+theorem WithinCharge.lift [AddCommMonoid ω] [PartialOrder ω] {h : Handler (FreeM M) E}
+    {d : M.A → ω} {c : E.A → ω} (hh : h.WithinCharge d c) :
+    (Stateful.lift (S := S) h).WithinCharge d c := by
+  intro a s
+  simpa [Stateful.lift] using hh a
 
 end Handler
 
