@@ -28,7 +28,7 @@ one-sided corollary.
 * `bind_step`, `bind_query` — `bind` distributes over a leading silent
   step / visible query.
 * `iter_unfold` — the canonical fixed-point equation for `ITree.iter`,
-  matching the Coq `unfold_iter` (`Core/ITreeDefinition.v`).
+  matching the Rocq `unfold_iter` (`Core/ITreeDefinition.v`).
 * `iter_bind` — left-distributive interaction between `iter` and `bind`.
 * `step_weakBisim` — silent steps are absorbed by weak bisimulation
   (`step t ≈ t`); the defining feature of `eutt`.

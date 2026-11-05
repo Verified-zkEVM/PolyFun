@@ -23,7 +23,7 @@ The proofs use the Tarski greatest fixed point characterization
 * **Symmetry**: take `R := swap WeakBisim`. The closure follows from
   `Match.swap`.
 
-* **Transitivity**: this is the deep one. Following the Coq
+* **Transitivity**: this is the deep one. Following the Rocq
   `InteractionTrees` proof of `eutt_trans` (Xia et al., POPL 2020), the
   argument must reconcile the interaction between τ-stripping and head
   alignment when the intermediate term has a divergent step. We discharge
@@ -44,7 +44,7 @@ The proofs use the Tarski greatest fixed point characterization
 
 The τ-absorption lemmas are independently useful and are exported for
 downstream proofs. They correspond to the "tau-eutt" lemmas in the
-Coq library and are the workhorses of weak-bisim reasoning in the
+Rocq library and are the workhorses of weak-bisim reasoning in the
 absence of full transitivity.
 -/
 

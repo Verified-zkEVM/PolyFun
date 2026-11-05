@@ -20,7 +20,7 @@ positions, target directions, and return values to inhabit independent
 universes. `Handler.comp` composes two handlers by simulating the output of
 the first through the second.
 
-The shape of `simulate` mirrors Coq's `interp` (`Core/Subevent.v`): we run
+The shape of `simulate` mirrors Rocq's `interp` (`Core/Subevent.v`): we run
 the source ITree, replacing every `query a c` with `bind (h a) c`, every
 `step c` with `step (... continue ...)`, and every `pure r` with `pure r`.
 The recursion is encoded with `iter`, leveraging the fact that the iteration
@@ -44,7 +44,7 @@ variable {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
 `E`-event via the handler `h : Handler E F`, producing an interaction tree
 over events `F`.
 
-This is the Lean analogue of Coq's `interp h : itree E ~> itree F`. -/
+This is the Lean analogue of Rocq's `interp h : itree E ~> itree F`. -/
 def simulate (h : Handler E F) (t : ITree E α) : ITree F α :=
   iter
     (fun (t : ITree E α) =>
@@ -107,7 +107,7 @@ def mapSpecStep (φ : PFunctor.Lens E F) (t : ITree E α) : (ViewPoly F α).Obj 
 /-- Apply a polynomial-functor lens `φ : PFunctor.Lens E F` to every event
 of an interaction tree, leaving the leaves and silent steps untouched.
 
-This is the Lean analogue of Coq's `translate (h : E ~> F) : itree E ~> itree F`.
+This is the Lean analogue of Rocq's `translate (h : E ~> F) : itree E ~> itree F`.
 
 It coincides with `simulate (Handler.ofLens φ)` up to (weak) bisimulation;
 defining it directly via `ITree.corec` produces a strongly bisimilar but more

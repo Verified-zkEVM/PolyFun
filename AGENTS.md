@@ -135,7 +135,9 @@ in [CONTRIBUTING.md](CONTRIBUTING.md).
 Docstrings describe current definitions, assumptions and live sibling APIs.
 Avoid removed names, change history and reactive wording. Use Mathlib-style
 `/-! ## Title -/` section comments, never ASCII banners. Cite public papers
-through [REFERENCES.md](REFERENCES.md).
+through [REFERENCES.md](REFERENCES.md). Call the proof assistant Rocq, and keep
+"Coq" only inside a cited title. Its library keeps the name InteractionTrees and
+its `.v` file paths, such as `Core/ITreeDefinition.v`.
 
 Update the owning tutorial/guide/reference/development page with API and
 workflow changes. Source is authoritative when prose disagrees. Promote durable
