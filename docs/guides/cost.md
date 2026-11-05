@@ -109,9 +109,9 @@ distributes over suprema, a restricted budget is a bound on `costUnder`
 (`isChargeBoundUnder_iff_costUnder_le`). The restricted cost is the cost of the restricted program
 (`costUnder_eq_cost_restrict`), and sequencing charges the continuation only at results satisfying
 a demonic invariant (`costUnder_bind_le_of_wpFold`; `cost_bind_le_of_wpFold` and
-`IsChargeBound.bind_of_wpFold` without restriction). Through a handler whose implementations return only allowed source
-answers along the target's allowed answers, each call costs the restricted worst case of its
-implementation (`costUnder_liftM_le`).
+`IsChargeBound.bind_of_wpFold` without restriction). Through a handler whose implementations
+return only allowed source answers along the target's allowed answers, each call costs the
+restricted worst case of its implementation (`costUnder_liftM_le`).
 
 ## Accounting boundary
 
