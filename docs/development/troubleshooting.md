@@ -255,6 +255,14 @@ Use full application (`SafetyRefinement.safe_of_satisfies bisim.forth ...`)
 at such sites, or keep the lemma in the generic namespace if it is not
 specific to the alias layer.
 
+### Inside `namespace ITree`, `pure` and `bind_assoc` name ITree's own
+
+`ITree.pure` (`PolyFun/ITree/Basic.lean`) and `ITree.bind_assoc`
+(`PolyFun/ITree/Bisim/Bind.lean`) live in the current namespace, so inside
+`namespace ITree` the unqualified names resolve to them rather than to the
+monad-generic `Pure.pure` and `LawfulMonad.bind_assoc`. Write the qualified
+generic name when a proof needs the monad law.
+
 ### Avoid `cast` / `Eq.mp` / `Eq.mpr` in core definitions
 
 Per [`AGENTS.md`](../../AGENTS.md): keep core definitions, especially in
@@ -303,11 +311,12 @@ actually uses.
 `PolyFun/Interaction/Basic/` folder). Even if a module "feels cohesive",
 callers must import the specific submodule they use.
 
-### Full cutover, no backward-compatibility shims
+### Update every call site in one pass
 
 When refactoring APIs, notations, or proof infrastructure, update all
-call sites in one pass. Do not add deprecated aliases, migration
-wrappers, or compatibility layers.
+call sites in one pass. Do not add migration wrappers or compatibility
+layers. A renamed public declaration still keeps its dated deprecated
+alias, under the [compatibility policy](review-hardening.md#naming).
 
 ### Agent guidance files must be committed
 
