@@ -11,6 +11,7 @@ public import ToCslib.Algebra.PolynomialGrowth
 public import ToCslib.Control.ForIn
 public import ToCslib.Control.Monad.HomTransport
 public import ToCslib.Data.BitVec
+public import ToCslib.Data.ENNReal.AddSupDistrib
 public import ToCslib.Data.Fin.Cases
 public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn

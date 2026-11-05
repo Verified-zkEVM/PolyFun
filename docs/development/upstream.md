@@ -120,6 +120,8 @@ suprema (`AddSupDistrib`), with the `ℕ∞` and pointwise instances, and the co
 `iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves both separately for
 `ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`, `ENat.iSup_zero`, `ENNReal.iSup_zero`); the
 general forms belong in Mathlib's order library, with those as instances.
+`ToCslib/Data/ENNReal/AddSupDistrib.lean` adds the `ℝ≥0∞` instance in a module of its own, so that
+PolyFun's core does not import the reals.
 
 ## Omega-CPO fixed points
 

@@ -30,7 +30,7 @@ positions.
 
 @[expose] public section
 
-universe uA uB uA₂ v v' w
+universe uA uB uA₂ uB₂ v v' w
 
 namespace PFunctor.FreeM
 
@@ -54,6 +54,29 @@ theorem IsChargeBound.bind_of_le_supp {β : Type v'} {x : FreeM P α} {f : α �
   | liftBind a r ih =>
     exact ⟨hx.1.trans hL, fun b =>
       ih b (hx.2 b) fun a' ha' => hf a' (mem_supp_liftBind_of_mem ha')⟩
+
+/-- **Sequencing at an invariant.** If `x` stays within `L ≤ B`, every result of `x` satisfies
+`I`, and the continuation at every result satisfying `I` stays within `B` from any amount at most
+`L`, then `x >>= f` stays within `B`. Reachable results are the case `I := (· ∈ x.supp)`
+(`IsChargeBound.bind_of_le_supp`). -/
+theorem IsChargeBound.bind_of_le_of_wpFold {β : Type v'} {x : FreeM P α} {f : α → FreeM P β}
+    {I : α → Prop} (hx : IsChargeBound x c L s) (hI : wpFold (OpSpec.demonic P) x I) (hL : L ≤ B)
+    (hf : ∀ a, I a → ∀ s', s' ≤ L → IsChargeBound (f a) c B s') :
+    IsChargeBound (FreeM.bind x f) c B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact hf a hI s hx
+  | liftBind a r ih => exact ⟨hx.1.trans hL, fun b => ih b (hx.2 b) (hI b)⟩
+
+/-- **Budgets add under sequencing at an invariant.** -/
+theorem IsChargeBound.bind_of_wpFold [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+    {β : Type v'} {x : FreeM P α} {f : α → FreeM P β} {I : α → Prop} {B₁ B₂ : ω}
+    (hx : IsChargeBound x c B₁ s) (hI : wpFold (OpSpec.demonic P) x I)
+    (hf : ∀ a, I a → IsChargeBound (f a) c B₂) :
+    IsChargeBound (FreeM.bind x f) c (B₁ + B₂) s := by
+  refine hx.bind_of_le_of_wpFold hI le_self_add fun a ha s' hs' => ?_
+  have := (hf a ha).add_left s'
+  rw [add_zero] at this
+  exact this.mono (add_le_add hs' le_rfl)
 
 /-- **Budgets add under sequencing on reachable results.** -/
 theorem IsChargeBound.bind_supp [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω] {β : Type v'}
@@ -185,7 +208,7 @@ theorem liftM_congr_of_callsIn {m : Type uB → Type v'} [Monad m] {α : Type uB
 /-- **Free-handler transfer on the positions called.** Step certificates are needed only on
 `S`. -/
 theorem IsChargeBound.liftM_of_callsIn [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
-    {Q : PFunctor.{uA₂, uB}} {α : Type uB} (h : (a : P.A) → FreeM Q (P.B a)) {c : P.A → ω}
+    {Q : PFunctor.{uA₂, uB₂}} {α : Type uB} (h : (a : P.A) → FreeM Q (P.B a)) {c : P.A → ω}
     {d : Q.A → ω} {B s : ω} (hstep : ∀ a ∈ S, IsChargeBound (h a) d (c a)) {x : FreeM P α}
     (hS : x.CallsIn S) (hx : x.IsChargeBound c B s) : (x.liftM h).IsChargeBound d B s := by
   induction x using FreeM.rec generalizing s with
