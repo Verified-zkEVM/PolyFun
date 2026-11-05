@@ -17,6 +17,7 @@ public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
+public import ToCslib.MeasureTheory.Measure.AEBind
 public import ToCslib.MeasureTheory.Measure.Subprobability
 public import ToCslib.Order.AddSupDistrib
 public import ToCslib.Order.Admissible
