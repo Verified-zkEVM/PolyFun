@@ -109,12 +109,14 @@ the source and its result proofs.
   - `Test` builds `PolyFunTest` with `--wfail --iofail` and runs `lake test`,
     the CLI tests and both consumers.
 
-  Every job restores two caches. One holds the dependencies, keyed on the
-  toolchain and manifest. The other holds PolyFun's own `.lake/build`, keyed per
-  commit and restored from the newest `main` build. Each job therefore rebuilds only what the checkout
-  changed. Only `build` on `main` saves the caches, and a newer push to `main`
-  waits for the running job rather than cancelling its save. A nightly clean
-  build of `main` skips the build cache, so nothing passes only because of it.
+  Every job restores two caches, each from the newest `main` entry for the same toolchain and
+  manifest. One holds the dependencies. The other holds PolyFun's own `.lake/build`. Each job
+  therefore rebuilds only what the checkout changed. Only `build` on `main` saves the caches. Before
+  it saves, it also builds `PolyFunTest`, `polyfun-parliament` and Batteries' `runLinter`, which only
+  the other jobs use. It saves the build cache on every run. It saves the dependency cache when the
+  list of dependency build outputs changes: new pins, or a PolyFun import that first reaches a
+  dependency module. A newer push to `main` waits for the running job rather than cancelling its
+  save. A nightly clean build of `main` skips the build cache, so nothing passes only because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
   links, anchors, excerpts and module docs.

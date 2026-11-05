@@ -22,13 +22,18 @@ concurrency:
   # running one instead of cancelling it.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# The three jobs run in parallel and share two caches with different lifetimes. Dependencies
-# (`.lake/packages`, including Mathlib's oleans and the cslib build) change only with the toolchain
-# and manifest. PolyFun's own build (`.lake/build`) changes with every commit, so it is keyed per
-# commit and restored from the newest `main` build. Lake decides what to rebuild from content
-# hashes, so a restored build is only a starting point: whatever the checkout changed, and
-# everything importing it, is rebuilt. Only the `build` job on `main` saves either cache. Lake
-# regenerates `*.setup.json` files per build and never reads old ones, so they are not cached.
+# The three jobs run in parallel and share two caches with different lifetimes. Each job restores
+# the newest `main` entry for the same toolchain and manifest. Lake decides what to rebuild from
+# content hashes, so a restored build is only a starting point: whatever the checkout changed, and
+# everything importing it, is rebuilt. Lake regenerates `*.setup.json` files per build and never
+# reads old ones, so they are not cached.
+#
+# Only the `build` job on `main` saves either cache, after it also builds what only `Lint` and `Test`
+# use:
+# - Dependencies (`.lake/packages`, including Mathlib's oleans, the cslib build and dependency C
+#   objects) are saved when the list of their build outputs changes. The pins change that list, and
+#   so does a PolyFun import that first reaches a dependency module.
+# - PolyFun's own build (`.lake/build`) changes with every commit, so it is saved on every run.
 #
 # The job names `build`, `Lint (environment linters)` and `Test` are required status checks on
 # `main`; keep them stable.
@@ -60,10 +65,13 @@ jobs:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          # Saved keys end in a hash of the output list, so this key never matches and the restore
+          # takes the newest entry for these pins.
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           # On a dependency bump, start from the previous packages; Lake checks out the new
           # revisions and rebuilds only the packages that changed.
           restore-keys: |
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
@@ -94,14 +102,34 @@ jobs:
       - name: Run validation wrapper
         run: ./scripts/validate.sh --axioms
 
+      # Every job starts from what `main` saves, so `main` also builds the targets that only `Lint`
+      # and `Test` use. Pull requests leave them to those jobs.
+      - name: Build what Lint and Test need
+        if: success() && github.ref == 'refs/heads/main'
+        run: |
+          lake build PolyFunTest --wfail --iofail
+          lake build polyfun-parliament --wfail
+          lake build @batteries/runLinter
+
+      - name: Name the dependency outputs
+        id: deps-outputs
+        if: success() && github.ref == 'refs/heads/main'
+        env:
+          KEY_PREFIX: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+        run: |
+          outputs="$(find .lake/packages -path '*/.lake/build/*' -type f ! -name '*.setup.json' ! -name lock -printf '%P\n' | LC_ALL=C sort | sha256sum | cut -c1-16)"
+          echo "key=$KEY_PREFIX-$outputs" >> "$GITHUB_OUTPUT"
+
+      # Cache entries are immutable, so a changed output list needs a new key. For fixed pins the list
+      # only grows, because each run starts from the newest entry, so a key never comes back.
       - name: Save dependency cache
-        if: success() && github.ref == 'refs/heads/main' && steps.deps-cache.outputs.cache-hit != 'true'
+        if: success() && github.ref == 'refs/heads/main' && steps.deps-outputs.outputs.key != steps.deps-cache.outputs.cache-matched-key
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: ${{ steps.deps-cache.outputs.cache-primary-key }}
+          key: ${{ steps.deps-outputs.outputs.key }}
 
       # Keyed by run as well as commit, so a rerun on `main` still saves; restores take the newest
       # match for the same pins.
@@ -133,15 +161,16 @@ jobs:
           version: "0.13.6"
           enable-cache: false
 
-      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      # Paths and key prefixes must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
@@ -201,15 +230,16 @@ jobs:
           version: "0.13.6"
           enable-cache: false
 
-      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      # Paths and key prefixes must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             lake-deps-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Restore build cache
