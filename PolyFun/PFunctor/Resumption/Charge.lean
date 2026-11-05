@@ -14,8 +14,8 @@ public import PolyFun.PFunctor.Resumption.Truncate
 
 A resumption may never return, so its charge bound is a safety property: every finite truncation
 stays within budget (`IsChargeBound`). A run that never returns is within budget when all of its
-finite prefixes are, and a run whose calls are free is within every nonnegative budget. The
-worst-case cost is the supremum of the costs of the truncations (`cost`).
+finite prefixes are. The worst-case cost is the supremum of the costs of the truncations (`cost`),
+and a budget bounds it when addition distributes over suprema (`isChargeBound_iff_cost_le`).
 
 Both readings reduce to `FreeM` by truncation, so the `FreeM` laws apply to them. On the
 embedding of a free program they agree with the `FreeM` bound (`isChargeBound_toResumption_iff`),
@@ -36,8 +36,8 @@ def IsChargeBound [Add ω] [LE ω] [Zero ω] (r : Resumption p β) (c : p.A → 
   ∀ k, (truncate k r).IsChargeBound c B spent
 
 /-- The worst-case cost of `r`: the supremum of the costs of its finite truncations. -/
-noncomputable def cost [AddCommMonoid ω] [CompleteLattice ω] (c : p.A → ω) (r : Resumption p β) :
-    ω :=
+noncomputable def cost [Add ω] [Zero ω] [CompleteLattice ω] (c : p.A → ω)
+    (r : Resumption p β) : ω :=
   ⨆ k, FreeM.cost c (truncate k r)
 
 section Bound

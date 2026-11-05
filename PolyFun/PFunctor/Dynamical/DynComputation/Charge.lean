@@ -42,9 +42,16 @@ def IsChargeBound [Add ω] [LE ω] [Zero ω] (M : DynComputation.{u} p α β) (c
 
 /-- The worst-case cost of `M` from `state`: the supremum of the costs of its finite
 unrollings. -/
-noncomputable def cost [AddCommMonoid ω] [CompleteLattice ω] (M : DynComputation.{u} p α β)
+noncomputable def cost [Add ω] [Zero ω] [CompleteLattice ω] (M : DynComputation.{u} p α β)
     (c : p.A → ω) (state : M.State) : ω :=
   ⨆ k, FreeM.cost c (M.unroll k state)
+
+/-- `M` implements `program`, and every program of the family is within the uniform budget `B`
+under `c`. The budget does not depend on the input: a size-dependent bound is stated by fixing the
+size measure and the budget envelope separately. -/
+def ImplementsWithinCharge [Add ω] [LE ω] [Zero ω] (M : DynComputation.{u} p α β)
+    (program : α → FreeM p β) (c : p.A → ω) (B : ω) : Prop :=
+  M.Implements program ∧ ∀ input, (program input).IsChargeBound c B
 
 variable [AddCommMonoid ω] [PartialOrder ω] {c : p.A → ω} {B s : ω}
 
@@ -65,13 +72,6 @@ theorem Implements.isChargeBound_init_iff [CanonicallyOrderedAdd ω] {M : DynCom
     {program : α → FreeM p β} (hM : M.Implements program) (input : α) :
     M.IsChargeBound c B (M.init input) s ↔ (program input).IsChargeBound c B s := by
   rw [isChargeBound_init_iff_denote, hM input, Resumption.isChargeBound_toResumption_iff]
-
-/-- `M` implements `program`, and every program of the family is within the uniform budget `B`
-under `c`. The budget does not depend on the input: a size-dependent bound is stated by fixing the
-size measure and the budget envelope separately. -/
-def ImplementsWithinCharge (M : DynComputation.{u} p α β)
-    (program : α → FreeM p β) (c : p.A → ω) (B : ω) : Prop :=
-  M.Implements program ∧ ∀ input, (program input).IsChargeBound c B
 
 /-- Bounded implementation is the unit-charge case. -/
 theorem implementsWithin_iff_implementsWithinCharge_one (M : DynComputation.{u} p α β)

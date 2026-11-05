@@ -37,8 +37,19 @@ theorem isChargeBound_iff_toSigmaFreeM (x : IFreeM P X s) (c : (s : I) → P.A s
 
 /-- The worst-case cost of an indexed program: the cost of its erasure, with each call charged at
 its state. -/
-noncomputable def cost {ω : Type w} [AddCommMonoid ω] [CompleteLattice ω]
+noncomputable def cost {ω : Type w} [Add ω] [Zero ω] [CompleteLattice ω]
     (c : (s : I) → P.A s → ω) (x : IFreeM P X s) : ω :=
   PFunctor.FreeM.cost (fun a : P.sigmaPFunctor.A => c a.1 a.2) (toSigmaFreeM P x)
+
+@[simp]
+theorem cost_pure {ω : Type w} [Add ω] [Zero ω] [CompleteLattice ω] (c : (s : I) → P.A s → ω)
+    (x : X s) : cost c (IFreeM.pure (P := P) x) = 0 :=
+  rfl
+
+/-- A call costs its charge at the current state plus the worst continuation. -/
+theorem cost_liftBind {ω : Type w} [Add ω] [Zero ω] [CompleteLattice ω] (c : (s : I) → P.A s → ω)
+    (a : P.A s) (r : (b : P.B s a) → IFreeM P X (P.src s a b)) :
+    cost c (IFreeM.liftBind a r) = c s a + ⨆ b, cost c (r b) :=
+  rfl
 
 end IPFunctor.IFreeM

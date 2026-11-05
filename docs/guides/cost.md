@@ -281,15 +281,18 @@ continuation stays within the interrupted program's budget (`IsChargeBound.runUn
 
 ## Other models
 
-The other models of computation inherit the notion through their finite truncations, which are
-free programs.
+The other models of computation reduce to free programs: resumptions, machines and interaction
+trees through their finite truncations, indexed programs through their Σ-erasure, and `TypeTree`
+by definition. Resumptions, machines and indexed programs also have a worst-case `cost`, the
+supremum of the costs of the truncations or the cost of the erasure
+(`Resumption.isChargeBound_iff_cost_le`).
 
 | Model | Bound | Agreement |
 |---|---|---|
 | `Resumption p β` | `IsChargeBound`: every `truncate k r` within budget (safety reading) | `isChargeBound_toResumption_iff`, `isChargeBound_query_iff` |
 | `DynComputation p α β` | every `unroll k state` within budget | `isChargeBound_iff_behavior`, `Implements.isChargeBound_init_iff` (any machine implementing a program has its bound), `isChargeBound_ofFreeM_iff`, `IsChargeBound.wrap`; `ImplementsWithinCharge` is bounded implementation with a charge |
-| `ITree F α` | visible calls charged by `c`, silent steps by `tau` (default `0`) | `isChargeBound_step_iff` (free silent steps are invisible), `isChargeBound_iff_toDynComputation` |
-| `IFreeM P X s` | the bound of the Σ-erasure | `isChargeBound_iff_toSigmaFreeM` |
+| `ITree F α` | visible calls charged by `c`, silent steps by `tau` (default `0`) | `isChargeBound_step_iff` (free silent steps are invisible), `isChargeBound_step_iff_add`, `isChargeBound_iff_toDynComputation` |
+| `IFreeM P X s` | the bound of the Σ-erasure | `isChargeBound_iff_toSigmaFreeM`: the natural-number `IsChargeBound` of indexed programs is the bound of the erasure |
 | `TypeTree` | a `FreeM` over move types; a unit charge counts rounds | definitional |
 
 The safety reading allows runs that never return: such a run is within budget when all of its
