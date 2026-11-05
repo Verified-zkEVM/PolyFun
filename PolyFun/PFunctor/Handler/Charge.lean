@@ -64,13 +64,13 @@ answers it with a fallback instead. On a program within budget neither intervene
 
 @[expose] public section
 
-universe uA uB uA₂ uA₃ v w
+universe uA uB uA₂ uB₂ uA₃ uB₃ v w
 
 namespace PFunctor
 
 namespace Handler
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
 
 /-! ## Charge certificates for free handlers -/
 
@@ -81,15 +81,15 @@ def WithinCharge {ω : Type w} [Add ω] [LE ω] [Zero ω] (h : Handler (FreeM Q)
     (c : P.A → ω) : Prop :=
   ∀ a, (h a).IsChargeBound d (c a)
 
-theorem WithinCharge.sum {ω : Type w} [Add ω] [LE ω] [Zero ω] {f : Handler (FreeM R) P}
-    {g : Handler (FreeM R) Q} {d : R.A → ω} {c₁ : P.A → ω} {c₂ : Q.A → ω}
+theorem WithinCharge.sum {ω : Type w} [Add ω] [LE ω] [Zero ω] {Q : PFunctor.{uA₂, uB}}
+    {f : Handler (FreeM R) P} {g : Handler (FreeM R) Q} {d : R.A → ω} {c₁ : P.A → ω} {c₂ : Q.A → ω}
     (hf : f.WithinCharge d c₁) (hg : g.WithinCharge d c₂) :
     (sum f g).WithinCharge d (Sum.elim c₁ c₂) := by
   rintro (a | a)
   · exact hf a
   · exact hg a
 
-variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
+variable {ω : Type w} [AddZeroClass ω] [Preorder ω]
 
 theorem withinCharge_id (d : Q.A → ω) : (Handler.id Q).WithinCharge d d :=
   fun a => (FreeM.isChargeBound_lift_iff a).2 (by rw [zero_add])
@@ -98,13 +98,21 @@ theorem withinCharge_ofLens (l : Lens P Q) (d : Q.A → ω) :
     (ofLens l).WithinCharge d (d ∘ l.toFunA) :=
   fun a => ⟨by rw [zero_add]; rfl, fun _ => by rw [zero_add]; exact le_rfl⟩
 
-theorem WithinCharge.comp [IsOrderedAddMonoid ω] {second : Handler (FreeM R) Q}
+end Certificate
+
+section CertificateComp
+
+variable {ω : Type w} [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
+
+/-- Certificates compose. The intermediate interface shares the source's answer universe, as
+`Handler.comp` requires. -/
+theorem WithinCharge.comp {Q : PFunctor.{uA₂, uB}} {second : Handler (FreeM R) Q}
     {first : Handler (FreeM Q) P} {e : R.A → ω} {d : Q.A → ω} {c : P.A → ω}
     (hs : second.WithinCharge e d) (hf : first.WithinCharge d c) :
     (second.comp first).WithinCharge e c :=
   fun a => (hf a).liftM second fun b => hs b
 
-end Certificate
+end CertificateComp
 
 /-! ## Instrumentation -/
 
@@ -245,8 +253,8 @@ def withBudget [Monad m] [Add ω] [LE ω] [DecidableLE ω] (h : Handler m P) (c 
 
 /-- A program within budget never meets the budget gate: running it under `withBudget` is running
 it under `withCharge`. -/
-theorem run_liftM_withBudget_of_isChargeBound [Monad m] [LawfulMonad m] [AddCommMonoid ω]
-    [PartialOrder ω] [DecidableLE ω] (h : Handler m P) (c : P.A → ω) {α : Type uB}
+theorem run_liftM_withBudget_of_isChargeBound [Monad m] [LawfulMonad m] [Add ω] [LE ω] [Zero ω]
+    [DecidableLE ω] (h : Handler m P) (c : P.A → ω) {α : Type uB}
     {x : FreeM P α} {B s : ω} (hx : x.IsChargeBound c B s) :
     ((x.liftM (h.withBudget c B)).run s).run = some <$> (x.liftM (h.withCharge c)).run s := by
   induction x using FreeM.rec generalizing s with
@@ -268,8 +276,8 @@ def withBudgetOr [Monad m] [Add ω] [LE ω] [DecidableLE ω] (h : Handler m P) (
 
 /-- A program within budget never reaches the fallback: running it under `withBudgetOr` is running
 it under `withCharge`. -/
-theorem run_liftM_withBudgetOr_of_isChargeBound [Monad m] [LawfulMonad m] [AddCommMonoid ω]
-    [PartialOrder ω] [DecidableLE ω] (h : Handler m P) (c : P.A → ω)
+theorem run_liftM_withBudgetOr_of_isChargeBound [Monad m] [LawfulMonad m] [Add ω] [LE ω]
+    [Zero ω] [DecidableLE ω] (h : Handler m P) (c : P.A → ω)
     (fallback : (a : P.A) → P.B a) {α : Type uB} {x : FreeM P α} {B s : ω}
     (hx : x.IsChargeBound c B s) :
     (x.liftM (h.withBudgetOr c B fallback)).run s = (x.liftM (h.withCharge c)).run s := by
@@ -291,7 +299,7 @@ end Instrumentation
 
 section Cost
 
-variable {ω : Type w} [AddCommMonoid ω] [CompleteLattice ω] [CanonicallyOrderedAdd ω]
+variable {ω : Type w} [AddMonoid ω] [CompleteLattice ω] [CanonicallyOrderedAdd ω]
 
 @[simp]
 theorem handlerCost_id (d : Q.A → ω) : FreeM.handlerCost d (Handler.id Q) = d :=
@@ -306,13 +314,15 @@ theorem handlerCost_ofLens (l : Lens P Q) (d : Q.A → ω) :
 
 omit [CanonicallyOrderedAdd ω] in
 @[simp]
-theorem handlerCost_sum (f : Handler (FreeM R) P) (g : Handler (FreeM R) Q) (d : R.A → ω) :
+theorem handlerCost_sum {Q : PFunctor.{uA₂, uB}} (f : Handler (FreeM R) P)
+    (g : Handler (FreeM R) Q) (d : R.A → ω) :
     FreeM.handlerCost d (sum f g) = Sum.elim (FreeM.handlerCost d f) (FreeM.handlerCost d g) :=
   funext fun | .inl _ => rfl | .inr _ => rfl
 
 omit [CanonicallyOrderedAdd ω] in
 /-- A composite handler costs at most its first stage, charged by the cost of the second. -/
-theorem handlerCost_comp_le [IsOrderedAddMonoid ω] (second : Handler (FreeM R) Q)
+theorem handlerCost_comp_le [AddLeftMono ω] [AddRightMono ω] {Q : PFunctor.{uA₂, uB}}
+    (second : Handler (FreeM R) Q)
     (first : Handler (FreeM Q) P) (e : R.A → ω) :
     FreeM.handlerCost e (second.comp first) ≤
       FreeM.handlerCost (FreeM.handlerCost e second) first :=
@@ -324,13 +334,13 @@ end Handler
 
 namespace FreeM
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {α : Type uB}
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
 
 /-! ## Stateful handlers implemented by free programs -/
 
 section Stateful
 
-variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] {B s : ω}
+variable {ω : Type w} [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] {B s : ω}
 
 /-- **Stateful-handler transfer.** If, from every state, the implementation of each call at `a`
 stays within `c a` under the target charge `d`, then from every state the simulation of a
@@ -354,7 +364,7 @@ end Stateful
 
 section Amortized
 
-variable {ω : Type w} [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
+variable {ω : Type w} [AddCommMonoid ω] [Preorder ω] [AddLeftMono ω]
 
 /-- **Amortized completed-path transfer.** Suppose a potential `Φ` on the handler state pays for
 the target charge of each step: along every completed path of the implementation of a call at `a`
@@ -423,7 +433,7 @@ theorem runUntil_liftBind (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ
 /-- **Budgets of paused continuations.** If a program is within budget `B` from `s`, every paused
 result of a run through `h` returns a call and continuation that are within `B` from an amount
 `s' ≥ s` spent along the answered prefix. -/
-theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
+theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [Add ω] [Zero ω] [Preorder ω]
     [CanonicallyOrderedAdd ω]
     {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
     (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
@@ -451,8 +461,8 @@ theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [AddCommMonoid ω] [P
 
 /-- Every paused continuation of a run of a program within budget `B` from `s` is itself within
 `B` from `s`: a pause never needs a larger budget than the program it interrupts. -/
-theorem IsChargeBound.runUntil_paused {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
-    [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+theorem IsChargeBound.runUntil_paused {ω : Type w} [Add ω] [Zero ω] [Preorder ω]
+    [AddRightMono ω] [CanonicallyOrderedAdd ω]
     {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
     (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
     (hz : (Sum.inr ⟨a, k⟩, state') ∈ FreeM.supp (FreeM.runUntil h x state)) :
@@ -460,7 +470,7 @@ theorem IsChargeBound.runUntil_paused {ω : Type w} [AddCommMonoid ω] [PartialO
   let ⟨_, hs, h'⟩ := hx.exists_runUntil_paused hz
   h'.mono_spent hs
 
-variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedCancelAddMonoid ω]
+variable {ω : Type w} [AddCommMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightReflectLE ω]
 
 /-- **Amortized budget for a pausing run.** Suppose a nonnegative potential `Φ` on the handler
 state pays for the gap between the two charges: whenever the caller can afford a call at `a`, its
@@ -508,7 +518,7 @@ end Pausing
 section Growth
 
 variable {m : Type uB → Type v} [Monad m] [LawfulMonad m] [MonadAttach m] [LawfulMonadAttach m]
-  {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] {B s : ω}
+  {ω : Type w} [Add ω] [Zero ω] [Preorder ω] [AddRightMono ω] {B s : ω}
 
 /-- **Resource growth.** If each call at `a` raises a measure `f` of the handler state by at most
 `c a`, then on every possible result of running a program within budget `B` from a state whose
@@ -527,12 +537,12 @@ theorem IsChargeBound.le_of_canReturn_run_liftM {σ : Type uB} (h : Handler (Sta
     change MonadAttach.CanReturn ((h a >>= fun b => (r b).liftM h).run σ₀) z at hz
     rw [StateT.run_bind] at hz
     obtain ⟨p, hp, hz⟩ := LawfulMonadAttach.canReturn_bind_imp' hz
-    exact ih p.1 (hx.2 p.1) ((hstep a σ₀ p hp).trans (add_le_add hσ le_rfl)) hz
+    exact ih p.1 (hx.2 p.1) ((hstep a σ₀ p hp).trans (by gcongr)) hz
 
 /-- On every possible result of an instrumented run of a program within budget `B`, the amount
 spent is at most `B`. -/
-theorem IsChargeBound.le_of_canReturn_run_liftM_withCharge {ω : Type uB} [AddCommMonoid ω]
-    [PartialOrder ω] [IsOrderedAddMonoid ω] {B s : ω} (h : Handler m P) {c : P.A → ω}
+theorem IsChargeBound.le_of_canReturn_run_liftM_withCharge {ω : Type uB} [Add ω] [Zero ω]
+    [Preorder ω] [AddRightMono ω] {B s : ω} (h : Handler m P) {c : P.A → ω}
     {x : FreeM P α} (hx : x.IsChargeBound c B s) {z : α × ω}
     (hz : MonadAttach.CanReturn ((x.liftM (h.withCharge c)).run s) z) : z.2 ≤ B := by
   refine hx.le_of_canReturn_run_liftM (h.withCharge c) id (fun a σ₁ z hz => ?_) le_rfl hz
