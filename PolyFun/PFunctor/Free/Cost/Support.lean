@@ -119,6 +119,37 @@ theorem callsIn_iff_isChargeBound [DecidablePred (· ∈ S)] (x : FreeM P α) :
     rw [callsIn_liftBind_iff, isChargeBound_liftBind_iff]
     by_cases ha : a ∈ S <;> simp [ha, ih]
 
+/-- `x.MayCall a`: a call at `a` occurs in the tree of `x`, on any branch. -/
+def MayCall : FreeM P α → P.A → Prop
+  | .pure _, _ => False
+  | .liftBind a' r, a => a = a' ∨ ∃ b, MayCall (r b) a
+
+@[simp]
+theorem mayCall_pure (x : α) (a : P.A) : MayCall (pure x : FreeM P α) a ↔ False :=
+  Iff.rfl
+
+theorem mayCall_liftBind_iff (a' : P.A) (r : P.B a' → FreeM P α) (a : P.A) :
+    MayCall (FreeM.liftBind a' r) a ↔ a = a' ∨ ∃ b, MayCall (r b) a :=
+  Iff.rfl
+
+/-- A program calls only in `S` exactly when every call occurring in its tree lies in `S`. -/
+theorem callsIn_iff_forall_mayCall (x : FreeM P α) :
+    CallsIn x S ↔ ∀ a, x.MayCall a → a ∈ S := by
+  induction x using FreeM.rec with
+  | pure v => exact iff_of_true trivial fun _ h => h.elim
+  | liftBind a' r ih =>
+    rw [callsIn_liftBind_iff]
+    simp only [mayCall_liftBind_iff, ih]
+    constructor
+    · rintro ⟨ha, hr⟩ a (rfl | ⟨b, hb⟩)
+      exacts [ha, hr b a hb]
+    · intro h
+      exact ⟨h a' (Or.inl rfl), fun b a hb => h a (Or.inr ⟨b, hb⟩)⟩
+
+/-- The calls occurring in a program form the least set it calls only in. -/
+theorem callsIn_setOf_mayCall (x : FreeM P α) : CallsIn x {a | x.MayCall a} :=
+  (callsIn_iff_forall_mayCall x).2 fun _ h => h
+
 /-- Charges agreeing on the positions a program calls give the same bound. -/
 theorem IsChargeBound.congr_charge [Add ω] [LE ω] [Zero ω] {c c' : P.A → ω} {B s : ω}
     {x : FreeM P α} (hS : x.CallsIn S) (hc : ∀ a ∈ S, c a = c' a) :
