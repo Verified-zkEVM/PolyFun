@@ -172,8 +172,9 @@ jobs:
       - name: Build production and example libraries
         run: lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
 
-      # One process per lint root. `lake lint` loads every root's environment into a single
-      # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
+      # One process per lint root. A single `lake lint` keeps every root's imports alive and reads
+      # each later root's oleans into memory instead of mapping them, so it exhausts the runner
+      # (docs/development/linting.md#commands-and-coverage).
       - name: Run environment linters
         run: |
           uv run --no-project --python 3.12 python -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
