@@ -44,6 +44,18 @@ example : twoFetches.IsEventChargeBound returned 6 := by
     returned]
   decide
 
+/-- Plain `simp` unfolds event bounds of `do` programs, and decides the budget. -/
+example : twoFetches.IsEventChargeBound returned 6 := by
+  simp [twoFetches, returned, Fin.forall_fin_succ]
+
+/-- Five units can be returned after the second fetch, so the budget `5` fails. -/
+example : ¬ twoFetches.IsEventChargeBound returned 5 := by
+  simp [twoFetches, returned, Fin.forall_fin_succ]
+
+/-- An event bound bounds the event charge of every completed path. -/
+example (p : Path twoFetches) : 0 + Path.eventCharge returned twoFetches p ≤ 6 :=
+  eventCharge_le_of_isEventChargeBound (by simp [twoFetches, returned, Fin.forall_fin_succ]) p
+
 /-- A price of three per call, paid when asking, dominates every answer. -/
 example : twoFetches.IsEventChargeBound returned 6 :=
   IsEventChargeBound.of_isChargeBound (c := fun _ => 3)
@@ -73,6 +85,20 @@ theorem alloc_progress : alloc.ProgramProgress :=
 example (p : Path alloc) : 0 + (Path.charge (Watermark.of ∘ live) alloc p).peak ≤ 2 :=
   (isChargeBound_iff_forall_peak_le alloc_progress).1
     ⟨by omega, by simp [alloc, live]⟩ p
+
+/-- Watermarks concatenate associatively, and a path's watermark is unchanged by `0` on either
+side. -/
+example (x y z : Watermark ℤ) : x + y + z = x + (y + z) := add_assoc x y z
+
+example (p : Path alloc) :
+    0 + Path.charge (Watermark.of ∘ live) alloc p = Path.charge (Watermark.of ∘ live) alloc p ∧
+      Path.charge (Watermark.of ∘ live) alloc p + 0 = Path.charge (Watermark.of ∘ live) alloc p :=
+  ⟨Watermark.zero_add_of_nonneg (Path.zero_le_peak alloc p),
+    Watermark.add_zero_of_net_le (Path.net_le_peak alloc p)⟩
+
+/-- `0` is not an identity on every watermark. -/
+example : (0 : Watermark ℤ) + ⟨-1, -1⟩ ≠ ⟨-1, -1⟩ := fun h =>
+  absurd (congrArg Watermark.peak h) (by simp)
 
 /-- The budget `1` fails: two units are live after the second allocation. -/
 example : ¬ alloc.IsChargeBound live 1 := by
