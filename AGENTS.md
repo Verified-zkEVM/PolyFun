@@ -24,9 +24,11 @@ checks module, import, and documentation integrity. Its flags add linters, regre
 separate consumers, CLI and filesystem tests, and the zero-debt axiom gate. See
 [validation](docs/development/validation.md).
 
-`lake test` builds `PolyFunTest`. `lake lint` covers the production and example
-libraries, with tests excluded. Use `lake lint -- --trace` after a fresh build
-to inspect the environment checks.
+`lake test` builds `PolyFunTest`. The environment linters cover the production and example
+roots in `lintDriverArgs`, with tests excluded. Run them one root per process, because a single
+`lake lint` over every root runs out of memory (see
+[lint policy](docs/development/linting.md#commands-and-coverage)). Use
+`lake exe runLinter --trace <root>` after a fresh build to inspect the checks.
 
 ## Source map and dependency direction
 
