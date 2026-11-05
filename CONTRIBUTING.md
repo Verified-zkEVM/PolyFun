@@ -19,15 +19,17 @@ for the repository Python checks.
 
 PolyFun hosts generic, domain-agnostic infrastructure. It contains polynomial functors,
 interaction trees, state machines, generic interaction, program logic, and realizability. It
-also contains free, displayed-free, and cofree structures. *Cryptographic* content belongs in
-[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio) or in downstream consumers.
-Examples of such content are probabilistic semantics, evaluation distributions,
-oracle-simulation security definitions, and scheme-specific algebra.
+also contains free, displayed-free, and cofree structures. It also interprets these programs
+measure-theoretically, in `Measure` companions beside the constructions. *Cryptographic security*
+content belongs in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio) or in
+downstream consumers. Examples of such content are security experiments, distinguishing
+advantage, adversary classes, negligibility, hardness assumptions, named reductions, and
+scheme-specific algebra.
 
-If a PolyFun definition has a load-bearing dependency on a probability
-monad, oracle simulator, or security predicate, parameterize the generic
-construction over an arbitrary monad or observation
-and let downstream consumers instantiate it.
+Generic constructions take a monad or an observation as a parameter, and downstream consumers
+instantiate them. A measure-theoretic interpretation that needs no security notion belongs in
+PolyFun, in a `Measure` companion beside the construction it interprets (see
+[probability](docs/guides/probability.md)).
 
 ### Check for overlap and upstream results
 

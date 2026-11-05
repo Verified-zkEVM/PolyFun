@@ -8,8 +8,8 @@ it provides, rather than importing the whole project while developing a module.
 
 | Target | Purpose | Build or import |
 |---|---|---|
-| `PolyFun` | Generic polynomial, interaction, logic, and realizability library | Default `lake build`; `import PolyFun` or a specific module |
-| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, `Fin`-indexed monadic sequencing, bitvector and polynomial lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
+| `PolyFun` | Generic polynomial, interaction, logic, and realizability library, with measure interpretations of its constructions | Default `lake build`; `import PolyFun` or a specific module |
+| `ToCslib` | Upstream staging: free-monad and loop laws, order bridge, omega-CPO fixed points, finite case compilation, `Fin`-indexed monadic sequencing, bitvector, polynomial, measure and kernel lemmas | `lake build ToCslib`; specific `ToCslib.*` imports |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model | `lake build ComplexityBackends`; `import ComplexityBackends` or a specific `ComplexityBackends.CslibSingleTape.*` module |
 | `PolyFunExamples` | Checked tutorials, the Parliament application, and typed console forms and checked filesystem operations (`Examples/IO/`) under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
@@ -58,6 +58,7 @@ Example and test imports never flow back into production.
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
 | Worst-case cost and query budgets | [Interface charges](../../PolyFun/PFunctor/Charge.lean), [charge bounds](../../PolyFun/PFunctor/Free/Cost.lean), [restricted answers](../../PolyFun/PFunctor/Free/Restrict.lean), [worst-case costs](../../PolyFun/PFunctor/Free/Cost/Value.lean), [loops](../../PolyFun/PFunctor/Free/Cost/Loops.lean), [reachable results](../../PolyFun/PFunctor/Free/Cost/Support.lean), [`cost_bound`](../../PolyFun/PFunctor/Free/Cost/Tactic.lean), [path charges](../../PolyFun/PFunctor/Free/Path/Charge.lean), [handlers](../../PolyFun/PFunctor/Handler/Charge.lean), [certified handlers](../../PolyFun/PFunctor/Handler/Certified.lean), [vector charges and demands](../../PolyFun/PFunctor/Handler/CertifiedVec.lean), [certificates over allowed answers](../../PolyFun/PFunctor/Handler/CertifiedUnder.lean), [stateful certificates](../../PolyFun/PFunctor/Handler/Stateful/Charge.lean), [measured programs](../../PolyFun/PFunctor/Free/Cost/Measured.lean), [charge folds](../../PolyFun/PFunctor/Free/WP/Charge.lean), [`vcgen` readings of charges](../../PolyFun/PFunctor/Free/WP/Budget.lean), [roll bounds](../../PolyFun/PFunctor/Bound.lean); [resumptions](../../PolyFun/PFunctor/Resumption/Charge.lean), [dynamical computations](../../PolyFun/PFunctor/Dynamical/DynComputation/Charge.lean), [interaction trees](../../PolyFun/ITree/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean); state-dependent [indexed charge bounds](../../PolyFun/IPFunctor/Free/Bound.lean) and [their erasure](../../PolyFun/IPFunctor/Free/Bound/Charge.lean) | [Interaction cost](../guides/cost.md), [program logic](../guides/program-logic.md#charges-and-budgets) |
+| Subprobability measures and kernels | [Subprobability measures](../../ToCslib/MeasureTheory/Measure/Subprobability.lean), [subprobability kernels](../../ToCslib/Probability/Kernel/Subprobability.lean) | [Probability](../guides/probability.md) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 | Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
 | Stateful handler substitution | [Handler costs](../../PolyFun/Realizability/Quantitative/Handler.lean), [product machine](../../PolyFun/PFunctor/Dynamical/DynComputation/WrapState.lean) | [Realizability](../guides/realizability.md#stateful-handler-substitution) |
@@ -146,6 +147,12 @@ PolyFun by path and cslib-frontier by commit. It holds what needs cslib-frontier
 into `PolyFun/` once the cslib-frontier modules it uses reach CSLib. Nothing outside it imports
 `CslibFrontier` or `PolyFunFrontier`, and the root package never requires cslib-frontier
 (`scripts/check-modules.sh`), so PolyFun's dependents never resolve it.
+
+PolyFun's measure interpretations live beside the constructions they interpret, in `Measure`
+companions: an area's main measure module is `<area>/Measure.lean`, and its other measure
+modules are in `<area>/Measure/`. The Mathlib lemmas they need are staged in
+`ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's; see
+[probability](../guides/probability.md).
 
 PolyFun and `ToCslib` import the CSLib module that owns each reused
 declaration instead of declaring a local copy: `PolyFun.PFunctor.Basic`
