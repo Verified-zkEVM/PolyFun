@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFunProbability.PFunctor.AnswerMeasure
+public import PolyFunProbability.PFunctor.Free.Expectation
 public import PolyFunProbability.PFunctor.Free.Kernel
 public import PolyFunProbability.PFunctor.Free.Kernel.Transport
 public import PolyFunProbability.PFunctor.Free.Measure
