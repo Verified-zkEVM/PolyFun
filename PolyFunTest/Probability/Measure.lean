@@ -9,6 +9,7 @@ module
 public import PolyFun.PFunctor.Free.Measure
 public import PolyFun.PFunctor.Free.Measure.Kernel
 public import PolyFun.PFunctor.Free.Measure.Path
+public import PolyFun.PFunctor.Free.Measure.Support
 
 /-!
 # Measure and kernel semantics of free programs
@@ -64,5 +65,23 @@ example (n : ℕ) : runKernel countingCoin (FreeM.lift ()) n = countingCoin () n
 /-- Each call of the counting handler is lossless, so the whole run is a subprobability kernel. -/
 example (program : FreeM Coin Bool) [∀ a, IsSubprobabilityKernel (countingCoin a)] :
     IsSubprobabilityKernel (runKernel countingCoin program) := inferInstance
+
+/-- A coin that never answers `false`: a Dirac answer measure. -/
+noncomputable def biased : (a : Coin.A) → Measure (Coin.B a) := fun _ => Measure.dirac true
+
+/-- Substitution is pullback: simulating each flip by two flips and keeping the second folds to
+the source program under the two-flip measure. -/
+example (program : FreeM Coin Bool) :
+    measureFold (fun _ => (uniformOn Set.univ : Measure Bool))
+        (program.liftM fun _ => FreeM.bind (FreeM.lift (P := Coin) ()) fun _ =>
+          FreeM.lift (P := Coin) ()) =
+      measureFold (fun _ => measureFold (fun _ => (uniformOn Set.univ : Measure Bool))
+        (FreeM.bind (FreeM.lift (P := Coin) ()) fun _ => FreeM.lift (P := Coin) ())) program :=
+  measureFold_liftM _ _ program
+
+/-- Every result of positive mass is a possible output, even when the answer measure has gaps. -/
+example (program : FreeM Coin Bool) (v : Bool) (h : measureFold biased program {v} ≠ 0) :
+    v ∈ MonadAttach.support program :=
+  mem_support_of_measureFold_singleton_ne_zero biased h
 
 end PolyFunTest.Probability.FreeMeasure
