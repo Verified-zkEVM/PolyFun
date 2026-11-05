@@ -106,7 +106,7 @@ theorem length_eq_charge_one (x : FreeM P α) (p : Path x) :
 
 section Ordered
 
-variable [AddCommMonoid ω] [PartialOrder ω] {B s : ω}
+variable [AddMonoid ω] [Preorder ω] {B s : ω}
 
 /-- A structural bound bounds the charge of every completed path. -/
 theorem charge_le_of_isChargeBound {x : FreeM P α} (h : x.IsChargeBound c B s) (p : Path x) :
@@ -134,19 +134,19 @@ theorem isChargeBound_of_forall_charge_le [CanonicallyOrderedAdd ω]
 end Ordered
 
 /-- The worst-case cost is at least the charge of every completed path. -/
-theorem charge_le_cost [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω]
+theorem charge_le_cost [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω]
     (x : FreeM P α) (p : Path x) : charge c x p ≤ cost c x := by
   induction x using FreeM.rec with
   | pure a => exact le_rfl
   | liftBind a r ih =>
     rcases p with ⟨b, p⟩
     rw [charge_liftBind, cost_liftBind]
-    exact add_le_add le_rfl ((ih b p).trans (le_iSup (fun b => cost c (r b)) b))
+    exact add_le_add_right ((ih b p).trans (le_iSup (fun b => cost c (r b)) b)) _
 
 /-- When every reachable call has an answer, the worst-case cost is the supremum of the charges of
 the completed paths. Without that hypothesis it fails: a call whose answer type is empty is charged
 by the cost, but ends no completed path. -/
-theorem cost_eq_iSup_charge [AddCommMonoid ω] [CompleteLattice ω] [IsOrderedAddMonoid ω]
+theorem cost_eq_iSup_charge [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω]
     [AddSupDistrib ω] {x : FreeM P α} (hx : x.ProgramProgress) :
     cost c x = ⨆ p : Path x, charge c x p := by
   refine le_antisymm ?_ (iSup_le (charge_le_cost x))
@@ -313,7 +313,7 @@ theorem charge_apply {ι : Type*} {ν : ι → Type w} [∀ i, AddMonoid (ν i)]
 /-- **Sequencing relabelled programs.** A program relabelled into a common interface, followed by
 relabelled continuations, has every completed path within the sum of the two path budgets, when the
 common charge agrees with the source charges along the relabellings. -/
-theorem charge_bind_mapLens_le [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
+theorem charge_bind_mapLens_le [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
     {R : PFunctor.{uA₂, uB₂}} {β : Type v'} {Q : α → PFunctor.{uA₃, uB₃}} (x : FreeM P α)
     (l : Lens P R) (y : (a : α) → FreeM (Q a) β) (l' : (a : α) → Lens (Q a) R)
     {c : P.A → ω} {d : (a : α) → (Q a).A → ω} {e : R.A → ω} {B₁ B₂ : ω}
@@ -330,7 +330,7 @@ theorem charge_bind_mapLens_le [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMon
 
 section Refinement
 
-variable [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω] {Q : PFunctor.{uA₂, uB}}
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] {Q : PFunctor.{uA₂, uB₂}}
   {α : Type uB}
 
 /-- **Completed-path transfer through a free handler.** If every completed path through the
@@ -372,7 +372,7 @@ end Refinement
 
 section Exact
 
-variable [AddMonoid ω] {Q : PFunctor.{uA₂, uB}} {α : Type uB}
+variable [AddMonoid ω] {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
 
 /-- `Demand h d x p e`: the calls along `p` can each be answered by a completed path through its
 implementation returning the answer `p` takes, with total target charge `e`. -/
@@ -464,7 +464,7 @@ theorem chargeDec_ofCharge [Add ω] [Zero ω] (x : FreeM P α) (p : Path x) :
     exact congrArg (c a + ·) (ih b p)
 
 /-- Node weights at most `bound` bound a path's weight by its length times `bound`. -/
-theorem chargeDec_le_length_nsmul [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
+theorem chargeDec_le_length_nsmul [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
     {bound : ω} (x : FreeM P α) (d : Displayed.Decoration (fun _ => ω) x)
     (hd : Decoration.AllLE bound x d) (p : Path x) : chargeDec x d p ≤ length x p • bound := by
   induction x using FreeM.rec with
