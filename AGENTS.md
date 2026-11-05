@@ -2,9 +2,11 @@
 
 PolyFun is a Lean 4 library for polynomial interfaces, programs, machines,
 interaction trees, generic open-system composition, program logic, and
-realizability. It extends Mathlib and CSLib. Cryptographic interpretations,
-probability semantics, distinguishing advantage, and scheme-specific proofs
-belong in [VCVio](https://github.com/Verified-zkEVM/VCVio).
+realizability. It extends Mathlib and CSLib. The optional `PolyFunProbability`
+library interprets these programs measure-theoretically. Cryptographic security
+notions belong in [VCVio](https://github.com/Verified-zkEVM/VCVio): security
+experiments, distinguishing advantage, adversary classes, negligibility, hardness
+assumptions, named reductions and scheme-specific proofs.
 
 `AGENTS.md` is the canonical agent guide, and `CLAUDE.md` is its symlink.
 Human readers should start with [README.md](README.md) and the
@@ -51,20 +53,29 @@ boundary. Imports flow downward and must remain acyclic.
 | `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
 | `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order, bitvector and polynomial lemmas |
 | `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
+| `PolyFunProbability/` | Optional measure-theoretic layer: subprobability measures and kernels, and measure interpretations of PolyFun programs, outside the generic umbrella |
 | `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
 | `PolyFunTest/` | Regression tests, which may import tutorials. No production library imports them |
 
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
 and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
 CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`. Extend them.
-`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, probability
+`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, measure theory
 or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`, and PolyFun never
-imports a backend. `scripts/check-modules.sh` enforces both directions.
+imports a backend. `PolyFunProbability` imports PolyFun and `ToCslib`, and no other
+production library imports it. `scripts/check-modules.sh` enforces these directions.
 
 ## Semantic boundaries
 
-- Parameterize generic effects by an abstract monad. Keep oracle/probability
-  interpretations, security policy and concrete protocol runtime semantics downstream.
+- Parameterize generic effects by an abstract monad. Measure-theoretic
+  interpretations of programs belong in `PolyFunProbability`. Keep oracle
+  conventions, security policy and concrete protocol runtime semantics downstream.
+- PolyFun contains no cryptographic security notions: security experiments,
+  distinguishing advantage, adversary classes, negligibility, hardness assumptions,
+  named reductions or schemes. The emulation judgments in `Interaction/Open/`
+  (`Emulates`, `UCSecure`, `SecurelyEmulates`, `CorruptionModel`) are structural.
+  They take the observation and the allowed classes as parameters, and VCVio
+  supplies the observations and classes that make them security statements.
 - `TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`. Its `done` and
   `node` are `@[match_pattern, reducible]` wrappers. Preserve pattern matching
   and definitional equality with the substrate.
@@ -92,6 +103,7 @@ Broad `@[expose] public section` is forbidden under `PolyFun/Interaction/`.
 
 - Tests may open `ComplexityBackends`.
 - Nothing opens a backend from `PolyFun/`, and a backend never opens `PolyFun` or `ToCslib`.
+- `PolyFunProbability` never opens `PolyFun` or `ToCslib`.
 - `ToCslib/`, `Examples/`, `PolyFunParliamentMain.lean`, the consumer packages, and the
   `PolyFunTest/ModuleAPI/` canaries open nothing.
 
@@ -124,6 +136,16 @@ directly imported only by `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`,
 `PolyFunTest/Do/`. Export constructions or scoped instances, never global WP
 instances. `ToCslib` directly imports neither tier. It may import `Std.Do.WP` transitively
 through CSLib's `IsMonadHom`. See [program logic](docs/guides/program-logic.md).
+
+## Probability quarantine
+
+Only `PolyFunProbability/` and `PolyFunTest/Probability/` may import
+`Mathlib.MeasureTheory`, `Mathlib.Probability` or `Mathlib.InformationTheory`.
+No module imports `Mathlib.Probability.ProbabilityMassFunction`. The layer is
+measure-native: it uses Mathlib's `Measure` and `Kernel`, not `PMF`, whose lawful
+monad instance pulls in most of Mathlib's analysis. Mathlib lemmas that the layer
+needs are staged under `PolyFunProbability/ToMathlib/`. `scripts/check-modules.sh`
+enforces the quarantine. See [probability](docs/guides/probability.md).
 
 ## Attribution and documentation
 
@@ -158,10 +180,10 @@ Read each suggestion in context. Leave clear, correct text alone.
 
 ## Generated files and scripts
 
-`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean` and `PolyFunIO.lean` are
-generated. Never hand-edit them. Stage new, deleted and renamed source files before
-you run `./scripts/update-lib.sh`. Pass `ToCslib`, `ComplexityBackends` or `PolyFunIO`
-to regenerate another umbrella. See
+`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean`, `PolyFunIO.lean` and
+`PolyFunProbability.lean` are generated. Never hand-edit them. Stage new, deleted and
+renamed source files before you run `./scripts/update-lib.sh`. Pass `ToCslib`,
+`ComplexityBackends`, `PolyFunIO` or `PolyFunProbability` to regenerate another umbrella. See
 [generated files](docs/development/generated-files.md).
 
 Tutorial modules use a glob target and need no generated umbrella. The optional

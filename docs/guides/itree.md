@@ -277,7 +277,8 @@ interpretation to `fun a => denote ret alg (next a)` and retains the query algeb
 The proof uses leastness and increasing approximants, so it covers unbounded
 branching and divergence. `ITree.denote_toITree` connects these laws across the
 canonical tau-free resumption embedding. Measure and kernel algebras belong in
-VCVio; these laws themselves impose no probability interpretation.
+the optional `PolyFunProbability` library; these laws themselves impose no
+probability interpretation.
 
 `ITree.denote_iter_eq` gives the semantic loop-body equation, and
 `denote_iter_le` bounds an unbounded iteration by any family preserved by its

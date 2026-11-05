@@ -26,8 +26,8 @@ proofs, examples, import boundaries, or validation infrastructure.
 
 | Check | Scope |
 |---|---|
-| Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunIO`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend, and `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
+| Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunIO`, `PolyFunProbability`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend, `PolyFun` imports no backend, and no other production library imports `PolyFunProbability`), the probability quarantine (only `PolyFunProbability` and its tests import Mathlib measure theory, and nothing imports `PMF`), `import all` boundaries (tests may open backends, backends and `PolyFunProbability` never open `PolyFun` or `ToCslib`, module canaries open nothing) |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
