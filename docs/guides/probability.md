@@ -90,6 +90,11 @@ measure-valued instances of those parameters.
   states, and it agrees with first interpreting a free handler's implementations
   (`runKernel_liftM`). Almost-everywhere state invariants and state projections transport from
   single steps to whole programs. `Wiring.runKernel` interprets recursive polynomial wiring.
+  ([`Free/Kernel/Handler`](../../PolyFunProbability/PFunctor/Free/Kernel/Handler.lean)) gives the
+  constructions: pullback along a free handler (`KernelHandler.comap`, with `comap_comap`), the
+  Dirac handler of a deterministic step (`KernelHandler.ofFun`, run by `runKernel_ofFun`), Markov
+  program kernels from Markov operation kernels, and the stateless kernel of answer measures
+  (`KernelHandler.ofMeasure`), whose run is the measure fold (`runKernel_ofMeasure`).
 - **Possible outputs and positive mass**
   ([`Free/Support`](../../PolyFunProbability/PFunctor/Free/Support.lean)).
   Over discrete answers, every result of positive mass is in PolyFun's `MonadAttach` support of
