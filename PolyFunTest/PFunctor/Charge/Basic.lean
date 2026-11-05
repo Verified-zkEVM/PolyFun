@@ -283,6 +283,19 @@ example (x : FreeM Coin Bool) (n : ℕ) (h : x.IsChargeBound (fun _ => (1 : ℕ)
     x.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) n :=
   h.under _
 
+/-- A tick whose answer is ignored merges into what follows. -/
+example (y : FreeM Coin Bool) (n s : ℕ) :
+    (FreeM.liftBind () fun _ => y).IsChargeBound (fun _ => (1 : ℕ)) n s ↔
+      s + 1 ≤ n ∧ y.IsChargeBound (fun _ => 1) n (s + 1) :=
+  isChargeBound_liftBind_const_iff () y
+
+/-- A lifted interface keeps the bound. -/
+example (n : ℕ) :
+    (flipThenMore.mapLens (Lens.Equiv.ulift (P := Coin)).invLens).IsChargeBound
+      (P := PFunctor.ulift.{0, 0, 1, 1} Coin) (fun _ => (1 : ℕ)) n ↔
+        flipThenMore.IsChargeBound (fun _ => 1) n :=
+  isChargeBound_mapLens_ulift_iff (c := fun _ => 1)
+
 /-- The restricted bound is the plain bound of the program relabelled to the allowed answers. -/
 example : (flipThenMore.restrict fun _ b => b = true).IsChargeBound (fun _ => (1 : ℕ)) 1 := by
   have h : flipThenMore.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) 1 := by
