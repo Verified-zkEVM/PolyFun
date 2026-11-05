@@ -162,16 +162,6 @@ theorem supp_run_liftM_id_withCharge [AddMonoid ω] (c : P.A → ω) {α : Type 
 
 /-! ### Writer instrumentation -/
 
-/-- The structural support of a mapped program is the image of the support. -/
-theorem _root_.PFunctor.FreeM.supp_map_eq_image {α β : Type*} (f : α → β) (x : FreeM P α) :
-    FreeM.supp (FreeM.map f x) = f '' FreeM.supp x := by
-  induction x using FreeM.rec with
-  | pure a => exact (Set.image_singleton).symm
-  | liftBind a r ih =>
-    change (⋃ b, FreeM.supp (FreeM.map f (r b))) = f '' ⋃ b, FreeM.supp (r b)
-    rw [Set.image_iUnion]
-    exact Set.iUnion_congr ih
-
 /-- Instrument a handler with a charge in a writer: a call at `a` writes `c a`. The log lives in
 `Multiplicative ω`, so it accumulates the sum of the charges. -/
 def withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) :
@@ -228,11 +218,14 @@ theorem supp_run_liftM_id_withChargeW [AddMonoid ω] (c : P.A → ω) {α : Type
     change z = (a, 1) ↔ _
     exact ⟨fun h => ⟨⟨⟩, h.symm⟩, fun ⟨_, h⟩ => h.symm⟩
   | liftBind a r ih =>
-    change FreeM.supp (FreeM.liftBind a fun b =>
+    have ih' : ∀ b, MonadAttach.support ((r b).liftM ((Handler.id P).withChargeW c)).run =
+        Set.range fun p : FreeM.Path (r b) =>
+          (FreeM.output (r b) p, Multiplicative.ofAdd (FreeM.Path.charge c (r b) p)) := ih
+    change MonadAttach.support (FreeM.liftBind a fun b =>
       FreeM.map (fun q : _ × Multiplicative ω => (q.1, Multiplicative.ofAdd (c a) * q.2))
         ((r b).liftM ((Handler.id P).withChargeW c)).run) = _
     ext z
-    simp only [FreeM.supp, Set.mem_iUnion, FreeM.supp_map_eq_image, ih, Set.mem_image,
+    simp only [FreeM.support_liftBind, Set.mem_iUnion, FreeM.support_map, ih', Set.mem_image,
       Set.mem_range]
     constructor
     · rintro ⟨b, _, ⟨p, rfl⟩, rfl⟩
@@ -422,6 +415,46 @@ theorem runUntil_liftBind (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ
     runUntil h (.liftBind a next) state = FreeM.bind (h a state) fun r =>
       r.elim (.pure (.inr ⟨a, next⟩, state)) fun p => runUntil h (next p.1) p.2 :=
   rfl
+
+/-- **Budgets of paused continuations.** If a program is within budget `B` from `s`, every paused
+result of a run through `h` returns a call and continuation that are within `B` from an amount
+`s' ≥ s` spent along the answered prefix. -/
+theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
+    [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+    {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
+    (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
+    (hz : (Sum.inr ⟨a, k⟩, state') ∈ FreeM.supp (FreeM.runUntil h x state)) :
+    ∃ s', s ≤ s' ∧ (FreeM.liftBind a k).IsChargeBound c B s' := by
+  induction x using FreeM.rec generalizing s state with
+  | pure v =>
+    have hz' : ((Sum.inr ⟨a, k⟩, state') : (α ⊕ (Σ a : P.A, (P.B a → FreeM P α))) × σ) =
+      (Sum.inl v, state) := hz
+    simp at hz'
+  | liftBind a' r ih =>
+    change _ ∈ MonadAttach.support (FreeM.bind (h a' state) _) at hz
+    rw [FreeM.support_bind] at hz
+    simp only [Set.mem_iUnion] at hz
+    obtain ⟨o, -, hz⟩ := hz
+    rcases o with _ | ⟨b, state''⟩
+    · have hz' : ((Sum.inr ⟨a, k⟩, state') : (α ⊕ (Σ a : P.A, (P.B a → FreeM P α))) × σ) =
+          (Sum.inr ⟨a', r⟩, state) := hz
+      simp only [Prod.mk.injEq, Sum.inr.injEq, Sigma.mk.inj_iff] at hz'
+      obtain ⟨⟨rfl, hk⟩, -⟩ := hz'
+      obtain rfl := eq_of_heq hk
+      exact ⟨s, le_rfl, hx⟩
+    · obtain ⟨s', hs', h'⟩ := ih b (hx.2 b) hz
+      exact ⟨s', le_self_add.trans hs', h'⟩
+
+/-- Every paused continuation of a run of a program within budget `B` from `s` is itself within
+`B` from `s`: a pause never needs a larger budget than the program it interrupts. -/
+theorem IsChargeBound.runUntil_paused {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
+    [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+    {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
+    (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
+    (hz : (Sum.inr ⟨a, k⟩, state') ∈ FreeM.supp (FreeM.runUntil h x state)) :
+    (FreeM.liftBind a k).IsChargeBound c B s :=
+  let ⟨_, hs, h'⟩ := hx.exists_runUntil_paused hz
+  h'.mono_spent hs
 
 variable {ω : Type w} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedCancelAddMonoid ω]
 
