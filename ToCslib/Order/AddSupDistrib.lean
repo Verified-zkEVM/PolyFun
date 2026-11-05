@@ -51,6 +51,6 @@ instance Pi.addSupDistrib {ι : Type*} {ω : ι → Type w} [∀ i, Add (ω i)]
     exact le_iSup (fun _ : (f : ∀ i, ω i) ∈ s => (a + f) i) f.2
 
 @[simp]
-theorem iSup_zero_eq_zero {ω : Type w} [AddCommMonoid ω] [CompleteLattice ω]
+theorem iSup_zero_eq_zero {ω : Type w} [AddZeroClass ω] [CompleteLattice ω]
     [CanonicallyOrderedAdd ω] {ι : Sort*} : (⨆ _ : ι, (0 : ω)) = 0 := by
   rw [← bot_eq_zero, iSup_bot]
