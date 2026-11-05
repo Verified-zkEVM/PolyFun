@@ -36,7 +36,7 @@ amortized transfer of `PolyFun.PFunctor.Handler.Charge`.
 
 @[expose] public section
 
-universe uA uA₂ uA₃ uB w w' w''
+universe uA uA₂ uA₃ uB uB₂ uB₃ w w' w''
 
 namespace PFunctor
 
@@ -46,12 +46,11 @@ variable {ω : Type w} {ω' : Type w'} {ω'' : Type w''}
 
 section Certified
 
-variable [AddCommMonoid ω] [PartialOrder ω] [AddCommMonoid ω'] [PartialOrder ω']
-  [AddCommMonoid ω''] [PartialOrder ω'']
+variable [AddMonoid ω] [Preorder ω] [AddMonoid ω'] [Preorder ω'] [AddMonoid ω''] [Preorder ω'']
 
 /-- A handler implementing `P` by programs over `Q`, with an exchange from `P`'s prices to `Q`'s
 under which each call at `a` is implemented within `exchange (c a)`. -/
-structure Certified (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB}) (c : P.A → ω)
+structure Certified (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂}) (c : P.A → ω)
     (d : Q.A → ω') where
   /-- The implementation of each call. -/
   handler : Handler (FreeM Q) P
@@ -60,7 +59,7 @@ structure Certified (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB}) (c : P.A 
   /-- Each call is implemented within its exchanged price. -/
   certificate : handler.WithinCharge d (exchange ∘ c)
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}} {R : PFunctor.{uA₃, uB}}
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
 
 namespace Certified
 
@@ -72,7 +71,8 @@ def id (P : PFunctor.{uA, uB}) (c : P.A → ω) : Certified P P c c where
 
 /-- Certified handlers compose: implement by `f`, then implement `f`'s target by `g`, exchanging
 prices through both. -/
-def comp [IsOrderedAddMonoid ω''] {c : P.A → ω} {d : Q.A → ω'} {e : R.A → ω''}
+def comp [AddLeftMono ω''] [AddRightMono ω''] {Q : PFunctor.{uA₂, uB}} {c : P.A → ω} {d : Q.A → ω'}
+    {e : R.A → ω''}
     (g : Certified Q R d e) (f : Certified P Q c d) : Certified P R c e where
   handler := g.handler.comp f.handler
   exchange := g.exchange.comp f.exchange
@@ -82,14 +82,16 @@ def comp [IsOrderedAddMonoid ω''] {c : P.A → ω} {d : Q.A → ω'} {e : R.A �
     exact h.liftM g.handler g.certificate
 
 @[simp]
-theorem comp_exchange [IsOrderedAddMonoid ω''] {c : P.A → ω} {d : Q.A → ω'} {e : R.A → ω''}
+theorem comp_exchange [AddLeftMono ω''] [AddRightMono ω''] {Q : PFunctor.{uA₂, uB}} {c : P.A → ω}
+    {d : Q.A → ω'} {e : R.A → ω''}
     (g : Certified Q R d e) (f : Certified P Q c d) :
     (g.comp f).exchange = g.exchange.comp f.exchange :=
   rfl
 
 /-- **Transfer.** A program within budget `B`, simulated through a certified handler, is within the
 exchanged budget. -/
-theorem transfer [IsOrderedAddMonoid ω'] {c : P.A → ω} {d : Q.A → ω'} (f : Certified P Q c d)
+theorem transfer [AddLeftMono ω'] [AddRightMono ω'] {c : P.A → ω} {d : Q.A → ω'}
+    (f : Certified P Q c d)
     {α : Type uB} {x : FreeM P α} {B s : ω} (hx : x.IsChargeBound c B s) :
     (x.liftM f.handler).IsChargeBound d (f.exchange B) (f.exchange s) :=
   (hx.map f.exchange).liftM f.handler f.certificate
@@ -100,9 +102,9 @@ end Certified
 
 section Value
 
-variable [AddCommMonoid ω] [CompleteLattice ω] [AddCommMonoid ω'] [CompleteLattice ω']
-  [IsOrderedAddMonoid ω'] [CanonicallyOrderedAdd ω'] [AddSupDistrib ω']
-  {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}}
+variable [AddMonoid ω] [CompleteLattice ω] [AddMonoid ω'] [CompleteLattice ω']
+  [AddLeftMono ω'] [AddRightMono ω'] [CanonicallyOrderedAdd ω'] [AddSupDistrib ω']
+  {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}}
 
 /-- **Transfer, value form.** A program simulated through a certified handler costs at most the
 exchange of the original's worst-case cost. -/
@@ -119,14 +121,13 @@ end Value
 
 section Reduction
 
-variable [AddCommMonoid ω] [PartialOrder ω] [AddCommMonoid ω'] [PartialOrder ω']
-  [IsOrderedAddMonoid ω'] [CanonicallyOrderedAdd ω']
-  {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}}
+variable [AddMonoid ω] [Preorder ω] [AddMonoid ω'] [Preorder ω'] [AddLeftMono ω']
+  [AddRightMono ω'] [CanonicallyOrderedAdd ω'] {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}}
 
 /-- A reduction from a `P`-program to a `Q`-program: run `setup`, then the source program through
 an implementation certified with one exchange, then `finish` on its result. The implementation and
 `finish` may use the result of `setup`. Each of the two extra stages has a budget. -/
-structure CostedReduction (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB}) (c : P.A → ω)
+structure CostedReduction (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂}) (c : P.A → ω)
     (d : Q.A → ω') (σ α β : Type uB) where
   /-- Work before running the source program, producing data for the later stages. -/
   setup : FreeM Q σ
