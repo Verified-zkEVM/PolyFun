@@ -22,7 +22,7 @@ The value form is the computational one: its equations reduce the cost of a conc
 to arithmetic by `simp` (see `cost_bound`). It relates to the budget `IsChargeBound` in canonically
 ordered monoids: `isChargeBound_of_cost_le` holds in general, and `cost_le_of_isChargeBound` needs
 addition to distribute over nonempty suprema (`AddSupDistrib`, which holds in `ℕ∞` and pointwise,
-from `ToCslib.Order.AddSupDistrib`).
+from `ToCslib.Order.AddSupDistrib`, and in `ℝ≥0∞` from `ToCslib.Data.ENNReal.AddSupDistrib`).
 `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound on the cost in `ℕ∞`.
 
 Costs transport along lenses (`cost_mapLens_le`, with equality when the lens reaches every answer)
@@ -189,6 +189,12 @@ theorem cost_pure (a : α) : cost c (pure a : FreeM P α) = 0 :=
 theorem cost_freeM_pure (a : α) : cost c (FreeM.pure a : FreeM P α) = 0 :=
   rfl
 
+/-- **Merging a tick.** A call whose answer is ignored adds its charge to what follows, when the
+call has an answer. Without one, the left side is `c a`. -/
+theorem costWith_liftBind_const (a : P.A) [Nonempty (P.B a)] (y : FreeM P α) (k : α → ω) :
+    costWith c (FreeM.liftBind a fun _ => y) k = c a + costWith c y k := by
+  rw [costWith_liftBind, iSup_const]
+
 @[freeM_unfold]
 theorem cost_liftBind (a : P.A) (r : P.B a → FreeM P α) :
     cost c (FreeM.liftBind a r) = c a + ⨆ b, cost c (r b) :=
@@ -262,6 +268,30 @@ theorem cost_bind_le {γ : Type v'} (x : FreeM P α) (f : α → FreeM P γ) :
     cost c (FreeM.bind x f) ≤ cost c x + ⨆ a, cost c (f a) := by
   rw [cost_bind]
   exact costWith_le_cost_add x _
+
+/-- **Cost of a sequence at an invariant.** When every result of `x` satisfies `I`, the
+continuation is charged only at results satisfying `I`. -/
+theorem cost_bind_le_of_wpFold {γ : Type v'} {x : FreeM P α} {f : α → FreeM P γ} {I : α → Prop}
+    (hI : wpFold (OpSpec.demonic P) x I) :
+    cost c (FreeM.bind x f) ≤ cost c x + ⨆ a, ⨆ (_ : I a), cost c (f a) := by
+  rw [cost_bind]
+  induction x using FreeM.rec with
+  | pure a => simpa using le_iSup₂_of_le (f := fun a (_ : I a) => cost c (f a)) a hI le_rfl
+  | liftBind a r ih =>
+    rw [costWith_liftBind, cost_liftBind, add_assoc]
+    exact add_le_add le_rfl (iSup_le fun b => (ih b (hI b)).trans
+      (add_le_add (le_iSup (fun b => cost c (r b)) b) le_rfl))
+
+omit [IsOrderedAddMonoid ω] in
+/-- Exchanging prices along a monotone additive map costs no more than exchanging the cost. -/
+theorem cost_comp_le {ω' : Type w'} [AddCommMonoid ω'] [CompleteLattice ω'] [IsOrderedAddMonoid ω']
+    (E : ω →+o ω') (c : P.A → ω) (x : FreeM P α) : cost (E ∘ c) x ≤ E (cost c x) := by
+  induction x using FreeM.rec with
+  | pure a => simp
+  | liftBind a r ih =>
+    rw [cost_liftBind, cost_liftBind, map_add]
+    exact add_le_add le_rfl
+      (iSup_le fun b => (ih b).trans (E.monotone' (le_iSup (fun b => cost c (r b)) b)))
 
 end Ordered
 
@@ -389,6 +419,25 @@ theorem wpFold_chargeUnder_le_costUnder_add {y : FreeM P β} {I : β → Prop}
     exact add_le_add le_rfl (iSup₂_le fun b hb => (ih b (hI b hb)).trans
       (add_le_add (le_iSup₂_of_le (f := fun b (_ : allows a b) => costUnder c allows (r b)) b hb
         le_rfl) le_rfl))
+
+/-- **Cost of a sequence over allowed answers.** When every result `x` can return along allowed
+answers satisfies `I`, the continuation is charged only at results satisfying `I`. -/
+theorem costUnder_bind_le_of_wpFold {γ : Type v'} {x : FreeM P α} {f : α → FreeM P γ}
+    {I : α → Prop} (hI : wpFold (OpSpec.demonicUnder allows) x I) :
+    costUnder c allows (FreeM.bind x f) ≤
+      costUnder c allows x + ⨆ a, ⨆ (_ : I a), costUnder c allows (f a) := by
+  unfold costUnder
+  rw [wpFold_bind']
+  exact wpFold_chargeUnder_le_costUnder_add hI _
+
+omit [IsOrderedAddMonoid ω] in
+/-- **Merging a tick over allowed answers.** A call whose answer is ignored adds its charge to what
+follows, when some answer is allowed. -/
+theorem costUnder_liftBind_const {a : P.A} (h : ∃ b, allows a b) (y : FreeM P α) :
+    costUnder c allows (FreeM.liftBind a fun _ => y) = c a + costUnder c allows y := by
+  rw [costUnder_liftBind]
+  obtain ⟨b, hb⟩ := h
+  exact congrArg (c a + ·) (le_antisymm (iSup₂_le fun _ _ => le_rfl) (le_iSup₂_of_le b hb le_rfl))
 
 /-- **Simulation overhead over allowed answers.** If every result each implementation can return
 along the target's allowed answers is an allowed source answer, a simulated program costs, over the

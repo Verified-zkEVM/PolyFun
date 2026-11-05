@@ -9,6 +9,7 @@ module
 public import PolyFun.PFunctor.Free.Cost.Tactic
 public import PolyFun.PFunctor.Free.Cost.Loops
 public import PolyFun.PFunctor.Free.Cost.Support
+public import ToCslib.Data.ENNReal.AddSupDistrib
 
 /-!
 # Worst-case costs, loops and restricted sequencing
@@ -182,5 +183,23 @@ example (x : FreeM Coin Bool) :
   costUnder_liftM_le (P := Coin) (Q := Coin) (allows := fun _ b => b = true)
     (allowsQ := fun _ b => b = true)
     _ (fun _ => FreeM.lift (P := Coin) ()) (fun _ _ hb => hb) x
+
+/-- A tick whose answer is ignored merges into what follows, in value form. -/
+example (y : FreeM Coin Bool) :
+    cost (fun _ => (1 : ℕ∞)) (FreeM.liftBind () fun _ => y) = 1 + cost (fun _ => 1) y :=
+  costWith_liftBind_const (c := fun _ => (1 : ℕ∞)) () y (fun _ => 0)
+
+/-- Over allowed answers, the continuation of a flip is charged only at `true`. -/
+example (f : Bool → FreeM Coin Bool) :
+    costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) (FreeM.bind (FreeM.lift (P := Coin) ()) f)
+      ≤ costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) (FreeM.lift (P := Coin) ()) +
+        ⨆ b, ⨆ (_ : b = true), costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) (f b) :=
+  costUnder_bind_le_of_wpFold (P := Coin) (allows := fun _ b => b = true) fun _ hb => hb
+
+/-- Costs in `ℝ≥0∞`: a budget bounds the worst-case cost once the `ℝ≥0∞` instance of
+`AddSupDistrib` is imported. -/
+example (x : FreeM Coin Bool) (B : ENNReal) (h : x.IsChargeBound (fun _ => (1 : ENNReal)) B) :
+    cost (fun _ => (1 : ENNReal)) x ≤ B :=
+  isChargeBound_iff_cost_le.1 h
 
 end PolyFunTest.ChargeCost

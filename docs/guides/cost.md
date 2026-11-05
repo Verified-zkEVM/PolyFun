@@ -98,7 +98,8 @@ The two readings agree in canonically ordered monoids:
 
 - `isChargeBound_of_cost_le` holds in general;
 - `cost_le_of_isChargeBound` needs addition to distribute over nonempty suprema (`AddSupDistrib`,
-  which holds for `ℕ∞` and pointwise);
+  which holds for `ℕ∞` and pointwise, and for `ℝ≥0∞` once `ToCslib.Data.ENNReal.AddSupDistrib` is
+  imported);
 - `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound in `ℕ∞`.
 
 Over restricted answers, `costUnder c allows x` is the fold of `OpSpec.chargeUnder c allows`,
@@ -106,7 +107,9 @@ which takes the worst continuation over the allowed answers only. It is `cost` w
 is allowed (`costUnder_true`) and at most `cost` in general (`costUnder_le_cost`). When addition
 distributes over suprema, a restricted budget is a bound on `costUnder`
 (`isChargeBoundUnder_iff_costUnder_le`). The restricted cost is the cost of the restricted program
-(`costUnder_eq_cost_restrict`). Through a handler whose implementations return only allowed source
+(`costUnder_eq_cost_restrict`), and sequencing charges the continuation only at results satisfying
+a demonic invariant (`costUnder_bind_le_of_wpFold`; `cost_bind_le_of_wpFold` and
+`IsChargeBound.bind_of_wpFold` without restriction). Through a handler whose implementations return only allowed source
 answers along the target's allowed answers, each call costs the restricted worst case of its
 implementation (`costUnder_liftM_le`).
 
