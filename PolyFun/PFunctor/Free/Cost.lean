@@ -280,16 +280,16 @@ end Bound
 
 section OrderedBound
 
-variable [AddCommMonoid ω] [PartialOrder ω] {c c' : P.A → ω} {B B' s s' : ω}
+variable [Add ω] [Zero ω] [Preorder ω] {c c' : P.A → ω} {B B' s s' : ω}
 
 /-- Starting from less spent keeps a program within budget. -/
-theorem IsChargeBound.mono_spent [IsOrderedAddMonoid ω] {x : FreeM P α} (h : IsChargeBound x c B s)
+theorem IsChargeBound.mono_spent [AddRightMono ω] {x : FreeM P α} (h : IsChargeBound x c B s)
     (hs : s' ≤ s) :
     IsChargeBound x c B s' := by
   induction x using FreeM.rec generalizing s s' with
   | pure a => exact hs.trans h
   | liftBind a r ih =>
-    have hs' : s' + c a ≤ s + c a := add_le_add hs le_rfl
+    have hs' : s' + c a ≤ s + c a := by gcongr
     exact ⟨hs'.trans h.1, fun b => ih b (h.2 b) hs'⟩
 
 /-- A larger budget keeps a program within budget. -/
@@ -300,24 +300,13 @@ theorem IsChargeBound.mono {x : FreeM P α} (h : IsChargeBound x c B s) (hB : B 
   | liftBind a r ih => exact ⟨h.1.trans hB, fun b => ih b (h.2 b)⟩
 
 /-- Cheaper calls keep a program within budget. -/
-theorem IsChargeBound.mono_charge [IsOrderedAddMonoid ω] {x : FreeM P α} (h : IsChargeBound x c B s)
-    (hc : ∀ a, c' a ≤ c a) : IsChargeBound x c' B s := by
+theorem IsChargeBound.mono_charge [AddLeftMono ω] [AddRightMono ω] {x : FreeM P α}
+    (h : IsChargeBound x c B s) (hc : ∀ a, c' a ≤ c a) : IsChargeBound x c' B s := by
   induction x using FreeM.rec generalizing s with
   | pure a => exact h
   | liftBind a r ih =>
-    have hs : s + c' a ≤ s + c a := add_le_add le_rfl (hc a)
+    have hs : s + c' a ≤ s + c a := by gcongr; exact hc a
     exact ⟨hs.trans h.1, fun b => (ih b (h.2 b)).mono_spent hs⟩
-
-/-- Shifting the spent amount shifts the budget. -/
-theorem IsChargeBound.add_left [IsOrderedAddMonoid ω] {x : FreeM P α} (h : IsChargeBound x c B s)
-    (t : ω) :
-    IsChargeBound x c (t + B) (t + s) := by
-  induction x using FreeM.rec generalizing s with
-  | pure a => exact add_le_add le_rfl h
-  | liftBind a r ih =>
-    refine ⟨?_, fun b => ?_⟩
-    · rw [add_assoc]; exact add_le_add le_rfl h.1
-    · rw [add_assoc]; exact ih b (h.2 b)
 
 /-- **Sequencing.** If `x` stays within `L ≤ B` and each continuation stays within `B` from any
 amount at most `L`, then `x >>= f` stays within `B`. -/
@@ -332,22 +321,37 @@ theorem IsChargeBound.bind_of_le {γ : Type v'} {x : FreeM P α} {f : α → Fre
 
 end OrderedBound
 
+section ShiftBound
+
+variable [AddSemigroup ω] [Zero ω] [Preorder ω] [AddLeftMono ω] {c : P.A → ω} {B s : ω}
+
+/-- Shifting the spent amount shifts the budget. -/
+theorem IsChargeBound.add_left {x : FreeM P α} (h : IsChargeBound x c B s) (t : ω) :
+    IsChargeBound x c (t + B) (t + s) := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => change t + s ≤ t + B; gcongr; exact h
+  | liftBind a r ih =>
+    refine ⟨?_, fun b => ?_⟩
+    · rw [add_assoc]; gcongr; exact h.1
+    · rw [add_assoc]; exact ih b (h.2 b)
+
+end ShiftBound
+
 section CanonicalBound
 
-variable [AddCommMonoid ω] [PartialOrder ω] [CanonicallyOrderedAdd ω]
-  {c : P.A → ω} {B B₁ B₂ s : ω}
+variable [AddMonoid ω] [Preorder ω] [CanonicallyOrderedAdd ω] {c : P.A → ω} {B B₁ B₂ s : ω}
 
 theorem isChargeBound_pure (a : α) : IsChargeBound (pure a : FreeM P α) c B :=
   zero_le
 
 /-- **Budgets add under sequencing.** -/
-theorem IsChargeBound.bind [IsOrderedAddMonoid ω] {γ : Type v'} {x : FreeM P α} {f : α → FreeM P γ}
-    (hx : IsChargeBound x c B₁ s) (hf : ∀ a, IsChargeBound (f a) c B₂) :
+theorem IsChargeBound.bind [AddLeftMono ω] [AddRightMono ω] {γ : Type v'} {x : FreeM P α}
+    {f : α → FreeM P γ} (hx : IsChargeBound x c B₁ s) (hf : ∀ a, IsChargeBound (f a) c B₂) :
     IsChargeBound (FreeM.bind x f) c (B₁ + B₂) s := by
   refine hx.bind_of_le le_self_add fun a s' hs' => ?_
   have := (hf a).add_left s'
   rw [add_zero] at this
-  exact this.mono (add_le_add hs' le_rfl)
+  exact this.mono (by gcongr)
 
 /-- A charge bound in spent-amount form is a roll bound whose budget is the amount spent. -/
 theorem isChargeBound_iff_isRollBound (x : FreeM P α) (c : P.A → ω) (B s : ω) :
@@ -368,7 +372,7 @@ end CanonicalBound
 /-- In a canonically ordered monoid with truncated subtraction and cancellation, such as
 `ι → ℕ` or `ℕ × ℕ`, a charge bound is the subtractive roll bound on the remaining budget. -/
 theorem isChargeBound_iff_isRollBound_orderedSub {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
-    [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω] [Sub ω] [OrderedSub ω] [AddLeftReflectLE ω]
+    [CanonicallyOrderedAdd ω] [Sub ω] [OrderedSub ω] [AddLeftReflectLE ω]
     (x : FreeM P α) (c : P.A → ω) (B s : ω) :
     IsChargeBound x c B s ↔
       s ≤ B ∧ IsRollBound x (B - s) (fun a b => c a ≤ b) (fun a b => b - c a) := by
@@ -401,7 +405,7 @@ theorem isChargeBound_one_iff_isTotalRollBound (x : FreeM P α) (n : ℕ) :
 
 section Transport
 
-variable {ω' : Type w'} [AddCommMonoid ω] [PartialOrder ω] [AddCommMonoid ω'] [PartialOrder ω']
+variable {ω' : Type w'} [AddZeroClass ω] [Preorder ω] [AddZeroClass ω'] [Preorder ω']
   {c : P.A → ω} {B s : ω}
 
 /-- Charge bounds push forward along monotone additive maps. Indicator, unit and per-kind
@@ -429,7 +433,7 @@ end Transport
 
 /-- Natural-number budgets as budgets in any ordered semiring of characteristic zero, such as `ℕ∞`
 or `ℝ≥0∞`. -/
-theorem isChargeBound_natCast_iff {R : Type w'} [AddCommMonoidWithOne R] [PartialOrder R]
+theorem isChargeBound_natCast_iff {R : Type w'} [AddMonoidWithOne R] [PartialOrder R]
     [AddLeftMono R] [ZeroLEOneClass R] [CharZero R] {x : FreeM P α} {c : P.A → ℕ} {n s : ℕ} :
     IsChargeBound x (fun a => (c a : R)) n s ↔ IsChargeBound x c n s :=
   isChargeBound_comp_iff (Nat.castAddMonoidHom R) fun _ _ => Nat.cast_le
@@ -476,7 +480,7 @@ end Product
 
 section Sum
 
-variable {ι : Type*} [Fintype ι] [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+variable {ι : Type*} [Fintype ι] [AddCommMonoid ω] [Preorder ω] [AddLeftMono ω]
 
 /-- A bound on a family of charges sums to a bound on the total charge: per-index budgets give a
 total budget. -/
@@ -515,7 +519,7 @@ theorem isChargeBound_single_iff_isRollBound [DecidableEq P.A] (x : FreeM P α) 
 
 section Transfer
 
-variable {Q : PFunctor.{uA₂, uB₂}} [AddCommMonoid ω] [PartialOrder ω] {B s : ω}
+variable {Q : PFunctor.{uA₂, uB₂}} [Add ω] [LE ω] [Zero ω] {B s : ω}
 
 /-- A bound on `x` with the charge pulled back along `l` bounds the relabelled program. -/
 theorem IsChargeBound.mapLens (l : Lens P Q) {x : FreeM P α} {c : Q.A → ω}
@@ -551,7 +555,7 @@ end Transfer
 
 section Handler
 
-variable {Q : PFunctor.{uA₂, uB₂}} [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω]
+variable {Q : PFunctor.{uA₂, uB₂}} [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
   {α : Type uB} {B s : ω}
 
 /-- **Free-handler transfer.** If the implementation of each call at `a` stays within `c a` under
@@ -754,10 +758,9 @@ end Under
 
 section OrderedUnder
 
-variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] {c : P.A → ω} {B B' s s' : ω}
+variable [Add ω] [Zero ω] [Preorder ω] {c : P.A → ω} {B B' s s' : ω}
   {allows : (a : P.A) → P.B a → Prop}
 
-omit [IsOrderedAddMonoid ω] in
 /-- A larger budget keeps a program within budget. -/
 theorem IsChargeBoundUnder.mono {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
     (hB : B ≤ B') : IsChargeBoundUnder x c allows B' s := by
@@ -765,7 +768,6 @@ theorem IsChargeBoundUnder.mono {x : FreeM P α} (h : IsChargeBoundUnder x c all
   | pure a => exact h.trans hB
   | liftBind a r ih => exact ⟨h.1.trans hB, fun b hb => ih b (h.2 b hb)⟩
 
-omit [IsOrderedAddMonoid ω] in
 /-- **Sequencing along a demonic postcondition.** If `x` stays within `L ≤ B`, every result `x` can
 return along allowed answers satisfies `post`, and from any amount at most `L` each continuation at
 such a result stays within `B`, then `x >>= f` stays within `B`. -/
@@ -779,23 +781,37 @@ theorem IsChargeBoundUnder.bind_of_le {γ : Type v'} {x : FreeM P α} {f : α �
   | liftBind a r ih => exact ⟨hx.1.trans hL, fun b hb => ih b (hx.2 b hb) (hpost b hb)⟩
 
 /-- Starting from less spent keeps a program within budget. -/
-theorem IsChargeBoundUnder.mono_spent {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
-    (hs : s' ≤ s) : IsChargeBoundUnder x c allows B s' := by
+theorem IsChargeBoundUnder.mono_spent [AddRightMono ω] {x : FreeM P α}
+    (h : IsChargeBoundUnder x c allows B s) (hs : s' ≤ s) : IsChargeBoundUnder x c allows B s' := by
   induction x using FreeM.rec generalizing s s' with
   | pure a => exact hs.trans h
   | liftBind a r ih =>
-    have hs' : s' + c a ≤ s + c a := add_le_add hs le_rfl
+    have hs' : s' + c a ≤ s + c a := by gcongr
     exact ⟨hs'.trans h.1, fun b hb => ih b (h.2 b hb) hs'⟩
+
+end OrderedUnder
+
+section ShiftUnder
+
+variable [AddSemigroup ω] [Zero ω] [Preorder ω] [AddLeftMono ω] {c : P.A → ω} {B s : ω}
+  {allows : (a : P.A) → P.B a → Prop}
 
 /-- Shifting the spent amount shifts the budget. -/
 theorem IsChargeBoundUnder.add_left {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
     (t : ω) : IsChargeBoundUnder x c allows (t + B) (t + s) := by
   induction x using FreeM.rec generalizing s with
-  | pure a => exact add_le_add le_rfl h
+  | pure a => change t + s ≤ t + B; gcongr; exact h
   | liftBind a r ih =>
     refine ⟨?_, fun b hb => ?_⟩
-    · rw [add_assoc]; exact add_le_add le_rfl h.1
+    · rw [add_assoc]; gcongr; exact h.1
     · rw [add_assoc]; exact ih b (h.2 b hb)
+
+end ShiftUnder
+
+section HandlerUnder
+
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] {c : P.A → ω} {B s : ω}
+  {allows : (a : P.A) → P.B a → Prop}
 
 /-- **Transfer through a free handler with restricted answers.** If each implementation stays
 within its call's charge along the target's allowed answers, and every result it can return along
@@ -815,11 +831,11 @@ theorem IsChargeBoundUnder.liftM {Q : PFunctor.{uA₂, uB₂}} {γ : Type uB}
     rw [add_zero] at hh
     exact hh.bind_of_le (hout a) hx.1 fun b hb s' hs' => (ih b (hx.2 b hb)).mono_spent hs'
 
-end OrderedUnder
+end HandlerUnder
 
 section CanonicalUnder
 
-variable [AddCommMonoid ω] [PartialOrder ω] [CanonicallyOrderedAdd ω] {c : P.A → ω} {B s : ω}
+variable [Add ω] [Zero ω] [Preorder ω] [CanonicallyOrderedAdd ω] {c : P.A → ω} {B s : ω}
   {allows : (a : P.A) → P.B a → Prop}
 
 /-- A restricted charge bound in spent-amount form is a restricted roll bound whose state is the
