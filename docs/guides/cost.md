@@ -72,6 +72,11 @@ the demonic reading:
   `IsChargeBound.under`). Allowing fewer answers keeps either bound (`mono_allows`).
 - A restricted charge bound is a restricted roll bound whose state is the amount spent
   (`isChargeBoundUnder_iff_isRollBoundUnder`).
+- Restriction is also a lens. `P.restrict allows` keeps only the allowed answers, and
+  `x.restrict allows` relabels `x` along the inclusion (`PolyFun/PFunctor/Free/Restrict.lean`). A
+  restricted bound is the plain bound of the restricted program (`isChargeBoundUnder_iff_restrict`,
+  `isRollBoundUnder_iff_restrict`), through `wpFold_mapLens`, which reads any fold over a
+  relabelled program as a fold over the original.
 - Sequencing takes a demonic postcondition on the results the first program can return along
   allowed answers (`IsChargeBoundUnder.bind_of_le`). A free handler transfers a restricted bound
   when each implementation returns only allowed source answers along the target's allowed answers

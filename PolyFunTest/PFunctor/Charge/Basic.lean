@@ -283,6 +283,12 @@ example (x : FreeM Coin Bool) (n : ℕ) (h : x.IsChargeBound (fun _ => (1 : ℕ)
     x.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) n :=
   h.under _
 
+/-- The restricted bound is the plain bound of the program relabelled to the allowed answers. -/
+example : (flipThenMore.restrict fun _ b => b = true).IsChargeBound (fun _ => (1 : ℕ)) 1 := by
+  have h : flipThenMore.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) 1 := by
+    simp [flipThenMore]
+  exact (isChargeBoundUnder_iff_restrict flipThenMore).1 h
+
 /-- The restricted charge bound is the restricted roll bound on the amount spent. -/
 example : flipThenMore.IsRollBoundUnder 0 (fun _ t => t + 1 ≤ 1) (fun _ t => t + 1)
     (fun _ b => b = true) :=
