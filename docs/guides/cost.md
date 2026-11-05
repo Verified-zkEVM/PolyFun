@@ -142,7 +142,10 @@ The calculus:
   (`charge_mapLens_eq_map`).
 - A path through a program simulated by a free handler refines to a path through the source with
   the same output, when each implementation stays within its call's charge on every completed
-  path (`exists_path_liftM`, `charge_liftM_le_of_forall`).
+  path (`exists_path_liftM`, `charge_liftM_le_of_forall`), also for bounds on the paths whose
+  output satisfies a predicate such as success (`charge_liftM_le_of_forall_output`). Exactly, the
+  paths through a simulated program are the source paths together with a path through each call's
+  implementation returning the answer taken (`exists_path_liftM_iff`, with `Demand`).
 - With subsingleton answers there is exactly one path (`forall_charge_le_iff_ofHandler`).
 - A program relabelled into a common interface, followed by relabelled continuations, has every
   path within the sum of the two path budgets (`charge_bind_mapLens_le`). Composites of measured
