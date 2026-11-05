@@ -113,11 +113,13 @@ the source and its result proofs.
   manifest. One holds the dependencies. The other holds PolyFun's own `.lake/build`. Each job
   therefore rebuilds only what the checkout changed. Only `build` on `main` saves the caches. Before
   it saves, it also builds `PolyFunTest`, `polyfun-parliament` and Batteries' `runLinter`, which only
-  the other jobs use. It saves the build cache on every run. It saves the dependency cache when the
-  list of dependency build outputs changes: new pins, or a PolyFun import that first reaches a
-  dependency module. New pins start the dependency cache empty, so the old pins' outputs do not
-  accumulate in it. A newer push to `main` waits for the running job rather than cancelling its
-  save. A nightly clean build of `main` skips the build cache, so nothing passes only because of it.
+  the other jobs use. That build only fills the caches: the other jobs report its failures, and a
+  failure in it still saves what did build. It saves the build cache on every run. It saves the
+  dependency cache when the list of dependency build outputs changes: new pins, or a PolyFun import
+  that first reaches a dependency module. New pins start the dependency cache empty, so the old pins'
+  outputs do not accumulate in it. A newer push to `main` waits for the running job rather than
+  cancelling its save. A nightly clean build of `main` skips the build cache, so nothing passes only
+  because of it.
 - [Import check](../../.github/workflows/check-imports.yml): generated imports.
 - [Docs integrity](../../.github/workflows/docs-integrity.yml): checker tests,
   links, anchors, excerpts and module docs.

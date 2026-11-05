@@ -102,13 +102,13 @@ jobs:
         run: ./scripts/validate.sh --axioms
 
       # Every job starts from what `main` saves, so `main` also builds the targets that only `Lint`
-      # and `Test` use. Pull requests leave them to those jobs.
+      # and `Test` use. Pull requests leave them to those jobs. This build only fills the caches:
+      # `Lint` and `Test` report its failures and warnings, and a failure here still saves what did
+      # build.
       - name: Build what Lint and Test need
         if: success() && github.ref == 'refs/heads/main'
-        run: |
-          lake build PolyFunTest --wfail --iofail
-          lake build polyfun-parliament --wfail
-          lake build @batteries/runLinter
+        continue-on-error: true
+        run: lake build PolyFunTest polyfun-parliament @batteries/runLinter
 
       - name: Name the dependency outputs
         id: deps-outputs
