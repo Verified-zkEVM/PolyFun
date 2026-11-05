@@ -33,6 +33,7 @@ changes the signature/re-export boundary only.
 | `PolyFun/` proof modules | sibling `PolyFun` modules, for a named definition | any `ComplexityBackends` module |
 | `ToCslib/` | nothing (upstream staging stays ordinary-import clean) | `PolyFun`, `ComplexityBackends` |
 | `ComplexityBackends/` | its own modules | `PolyFun`, `ToCslib` |
+| `PolyFunProbability/` | its own modules | `PolyFun`, `ToCslib` |
 | `Examples/`, `PolyFunParliamentMain.lean`, consumer packages | nothing | everything |
 | `PolyFunTest/` worked examples | `ComplexityBackends` modules; `PolyFun` modules only in the grandfathered `PolyFunTest/Interaction/` examples listed in the script | `PolyFun` elsewhere |
 | `PolyFunTest/ModuleAPI/` canaries | nothing | everything |
@@ -173,10 +174,11 @@ characterization theorem, or change the downstream proof. Re-run the consumer
 census at each Lean/Mathlib release upgrade; module-system changes and release
 skew otherwise make old workaround counts look like current API defects.
 
-A theorem belongs in PolyFun only when its statement can avoid `OracleSpec`,
-probability, and cryptographic policy; otherwise route it one dependency level
-at a time (VCVio candidates stay in VCVio), so "upstreamable" does not
-collapse everything to the lowest dependency.
+A theorem belongs in PolyFun only when its statement can avoid `OracleSpec` and
+cryptographic policy, and in the core libraries only when it also avoids measure
+theory (otherwise it belongs in `PolyFunProbability`). Route other theorems one
+dependency level at a time (VCVio candidates stay in VCVio), so "upstreamable"
+does not collapse everything to the lowest dependency.
 
 For a facade that reuses quotient structures, preserve instance coherence as
 well as declaration names. When `inferInstanceAs` shares a hierarchy containing

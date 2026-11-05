@@ -8,9 +8,9 @@ General-purpose protocol interaction theory: sequential type trees, two-party
 roles, multiparty local views, and concurrent process semantics. PolyFun's
 [`PolyFun/Interaction/`](../../PolyFun/Interaction) is intentionally
 *generic*. It carries abstract observational judgments, with no probability
-semantics or concrete cryptographic algebra. Cryptographic content of any kind belongs
+semantics or concrete cryptographic algebra. Cryptographic security content belongs
 in [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
-downstream.
+downstream, and measure interpretations in the optional `PolyFunProbability` library.
 
 This page is descriptive. The Lean source under
 [`PolyFun/Interaction/`](../../PolyFun/Interaction) is the canonical
@@ -42,9 +42,10 @@ The framework is organized around a few stable principles:
   `Process` wraps sequential `TypeTree` episodes into a coinductive stream.
 - **Observer-relative open composition.** The open-systems layer
   (`Interface`, `PortBoundary`, `OpenTheory`) provides compositional
-  operations (`map`, `par`, `wire`, `plug`). Computational equivalence,
-  asymptotic security, and other security-flavored UC layers are *not*
-  part of PolyFun: those live in
+  operations (`map`, `par`, `wire`, `plug`). Its emulation judgments
+  (`Emulates`, `UCSecure`) take the observation and the allowed classes as
+  parameters. Computational equivalence, asymptotic security, and the other
+  instantiations that make them security statements live in
   [`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio).
 
 ## Quick orientation
@@ -506,10 +507,10 @@ node. `OpenProcess m Party Δ` carries a sampler for each step, and its
 composition also needs scheduler choices. Reassociating a structural composite
 does not by itself preserve an effectful scheduler's semantics.
 
-Probability, distinguishing advantage, and computational security belong to
-VCVio. See [PolyFun and VCVio](polyfun-and-vcvio.md) for the ownership boundary;
-generic declarations named `UCSecure` in PolyFun are parameterized judgments,
-not instantiated cryptographic security claims.
+Distinguishing advantage and computational security belong to VCVio. See
+[PolyFun and VCVio](polyfun-and-vcvio.md) for the ownership boundary; generic
+declarations named `UCSecure` in PolyFun are parameterized judgments, not
+instantiated cryptographic security claims.
 
 ## Import guide
 

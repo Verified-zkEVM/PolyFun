@@ -32,6 +32,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [Execution](guides/execution.md): machine state, handler state, bounded runs, and networks.
 - [Open systems](guides/open-systems.md): composition laws, contexts, observations, and instantiation obligations.
 - [Program logic](guides/program-logic.md): support, ordered algebras, and weakest preconditions.
+- [Probability](guides/probability.md): the optional measure-theoretic layer and its quarantine.
 - [Realizability](guides/realizability.md): represented boundaries, admissible machines, and resource certificates.
 - [Bisimulation](guides/bisimulation.md): strong, delay, and weak behavioral relations.
 - [PolyFun and VCVio](guides/polyfun-and-vcvio.md): generic constructions and cryptographic interpretations.

@@ -29,6 +29,7 @@ EXCLUDED_PREFIXES = (".lake/", "scripts/PolyFunAxiomSweepTestFixtures/",
                      "Examples/Parliament/Fixtures/")
 # Generated umbrella modules contain only imports.
 EXCLUDED_FILES = {"PolyFun.lean", "ToCslib.lean", "ComplexityBackends.lean", "PolyFunIO.lean",
+                  "PolyFunProbability.lean",
                   "Examples/Parliament.lean"}
 
 PROCEDURAL_LIMIT = 20

@@ -16,7 +16,7 @@ usage() {
 Usage: ./scripts/validate.sh [--lint] [--test] [--axioms]
 
 Default checks:
-  - lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
+  - lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunProbability PolyFunExamples +PolyFunParliamentMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
   - uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
@@ -52,7 +52,7 @@ for arg in "$@"; do
 done
 
 echo "# Building project"
-lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
+lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunProbability PolyFunExamples +PolyFunParliamentMain --wfail
 
 echo ""
 echo "# Checking module scopes"
@@ -82,7 +82,7 @@ if (( run_lint )); then
     Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
     Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
     Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
-    Examples.Tutorials.BoundedController PolyFunIO \
+    Examples.Tutorials.BoundedController PolyFunIO PolyFunProbability \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -100,7 +100,7 @@ fi
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
+  lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunProbability PolyFunExamples +PolyFunParliamentMain --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -116,7 +116,7 @@ if (( run_axioms )); then
     --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
     --root Examples.Tutorials.BoundedController \
     --root Examples.Parliament \
-    --root PolyFunParliamentMain --root PolyFunIO --check
+    --root PolyFunParliamentMain --root PolyFunIO --root PolyFunProbability --check
 fi
 
 echo ""

@@ -11,8 +11,9 @@ interpretation. The *demonic* reading (`MonadAttach.toWPMonadDemonic`) asks the 
 every possible output, and the *angelic* reading (`MonadAttach.toWPMonadAngelic`) asks it of some
 possible output. Together they are the *support readings*. The *dual* reading of an exact
 interpretation (`ExactWPMonad.dual`) states upper bounds. An *expectation* reading takes
-postconditions valued in `ℝ≥0∞` and gives their expected values. VCVio, which builds on PolyFun,
-supplies the expectation reading of its oracle computations.
+postconditions valued in `ℝ≥0∞` and gives their expected values. A measure interpretation of a
+program, such as those in the optional `PolyFunProbability` library, determines one. VCVio, which
+builds on PolyFun, supplies the expectation reading of its oracle computations.
 [Names in VCVio](#names-in-vcvio) lists VCVio's names for these readings.
 
 For a small application-facing entry point, read
@@ -478,13 +479,15 @@ by explicit theorems, with the full-support, losslessness, and measurability hyp
 theorems need. An expectation reading does not change the attachment instance, and it satisfies
 `LawfulWPMonadAttach` only where a theorem proves it.
 
-## What stays downstream
+## What lives elsewhere
 
-Probability semantics stays downstream: output measures (`evalDist`), the expectation reading
-over `ℝ≥0∞` and the `Prob` carrier, couplings and pRHL/eRHL, concrete handler specifications,
-verification tactics specific to those readings, and any dependency on Loom2 or Iris/Bluebell.
-PolyFun supplies the generic definitions, the rule lemmas, and the quarantined `vcgen` bridges
-and specifications described above.
+The core program-logic modules stay free of measure theory. Measure interpretations of programs
+belong in the optional `PolyFunProbability` library (see [probability](probability.md)). VCVio
+keeps its oracle-specific readings and their notation: output measures (`evalDist`), the `Prob`
+carrier, couplings and pRHL/eRHL over oracle computations, concrete handler specifications, and
+verification tactics specific to those readings. Any dependency on Loom2 or Iris/Bluebell stays
+downstream. PolyFun supplies the generic definitions, the rule lemmas, and the quarantined `vcgen`
+bridges and specifications described above.
 
 ### Names in VCVio
 
