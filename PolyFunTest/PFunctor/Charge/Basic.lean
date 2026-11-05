@@ -225,4 +225,59 @@ def refundPrice (b : Two.A) : ℤ := if b then 5 else -5
 example : refundThenWork.IsChargeBound refundPrice 0 := by
   simp [refundThenWork, refundPrice]
 
+/-- Under the reversed order, every program meets the budget `0`: `≤` no longer bounds use. -/
+example (x : FreeM Coin Bool) (s : ℕᵒᵈ) :
+    x.IsChargeBound (fun _ => OrderDual.toDual (1 : ℕ)) (OrderDual.toDual 0) s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact Nat.zero_le _
+  | liftBind a r ih => exact ⟨Nat.zero_le _, fun b => ih b _⟩
+
+/-- `ℕ` with `max` as its addition. -/
+structure MaxNat where
+  /-- The underlying natural number. -/
+  val : ℕ
+
+instance : Add MaxNat := ⟨fun a b => ⟨max a.val b.val⟩⟩
+instance : LE MaxNat := ⟨fun a b => a.val ≤ b.val⟩
+instance : Zero MaxNat := ⟨⟨0⟩⟩
+
+/-- With `max` as addition, a budget bounds only the largest price: every program, however many
+calls it makes, meets the budget `1` at price `1`. -/
+example (x : FreeM Coin Bool) : x.IsChargeBound (fun _ => (⟨1⟩ : MaxNat)) ⟨1⟩ := by
+  suffices h : ∀ s : MaxNat, s.val ≤ 1 → x.IsChargeBound (fun _ => (⟨1⟩ : MaxNat)) ⟨1⟩ s from
+    h 0 (Nat.zero_le 1)
+  induction x using FreeM.rec with
+  | pure a => exact fun _ hs => hs
+  | liftBind a r ih =>
+    exact fun s hs => ⟨max_le hs le_rfl, fun b => ih b _ (max_le hs le_rfl)⟩
+
+/-! ## Restricted answers -/
+
+/-- Flip a coin; on `false`, make two more calls. -/
+def flipThenMore : FreeM Coin Bool := do
+  let b ← FreeM.lift (P := Coin) ()
+  if b then pure true else do
+    let _ ← FreeM.lift (P := Coin) ()
+    let _ ← FreeM.lift (P := Coin) ()
+    pure false
+
+/-- When the handler can only answer `true`, as a sampler supported on `true`, the continuation at
+`false` is never run, so one call fits the budget `1`. -/
+example : flipThenMore.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) 1 := by
+  simp [flipThenMore]
+
+/-- Without the restriction the budget `1` does not hold. -/
+example : ¬ flipThenMore.IsChargeBound (fun _ => (1 : ℕ)) 1 := by
+  simp [flipThenMore]
+
+/-- Every answer allowed: the restricted bound is the charge bound, and a charge bound holds under
+any restriction. -/
+example (x : FreeM Coin Bool) (n : ℕ) :
+    x.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ _ => True) n ↔ x.IsChargeBound (fun _ => 1) n :=
+  isChargeBoundUnder_true_iff x
+
+example (x : FreeM Coin Bool) (n : ℕ) (h : x.IsChargeBound (fun _ => (1 : ℕ)) n) :
+    x.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) n :=
+  h.under _
+
 end PolyFunTest.Charge

@@ -94,6 +94,47 @@ theorem roll_apply {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A →
     roll canRoll cost a k b ↔ canRoll a b ∧ ∀ y, k y (cost a b) :=
   Iff.rfl
 
+/-- The budget reading restricted to allowed answers: a call at `a` is admitted when the amount
+spent after it is at most `B`, and only the continuations at answers `b` with `allows a b` must stay
+within budget. It is the budget counterpart of `demonicUnder`; with every answer allowed it is
+`budget` (`budgetUnder_true`). -/
+def budgetUnder {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω)
+    (allows : (a : P.A) → P.B a → Prop) : OpSpec P (ω → Prop) :=
+  fun a k s => s + c a ≤ B ∧ ∀ b, allows a b → k b (s + c a)
+
+@[simp]
+theorem budgetUnder_apply {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω)
+    (allows : (a : P.A) → P.B a → Prop) (a : P.A) (k : P.B a → ω → Prop) (s : ω) :
+    budgetUnder c B allows a k s ↔ s + c a ≤ B ∧ ∀ b, allows a b → k b (s + c a) :=
+  Iff.rfl
+
+theorem budgetUnder_true {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) :
+    budgetUnder c B (fun (_ : P.A) _ => True) = budget c B := by
+  funext a k s
+  simp [budgetUnder, budget]
+
+theorem budgetUnder_monotone {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω)
+    (allows : (a : P.A) → P.B a → Prop) : (budgetUnder c B allows).Monotone :=
+  fun _ _ _ hk _ hs => ⟨hs.1, fun b hb => hk b _ (hs.2 b hb)⟩
+
+/-- The roll reading restricted to allowed answers: a call at `a` is admitted at state `b` when
+`canRoll a b`, and only the continuations at allowed answers start from `cost a b`. With every
+answer allowed it is `roll` (`rollUnder_true`). -/
+def rollUnder {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ)
+    (allows : (a : P.A) → P.B a → Prop) : OpSpec P (σ → Prop) :=
+  fun a k b => canRoll a b ∧ ∀ y, allows a y → k y (cost a b)
+
+@[simp]
+theorem rollUnder_apply {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ)
+    (allows : (a : P.A) → P.B a → Prop) (a : P.A) (k : P.B a → σ → Prop) (b : σ) :
+    rollUnder canRoll cost allows a k b ↔ canRoll a b ∧ ∀ y, allows a y → k y (cost a b) :=
+  Iff.rfl
+
+theorem rollUnder_true {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) :
+    rollUnder canRoll cost (fun (_ : P.A) _ => True) = roll canRoll cost := by
+  funext a k b
+  simp [rollUnder, roll]
+
 end OpSpec
 
 namespace FreeM
@@ -535,6 +576,218 @@ theorem IsChargeBound.liftM_nsmul [CanonicallyOrderedAdd ω] (handler : (a : P.A
   exact hstep a
 
 end Handler
+
+/-! ### Restricted answers
+
+A budget or roll bound can restrict the answers whose continuations it constrains, through a
+relation `allows : (a : P.A) → P.B a → Prop`, as `demonicUnder` restricts the demonic reading. A
+handler may return only some answers to a call, for example those in the support of a sampled
+distribution; the continuations at the other answers are never run, so they need no budget. With
+every answer allowed, the restricted bounds are the unrestricted ones (`isRollBoundUnder_true_iff`,
+`isChargeBoundUnder_true_iff`), and a charge bound is a roll bound under the same restriction
+(`isChargeBoundUnder_iff_isRollBoundUnder`). -/
+
+section Under
+
+variable {allows allows' : (a : P.A) → P.B a → Prop}
+
+/-- The roll bound along allowed answers: `canRoll` must hold at each call, and the state is
+updated by `cost`, only along the answers that `allows` admits. -/
+def IsRollBoundUnder {σ : Type w} (x : FreeM P α) (b : σ) (canRoll : P.A → σ → Prop)
+    (cost : P.A → σ → σ) (allows : (a : P.A) → P.B a → Prop) : Prop :=
+  wpFold (OpSpec.rollUnder canRoll cost allows) x (fun _ _ => True) b
+
+theorem isRollBoundUnder_liftBind_iff {σ : Type w} (a : P.A) (r : P.B a → FreeM P α) (b : σ)
+    (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) :
+    IsRollBoundUnder (FreeM.liftBind a r) b canRoll cost allows ↔
+      canRoll a b ∧ ∀ y, allows a y → IsRollBoundUnder (r y) (cost a b) canRoll cost allows :=
+  Iff.rfl
+
+/-- With every answer allowed, the restricted roll bound is the roll bound. -/
+theorem isRollBoundUnder_true_iff {σ : Type w} (x : FreeM P α) (b : σ)
+    (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) :
+    IsRollBoundUnder x b canRoll cost (fun _ _ => True) ↔ IsRollBound x b canRoll cost := by
+  rw [isRollBound_iff_wpFold, IsRollBoundUnder, OpSpec.rollUnder_true]
+
+variable [Add ω] [LE ω] [Zero ω] {c : P.A → ω} {B s : ω}
+
+/-- `x.IsChargeBoundUnder c allows B s`: with `s` already spent, every call of `x` keeps the amount
+spent at most `B`, and every leaf is reached within `B`, along the answers that `allows` admits. -/
+def IsChargeBoundUnder (x : FreeM P α) (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop) (B : ω)
+    (spent : ω := 0) : Prop :=
+  wpFold (OpSpec.budgetUnder c B allows) x (fun _ s => s ≤ B) spent
+
+@[simp, freeM_unfold]
+theorem isChargeBoundUnder_pure_iff (a : α) :
+    IsChargeBoundUnder (pure a : FreeM P α) c allows B s ↔ s ≤ B :=
+  Iff.rfl
+
+@[freeM_unfold]
+theorem isChargeBoundUnder_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) :
+    IsChargeBoundUnder (FreeM.liftBind a r) c allows B s ↔
+      s + c a ≤ B ∧ ∀ b, allows a b → IsChargeBoundUnder (r b) c allows B (s + c a) :=
+  Iff.rfl
+
+@[simp]
+theorem isChargeBoundUnder_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) :
+    IsChargeBoundUnder ((FreeM.lift a).bind (α := no_index (P.B a)) r) c allows B s ↔
+      s + c a ≤ B ∧ ∀ b, allows a b → IsChargeBoundUnder (r b) c allows B (s + c a) :=
+  Iff.rfl
+
+/-- With every answer allowed, the restricted charge bound is the charge bound. -/
+theorem isChargeBoundUnder_true_iff (x : FreeM P α) :
+    IsChargeBoundUnder x c (fun _ _ => True) B s ↔ IsChargeBound x c B s := by
+  rw [IsChargeBoundUnder, OpSpec.budgetUnder_true]
+  rfl
+
+/-- A charge bound holds under every restriction of the answers. -/
+theorem IsChargeBound.under {x : FreeM P α} (h : IsChargeBound x c B s)
+    (allows : (a : P.A) → P.B a → Prop) : IsChargeBoundUnder x c allows B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact h
+  | liftBind a r ih => exact ⟨h.1, fun b _ => ih b (h.2 b)⟩
+
+/-- Allowing fewer answers keeps a program within budget. -/
+theorem IsChargeBoundUnder.mono_allows {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
+    (hle : ∀ a b, allows' a b → allows a b) : IsChargeBoundUnder x c allows' B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact h
+  | liftBind a r ih => exact ⟨h.1, fun b hb => ih b (h.2 b (hle a b hb))⟩
+
+/-- `isChargeBoundUnder_lift_bind_iff` when results and directions share a universe. -/
+@[simp]
+theorem isChargeBoundUnder_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) :
+    IsChargeBoundUnder (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) r) c allows B s ↔
+      s + c a ≤ B ∧ ∀ b, allows a b → IsChargeBoundUnder (r b) c allows B (s + c a) :=
+  Iff.rfl
+
+@[simp]
+theorem isChargeBoundUnder_lift_iff (a : P.A) :
+    IsChargeBoundUnder (α := no_index (P.B a)) (FreeM.lift a) c allows B s ↔ s + c a ≤ B :=
+  ⟨fun h => h.1, fun h => ⟨h, fun _ _ => h⟩⟩
+
+/-- Sequencing, exactly: the continuation starts from whatever amount each allowed branch of `x`
+has spent. -/
+theorem isChargeBoundUnder_bind_iff {γ : Type v'} (x : FreeM P α) (f : α → FreeM P γ) :
+    IsChargeBoundUnder (FreeM.bind x f) c allows B s ↔
+      wpFold (OpSpec.budgetUnder c B allows) x
+        (fun a s' => IsChargeBoundUnder (f a) c allows B s') s := by
+  unfold IsChargeBoundUnder
+  rw [wpFold_bind']
+
+@[simp]
+theorem isChargeBoundUnder_bind_iff' (x : FreeM P α) (f : α → FreeM P β) :
+    IsChargeBoundUnder (x >>= f) c allows B s ↔
+      wpFold (OpSpec.budgetUnder c B allows) x
+        (fun a s' => IsChargeBoundUnder (f a) c allows B s') s :=
+  isChargeBoundUnder_bind_iff x f
+
+@[simp]
+theorem isChargeBoundUnder_ite (p : Prop) [Decidable p] (x y : FreeM P α) :
+    IsChargeBoundUnder (if p then x else y) c allows B s ↔
+      if p then IsChargeBoundUnder x c allows B s else IsChargeBoundUnder y c allows B s := by
+  split <;> rfl
+
+@[simp]
+theorem isChargeBoundUnder_map_iff {γ : Type v'} (f : α → γ) (x : FreeM P α) :
+    IsChargeBoundUnder (FreeM.map f x) c allows B s ↔ IsChargeBoundUnder x c allows B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact Iff.rfl
+  | liftBind a r ih =>
+    exact and_congr_right fun _ => forall_congr' fun b => imp_congr_right fun _ => ih b
+
+@[simp]
+theorem isChargeBoundUnder_map_iff' (f : α → β) (x : FreeM P α) :
+    IsChargeBoundUnder (f <$> x) c allows B s ↔ IsChargeBoundUnder x c allows B s :=
+  isChargeBoundUnder_map_iff f x
+
+end Under
+
+section OrderedUnder
+
+variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] {c : P.A → ω} {B B' s s' : ω}
+  {allows : (a : P.A) → P.B a → Prop}
+
+omit [IsOrderedAddMonoid ω] in
+/-- A larger budget keeps a program within budget. -/
+theorem IsChargeBoundUnder.mono {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
+    (hB : B ≤ B') : IsChargeBoundUnder x c allows B' s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact h.trans hB
+  | liftBind a r ih => exact ⟨h.1.trans hB, fun b hb => ih b (h.2 b hb)⟩
+
+omit [IsOrderedAddMonoid ω] in
+/-- **Sequencing along a demonic postcondition.** If `x` stays within `L ≤ B`, every result `x` can
+return along allowed answers satisfies `post`, and from any amount at most `L` each continuation at
+such a result stays within `B`, then `x >>= f` stays within `B`. -/
+theorem IsChargeBoundUnder.bind_of_le {γ : Type v'} {x : FreeM P α} {f : α → FreeM P γ} {L : ω}
+    {post : α → Prop} (hx : IsChargeBoundUnder x c allows L s)
+    (hpost : wpFold (OpSpec.demonicUnder allows) x post) (hL : L ≤ B)
+    (hf : ∀ a, post a → ∀ s', s' ≤ L → IsChargeBoundUnder (f a) c allows B s') :
+    IsChargeBoundUnder (FreeM.bind x f) c allows B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact hf a hpost s hx
+  | liftBind a r ih => exact ⟨hx.1.trans hL, fun b hb => ih b (hx.2 b hb) (hpost b hb)⟩
+
+
+/-- Starting from less spent keeps a program within budget. -/
+theorem IsChargeBoundUnder.mono_spent {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
+    (hs : s' ≤ s) : IsChargeBoundUnder x c allows B s' := by
+  induction x using FreeM.rec generalizing s s' with
+  | pure a => exact hs.trans h
+  | liftBind a r ih =>
+    have hs' : s' + c a ≤ s + c a := add_le_add hs le_rfl
+    exact ⟨hs'.trans h.1, fun b hb => ih b (h.2 b hb) hs'⟩
+
+/-- Shifting the spent amount shifts the budget. -/
+theorem IsChargeBoundUnder.add_left {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)
+    (t : ω) : IsChargeBoundUnder x c allows (t + B) (t + s) := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact add_le_add le_rfl h
+  | liftBind a r ih =>
+    refine ⟨?_, fun b hb => ?_⟩
+    · rw [add_assoc]; exact add_le_add le_rfl h.1
+    · rw [add_assoc]; exact ih b (h.2 b hb)
+
+/-- **Transfer through a free handler with restricted answers.** If each implementation stays
+within its call's charge along the target's allowed answers, and every result it can return along
+those answers is an allowed source answer, then simulating a program within `B` along the source's
+allowed answers stays within `B` along the target's. -/
+theorem IsChargeBoundUnder.liftM {Q : PFunctor.{uA₂, uB}} {γ : Type uB}
+    (handler : (a : P.A) → FreeM Q (P.B a)) {d : Q.A → ω} {allowsQ : (q : Q.A) → Q.B q → Prop}
+    (hstep : ∀ a, IsChargeBoundUnder (handler a) d allowsQ (c a))
+    (hout : ∀ a, wpFold (OpSpec.demonicUnder allowsQ) (handler a) (allows a))
+    {x : FreeM P γ} (hx : IsChargeBoundUnder x c allows B s) :
+    IsChargeBoundUnder (x.liftM handler) d allowsQ B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact hx
+  | liftBind a r ih =>
+    change IsChargeBoundUnder (FreeM.bind (handler a) fun b => (r b).liftM handler) d allowsQ B s
+    have hh := (hstep a).add_left s
+    rw [add_zero] at hh
+    exact hh.bind_of_le (hout a) hx.1 fun b hb s' hs' => (ih b (hx.2 b hb)).mono_spent hs'
+
+end OrderedUnder
+
+section CanonicalUnder
+
+variable [AddCommMonoid ω] [PartialOrder ω] [CanonicallyOrderedAdd ω] {c : P.A → ω} {B s : ω}
+  {allows : (a : P.A) → P.B a → Prop}
+
+/-- A restricted charge bound in spent-amount form is a restricted roll bound whose state is the
+amount spent. -/
+theorem isChargeBoundUnder_iff_isRollBoundUnder (x : FreeM P α) :
+    IsChargeBoundUnder x c allows B s ↔
+      s ≤ B ∧ IsRollBoundUnder x s (fun a t => t + c a ≤ B) (fun a t => t + c a) allows := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact ⟨fun h => ⟨h, trivial⟩, fun h => h.1⟩
+  | liftBind a r ih =>
+    rw [isChargeBoundUnder_liftBind_iff, isRollBoundUnder_liftBind_iff]
+    simp only [ih]
+    exact ⟨fun h => ⟨le_self_add.trans h.1, h.1, fun b hb => (h.2 b hb).2⟩,
+      fun h => ⟨h.2.1, fun b hb => ⟨h.2.1, h.2.2 b hb⟩⟩⟩
+
+end CanonicalUnder
 
 end FreeM
 

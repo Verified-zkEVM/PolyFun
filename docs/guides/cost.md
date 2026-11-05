@@ -52,6 +52,25 @@ fold, of `OpSpec.roll canRoll cost` (`isRollBound_iff_wpFold`).
 Roll bounds also express protocols that are not additive, such as "never call `b` after `a`".
 Charge bounds trade that generality for the laws below, which hold with no side conditions.
 
+### Restricted answers
+
+A handler may return only some answers to a call, for example those in the support of a sampled
+distribution. The continuations at the other answers never run, so they need no budget. Both
+automata take a relation `allows : (a : P.A) → P.B a → Prop` for this, as `demonicUnder` restricts
+the demonic reading:
+
+- `IsRollBoundUnder` and `IsChargeBoundUnder` are the folds of `OpSpec.rollUnder` and
+  `OpSpec.budgetUnder`, which constrain only the continuations at allowed answers.
+- With every answer allowed they are `IsRollBound` and `IsChargeBound` (`isRollBoundUnder_true_iff`,
+  `isChargeBoundUnder_true_iff`), and a charge bound holds under every restriction
+  (`IsChargeBound.under`).
+- A restricted charge bound is a restricted roll bound whose state is the amount spent
+  (`isChargeBoundUnder_iff_isRollBoundUnder`).
+- Sequencing takes a demonic postcondition on the results the first program can return along
+  allowed answers (`IsChargeBoundUnder.bind_of_le`). A free handler transfers a restricted bound
+  when each implementation returns only allowed source answers along the target's allowed answers
+  (`IsChargeBoundUnder.liftM`).
+
 ## Accounting boundary
 
 A charge bound is a bound on interface use, relative to an accounting boundary. It charges the
@@ -77,7 +96,9 @@ contract needs more:
 - **Finitely many kinds.** With `K → ℕ` and infinite `K`, a pointwise budget does not bound total
   use: one call to each of many kinds meets a budget of `1` per kind. Use `K →₀ ℕ`, or `[Finite K]`.
 - **The usual order and addition.** A reversed order, or a max-based addition, makes `≤ B` mean
-  something else.
+  something else: under the reversed order every program meets the budget `0`, and with `max` as
+  addition a budget bounds only the largest price (both tested in
+  `PolyFunTest/PFunctor/Charge/Basic.lean`).
 - **Availability and termination stated separately.** A budget says nothing about divergence, or
   about whether a call can be answered. Keep `CallsIn` or an availability predicate as its own
   conjunct.
