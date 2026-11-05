@@ -54,35 +54,12 @@ variable {P : PFunctor.{uA, uB}} {α : Type uB}
 
 /-! ## Budgets are charge bounds -/
 
-/-- Subtractive per-position budgets are exactly upper bounds on the worst-case charge fold. -/
+/-- Subtractive per-position budgets are exactly upper bounds on the worst-case charge fold: the
+natural-number case of `isChargeBound_iff_cost_natCast_le`. -/
 theorem isRollBound_iff_wpFold_charge (c : P.A → ℕ) (x : FreeM P α) (n : ℕ) :
     IsRollBound x n (fun a b => c a ≤ b) (fun a b => b - c a) ↔
-      wpFold (OpSpec.charge fun a => (c a : ℕ∞)) x (fun _ => 0) ≤ n := by
-  induction x generalizing n with
-  | pure x => exact iff_of_true trivial (by simp)
-  | lift_bind a r ih =>
-    rw [isRollBound_lift_bind_iff]
-    change _ ↔ ((c a : ℕ∞) + ⨆ b, wpFold _ (r b) fun _ => 0) ≤ (n : ℕ∞)
-    constructor
-    · rintro ⟨hc, hr⟩
-      have hsup : (⨆ b, wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) fun _ => 0) ≤
-          ((n - c a : ℕ) : ℕ∞) := iSup_le fun b => (ih b (n - c a)).1 (hr b)
-      calc (c a : ℕ∞) + ⨆ b, wpFold _ (r b) (fun _ => 0)
-          ≤ (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by gcongr
-        _ = n := by rw [← Nat.cast_add, Nat.add_sub_cancel' hc]
-    · intro h
-      have hc : c a ≤ n := by
-        have : (c a : ℕ∞) ≤ n := le_trans le_self_add h
-        exact_mod_cast this
-      refine ⟨hc, fun b => (ih b (n - c a)).2 ?_⟩
-      have hb : wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) (fun _ => 0) ≤
-          ⨆ b, wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) fun _ => 0 :=
-        le_iSup (fun b => wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) fun _ => 0) b
-      have h' : (c a : ℕ∞) + wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) (fun _ => 0) ≤
-          (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by
-        rw [← Nat.cast_add, Nat.add_sub_cancel' hc]
-        exact le_trans (by gcongr) h
-      exact (ENat.add_le_add_iff_left (ENat.natCast_ne_top _)).1 h'
+      wpFold (OpSpec.charge fun a => (c a : ℕ∞)) x (fun _ => 0) ≤ n :=
+  (isChargeBound_iff_isRollBound_nat x c n).symm.trans isChargeBound_iff_cost_natCast_le
 
 /-- Total roll bounds are unit-charge bounds. -/
 theorem isTotalRollBound_iff_wpFold_charge (x : FreeM P α) (n : ℕ) :
@@ -93,33 +70,19 @@ theorem isTotalRollBound_iff_wpFold_charge (x : FreeM P α) (n : ℕ) :
 /-! ## Simulation overhead -/
 
 /-- The charge fold splits off the continuation: the charge-to-go is at most the program's own
-charge plus the worst continuation value. -/
+charge plus the worst continuation value. This is `costWith_le_cost_add` in `ℕ∞`. -/
 theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞) {β : Type uB} (y : FreeM Q β)
     (k : β → ℕ∞) :
-    wpFold (OpSpec.charge c) y k ≤ wpFold (OpSpec.charge c) y (fun _ => 0) + ⨆ b, k b := by
-  induction y with
-  | pure b => simpa using le_iSup k b
-  | lift_bind a r ih =>
-    change c a + (⨆ u, wpFold _ (r u) k) ≤ (c a + ⨆ u, wpFold _ (r u) fun _ => 0) + ⨆ b, k b
-    rw [add_assoc]
-    gcongr
-    refine iSup_le fun u => (ih u).trans ?_
-    gcongr
-    exact le_iSup (fun u => wpFold (OpSpec.charge c) (r u) fun _ => 0) u
+    wpFold (OpSpec.charge c) y k ≤ wpFold (OpSpec.charge c) y (fun _ => 0) + ⨆ b, k b :=
+  costWith_le_cost_add y k
 
 /-- **Simulation overhead.** A program simulated through a handler costs at most the program with
-each call at `a` charged the handler's worst-case cost at `a`. -/
+each call at `a` charged the handler's worst-case cost at `a`. This is `cost_liftM_le` in `ℕ∞`. -/
 theorem wpFold_charge_liftM_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞)
     (handler : (a : P.A) → FreeM Q (P.B a)) (x : FreeM P α) :
     wpFold (OpSpec.charge c) (x.liftM handler) (fun _ => 0) ≤
-      wpFold (OpSpec.charge (handlerCost c handler)) x (fun _ => 0) := by
-  rw [wpFold_liftM]
-  induction x with
-  | pure x => exact le_rfl
-  | lift_bind a r ih =>
-    change wpFold (OpSpec.charge c) (handler a) (fun u => wpFold _ (r u) _) ≤
-      handlerCost c handler a + ⨆ u, wpFold _ (r u) _
-    exact (wpFold_charge_le c (handler a) _).trans (add_le_add (le_refl _) (iSup_mono ih))
+      wpFold (OpSpec.charge (handlerCost c handler)) x (fun _ => 0) :=
+  cost_liftM_le c handler x
 
 /-! ## Ranked simulation triples -/
 
