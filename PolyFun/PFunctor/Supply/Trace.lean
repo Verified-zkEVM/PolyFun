@@ -193,10 +193,13 @@ variable {program : FreeM P α} {s s' : Supply P} {a : P.A} {n : Nat} {u : P.B a
 
 /-- **Substituting the supply substitutes the trace.** If the run reaches the `n`-th occurrence of
 `a` at all, the answer it takes there is the substituted one. -/
-theorem getAt?_trace_runPath_setAt (hn : n < (s a).length) {path : FreeM.Path program}
+theorem getAt?_trace_runPath_setAt {path : FreeM.Path program}
     (h : runPath program (s.setAt a n u) = some (path, s'))
     (hocc : n < TraceList.occurrences a (FreeM.Path.trace program path)) :
     TraceList.getAt? (FreeM.Path.trace program path) a n = some u := by
+  have hle := occurrences_le_length h a
+  rw [length_setAt] at hle
+  have hn : n < (s a).length := lt_of_lt_of_le hocc hle
   rw [getAt?_trace_runPath program a n _ s' path h hocc, getElem?_setAt_self s a u hn]
 
 /-- Every other answer at the substituted position is untouched. -/
