@@ -1,9 +1,16 @@
 # PolyFun and VCVio
 
-PolyFun supplies general constructions for typed interaction. VCVio specializes
+PolyFun supplies general constructions for typed interaction and interprets them
+measure-theoretically. VCVio specializes
 those constructions to cryptographic computations and security proofs. Their
 connection is a dependency and an API boundary: the generic library can be
 used independently in semantics, effect handling, and concurrent systems.
+
+The line between the libraries is security, not probability. A construction whose
+statement needs no security notion belongs in PolyFun, in a `Measure` companion
+when it needs measures. Security experiments, distinguishing advantage, adversary
+classes, negligibility, hardness assumptions, named reductions and schemes belong
+in VCVio.
 
 ## Who owns what
 
@@ -11,10 +18,10 @@ used independently in semantics, effect handling, and concurrent systems.
 |---|---|
 | Mathlib | `PFunctor`, W-types and M-types, algebra and order theory, and supporting mathematics |
 | CSLib | `PFunctor.FreeM`, the functor-generic `Cslib.FreeM`, and reusable computer-science infrastructure |
-| PolyFun | Polynomial morphisms and handlers; paths and replay structure; programs, behaviors, machines, and their laws; protocol shapes; open composition; generic support/WP and realizability |
-| `ToCslib` | Staged extensions of upstream interfaces: free-monad and loop laws, an order bridge, omega-CPO fixed points, bitvector and polynomial lemmas |
+| PolyFun | Polynomial morphisms and handlers; paths and replay structure; programs, behaviors, machines, and their laws; protocol shapes; open composition; generic support/WP and realizability; measure interpretations |
+| `ToCslib` | Staged extensions of upstream interfaces: free-monad and loop laws, an order bridge, omega-CPO fixed points, bitvector, polynomial, measure and kernel lemmas |
 | `ComplexityBackends` | Optional concrete machine models and the backend-specific certificates connecting them to PolyFun realizability |
-| VCVio | Probability and distributions, cryptographic experiments and adversary restrictions, security definitions, reductions, and concrete cryptographic applications |
+| VCVio | Oracle computations and their probability conventions and notation, cryptographic experiments and adversary restrictions, security definitions, reductions, and concrete cryptographic applications |
 
 Generic resource accounting is already part of PolyFun. Concrete complexity
 theory lives in `ComplexityBackends`, whose cslib single-tape backend includes a
@@ -41,7 +48,7 @@ its own encoding, probability, resource, and adequacy obligations.
 | Positions of an indexed oracle sum `Σₚ i, spec i` | `PFunctor.sigma.mk`, `sigma.fst`, `sigma.snd`, `sigma.rec`, `sigma.B_mk` |
 | `simulateQ` | Interpretation through the free-monad handler extension |
 | Oracle strategies and returning implementations | Specializations of polynomial dynamical systems and returning computations |
-| Probability of an output or event | A downstream interpretation, not a field of the generic request tree |
+| Probability of an output or event | A measure interpretation of the request tree, not a field of it; generic interpretations are in PolyFun's measure companions, and VCVio's `Pr{…}[…]` notation reads them |
 
 The program and handler correspondences can be inspected in VCVio's
 [OracleComp](https://github.com/Verified-zkEVM/VCVio/blob/main/VCVio/OracleComp/OracleComp.lean)
@@ -56,11 +63,12 @@ VCVio can instantiate it with a stateful probabilistic interpretation to compose
 oracle simulations. That structural law alone does not prove that two different
 handlers induce equal distributions, preserve a shared random-oracle cache, or
 have the same running time. Those are additional statements about the chosen
-interpretations.
+interpretations. Statements about distributions that need no security notion
+belong in PolyFun's measure companions.
 
 Likewise, a replay cursor identifies and reconstructs branches of a free
-program. A forking probability bound needs probability semantics and the
-cryptographic experiment. PolyFun's open-system composition laws need a chosen
+program. A forking probability bound needs a measure interpretation of the
+program and, to become a security statement, the cryptographic experiment. PolyFun's open-system composition laws need a chosen
 observation; a concrete security interpretation must establish that its
 observation and allowed contexts satisfy the required laws.
 
@@ -69,8 +77,8 @@ observation and allowed contexts satisfy the required laws.
 Put reusable polynomial, monadic, machine, and structural interaction laws in
 PolyFun. Put reusable upstream extensions in `ToCslib` while they are staged.
 Put a concrete machine model in its own subdirectory of `ComplexityBackends`.
-Put definitions whose
-meaning depends on probability or cryptographic security in VCVio or a more
+Put measure interpretations that need no security notion in PolyFun's measure companions.
+Put definitions whose meaning depends on cryptographic security in VCVio or a more
 specialized downstream library.
 
 The [program-logic guide](program-logic.md), [realizability guide](realizability.md),

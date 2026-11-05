@@ -2,9 +2,10 @@
 
 PolyFun is a Lean 4 library for polynomial interfaces, programs, machines,
 interaction trees, generic open-system composition, program logic, and
-realizability. It extends Mathlib and CSLib. Cryptographic interpretations,
-probability semantics, distinguishing advantage, and scheme-specific proofs
-belong in [VCVio](https://github.com/Verified-zkEVM/VCVio).
+realizability. It extends Mathlib and CSLib. Cryptographic security
+notions belong in [VCVio](https://github.com/Verified-zkEVM/VCVio): security
+experiments, distinguishing advantage, adversary classes, negligibility, hardness
+assumptions, named reductions and scheme-specific proofs.
 
 `AGENTS.md` is the canonical agent guide, and `CLAUDE.md` is its symlink.
 Human readers should start with [README.md](README.md) and the
@@ -58,14 +59,20 @@ boundary. Imports flow downward and must remain acyclic.
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
 and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
 CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`. Extend them.
-`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, probability
+`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend
 or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`, and PolyFun never
 imports a backend. `scripts/check-modules.sh` enforces both directions.
 
 ## Semantic boundaries
 
-- Parameterize generic effects by an abstract monad. Keep oracle/probability
-  interpretations, security policy and concrete protocol runtime semantics downstream.
+- Parameterize generic effects by an abstract monad. Keep oracle
+  conventions, security policy and concrete protocol runtime semantics downstream.
+- PolyFun contains no cryptographic security notions: security experiments,
+  distinguishing advantage, adversary classes, negligibility, hardness assumptions,
+  named reductions or schemes. The emulation judgments in `Interaction/Open/`
+  (`Emulates`, `UCSecure`, `SecurelyEmulates`) are structural.
+  They take the observation and the allowed classes as parameters, and VCVio
+  supplies the observations and classes that make them security statements.
 - `TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`. Its `done` and
   `node` are `@[match_pattern, reducible]` wrappers. Preserve pattern matching
   and definitional equality with the substrate.
