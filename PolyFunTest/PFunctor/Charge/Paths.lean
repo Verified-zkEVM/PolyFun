@@ -8,6 +8,7 @@ module
 
 public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.Interaction.Basic.TypeTree
+public import Mathlib.Algebra.Ring.Int.Defs
 
 /-!
 # Charges of completed paths
@@ -19,7 +20,9 @@ Checks for `PolyFun.PFunctor.Free.Path.Charge`:
 * a call with no answers ends no completed path, so the worst-case cost is the supremum of path
   charges only when every call has an answer;
 * the completed-path bound transfers through a free handler, keeping the output;
-* relabelling into a sum with a charge that ignores the other summand keeps path charges;
+* relabelling into a sum with a charge that ignores the other summand keeps path charges, also
+  along a change of cost monoid;
+* splitting a path through a bind inverts joining, and the charge adds;
 * charging distinct keys is subadditive and below the additive charge;
 * weights on the nodes of a protocol bound a path by its length.
 -/
@@ -116,6 +119,23 @@ example {α : Type} (x : FreeM Coin α) (q : Path (x.mapLens (Lens.inl (Q := Two
     Path.charge (Sum.elim (fun _ => (1 : ℤ)) fun _ => 0) (x.mapLens Lens.inl) q =
       Path.charge (fun _ => (1 : ℤ)) x (Path.pullMapLens Lens.inl x q) :=
   Path.charge_mapLens_eq_map (AddMonoidHom.id ℤ) Lens.inl (fun _ => rfl) x q
+
+/-- Charging in `ℕ` and casting to `ℤ` is charging the cast: a change of cost monoid along an
+additive map. -/
+example {α : Type} (x : FreeM Coin α) (q : Path (x.mapLens (Lens.inl (Q := Two)))) :
+    Path.charge (Sum.elim (fun _ => (1 : ℤ)) fun _ => 0) (x.mapLens Lens.inl) q =
+      Nat.cast (R := ℤ) (Path.charge (fun _ => (1 : ℕ)) x (Path.pullMapLens Lens.inl x q)) :=
+  Path.charge_mapLens_eq_map (Nat.castAddMonoidHom ℤ) Lens.inl (fun _ => rfl) x q
+
+/-! ## Splitting and joining paths through a bind -/
+
+/-- Splitting a joined path recovers its parts, and the charge adds. -/
+example {α β : Type} (x : FreeM Coin α) (f : α → FreeM Coin β) (p : Path x)
+    (q : Path (f (output x p))) :
+    Path.splitBind x f (Path.joinBind x f p q) = ⟨p, q⟩ ∧
+      Path.charge (fun _ => (1 : ℕ)) _ (Path.joinBind x f p q) =
+        Path.charge (fun _ => 1) x p + Path.charge (fun _ => 1) _ q :=
+  ⟨Path.splitBind_joinBind x f p q, Path.charge_joinBind x f p q⟩
 
 /-! ## Sums, coordinates and the charge of the path taken -/
 
