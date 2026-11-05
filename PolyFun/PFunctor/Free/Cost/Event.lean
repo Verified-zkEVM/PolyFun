@@ -180,7 +180,7 @@ end Bound
 
 section Ordered
 
-variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] {e : P.Idx → ω} {B s : ω}
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] {e : P.Idx → ω} {B s : ω}
 
 /-- A charge paid when the call is made, at least the event charge of every answer, gives an event
 bound. -/
@@ -193,7 +193,7 @@ theorem IsEventChargeBound.of_isChargeBound {c : P.A → ω} (he : ∀ i, e i �
     have hb : s + e ⟨a, b⟩ ≤ s + c a := add_le_add le_rfl (he ⟨a, b⟩)
     exact ⟨hb.trans h.1, ih b (IsChargeBound.mono_spent (h.2 b) hb)⟩
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- An event bound bounds the event charge of every completed path. -/
 theorem eventCharge_le_of_isEventChargeBound {x : FreeM P α} (h : x.IsEventChargeBound e B s)
     (p : Path x) : s + Path.eventCharge e x p ≤ B := by
@@ -208,7 +208,7 @@ theorem eventCharge_le_of_isEventChargeBound {x : FreeM P α} (h : x.IsEventChar
     rw [← add_assoc]
     exact ih b (h b).2 p
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] [AddRightMono ω] in
 /-- Event bounds are monotone in the budget. -/
 theorem IsEventChargeBound.mono {x : FreeM P α} {B' : ω} (h : x.IsEventChargeBound e B s)
     (hB : B ≤ B') : x.IsEventChargeBound e B' s := by
@@ -231,7 +231,7 @@ end Ordered
 
 section Canonical
 
-variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω]
   {e : P.Idx → ω} {B₁ B₂ s : ω}
 
 omit [CanonicallyOrderedAdd ω] in
@@ -321,10 +321,10 @@ end Watermark
 
 namespace FreeM
 
-variable {P : PFunctor.{uA, uB}} {α : Type v} {ω : Type w} [AddCommMonoid ω] [LinearOrder ω]
-  [IsOrderedAddMonoid ω] {c : P.A → ω} {B s : ω}
+variable {P : PFunctor.{uA, uB}} {α : Type v} {ω : Type w} [AddMonoid ω] [LinearOrder ω]
+  [AddLeftMono ω] {c : P.A → ω} {B s : ω}
 
-omit [IsOrderedAddMonoid ω] in
+omit [AddLeftMono ω] in
 /-- The peak of a path's watermark is at least `0`: it counts the empty prefix. -/
 theorem Path.zero_le_peak (x : FreeM P α) (p : Path x) :
     0 ≤ (Path.charge (Watermark.of ∘ c) x p).peak := by
@@ -344,7 +344,7 @@ theorem Path.net_le_peak (x : FreeM P α) (p : Path x) :
     rcases p with ⟨b, p⟩
     change c a + (Path.charge (Watermark.of ∘ c) (r b) p).net ≤
       max (max 0 (c a)) (c a + (Path.charge (Watermark.of ∘ c) (r b) p).peak)
-    exact le_max_of_le_right (add_le_add le_rfl (ih b p))
+    exact le_max_of_le_right (add_le_add_right (ih b p) _)
 
 /-- The peak of a path's watermark from `s` spent: the highest amount spent along the path. -/
 private theorem add_peak_liftBind (a : P.A) (r : P.B a → FreeM P α) (b : P.B a) (p : Path (r b)) :
