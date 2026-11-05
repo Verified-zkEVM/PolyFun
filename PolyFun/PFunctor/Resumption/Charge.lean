@@ -91,7 +91,8 @@ end Bound
 
 /-- The safety reading is the value bound, where addition distributes over nonempty suprema. -/
 theorem isChargeBound_iff_cost_le [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω]
-    [AddRightMono ω] [CanonicallyOrderedAdd ω] [AddSupDistrib ω] {c : p.A → ω} {B : ω} {r : Resumption p β} :
+    [AddRightMono ω] [CanonicallyOrderedAdd ω] [AddSupDistrib ω] {c : p.A → ω} {B : ω}
+    {r : Resumption p β} :
     r.IsChargeBound c B ↔ cost c r ≤ B := by
   simp only [IsChargeBound, cost, iSup_le_iff, FreeM.isChargeBound_iff_cost_le]
 
