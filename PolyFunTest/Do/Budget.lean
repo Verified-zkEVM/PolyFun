@@ -31,7 +31,7 @@ Checks for `PolyFun.PFunctor.Free.WP.Budget`:
 public section
 
 open Std.WP PFunctor
-open scoped PFunctor.FreeM.BudgetReading PFunctor.Handler.ChargeSteps
+attribute [local spec] PFunctor.FreeM.Spec.lift_budget PFunctor.Handler.withCharge_eq_modify
 
 set_option experimental.vcgen true
 
