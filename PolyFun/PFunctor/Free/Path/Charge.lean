@@ -32,9 +32,14 @@ signed weights, for which a prefix may overspend a budget that every completed p
 * paths pull back along lenses and leaf maps with the pulled-back charge (`charge_pullMapLens`,
   `charge_pullMap`), and along a lens whose charges agree up to an additive map the charge is
   that map applied (`charge_mapLens_eq_map`);
+* `joinBind` is its inverse, and the charge adds (`charge_joinBind`);
 * a path through a simulated program refines to a path through the source program with the
   same output and at least its charge, when each implementation is within its call's charge on
-  every completed path (`exists_path_liftM`, `charge_liftM_le_of_forall`);
+  every completed path (`exists_path_liftM`, `charge_liftM_le_of_forall`), also for bounds
+  restricted to an output predicate (`charge_liftM_le_of_forall_output`);
+* exactly, the paths through a simulated program are the paths through the source program
+  together with a path through each call's implementation returning the answer taken
+  (`exists_path_liftM_iff`, with `Demand`);
 * with subsingleton answers there is exactly one path, so the completed-path bound is the charge
   of that path (`forall_charge_le_iff_ofHandler`).
 
@@ -194,6 +199,33 @@ theorem charge_splitBind [AddMonoid ω] {β : Type v'} (x : FreeM P α) (f : α 
     rw [ih b q, add_assoc]
     rfl
 
+/-- Join a completed path through `x` with a completed path through the continuation at its
+output: the inverse of `splitBind`. -/
+def joinBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) → (p : Path x) →
+    Path (f (output x p)) → Path (FreeM.bind x f)
+  | .pure _, _, _, q => q
+  | .liftBind _ r, f, ⟨b, p⟩, q => ⟨b, joinBind (r b) f p q⟩
+
+theorem output_joinBind {β : Type v'} (x : FreeM P α) (f : α → FreeM P β) (p : Path x)
+    (q : Path (f (output x p))) :
+    output (FreeM.bind x f) (joinBind x f p q) = output (f (output x p)) q := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    exact ih b p q
+
+theorem charge_joinBind [AddMonoid ω] {β : Type v'} (x : FreeM P α) (f : α → FreeM P β)
+    (p : Path x) (q : Path (f (output x p))) :
+    charge c (FreeM.bind x f) (joinBind x f p q) = charge c x p + charge c _ q := by
+  induction x using FreeM.rec with
+  | pure a => exact (zero_add _).symm
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change c a + charge c _ (joinBind (r b) f p q) = (c a + charge c (r b) p) + _
+    rw [ih b p q, add_assoc]
+    rfl
+
 theorem output_pullMapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) (x : FreeM P α)
     (q : Path (x.mapLens l)) : output x (pullMapLens l x q) = output (x.mapLens l) q := by
   induction x using FreeM.rec with
@@ -309,7 +341,53 @@ theorem charge_liftM_le_of_forall (h : (a : P.A) → FreeM Q (P.B a)) {d : Q.A �
   obtain ⟨p, -, hle⟩ := exists_path_liftM h hstep x q
   exact hle.trans (hx p)
 
+/-- Completed-path bounds restricted to an output predicate, such as success, transfer through a
+free handler. -/
+theorem charge_liftM_le_of_forall_output (h : (a : P.A) → FreeM Q (P.B a)) {d : Q.A → ω} {B : ω}
+    (hstep : ∀ a (r : Path (h a)), charge d (h a) r ≤ c a) {x : FreeM P α} {S : α → Prop}
+    (hx : ∀ p : Path x, S (output x p) → charge c x p ≤ B) (q : Path (x.liftM h))
+    (hq : S (output (x.liftM h) q)) : charge d (x.liftM h) q ≤ B := by
+  obtain ⟨p, hout, hle⟩ := exists_path_liftM h hstep x q
+  exact hle.trans (hx p (by rw [hout]; exact hq))
+
 end Refinement
+
+section Exact
+
+variable [AddMonoid ω] {Q : PFunctor.{uA₂, uB}} {α : Type uB}
+
+/-- `Demand h d x p e`: the calls along `p` can each be answered by a completed path through its
+implementation returning the answer `p` takes, with total target charge `e`. -/
+def Demand (h : (a : P.A) → FreeM Q (P.B a)) (d : Q.A → ω) : (x : FreeM P α) → Path x → ω → Prop
+  | .pure _, _, e => e = 0
+  | .liftBind a r, ⟨b, p⟩, e => ∃ q : Path (h a), output (h a) q = b ∧
+      ∃ e', Demand h d (r b) p e' ∧ e = charge d (h a) q + e'
+
+/-- **The exact law of substitution.** The completed paths through a simulated program, read as
+an output and a target charge, are exactly the completed paths through the source program
+together with, for each call, a completed path through its implementation returning the answer
+taken. -/
+theorem exists_path_liftM_iff (h : (a : P.A) → FreeM Q (P.B a)) (d : Q.A → ω) (x : FreeM P α)
+    (v : α) (e : ω) :
+    (∃ q : Path (x.liftM h), output (x.liftM h) q = v ∧ charge d (x.liftM h) q = e) ↔
+      ∃ p : Path x, output x p = v ∧ Demand h d x p e := by
+  induction x using FreeM.rec generalizing e with
+  | pure a => exact ⟨fun ⟨_, hv, he⟩ => ⟨⟨⟩, hv, he.symm⟩, fun ⟨_, hv, he⟩ => ⟨⟨⟩, hv, he.symm⟩⟩
+  | liftBind a r ih =>
+    constructor
+    · rintro ⟨q, hv, rfl⟩
+      let s := splitBind (h a) (fun b => (r b).liftM h) q
+      obtain ⟨p, hp, hd⟩ := (ih (output (h a) s.1) _).1
+        ⟨s.2, (output_splitBind (h a) (fun b => (r b).liftM h) q).symm.trans hv, rfl⟩
+      exact ⟨⟨output (h a) s.1, p⟩, hp, s.1, rfl, _, hd,
+        charge_splitBind (c := d) (h a) (fun b => (r b).liftM h) q⟩
+    · rintro ⟨⟨b, p⟩, hv, q₁, rfl, e', hd, rfl⟩
+      obtain ⟨q₂, hq₂, rfl⟩ := (ih (output (h a) q₁) e').2 ⟨p, hv, hd⟩
+      exact ⟨joinBind (h a) (fun b => (r b).liftM h) q₁ q₂,
+        (output_joinBind (h a) (fun b => (r b).liftM h) q₁ q₂).trans hq₂,
+        charge_joinBind (c := d) (h a) (fun b => (r b).liftM h) q₁ q₂⟩
+
+end Exact
 
 /-- With subsingleton answers a program has exactly one completed path. -/
 instance subsingleton [∀ a, Subsingleton (P.B a)] (x : FreeM P α) : Subsingleton (Path x) := by

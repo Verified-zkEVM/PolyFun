@@ -95,6 +95,20 @@ example {α : Type} (x : FreeM Coin α) (n : ℤ)
     Path.charge (fun _ => (1 : ℤ)) (x.liftM doubled) q ≤ n :=
   Path.charge_liftM_le_of_forall doubled doubled_path hx q
 
+/-- The exact law: a coin flip simulated by `doubled` has a completed path that answers `true`
+at charge `2`, obtained from a path through `doubled` that returns `true`. -/
+example : ∃ q : Path ((FreeM.lift (P := Coin) ()).liftM doubled),
+    output _ q = true ∧ Path.charge (fun _ => (1 : ℤ)) _ q = 2 :=
+  (Path.exists_path_liftM_iff doubled _ _ true 2).2
+    ⟨⟨true, ⟨⟩⟩, rfl, ⟨false, true, ⟨⟩⟩, rfl, 0, rfl, by decide⟩
+
+/-- Bounds on the successful runs alone transfer through a handler. -/
+example {α : Type} (x : FreeM Coin (Option α)) (n : ℤ)
+    (hx : ∀ p : Path x, (output x p).isSome → Path.charge (fun _ => (2 : ℤ)) x p ≤ n)
+    (q : Path (x.liftM doubled)) (hq : (output _ q).isSome) :
+    Path.charge (fun _ => (1 : ℤ)) (x.liftM doubled) q ≤ n :=
+  Path.charge_liftM_le_of_forall_output doubled doubled_path (S := fun v => v.isSome) hx q hq
+
 /-! ## Relabelling with a change of cost monoid -/
 
 /-- Relabel into the left summand of a sum interface, charging the right summand nothing. -/
