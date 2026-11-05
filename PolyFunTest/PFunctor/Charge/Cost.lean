@@ -149,4 +149,23 @@ example : prog.MayCall true ∧ prog.CallsIn {a | prog.MayCall a} :=
 example (x : FreeM Two PUnit) : x.CallsIn {true} ↔ ∀ a, x.MayCall a → a = true :=
   callsIn_iff_forall_mayCall x
 
+/-! ## Restricted answers -/
+
+/-- Flip a coin; on `false`, make two more calls. -/
+def flipThenMore : FreeM Coin Bool := do
+  let b ← FreeM.lift (P := Coin) ()
+  if b then pure true else do
+    let _ ← FreeM.lift (P := Coin) ()
+    let _ ← FreeM.lift (P := Coin) ()
+    pure false
+
+/-- Over the answers a sampler supported on `true` can return, the worst case is one call. -/
+example : costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) flipThenMore ≤ 1 :=
+  isChargeBoundUnder_iff_costUnder_le.1 (by simp [flipThenMore])
+
+/-- The restricted cost never exceeds the worst-case cost, which counts the `false` branch. -/
+example (x : FreeM Coin Bool) :
+    costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) x ≤ cost (fun _ => (1 : ℕ∞)) x :=
+  costUnder_le_cost x
+
 end PolyFunTest.ChargeCost

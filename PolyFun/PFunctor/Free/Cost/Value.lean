@@ -58,6 +58,23 @@ theorem charge_mono {R : Type w} [CompleteLattice R] [Add R] [AddLeftMono R] (c 
   gcongr with b
   exact hk b
 
+/-- The worst-case charge reading over the allowed answers: a call at `a` costs `c a`, followed
+by the worst continuation at an answer `b` with `allows a b`. This follows CatCrypt-core's
+`OpSpec.chargeUnder`; with every answer allowed it is `charge` (`chargeUnder_true`). -/
+noncomputable def chargeUnder {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R)
+    (allows : (a : P.A) → P.B a → Prop) : OpSpec P R :=
+  fun a k => c a + ⨆ b, ⨆ (_ : allows a b), k b
+
+@[simp]
+theorem chargeUnder_apply {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R)
+    (allows : (a : P.A) → P.B a → Prop) (a : P.A) (k : P.B a → R) :
+    chargeUnder c allows a k = c a + ⨆ b, ⨆ (_ : allows a b), k b :=
+  rfl
+
+theorem chargeUnder_true {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) :
+    chargeUnder c (fun (_ : P.A) _ => True) = charge c := by
+  funext a k
+  simp [chargeUnder, charge]
 
 end OpSpec
 
@@ -328,6 +345,89 @@ theorem isChargeBound_iff_cost_le [AddSupDistrib ω] {x : FreeM P α} {B : ω} :
   ⟨fun h => by simpa using cost_le_of_isChargeBound h, IsChargeBound.of_cost_le⟩
 
 end Canonical
+
+/-! ### Restricted answers -/
+
+section Under
+
+variable {allows allows' : (a : P.A) → P.B a → Prop}
+
+/-- The worst-case cost of `x` over the answers that `allows` admits: the fold of
+`OpSpec.chargeUnder c allows`. -/
+noncomputable def costUnder (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) :
+    ω :=
+  wpFold (OpSpec.chargeUnder c allows) x fun _ => 0
+
+@[simp, freeM_unfold]
+theorem costUnder_pure (a : α) : costUnder c allows (pure a : FreeM P α) = 0 :=
+  rfl
+
+@[simp, freeM_unfold]
+theorem costUnder_freeM_pure (a : α) : costUnder c allows (FreeM.pure a : FreeM P α) = 0 :=
+  rfl
+
+@[freeM_unfold]
+theorem costUnder_liftBind (a : P.A) (r : P.B a → FreeM P α) :
+    costUnder c allows (FreeM.liftBind a r) =
+      c a + ⨆ b, ⨆ (_ : allows a b), costUnder c allows (r b) :=
+  rfl
+
+/-- With every answer allowed, the restricted cost is the worst-case cost. -/
+theorem costUnder_true (x : FreeM P α) : costUnder c (fun _ _ => True) x = cost c x := by
+  rw [costUnder, OpSpec.chargeUnder_true]
+  rfl
+
+variable [IsOrderedAddMonoid ω]
+
+/-- Allowing fewer answers lowers the restricted cost. -/
+theorem costUnder_mono_allows (hle : ∀ a b, allows' a b → allows a b) (x : FreeM P α) :
+    costUnder c allows' x ≤ costUnder c allows x := by
+  induction x using FreeM.rec with
+  | pure a => exact le_rfl
+  | liftBind a r ih =>
+    rw [costUnder_liftBind, costUnder_liftBind]
+    exact add_le_add le_rfl (iSup_mono fun b => iSup_le fun hb => le_iSup_of_le (hle a b hb)
+      (ih b))
+
+/-- The restricted cost is at most the worst-case cost. -/
+theorem costUnder_le_cost (x : FreeM P α) : costUnder c allows x ≤ cost c x := by
+  rw [← costUnder_true]
+  exact costUnder_mono_allows (fun _ _ _ => trivial) x
+
+variable [CanonicallyOrderedAdd ω]
+
+/-- **From the restricted value to the restricted budget.** -/
+theorem isChargeBoundUnder_of_costUnder_le {x : FreeM P α} {B s : ω}
+    (h : s + costUnder c allows x ≤ B) : IsChargeBoundUnder x c allows B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => simpa using h
+  | liftBind a r ih =>
+    rw [costUnder_liftBind, ← add_assoc] at h
+    refine ⟨le_self_add.trans h, fun b hb => ih b ?_⟩
+    exact le_trans (add_le_add le_rfl
+      (le_iSup₂ (f := fun b (_ : allows a b) => costUnder c allows (r b)) b hb)) h
+
+omit [IsOrderedAddMonoid ω] in
+/-- **From the restricted budget to the restricted value**, where addition distributes over
+nonempty suprema. -/
+theorem costUnder_le_of_isChargeBoundUnder [AddSupDistrib ω] {x : FreeM P α} {B s : ω}
+    (h : IsChargeBoundUnder x c allows B s) : s + costUnder c allows x ≤ B := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => simpa using h
+  | liftBind a r ih =>
+    rw [costUnder_liftBind, ← add_assoc, iSup_subtype']
+    rcases isEmpty_or_nonempty {b // allows a b} with hb | hb
+    · rw [iSup_of_empty, bot_eq_zero, add_zero]
+      exact h.1
+    · exact (add_iSup_le_iSup_add _ _).trans (iSup_le fun b => ih b.1 (h.2 b.1 b.2))
+
+/-- A restricted budget is a bound on the restricted worst-case cost. -/
+theorem isChargeBoundUnder_iff_costUnder_le [AddSupDistrib ω] {x : FreeM P α} {B : ω} :
+    IsChargeBoundUnder x c allows B ↔ costUnder c allows x ≤ B :=
+  ⟨fun h => by simpa using costUnder_le_of_isChargeBoundUnder h,
+    fun h => isChargeBoundUnder_of_costUnder_le (by rwa [zero_add])⟩
+
+end Under
 
 end Cost
 
