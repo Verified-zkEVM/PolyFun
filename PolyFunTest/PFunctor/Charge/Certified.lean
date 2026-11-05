@@ -105,19 +105,20 @@ example {α : Type} (x : FreeM Hash α) :
 
 /-! ## Reductions -/
 
-/-- A reduction that makes one compression call before and one after the simulated program. -/
-def oneEachSide : CostedReduction Hash Compress (fun _ => (1 : ℕ)) (fun _ => 1) Bool Bool where
-  certified := hashLayer
-  setup := do
-    let _ ← FreeM.lift (P := Compress) ()
-    pure PUnit.unit
-  finish b := do
+/-- A reduction that makes one compression call before the simulated program, keeping its answer
+as a key, and one after it, combining the key with the result. -/
+def oneEachSide : CostedReduction Hash Compress (fun _ => (1 : ℕ)) (fun _ => 1) Bool Bool Bool where
+  setup := FreeM.lift (P := Compress) ()
+  handler _ := hashLayer.handler
+  exchange := hashLayer.exchange
+  certificate _ := hashLayer.certificate
+  finish key b := do
     let c ← FreeM.lift (P := Compress) ()
-    pure (b && c)
+    pure (b && c && key)
   setupCost := 1
   finishCost := 1
   setup_le := by cost_bound
-  finish_le _ := by cost_bound
+  finish_le _ _ := by cost_bound
 
 /-- The reduction's cost transformer is affine: `1 + 2 q + 1`. -/
 example (x : FreeM Hash Bool) (q : ℕ) (hx : x.IsChargeBound (fun _ => 1) q) :
@@ -145,6 +146,6 @@ each hash query is within `6` steps from every state. -/
 example : ((Stateful.lift (S := PUnit) hashByCompress).link countingSteps).WithinCharge
     (fun _ => (1 : ℕ)) (fun _ => 6) := by
   refine Stateful.WithinCharge.link (d := fun _ => 3) ?_ countingSteps_withinCharge
-  exact Stateful.WithinCharge.lift fun _ => by cost_bound [hashByCompress]
+  exact Handler.WithinCharge.lift fun _ => by cost_bound [hashByCompress]
 
 end PolyFunTest.ChargeCertified
