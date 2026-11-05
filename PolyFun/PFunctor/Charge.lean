@@ -18,9 +18,10 @@ A charge prices the calls of an interface `P` in a cost type `ω`: a call at pos
 fold of its charge (`PolyFun.PFunctor.Free.Cost`).
 
 As a polynomial map, a charge is a lens into the constant polynomial `C ω`, whose positions are the
-prices and which has no directions to answer. Charges on composite interfaces are then lens
-constructions: pulling a charge back along a lens is composition (`Lens.toCharge_comp`), and the
-charge on a sum is the copairing (`Lens.toCharge_sumPair`).
+prices and which has no directions to answer: `Lens.toConst c`, and every such lens has this form
+(`Lens.toConstEquiv`). Charges on composite interfaces are then lens constructions: pulling a
+charge back along a lens is composition (`Lens.toConst_comp`), and the charge on a sum is the
+copairing (`Lens.sumPair_toConst`).
 
 A charge read off events instead of positions, `e : P.Idx → ω`, prices a call together with its
 answer. `TraceList.charge e` extends it additively to the event traces of `PolyFun.PFunctor.Trace`.
@@ -36,33 +37,17 @@ variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {ω : Type w}
 
 namespace Lens
 
-/-- The charge read off a lens into the constant polynomial `C ω`. -/
-def toCharge (l : Lens P (C.{w, uE} ω)) : P.A → ω :=
-  l.toFunA
-
-/-- A charge as a lens into the constant polynomial `C ω`. `C ω` has no directions, so the
-backward map is empty. -/
-def ofCharge (c : P.A → ω) : Lens P (C.{w, uE} ω) :=
-  c ⇆ fun _ e => PEmpty.elim e
-
+/-- Pulling a charge back along a lens is lens composition. -/
 @[simp]
-theorem toCharge_ofCharge (c : P.A → ω) : (ofCharge.{uA, uB, uE} c : Lens P (C ω)).toCharge = c :=
-  rfl
-
-@[simp]
-theorem ofCharge_toCharge (l : Lens P (C.{w, uE} ω)) : ofCharge l.toCharge = l :=
+theorem toConst_comp (c : Q.A → ω) (l : Lens P Q) :
+    (toConst c : Lens Q (C.{w, uE} ω)) ∘ₗ l = toConst (c ∘ l.toFunA) :=
   Lens.ext _ _ (fun _ => rfl) fun _ => funext fun e => PEmpty.elim e
 
-/-- Pulling a charge back along a lens is lens composition. -/
-theorem toCharge_comp (m : Lens Q (C.{w, uE} ω)) (l : Lens P Q) :
-    (m ∘ₗ l).toCharge = m.toCharge ∘ l.toFunA :=
-  rfl
-
 /-- The charge on a sum of interfaces is the copairing of the charges. -/
-theorem toCharge_sumPair {Q : PFunctor.{uA₂, uB}} (l₁ : Lens P (C.{w, uE} ω))
-    (l₂ : Lens Q (C.{w, uE} ω)) :
-    (sumPair l₁ l₂).toCharge = Sum.elim l₁.toCharge l₂.toCharge :=
-  rfl
+@[simp]
+theorem sumPair_toConst {Q : PFunctor.{uA₂, uB}} (c₁ : P.A → ω) (c₂ : Q.A → ω) :
+    sumPair (toConst c₁ : Lens P (C.{w, uE} ω)) (toConst c₂) = toConst (Sum.elim c₁ c₂) :=
+  Lens.ext _ _ (fun a => by cases a <;> rfl) fun _ => funext fun e => PEmpty.elim e
 
 end Lens
 

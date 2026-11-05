@@ -17,7 +17,7 @@ answer arrives. Cost types are Mathlib's ordered additive monoids, so the same A
 - weights in `ℕ∞`, `ℝ≥0∞` or `ℤ`;
 - records of counters such as `ExecutionCost`.
 
-As a polynomial map, a charge is a lens into the constant polynomial `C ω`
+As a polynomial map, a charge is a lens into the constant polynomial `C ω`, namely `Lens.toConst c`
 (`PolyFun/PFunctor/Charge.lean`). Pulling a charge back along a lens is lens composition, and the
 charge on a sum of interfaces is the copairing `Sum.elim c d`. Intrinsic costs such as ticks need
 no new construction: a tick is a call to `PFunctor.linear ω` charged by `id`. A charge read off
@@ -36,6 +36,10 @@ concrete `do` program.
 A call whose answer type is empty is still charged. A run that reaches such a call never
 completes, but the call is still made.
 
+Indexed programs keep their natural-number `IsChargeBound` on what remains
+(`PolyFun/IPFunctor/Free/Bound.lean`), the indexed counterpart of
+`isChargeBound_iff_isRollBound_nat` below.
+
 ### Relation to roll bounds
 
 `IsRollBound x b canRoll cost` (`PolyFun/PFunctor/Bound.lean`) is the general budget automaton:
@@ -50,7 +54,9 @@ fold, of `OpSpec.roll canRoll cost` (`isRollBound_iff_wpFold`).
 - Unit charges give `IsTotalRollBound` (`isChargeBound_one_iff_isTotalRollBound`).
 
 Roll bounds also express protocols that are not additive, such as "never call `b` after `a`".
-Charge bounds trade that generality for the laws below, which hold with no side conditions.
+Charge bounds trade that generality for the additive laws below. Sequencing and the relation to
+roll bounds need a canonically ordered cost type, in which `a ≤ a + b`; the other laws need only an
+ordered additive monoid.
 
 ### Restricted answers
 
@@ -62,8 +68,8 @@ the demonic reading:
 - `IsRollBoundUnder` and `IsChargeBoundUnder` are the folds of `OpSpec.rollUnder` and
   `OpSpec.budgetUnder`, which constrain only the continuations at allowed answers.
 - With every answer allowed they are `IsRollBound` and `IsChargeBound` (`isRollBoundUnder_true_iff`,
-  `isChargeBoundUnder_true_iff`), and a charge bound holds under every restriction
-  (`IsChargeBound.under`).
+  `isChargeBoundUnder_true_iff`), and both hold under every restriction (`IsRollBound.under`,
+  `IsChargeBound.under`). Allowing fewer answers keeps either bound (`mono_allows`).
 - A restricted charge bound is a restricted roll bound whose state is the amount spent
   (`isChargeBoundUnder_iff_isRollBoundUnder`).
 - Sequencing takes a demonic postcondition on the results the first program can return along
@@ -87,8 +93,7 @@ leaves free.
 
 ### Bounds as contracts
 
-The laws of this guide hold in any ordered additive monoid. A bound presented as a resource
-contract needs more:
+A bound presented as a resource contract needs more than the laws of this guide:
 
 - **A canonically ordered cost type.** With negative prices, a program can be padded with refund
   calls to meet any budget. Signed prices belong inside potential and completed-path arguments,
@@ -99,9 +104,9 @@ contract needs more:
   something else: under the reversed order every program meets the budget `0`, and with `max` as
   addition a budget bounds only the largest price (both tested in
   `PolyFunTest/PFunctor/Charge/Basic.lean`).
-- **Availability and termination stated separately.** A budget says nothing about divergence, or
-  about whether a call can be answered. Keep `CallsIn` or an availability predicate as its own
-  conjunct.
+- **Availability stated separately.** A budget says nothing about whether a call can be answered:
+  a call whose answer type is empty meets its budget and never returns. Keep `ProgramProgress`
+  (`programProgress_of_nonempty`) or an availability predicate as its own conjunct.
 
 ## Laws
 
