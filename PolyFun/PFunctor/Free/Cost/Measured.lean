@@ -36,7 +36,7 @@ budgets graded by `Multiplicative ω`, it is a `GradedMonad`: `gbind` adds budge
 
 @[expose] public section
 
-universe u v w uA uB
+universe u v w uA uB uI uI'
 
 namespace PFunctor.FreeM
 
@@ -49,7 +49,7 @@ Only the operations are charged. The view, the answering function and the code b
 free at this layer, so `ofFun f` realizes any `f` at cost `0`: a statement of the form
 `∃ M, M.Realizes f ∧ M.CostAtMost B` is trivial. Cost statements name the measured program, and
 the uncharged parts are bounded one layer down. -/
-structure MeasuredProgram (Input Result : Type u) (ω : Type w) where
+structure MeasuredProgram (Input : Type uI) (Result : Type u) (ω : Type w) where
   /-- What the program is allowed to depend on. -/
   View : Type u
   /-- The uncharged view of an input. -/
@@ -67,7 +67,7 @@ structure MeasuredProgram (Input Result : Type u) (ω : Type w) where
 
 namespace MeasuredProgram
 
-variable {Input Mid Result : Type u} {ω : Type w}
+variable {Input : Type uI} {Mid Result : Type u} {ω : Type w}
 
 /-- Run the program of the input's view, answering every call deterministically. -/
 def run (M : MeasuredProgram Input Result ω) (i : Input) : Result :=
@@ -91,8 +91,9 @@ theorem CostAtMost.mono [Add ω] [Zero ω] [Preorder ω] {M : MeasuredProgram In
     {B B' : ω} (h : M.CostAtMost B) (hB : B ≤ B') : M.CostAtMost B' :=
   fun v p => (h v p).trans hB
 
-/-- The program with no operations that computes `f` on its whole input. -/
-def ofFun (f : Input → Result) : MeasuredProgram Input Result ω where
+/-- The program with no operations that computes `f` on its whole input. Its view is the input, so
+the input shares the result's universe. -/
+def ofFun {Input : Type u} (f : Input → Result) : MeasuredProgram Input Result ω where
   View := Input
   view := id
   Op := PEmpty
@@ -101,11 +102,11 @@ def ofFun (f : Input → Result) : MeasuredProgram Input Result ω where
   answer _ o := o.elim
   cost o := o.elim
 
-theorem realizes_ofFun (f : Input → Result) : (ofFun f (ω := ω)).Realizes f :=
+theorem realizes_ofFun {Input : Type u} (f : Input → Result) : (ofFun f (ω := ω)).Realizes f :=
   fun _ => rfl
 
 /-- A program with no operations costs nothing. -/
-theorem costAtMost_ofFun [Add ω] [Zero ω] [Preorder ω] (f : Input → Result) :
+theorem costAtMost_ofFun [Add ω] [Zero ω] [Preorder ω] {Input : Type u} (f : Input → Result) :
     (ofFun f (ω := ω)).CostAtMost 0 :=
   fun _ _ => le_rfl
 
@@ -159,7 +160,7 @@ theorem Realizes.comp {outer : MeasuredProgram Mid Result ω} {inner : MeasuredP
 
 /-- Composite budgets add: the inner budget, then the outer one. Arguments come in the order of
 `comp`, outer first. -/
-theorem CostAtMost.comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
+theorem CostAtMost.comp [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
     {outer : MeasuredProgram Mid Result ω} {inner : MeasuredProgram Input Mid ω}
     {outerBudget innerBudget : ω} (ho : outer.CostAtMost outerBudget)
     (hi : inner.CostAtMost innerBudget) :
@@ -169,20 +170,20 @@ theorem CostAtMost.comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω]
     fun m => ho (outer.view m)
 
 /-- Precompose with an uncharged map on inputs. -/
-def contramap {Input' : Type u} (M : MeasuredProgram Input Result ω) (g : Input' → Input) :
+def contramap {Input' : Type uI'} (M : MeasuredProgram Input Result ω) (g : Input' → Input) :
     MeasuredProgram Input' Result ω :=
   { M with view := M.view ∘ g }
 
-theorem run_contramap {Input' : Type u} (M : MeasuredProgram Input Result ω) (g : Input' → Input)
+theorem run_contramap {Input' : Type uI'} (M : MeasuredProgram Input Result ω) (g : Input' → Input)
     (i : Input') : (M.contramap g).run i = M.run (g i) :=
   rfl
 
-theorem Realizes.contramap {Input' : Type u} {M : MeasuredProgram Input Result ω}
+theorem Realizes.contramap {Input' : Type uI'} {M : MeasuredProgram Input Result ω}
     {f : Input → Result} (h : M.Realizes f) (g : Input' → Input) :
     (M.contramap g).Realizes (f ∘ g) :=
   fun i => h (g i)
 
-theorem CostAtMost.contramap [Add ω] [Zero ω] [LE ω] {Input' : Type u}
+theorem CostAtMost.contramap [Add ω] [Zero ω] [LE ω] {Input' : Type uI'}
     {M : MeasuredProgram Input Result ω} {B : ω} (h : M.CostAtMost B) (g : Input' → Input) :
     (M.contramap g).CostAtMost B :=
   h
@@ -190,8 +191,8 @@ theorem CostAtMost.contramap [Add ω] [Zero ω] [LE ω] {Input' : Type u}
 end MeasuredProgram
 
 /-- A measured program realizing `f`, with a budget on every completed path. -/
-structure BudgetedProgram {Input Result : Type u} (f : Input → Result) (ω : Type w) [Add ω]
-    [Zero ω] [LE ω] where
+structure BudgetedProgram {Input : Type uI} {Result : Type u} (f : Input → Result) (ω : Type w)
+    [Add ω] [Zero ω] [LE ω] where
   /-- The measured program. -/
   program : MeasuredProgram Input Result ω
   /-- The bound on the charge of every completed path. -/
@@ -203,20 +204,21 @@ structure BudgetedProgram {Input Result : Type u} (f : Input → Result) (ω : T
 
 namespace BudgetedProgram
 
-variable {Input Mid Result : Type u} {ω : Type w}
+variable {Input : Type uI} {Mid Result : Type u} {ω : Type w}
 
 /-- Every function has a budgeted program with budget `0` and no operations. -/
-def ofFun [Add ω] [Zero ω] [Preorder ω] (f : Input → Result) : BudgetedProgram f ω :=
+def ofFun [Add ω] [Zero ω] [Preorder ω] {Input : Type u} (f : Input → Result) :
+    BudgetedProgram f ω :=
   ⟨MeasuredProgram.ofFun f, 0, MeasuredProgram.realizes_ofFun f,
     MeasuredProgram.costAtMost_ofFun f⟩
 
 /-- Precompose with an uncharged map on inputs. -/
-def contramap [Add ω] [Zero ω] [LE ω] {Input' : Type u} {f : Input → Result}
+def contramap [Add ω] [Zero ω] [LE ω] {Input' : Type uI'} {f : Input → Result}
     (M : BudgetedProgram f ω) (g : Input' → Input) : BudgetedProgram (f ∘ g) ω :=
   ⟨M.program.contramap g, M.budget, M.realizes.contramap g, M.costAtMost.contramap g⟩
 
 /-- Compose budgeted programs; budgets add. -/
-def comp [AddCommMonoid ω] [Preorder ω] [IsOrderedAddMonoid ω] {f : Input → Mid}
+def comp [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] {f : Input → Mid}
     {g : Mid → Result} (outer : BudgetedProgram g ω) (inner : BudgetedProgram f ω) :
     BudgetedProgram (g ∘ f) ω :=
   ⟨outer.program.comp inner.program, inner.budget + outer.budget,
@@ -235,7 +237,7 @@ def Budgeted [Add ω] [LE ω] [Zero ω] (c : P.A → ω) (B : Multiplicative ω)
     Type (max uA uB v) :=
   {x : FreeM P α // x.IsChargeBound c (Multiplicative.toAdd B)}
 
-variable [AddCommMonoid ω] [PartialOrder ω] [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] [CanonicallyOrderedAdd ω]
 
 /-- Budgeted programs form a graded monad: sequencing adds budgets. -/
 instance Budgeted.instGradedMonad (c : P.A → ω) :
