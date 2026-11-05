@@ -42,7 +42,7 @@ the remaining condition to the fold.
 
 @[expose] public section
 
-universe uA uB uA₂ v w z
+universe uA uB uA₂ uB₂ v w z
 
 open Std.WP
 
@@ -71,14 +71,14 @@ theorem isTotalRollBound_iff_wpFold_charge (x : FreeM P α) (n : ℕ) :
 
 /-- The charge fold splits off the continuation: the charge-to-go is at most the program's own
 charge plus the worst continuation value. This is `costWith_le_cost_add` in `ℕ∞`. -/
-theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞) {β : Type uB} (y : FreeM Q β)
+theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB₂}} (c : Q.A → ℕ∞) {β : Type uB} (y : FreeM Q β)
     (k : β → ℕ∞) :
     wpFold (OpSpec.charge c) y k ≤ wpFold (OpSpec.charge c) y (fun _ => 0) + ⨆ b, k b :=
   costWith_le_cost_add y k
 
 /-- **Simulation overhead.** A program simulated through a handler costs at most the program with
 each call at `a` charged the handler's worst-case cost at `a`. This is `cost_liftM_le` in `ℕ∞`. -/
-theorem wpFold_charge_liftM_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞)
+theorem wpFold_charge_liftM_le {Q : PFunctor.{uA₂, uB₂}} (c : Q.A → ℕ∞)
     (handler : (a : P.A) → FreeM Q (P.B a)) (x : FreeM P α) :
     wpFold (OpSpec.charge c) (x.liftM handler) (fun _ => 0) ≤
       wpFold (OpSpec.charge (handlerCost c handler)) x (fun _ => 0) :=
