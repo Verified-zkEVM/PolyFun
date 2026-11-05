@@ -59,6 +59,31 @@ measure-valued instances of those parameters.
   `IsSubprobabilityKernel κ` bounds every fibre. Constant, restricted, pushed-forward,
   pulled-back, composed and product kernels keep the bound, and every Markov kernel is a
   subprobability kernel.
+- **Answer measures and the measure fold**
+  ([`AnswerMeasure`](../../PolyFunProbability/PFunctor/AnswerMeasure.lean),
+  [`Free/Measure`](../../PolyFunProbability/PFunctor/Free/Measure.lean)).
+  `PFunctor.AnswerMeasure` assigns a probability measure to the answers of each operation, and
+  `PFunctor.FreeM.denote` folds a free program into a measure on its results with `Measure.bind`.
+  An unmeasurable continuation denotes zero, so every program denotes a subprobability measure,
+  and over discrete answers a probability measure. Over discrete answers the fold preserves bind
+  and map (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two independent runs denote
+  the product measure (`denote_bind_bind_prod_mk_eq_prod`).
+- **Kernel handlers**
+  ([`Free/Kernel`](../../PolyFunProbability/PFunctor/Free/Kernel.lean),
+  [`Free/Kernel/Transport`](../../PolyFunProbability/PFunctor/Free/Kernel/Transport.lean),
+  [`Wiring/Kernel`](../../PolyFunProbability/PFunctor/Wiring/Kernel.lean)).
+  A `KernelHandler P S` samples each operation's answer together with a successor state.
+  `PFunctor.FreeM.runKernel` extends it to a kernel from initial states to results and final
+  states, and it agrees with first interpreting a free handler's implementations
+  (`runKernel_liftM`). Almost-everywhere state invariants and state projections transport from
+  single steps to whole programs. `Wiring.runKernel` interprets recursive polynomial wiring.
+- **Path measures**
+  ([`Free/Path/Measure`](../../PolyFunProbability/PFunctor/Free/Path/Measure.lean)).
+  `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path
+  length, bounded by a total roll bound (`expectedQueryCount_le_of_isTotalRollBound`).
+
+The library keeps the names and namespaces of the declarations it took over from VCVio, so
+VCVio can import them without renaming.
 
 ## Relation to VCVio and to interaction cost
 
