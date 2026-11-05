@@ -420,7 +420,7 @@ theorem runUntil_liftBind (h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ
 result of a run through `h` returns a call and continuation that are within `B` from an amount
 `s' ≥ s` spent along the answered prefix. -/
 theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
-    [IsOrderedAddMonoid ω] [CanonicallyOrderedAdd ω]
+    [CanonicallyOrderedAdd ω]
     {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
     (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
     (hz : (Sum.inr ⟨a, k⟩, state') ∈ FreeM.supp (FreeM.runUntil h x state)) :
