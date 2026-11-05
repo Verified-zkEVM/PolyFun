@@ -37,7 +37,7 @@ def IsChargeBound [Add ω] [LE ω] [Zero ω] (t : ITree F α) (c : F.A → ω) (
     (tau : ω := 0) : Prop :=
   PFunctor.Resumption.IsChargeBound (toResumptionWithTau t) (Sum.elim c fun _ => tau) B spent
 
-variable [AddCommMonoid ω] [PartialOrder ω] {c : F.A → ω} {B s tau : ω}
+variable [AddZeroClass ω] [Preorder ω] {c : F.A → ω} {B s tau : ω}
 
 @[simp]
 theorem isChargeBound_pure_iff (a : α) :
