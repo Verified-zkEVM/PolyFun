@@ -14,10 +14,10 @@ import PolyFun.PFunctor.Free.Cost.Measured
 /-!
 # Ordinary-import canaries for charges and charge bounds
 
-A charge pulled back along a lens is the composite lens, a charge bound unfolds call by call, and
-the worst-case cost is the fold of the charge reading, and a composite measured program runs its
-two parts. These are definitional, and the examples check that they stay so through ordinary
-imports, with positions and directions in independent universes.
+A charge pulled back along a lens is the composite lens, a charge bound unfolds call by call, the
+worst-case cost is the fold of the charge reading, and a measured program precomposed with a map
+on inputs runs on the mapped input. These are definitional, and the examples check that they stay
+so through ordinary imports, with positions and directions in independent universes.
 -/
 
 universe uA uB uA₂ uB₂ uE w v
@@ -41,17 +41,16 @@ example [Add ω] [LE ω] [Zero ω] (c : P.A → ω) (B s : ω) (x : α) :
     (FreeM.pure x : FreeM P α).IsChargeBound c B s ↔ s ≤ B :=
   Iff.rfl
 
-example [AddCommMonoid ω] [CompleteLattice ω] (c : P.A → ω) (x : FreeM P α) (k : α → ω) :
+example [Add ω] [CompleteLattice ω] (c : P.A → ω) (x : FreeM P α) (k : α → ω) :
     FreeM.costWith c x k = FreeM.wpFold (OpSpec.charge c) x k :=
   rfl
 
-example [AddCommMonoid ω] [CompleteLattice ω] (c : P.A → ω) (x : FreeM P α) :
+example [Add ω] [Zero ω] [CompleteLattice ω] (c : P.A → ω) (x : FreeM P α) :
     FreeM.cost c x = FreeM.costWith c x fun _ => 0 :=
   rfl
 
-example {Input Mid Result : Type v} (outer : FreeM.MeasuredProgram Mid Result ω)
-    (inner : FreeM.MeasuredProgram Input Mid ω) (i : Input) :
-    (outer.comp inner).run i = outer.run (inner.run i) :=
-  FreeM.MeasuredProgram.run_comp outer inner i
+example {Input Input' Result : Type v} (M : FreeM.MeasuredProgram Input Result ω)
+    (g : Input' → Input) (i : Input') : (M.contramap g).run i = M.run (g i) :=
+  rfl
 
 end PolyFunTest.ModuleAPI.Charge
