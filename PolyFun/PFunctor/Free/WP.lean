@@ -30,7 +30,9 @@ in two coupled layers:
 
 * **Substitution.** A handler implementing each operation of `P` by a free `Q`-program pulls a
   `Q`-spec back to a `P`-spec (`OpSpec.pullback`), and folding over the substituted program is
-  folding the pullback over the original (`wpFold_liftM`).
+  folding the pullback over the original (`wpFold_liftM`). Relabelling along a lens is the special
+  case in which each operation is one call: folding over `x.mapLens f` is folding the spec read
+  through `f` over `x` (`wpFold_mapLens`).
 
 The canonical `Prop`-carrier specs `OpSpec.demonic` ("every response") and
 `OpSpec.angelic` ("some response") recover the support-based judgments of
@@ -214,6 +216,19 @@ theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Monotone) (x : Free
   induction x with
   | pure x => exact h x
   | lift_bind a r ih => exact hΦ a fun b => ih b
+
+/-- Folding a spec over a program relabelled along a lens is folding the spec read through the
+lens: a call at `a` is read by `Φ` at `f.toFunA a`, with each continuation read through
+`f.toFunB a`. -/
+theorem wpFold_mapLens {Q : PFunctor.{uA₂, uB₂}} (f : Lens P Q) (Φ : OpSpec Q l) (x : FreeM P α)
+    (post : α → l) :
+    wpFold Φ (x.mapLens f) post = wpFold (fun a k => Φ (f.toFunA a) (k ∘ f.toFunB a)) x post := by
+  induction x with
+  | pure a => rfl
+  | lift_bind a r ih =>
+    change Φ (f.toFunA a) (fun d => wpFold Φ ((r (f.toFunB a d)).mapLens f) post) = _
+    simp only [ih]
+    rfl
 
 /-! ## Reachable outputs under an operationalization -/
 

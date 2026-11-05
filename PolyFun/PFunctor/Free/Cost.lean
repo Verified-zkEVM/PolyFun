@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.PFunctor.Free.WP
+public import PolyFun.PFunctor.Free.Restrict
 public import PolyFun.PFunctor.Bound
 public import Mathlib.Algebra.Order.Hom.Monoid
 public import Mathlib.Algebra.Order.Monoid.Canonical.Defs
@@ -576,7 +576,9 @@ handler may return only some answers to a call, for example those in the support
 distribution; the continuations at the other answers are never run, so they need no budget. With
 every answer allowed, the restricted bounds are the unrestricted ones (`isRollBoundUnder_true_iff`,
 `isChargeBoundUnder_true_iff`), and a charge bound is a roll bound under the same restriction
-(`isChargeBoundUnder_iff_isRollBoundUnder`). -/
+(`isChargeBoundUnder_iff_isRollBoundUnder`). Equivalently, a restricted bound is the plain bound of
+the program relabelled to the allowed answers, `x.restrict allows` (`isRollBoundUnder_iff_restrict`,
+`isChargeBoundUnder_iff_restrict`). -/
 
 section Under
 
@@ -621,6 +623,16 @@ theorem IsRollBound.under {σ : Type w} {x : FreeM P α} {b : σ} {canRoll : P.A
     (allows : (a : P.A) → P.B a → Prop) : IsRollBoundUnder x b canRoll cost allows :=
   ((isRollBoundUnder_true_iff x b canRoll cost).2 h).mono_allows fun _ _ _ => trivial
 
+/-- The roll bound along allowed answers is the roll bound of the restricted program. -/
+theorem isRollBoundUnder_iff_restrict {σ : Type w} (x : FreeM P α) (b : σ)
+    (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) :
+    IsRollBoundUnder x b canRoll cost allows ↔ (x.restrict allows).IsRollBound b canRoll cost := by
+  induction x using FreeM.rec generalizing b with
+  | pure a => exact Iff.rfl
+  | liftBind a r ih =>
+    exact and_congr_right fun _ =>
+      ⟨fun h y => (ih y.1 _).1 (h y.1 y.2), fun h y hy => (ih y _).2 (h ⟨y, hy⟩)⟩
+
 variable [Add ω] [LE ω] [Zero ω] {c : P.A → ω} {B s : ω}
 
 /-- `x.IsChargeBoundUnder c allows B s`: with `s` already spent, every call of `x` keeps the amount
@@ -651,6 +663,15 @@ theorem isChargeBoundUnder_true_iff (x : FreeM P α) :
     IsChargeBoundUnder x c (fun _ _ => True) B s ↔ IsChargeBound x c B s := by
   rw [IsChargeBoundUnder, OpSpec.budgetUnder_true]
   rfl
+
+/-- The budget along allowed answers is the budget of the restricted program. -/
+theorem isChargeBoundUnder_iff_restrict (x : FreeM P α) :
+    IsChargeBoundUnder x c allows B s ↔ (x.restrict allows).IsChargeBound c B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => exact Iff.rfl
+  | liftBind a r ih =>
+    exact and_congr_right fun _ =>
+      ⟨fun h b => (ih b.1).1 (h b.1 b.2), fun h b hb => (ih b).2 (h ⟨b, hb⟩)⟩
 
 /-- A charge bound holds under every restriction of the answers. -/
 theorem IsChargeBound.under {x : FreeM P α} (h : IsChargeBound x c B s)
