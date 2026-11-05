@@ -334,3 +334,7 @@ finite prefixes are.
   `do` programs over finite answer types, and returns any goal it cannot close in simplified
   form.
 - **Loops with a symbolic number of iterations.** Use the loop lemmas.
+- **Programs with symbolic structure, through `vcgen`.** Read a budget as a core `WPMonad`
+  (`budgetWPMonad`), or keep the amount spent as `StateT` state (`withCharge`), and let `vcgen`
+  step through the calls with loop invariants
+  ([program logic](program-logic.md#charges-and-budgets)).

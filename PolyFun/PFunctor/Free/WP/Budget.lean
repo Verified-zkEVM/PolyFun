@@ -21,13 +21,12 @@ the amount spent. Its weakest precondition is the fold of `OpSpec.budget c B`, s
 call rule `Spec.lift_budget` asks `s + c a ≤ B` and continues from `s + c a`, stated with the
 lattice connectives `⊓` and `⨅` that `vcgen` splits, so `vcgen` proceeds call by call. Unlike the
 upper-bound reading of `OpSpec.charge`, there is no supremum to stop at. The reading fixes `c` and
-`B`, so it is installed locally with `attribute [local instance]`, and its call rule is scoped:
-`open scoped PFunctor.FreeM.BudgetReading`.
+`B`, so it is installed locally with `attribute [local instance]`, and its call rule is passed to
+`vcgen` or registered locally with `attribute [local spec]`.
 
 **The instrumented reading.** `Handler.withCharge h c a` is `modify (· + c a)` followed by `h a`
-(`withCharge_eq_modify`, a `vcgen` rule under `open scoped PFunctor.Handler.ChargeSteps`), so the
-amount spent is ordinary `StateT` state
-and core's state rules and loop invariants apply in any base interpretation. Under the demonic
+(`withCharge_eq_modify`, a `vcgen` rule), so the amount spent is ordinary `StateT` state and core's
+state rules and loop invariants apply in any base interpretation. Under the demonic
 reading of the base, a triple for a program run through the instrumented identity handler is a
 statement about every completed path and the amount spent along it
 (`triple_liftM_id_withCharge_iff`), which turns a `vcgen` proof into a completed-path cost bound.
@@ -48,7 +47,7 @@ variable {P : PFunctor.{uA, uB}} {ω : Type uB} [Add ω] [LE ω]
 /-- The budget reading of a charge: free programs interpreted over predicates on the amount
 spent, with a call at `a` admitted when `s + c a ≤ B`. -/
 abbrev budgetWPMonad (c : P.A → ω) (B : ω) : WPMonad (FreeM P) (ω → Prop) EStack⟨⟩ :=
-  (OpSpec.budget c B).toWPMonad (OpSpec.budget_monotone c B)
+  (OpSpec.budget c B).toWPMonad (OpSpec.budget_mono c B)
 
 theorem budgetWPMonad_wp (c : P.A → ω) (B : ω) {α : Type uB} (x : FreeM P α)
     (post : α → ω → Prop) (epost : EStack⟨⟩) :
@@ -78,7 +77,7 @@ namespace Spec
 
 /-- Under the budget reading, a call at `a` asks `s + c a ≤ B` and continues from `s + c a`. The
 precondition is stated with the lattice connectives `⊓` and `⨅`, which `vcgen` splits, so it
-proceeds call by call. It is a `vcgen` rule under `open scoped PFunctor.FreeM.BudgetReading`. -/
+proceeds call by call. -/
 theorem lift_budget (c : P.A → ω) (B : ω) (a : P.A) (Q : P.B a → ω → Prop) (E : EStack⟨⟩) :
     @Triple (ω → Prop) EStack⟨⟩ (FreeM P (P.B a)) (P.B a) _ _ (FreeM.lift (P := P) a)
       ((budgetWPMonad c B).toWP _)
@@ -96,31 +95,18 @@ theorem lift_budget (c : P.A → ω) (B : ω) (a : P.A) (Q : P.B a → ω → Pr
 
 end Spec
 
-namespace BudgetReading
-
-attribute [scoped spec] Spec.lift_budget
-
-end BudgetReading
-
 end FreeM
 
 namespace Handler
 
 variable {P : PFunctor.{uA, uB}} {ω : Type uB}
 
-/-- An instrumented call adds its charge to the state and then runs the handler. It is a `vcgen`
-rule under `open scoped PFunctor.Handler.ChargeSteps`. -/
+/-- An instrumented call adds its charge to the state and then runs the handler. -/
 theorem withCharge_eq_modify {m : Type uB → Type v} [Monad m] [LawfulMonad m] [Add ω]
     (h : Handler m P) (c : P.A → ω) (a : P.A) :
     h.withCharge c a = (modify (· + c a) >>= fun _ => StateT.lift (h a) : StateT ω m (P.B a)) := by
   refine StateT.ext fun s => ?_
   simp [Handler.run_withCharge]
-
-namespace ChargeSteps
-
-attribute [scoped spec] withCharge_eq_modify
-
-end ChargeSteps
 
 section Demonic
 
