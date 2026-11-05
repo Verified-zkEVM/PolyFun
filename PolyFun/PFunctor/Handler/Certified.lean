@@ -20,13 +20,13 @@ layers, and every call at `a` is implemented within `E (c a)` (`Handler.Certifie
   (`Certified.transfer`), and in value form a simulated program costs at most `E` of the
   original's cost (`Certified.cost_liftM_le`).
 * Certified handlers compose, composing their exchanges (`Certified.comp`), and the identity
-  handler is certified by the identity exchange. Interfaces with charges and certified handlers
-  therefore form a category, whose arrows are the cross-layer links of a cost argument: a
-  specification implemented by an algorithm, the algorithm compiled to instructions, and so on.
-* A reduction runs a setup program, the source program through a certified handler, and a
-  finishing program. Its bound is affine in the source budget, `setupCost + E B + finishCost`
-  (`CostedReduction.run_isChargeBound`). This is the shape of a reduction's cost transformer in a
-  security proof.
+  handler is certified by the identity exchange (`Certified.id`). Certificates therefore chain
+  along the cross-layer links of a cost argument: a specification implemented by an algorithm,
+  the algorithm compiled to instructions, and so on.
+* A reduction runs a setup program, then the source program through a certified handler, then a
+  finishing program; the handler and the finishing program may use the setup's result, such as
+  keys or tables. Its bound is affine in the source budget, `setupCost + E B + finishCost`
+  (`CostedReduction.run_isChargeBound`).
 
 The exchange is monotone and additive, so it handles changes of unit (one hash is `k`
 compressions), changes of cost type (per-kind counts to weighted totals) and the identity. Costs
@@ -141,45 +141,56 @@ variable [AddCommMonoid ω] [PartialOrder ω] [AddCommMonoid ω'] [PartialOrder 
   {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB}}
 
 /-- A reduction from a `P`-program to a `Q`-program: run `setup`, then the source program through
-a certified handler, then `finish` on its result. Each of the two extra stages has a budget. -/
+an implementation certified with one exchange, then `finish` on its result. The implementation and
+`finish` may use the result of `setup`. Each of the two extra stages has a budget. -/
 structure CostedReduction (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB}) (c : P.A → ω)
-    (d : Q.A → ω') (α β : Type uB) where
-  /-- The certified implementation of the source calls. -/
-  certified : Certified P Q c d
-  /-- Work before running the source program. -/
-  setup : FreeM Q PUnit.{uB + 1}
-  /-- Work after the source program returns. -/
-  finish : α → FreeM Q β
+    (d : Q.A → ω') (σ α β : Type uB) where
+  /-- Work before running the source program, producing data for the later stages. -/
+  setup : FreeM Q σ
+  /-- The implementation of the source calls, given the result of `setup`. -/
+  handler : σ → Handler (FreeM Q) P
+  /-- The conversion of prices from `P`'s layer to `Q`'s, the same for every setup result. -/
+  exchange : ω →+o ω'
+  /-- Each call is implemented within its exchanged price, whatever `setup` returned. -/
+  certificate : ∀ k, (handler k).WithinCharge d (exchange ∘ c)
+  /-- Work after the source program returns, given the result of `setup`. -/
+  finish : σ → α → FreeM Q β
   /-- The budget of `setup`. -/
   setupCost : ω'
-  /-- The budget of `finish`, uniform in the source result. -/
+  /-- The budget of `finish`, uniform in the setup and source results. -/
   finishCost : ω'
   setup_le : setup.IsChargeBound d setupCost
-  finish_le : ∀ a, (finish a).IsChargeBound d finishCost
+  finish_le : ∀ k a, (finish k a).IsChargeBound d finishCost
 
 namespace CostedReduction
 
-variable {c : P.A → ω} {d : Q.A → ω'} {α β : Type uB}
+variable {c : P.A → ω} {d : Q.A → ω'} {σ α β : Type uB}
+
+/-- The certified handler for one result of `setup`. -/
+def certified (r : CostedReduction P Q c d σ α β) (k : σ) : Certified P Q c d :=
+  ⟨r.handler k, r.exchange, r.certificate k⟩
 
 /-- The reduced program. -/
-def run (r : CostedReduction P Q c d α β) (x : FreeM P α) : FreeM Q β :=
-  FreeM.bind r.setup fun _ => FreeM.bind (x.liftM r.certified.handler) r.finish
+def run (r : CostedReduction P Q c d σ α β) (x : FreeM P α) : FreeM Q β :=
+  FreeM.bind r.setup fun k => FreeM.bind (x.liftM (r.handler k)) (r.finish k)
 
 /-- The reduction's cost transformer: affine in the source budget. -/
-def bound (r : CostedReduction P Q c d α β) (B : ω) : ω' :=
-  r.setupCost + r.certified.exchange B + r.finishCost
+def bound (r : CostedReduction P Q c d σ α β) (B : ω) : ω' :=
+  r.setupCost + r.exchange B + r.finishCost
 
 omit [CanonicallyOrderedAdd ω'] in
-theorem bound_mono (r : CostedReduction P Q c d α β) : Monotone r.bound :=
-  fun _ _ h => add_le_add (add_le_add le_rfl (r.certified.exchange.monotone' h)) le_rfl
+theorem bound_mono (r : CostedReduction P Q c d σ α β) : Monotone r.bound :=
+  fun _ _ h => add_le_add (add_le_add le_rfl (r.exchange.monotone' h)) le_rfl
 
 /-- **The reduction's bound.** A source program within `B` reduces to a target program within
 `setupCost + E B + finishCost`. -/
-theorem run_isChargeBound (r : CostedReduction P Q c d α β) {x : FreeM P α} {B : ω}
+theorem run_isChargeBound (r : CostedReduction P Q c d σ α β) {x : FreeM P α} {B : ω}
     (hx : x.IsChargeBound c B) : (r.run x).IsChargeBound d (r.bound B) := by
-  have hmid : (x.liftM r.certified.handler).IsChargeBound d (r.certified.exchange B) := by
-    simpa using r.certified.transfer hx
-  have := r.setup_le.bind fun _ => hmid.bind r.finish_le
+  have hmid : ∀ k, (x.liftM (r.handler k)).IsChargeBound d (r.exchange B) := fun k => by
+    have h := (r.certified k).transfer hx
+    rw [map_zero] at h
+    exact h
+  have := r.setup_le.bind fun k => (hmid k).bind (r.finish_le k)
   rwa [← add_assoc] at this
 
 end CostedReduction
