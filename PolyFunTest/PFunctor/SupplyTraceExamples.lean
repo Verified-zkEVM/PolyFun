@@ -66,7 +66,7 @@ example : PFunctor.TraceList.getAt? (Path.trace nestedProgram nestedFalsePath)
       ExampleOp.target 0 = some false := by
   obtain ⟨s', hs'⟩ : ∃ s', Supply.runPath nestedProgram
       (exampleSupply.setAt ExampleOp.target 0 false) = some (nestedFalsePath, s') := ⟨_, rfl⟩
-  exact Supply.getAt?_trace_runPath_setAt (by decide) hs' (by decide)
+  exact Supply.getAt?_trace_runPath_setAt hs' (by decide)
 
 /-- **And leaves every other position alone.** The `noise` answer is still the supply's own, even
 though the substituted run follows a different branch from here on. -/
