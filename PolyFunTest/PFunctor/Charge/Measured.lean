@@ -57,6 +57,33 @@ example : addTwo.budget = 2 := rfl
 
 example : (BudgetedProgram.ofFun (ω := ℕ) (fun n : ℕ => n * 2)).budget = 0 := rfl
 
+/-! ## Stages along a path
+
+An acceptance test after ArkLib's `MeasuredStages.programAlong`, which composes per-stage budgeted
+programs along an execution path, starting from the zero-stage `BudgetedProgram.ofFun`. -/
+
+/-- One budgeted increment: a stage of budget `1`. -/
+def incrStage : BudgetedProgram (· + 1 : ℕ → ℕ) ℕ := ⟨incr, 1, incr_realizes, incr_cost⟩
+
+/-- `k` increment stages composed along a path of length `k`: the composite computes `+ k`. -/
+def stagesAlong : (k : ℕ) → BudgetedProgram (fun n : ℕ => n + k) ℕ
+  | 0 => BudgetedProgram.ofFun id
+  | k + 1 => incrStage.comp (stagesAlong k)
+
+/-- The declared budgets add along the path. -/
+theorem stagesAlong_budget (k : ℕ) : (stagesAlong k).budget = k := by
+  induction k with
+  | zero => rfl
+  | succ k ih => exact congrArg (· + 1) ih
+
+/-- Uniform stage budgets give the path-length bound, on every completed path of the composite. -/
+example (k : ℕ) : (stagesAlong k).program.CostAtMost (k • 1) :=
+  (stagesAlong k).costAtMost.mono (by rw [stagesAlong_budget, smul_eq_mul, mul_one])
+
+/-- The composite computes the composed function. -/
+example (k n : ℕ) : (stagesAlong k).program.run n = n + k :=
+  ((stagesAlong k).realizes n).symm
+
 /-- Quantifying over measured programs proves nothing: every function has one at cost `0`, because
 the view, the answers and the code between calls are uncharged. Statements name the program. -/
 example (f : ℕ → ℕ) : ∃ M : MeasuredProgram ℕ ℕ ℕ, M.Realizes f ∧ M.CostAtMost 0 :=
