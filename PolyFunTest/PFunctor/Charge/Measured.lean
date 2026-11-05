@@ -30,7 +30,7 @@ def incr : MeasuredProgram ℕ ℕ ℕ where
   View := ℕ
   view := id
   Op := Unit
-  Ans _ _ := ℕ
+  spec _ _ := ℕ
   program _ := FreeM.lift (P := ⟨Unit, fun _ => ℕ⟩) ()
   answer v _ := v + 1
   cost _ := 1
@@ -48,6 +48,19 @@ theorem incr_cost : incr.CostAtMost 1 := by
 
 example : (incr.comp incr).CostAtMost 2 :=
   MeasuredProgram.CostAtMost.comp incr_cost incr_cost
+
+/-- The one call is charged: no smaller budget holds. -/
+example : ¬ incr.CostAtMost 0 := fun h => absurd (h (0 : ℕ) ⟨(0 : ℕ), ⟨⟩⟩) (by decide)
+
+/-- The run is the output of the path the answers pick, and precomposing a map on inputs keeps the
+budget. -/
+example (i : ℕ) :
+    incr.run i = FreeM.output (incr.program i) (FreeM.Path.ofHandler (incr.answer i) _) :=
+  incr.run_eq_output i
+
+example : ((incr.contramap (· * 2)).Realizes fun n => n * 2 + 1) ∧
+    (incr.contramap (· * 2)).CostAtMost 1 :=
+  ⟨incr_realizes.contramap _, incr_cost.contramap _⟩
 
 /-- Two increments, as a budgeted program with budget `2`. -/
 def addTwo : BudgetedProgram ((· + 1) ∘ (· + 1) : ℕ → ℕ) ℕ :=
