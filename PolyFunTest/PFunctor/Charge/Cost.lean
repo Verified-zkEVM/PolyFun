@@ -141,4 +141,12 @@ example (x : FreeM Two PUnit) (hS : x.CallsIn {true}) (B s : ℕ) :
     x.IsChargeBound (fun b => if b then 1 else 7) B s ↔ x.IsChargeBound (fun _ => 1) B s :=
   IsChargeBound.congr_charge hS fun a ha => by simp_all
 
+/-- The calls occurring in `prog` are exactly those at `true` and `false`; a program calls only in
+a set exactly when every call occurring in it lies there. -/
+example : prog.MayCall true ∧ prog.CallsIn {a | prog.MayCall a} :=
+  ⟨Or.inl rfl, callsIn_setOf_mayCall prog⟩
+
+example (x : FreeM Two PUnit) : x.CallsIn {true} ↔ ∀ a, x.MayCall a → a = true :=
+  callsIn_iff_forall_mayCall x
+
 end PolyFunTest.ChargeCost

@@ -144,6 +144,8 @@ and `IsChargeBound.bind_of_le` lets the continuation start from any amount withi
 needed only where `x` can return: `IsChargeBound.bind_supp` and `cost_bind_le_supp` take it on the
 support `x.supp`. `x.CallsIn S` says every call of `x` is in `S`; then charges and handlers matter
 only on `S` (`IsChargeBound.congr_charge`, `costWith_congr_charge`, `liftM_congr_of_callsIn`).
+`x.MayCall a` says a call at `a` occurs in the tree, and the calls that occur form the least such
+`S` (`callsIn_iff_forall_mayCall`, `callsIn_setOf_mayCall`).
 
 **Monotonicity.** `IsChargeBound.mono`, `.mono_charge` and `.mono_spent`; `cost_mono_charge` is
 tagged `@[gcongr]`.
