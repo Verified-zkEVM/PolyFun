@@ -96,9 +96,8 @@ however often it is called. -/
 def freshCharge (w : P.A → ω') (K : Finset P.A) (t : TraceList P) : ω' :=
   ∑ a ∈ t.positions.toFinset \ K, w a
 
-variable [PartialOrder ω'] [IsOrderedAddMonoid ω'] [CanonicallyOrderedAdd ω'] (w : P.A → ω')
+variable [PartialOrder ω'] [CanonicallyOrderedAdd ω'] (w : P.A → ω')
 
-omit [IsOrderedAddMonoid ω'] in
 /-- A fresh charge is subadditive under concatenation: a position new to both halves is charged
 once. -/
 theorem freshCharge_mul_le (K : Finset P.A) (s t : TraceList P) :
@@ -119,7 +118,6 @@ theorem freshCharge_le_charge (K : Finset P.A) (t : TraceList P) :
   exact (one_nsmul (w a)).symm.le.trans
     (nsmul_le_nsmul_left zero_le (List.one_le_count_iff.2 (List.mem_toFinset.1 ha)))
 
-omit [IsOrderedAddMonoid ω'] in
 /-- Knowing more positions in advance leaves fewer new ones to charge. -/
 theorem freshCharge_antitone {K K' : Finset P.A} (hK : K ⊆ K') (t : TraceList P) :
     freshCharge w K' t ≤ freshCharge w K t :=
