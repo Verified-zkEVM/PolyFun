@@ -179,8 +179,8 @@ characterization theorem, or change the downstream proof. Re-run the consumer
 census at each Lean/Mathlib release upgrade; module-system changes and release
 skew otherwise make old workaround counts look like current API defects.
 
-A theorem belongs in PolyFun only when its statement can avoid `OracleSpec`,
-probability, and cryptographic policy; otherwise route it one dependency level
+A theorem belongs in PolyFun only when its statement can avoid `OracleSpec`
+and cryptographic policy; otherwise route it one dependency level
 at a time (VCVio candidates stay in VCVio), so "upstreamable" does not
 collapse everything to the lowest dependency.
 
@@ -195,28 +195,39 @@ free-syntax interpretation exercises this boundary.
 
 ## The `ToCslib` staging layer
 
-`ToCslib/` is the lowest production library. It holds what PolyFun intends to upstream, written
-so that the upstream pull request is a move rather than a rewrite:
+`ToCslib/` is the lowest production library. It holds what PolyFun intends to upstream to cslib,
+Mathlib or core. Its staged measure modules, under `ToCslib/MeasureTheory/` and
+`ToCslib/Probability/`, hold measure and kernel lemmas bound for Mathlib, in paths that mirror
+Mathlib's. All of it is written so that the upstream pull request is a move rather than a rewrite:
 
 - every declaration lives in the namespace it will have upstream (`PFunctor.FreeM`, `Cslib`,
-  `Cslib.IsMonadHom`, `Lean.Order`, `Std.Internal`, `OmegaCompletePartialOrder`, `Fin`), so
-  cslib's `topNamespace` linter and downstream call sites do not change when it lands;
+  `Cslib.IsMonadHom`, `Lean.Order`, `Std.Internal`, `OmegaCompletePartialOrder`, `Fin`; in the
+  staged measure modules, `MeasureTheory`, `ProbabilityTheory`, `MeasurableEquiv` and the
+  namespaces of the types the lemmas are about, such as `Option`, `Except`, `Sum` and `PMF`), so
+  downstream call sites do not change when it lands, and neither does cslib's `topNamespace`
+  linter for a cslib-bound module;
 - a lemma that duplicates an open upstream pull request carries an `-- upstream:` comment
   naming it and copies that request's statement shape; it is deleted when the request lands
   and the pin moves (cslib#856's `IsMonadHom` is part of cslib `v4.34.0`, so PolyFun keeps no
   hypothesis-form transport lemmas, and its `forIn` transport is stated on
   `Cslib.IsMonadHom`);
-- a lemma with no upstream twin yet is marked `-- upstream candidate`;
+- a lemma with no upstream twin yet is marked `-- upstream candidate`, and a module that is a
+  candidate as a whole carries the marker once, after `public section`. A staged measure
+  module's marker names its Mathlib target when that is not the path its own path mirrors;
 - `ToCslib` imports core, cslib, and Mathlib only — never PolyFun or `ComplexityBackends`, and
   never `Std.WP`, `Std.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh`
   enforces both; cslib's `IsMonadHom` module brings core's `Std.Do.WP` classes in
-  transitively, which the fence does not police);
+  transitively, which the fence does not police). The staged measure modules import only
+  Mathlib and each other;
 - PolyFun modules import `ToCslib` modules directly (`public import`) and keep no local copy of
   a lemma that lives there; ordinary-import canaries for the moved lemmas stay in
-  `PolyFunTest/ModuleAPI/`, and behavioural canaries in `PolyFunTest/ToCslib/`;
+  `PolyFunTest/ModuleAPI/`, and behavioural canaries in `PolyFunTest/ToCslib/`. The tests of the
+  staged measure modules are in `PolyFunTest/Probability/`, beside the tests of the PolyFun
+  measure modules that use them;
 - headers say `PolyFun Contributors` here and are rewritten to the individual authors at
-  upstream pull-request time, when the file also gains `import Cslib.Init` and a
-  `CslibTests/` entry.
+  upstream pull-request time. A cslib-bound file then also gains `import Cslib.Init` and a
+  `CslibTests/` entry, and a staged measure module moves to the Mathlib path that its marker
+  names or that its own path mirrors.
 
 Concrete machine models are not staging material: they live in the optional
 `ComplexityBackends` library above PolyFun, and PolyFun never imports them
