@@ -105,7 +105,10 @@ Over restricted answers, `costUnder c allows x` is the fold of `OpSpec.chargeUnd
 which takes the worst continuation over the allowed answers only. It is `cost` when every answer
 is allowed (`costUnder_true`) and at most `cost` in general (`costUnder_le_cost`). When addition
 distributes over suprema, a restricted budget is a bound on `costUnder`
-(`isChargeBoundUnder_iff_costUnder_le`).
+(`isChargeBoundUnder_iff_costUnder_le`). The restricted cost is the cost of the restricted program
+(`costUnder_eq_cost_restrict`). Through a handler whose implementations return only allowed source
+answers along the target's allowed answers, each call costs the restricted worst case of its
+implementation (`costUnder_liftM_le`).
 
 ## Accounting boundary
 

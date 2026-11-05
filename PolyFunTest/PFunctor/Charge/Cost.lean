@@ -168,4 +168,19 @@ example (x : FreeM Coin Bool) :
     costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) x ≤ cost (fun _ => (1 : ℕ∞)) x :=
   costUnder_le_cost x
 
+/-- The restricted cost is the cost of the program relabelled to the allowed answers. -/
+example (x : FreeM Coin Bool) :
+    costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) x =
+      cost (P := Coin.restrict fun _ b => b = true) (fun _ => 1) (x.restrict fun _ b => b = true) :=
+  costUnder_eq_cost_restrict x
+
+/-- Answering each flip by one flip, along the same allowed answers, costs one call per flip. -/
+example (x : FreeM Coin Bool) :
+    costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true) (x.liftM fun _ => FreeM.lift (P := Coin) ())
+      ≤ costUnder (fun _ => costUnder (fun _ => (1 : ℕ∞)) (fun _ b => b = true)
+          (FreeM.lift (P := Coin) ())) (fun _ b => b = true) x :=
+  costUnder_liftM_le (P := Coin) (Q := Coin) (allows := fun _ b => b = true)
+    (allowsQ := fun _ b => b = true)
+    _ (fun _ => FreeM.lift (P := Coin) ()) (fun _ _ hb => hb) x
+
 end PolyFunTest.ChargeCost
