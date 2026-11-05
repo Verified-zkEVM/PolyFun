@@ -28,8 +28,9 @@ with `s` already spent, the amount spent along every branch of `x : FreeM P α`,
 stays at most `B`. It is the fold of `OpSpec.budget c B`, whose carrier is a predicate on the
 amount spent so far, so a call at `a` asks `s + c a ≤ B` and no subtraction or existential is
 involved. The spent amount defaults to `0`. The definition makes sense in any type with addition
-and an order, including `ℕ`, vectors `ι → ℕ`, `ℤ` and records of counters; its laws hold in ordered
-additive monoids.
+and an order, including `ℕ`, vectors `ι → ℕ`, `ℤ` and records of counters. Its monotonicity and
+transport laws hold in ordered additive monoids; sequencing and the relation to roll bounds also
+need a canonical order, in which `a ≤ a + b`.
 
 ## Relation to roll bounds
 
@@ -40,16 +41,17 @@ is the amount spent (`isChargeBound_iff_isRollBound`), plus a check of the amoun
 leaf. With natural-number charges it is the subtractive budget on what remains
 (`isChargeBound_iff_isRollBound_nat`, and `isChargeBound_iff_isRollBound_orderedSub` for vectors
 and pairs), and unit charges give `IsTotalRollBound`. Roll bounds also express non-additive
-protocols; charge bounds have additive laws with no side conditions:
+protocols; charge bounds have additive laws:
 
-* sequencing adds budgets (`IsChargeBound.bind`), and `IsChargeBound.bind_of_le` lets the
-  continuation start from any amount spent within a bound;
+* in a canonically ordered monoid, sequencing adds budgets (`IsChargeBound.bind`), and
+  `IsChargeBound.bind_of_le` lets the continuation start from any amount spent within a bound;
 * bounds are monotone in the budget, the charge and the amount spent;
 * bounds push forward along monotone additive maps (`IsChargeBound.map`) and transfer both ways
   along additive order embeddings such as `ℕ ↪ ℕ∞` (`isChargeBound_comp_iff`);
 * pairs and families of charges split componentwise (`isChargeBound_prod_iff`,
   `isChargeBound_pi_iff`);
-* bounds transport along lenses (`IsChargeBound.mapLens`) and through free handlers whose
+* bounds transport along lenses (`IsChargeBound.mapLens`), in both directions when every map of
+  directions is surjective (`isChargeBound_mapLens_iff`), and through free handlers whose
   implementation of each call stays within its charge (`IsChargeBound.liftM`).
 
 A query whose answer type is empty is still charged: the bound counts the call itself, not only
@@ -79,7 +81,7 @@ theorem budget_apply {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) (a
   Iff.rfl
 
 /-- The budget reading is monotone in its continuation. -/
-theorem budget_monotone {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) :
+theorem budget_mono {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) :
     (budget c B).Monotone :=
   fun _ _ _ hk _ hs => ⟨hs.1, fun b => hk b _ (hs.2 b)⟩
 
@@ -94,27 +96,32 @@ theorem roll_apply {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A →
     roll canRoll cost a k b ↔ canRoll a b ∧ ∀ y, k y (cost a b) :=
   Iff.rfl
 
+/-- The roll reading is monotone in its continuation. -/
+theorem roll_mono {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) :
+    (roll canRoll cost).Monotone :=
+  fun _ _ _ hk _ hs => ⟨hs.1, fun y => hk y _ (hs.2 y)⟩
+
 /-- The budget reading restricted to allowed answers: a call at `a` is admitted when the amount
 spent after it is at most `B`, and only the continuations at answers `b` with `allows a b` must stay
 within budget. It is the budget counterpart of `demonicUnder`; with every answer allowed it is
 `budget` (`budgetUnder_true`). -/
-def budgetUnder {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω)
-    (allows : (a : P.A) → P.B a → Prop) : OpSpec P (ω → Prop) :=
+def budgetUnder {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop)
+    (B : ω) : OpSpec P (ω → Prop) :=
   fun a k s => s + c a ≤ B ∧ ∀ b, allows a b → k b (s + c a)
 
 @[simp]
-theorem budgetUnder_apply {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω)
-    (allows : (a : P.A) → P.B a → Prop) (a : P.A) (k : P.B a → ω → Prop) (s : ω) :
-    budgetUnder c B allows a k s ↔ s + c a ≤ B ∧ ∀ b, allows a b → k b (s + c a) :=
+theorem budgetUnder_apply {ω : Type w} [Add ω] [LE ω] (c : P.A → ω)
+    (allows : (a : P.A) → P.B a → Prop) (B : ω) (a : P.A) (k : P.B a → ω → Prop) (s : ω) :
+    budgetUnder c allows B a k s ↔ s + c a ≤ B ∧ ∀ b, allows a b → k b (s + c a) :=
   Iff.rfl
 
 theorem budgetUnder_true {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω) :
-    budgetUnder c B (fun (_ : P.A) _ => True) = budget c B := by
+    budgetUnder c (fun (_ : P.A) _ => True) B = budget c B := by
   funext a k s
   simp [budgetUnder, budget]
 
-theorem budgetUnder_monotone {ω : Type w} [Add ω] [LE ω] (c : P.A → ω) (B : ω)
-    (allows : (a : P.A) → P.B a → Prop) : (budgetUnder c B allows).Monotone :=
+theorem budgetUnder_mono {ω : Type w} [Add ω] [LE ω] (c : P.A → ω)
+    (allows : (a : P.A) → P.B a → Prop) (B : ω) : (budgetUnder c allows B).Monotone :=
   fun _ _ _ hk _ hs => ⟨hs.1, fun b hb => hk b _ (hs.2 b hb)⟩
 
 /-- The roll reading restricted to allowed answers: a call at `a` is admitted at state `b` when
@@ -134,6 +141,10 @@ theorem rollUnder_true {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A
     rollUnder canRoll cost (fun (_ : P.A) _ => True) = roll canRoll cost := by
   funext a k b
   simp [rollUnder, roll]
+
+theorem rollUnder_mono {σ : Type w} (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ)
+    (allows : (a : P.A) → P.B a → Prop) : (rollUnder canRoll cost allows).Monotone :=
+  fun _ _ _ hk _ hs => ⟨hs.1, fun y hy => hk y _ (hs.2 y hy)⟩
 
 end OpSpec
 
@@ -346,26 +357,6 @@ end CanonicalBound
 
 /-! ### Natural-number budgets -/
 
-/-- With natural-number charges, a charge bound is the subtractive roll bound: the remaining
-budget `n - s` decreases by `c a` at each call. -/
-theorem isChargeBound_iff_isRollBound_tsub (x : FreeM P α) (c : P.A → ℕ) (n s : ℕ) :
-    IsChargeBound x c n s ↔
-      s ≤ n ∧ IsRollBound x (n - s) (fun a b => c a ≤ b) (fun a b => b - c a) := by
-  induction x using FreeM.rec generalizing s with
-  | pure a => simp
-  | liftBind a r ih =>
-    rw [isChargeBound_liftBind_iff, isRollBound_liftBind_iff]
-    simp only [ih]
-    constructor
-    · rintro ⟨h₁, h₂⟩
-      refine ⟨by omega, by omega, fun b => ?_⟩
-      rw [show n - s - c a = n - (s + c a) by omega]
-      exact (h₂ b).2
-    · rintro ⟨_, hc, h₂⟩
-      refine ⟨by omega, fun b => ⟨by omega, ?_⟩⟩
-      rw [show n - (s + c a) = n - s - c a by omega]
-      exact h₂ b
-
 /-- In a canonically ordered monoid with truncated subtraction and cancellation, such as
 `ι → ℕ` or `ℕ × ℕ`, a charge bound is the subtractive roll bound on the remaining budget. -/
 theorem isChargeBound_iff_isRollBound_orderedSub {ω : Type w} [AddCommMonoid ω] [PartialOrder ω]
@@ -389,7 +380,7 @@ theorem isChargeBound_iff_isRollBound_orderedSub {ω : Type w} [AddCommMonoid ω
 /-- A natural-number charge bound from nothing spent is the subtractive roll bound. -/
 theorem isChargeBound_iff_isRollBound_nat (x : FreeM P α) (c : P.A → ℕ) (n : ℕ) :
     IsChargeBound x c n ↔ IsRollBound x n (fun a b => c a ≤ b) (fun a b => b - c a) := by
-  simpa using isChargeBound_iff_isRollBound_tsub x c n 0
+  simpa using isChargeBound_iff_isRollBound_orderedSub x c n 0
 
 /-- A unit-charge budget is a total roll bound. -/
 theorem isChargeBound_one_iff_isTotalRollBound (x : FreeM P α) (n : ℕ) :
@@ -597,6 +588,12 @@ def IsRollBoundUnder {σ : Type w} (x : FreeM P α) (b : σ) (canRoll : P.A → 
     (cost : P.A → σ → σ) (allows : (a : P.A) → P.B a → Prop) : Prop :=
   wpFold (OpSpec.rollUnder canRoll cost allows) x (fun _ _ => True) b
 
+@[simp]
+theorem isRollBoundUnder_pure {σ : Type w} (a : α) (b : σ) (canRoll : P.A → σ → Prop)
+    (cost : P.A → σ → σ) : IsRollBoundUnder (pure a : FreeM P α) b canRoll cost allows :=
+  trivial
+
+@[freeM_unfold]
 theorem isRollBoundUnder_liftBind_iff {σ : Type w} (a : P.A) (r : P.B a → FreeM P α) (b : σ)
     (canRoll : P.A → σ → Prop) (cost : P.A → σ → σ) :
     IsRollBoundUnder (FreeM.liftBind a r) b canRoll cost allows ↔
@@ -609,13 +606,28 @@ theorem isRollBoundUnder_true_iff {σ : Type w} (x : FreeM P α) (b : σ)
     IsRollBoundUnder x b canRoll cost (fun _ _ => True) ↔ IsRollBound x b canRoll cost := by
   rw [isRollBound_iff_wpFold, IsRollBoundUnder, OpSpec.rollUnder_true]
 
+/-- Allowing fewer answers keeps a roll bound. -/
+theorem IsRollBoundUnder.mono_allows {σ : Type w} {x : FreeM P α} {b : σ}
+    {canRoll : P.A → σ → Prop} {cost : P.A → σ → σ}
+    (h : IsRollBoundUnder x b canRoll cost allows) (hle : ∀ a y, allows' a y → allows a y) :
+    IsRollBoundUnder x b canRoll cost allows' := by
+  induction x using FreeM.rec generalizing b with
+  | pure a => trivial
+  | liftBind a r ih => exact ⟨h.1, fun y hy => ih y (h.2 y (hle a y hy))⟩
+
+/-- A roll bound holds under every restriction of the answers. -/
+theorem IsRollBound.under {σ : Type w} {x : FreeM P α} {b : σ} {canRoll : P.A → σ → Prop}
+    {cost : P.A → σ → σ} (h : IsRollBound x b canRoll cost)
+    (allows : (a : P.A) → P.B a → Prop) : IsRollBoundUnder x b canRoll cost allows :=
+  ((isRollBoundUnder_true_iff x b canRoll cost).2 h).mono_allows fun _ _ _ => trivial
+
 variable [Add ω] [LE ω] [Zero ω] {c : P.A → ω} {B s : ω}
 
 /-- `x.IsChargeBoundUnder c allows B s`: with `s` already spent, every call of `x` keeps the amount
 spent at most `B`, and every leaf is reached within `B`, along the answers that `allows` admits. -/
 def IsChargeBoundUnder (x : FreeM P α) (c : P.A → ω) (allows : (a : P.A) → P.B a → Prop) (B : ω)
     (spent : ω := 0) : Prop :=
-  wpFold (OpSpec.budgetUnder c B allows) x (fun _ s => s ≤ B) spent
+  wpFold (OpSpec.budgetUnder c allows B) x (fun _ s => s ≤ B) spent
 
 @[simp, freeM_unfold]
 theorem isChargeBoundUnder_pure_iff (a : α) :
@@ -655,7 +667,6 @@ theorem IsChargeBoundUnder.mono_allows {x : FreeM P α} (h : IsChargeBoundUnder 
   | liftBind a r ih => exact ⟨h.1, fun b hb => ih b (h.2 b (hle a b hb))⟩
 
 /-- `isChargeBoundUnder_lift_bind_iff` when results and directions share a universe. -/
-@[simp]
 theorem isChargeBoundUnder_lift_bind_iff' {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) :
     IsChargeBoundUnder (Bind.bind (α := no_index (P.B a)) (FreeM.lift a) r) c allows B s ↔
       s + c a ≤ B ∧ ∀ b, allows a b → IsChargeBoundUnder (r b) c allows B (s + c a) :=
@@ -670,7 +681,7 @@ theorem isChargeBoundUnder_lift_iff (a : P.A) :
 has spent. -/
 theorem isChargeBoundUnder_bind_iff {γ : Type v'} (x : FreeM P α) (f : α → FreeM P γ) :
     IsChargeBoundUnder (FreeM.bind x f) c allows B s ↔
-      wpFold (OpSpec.budgetUnder c B allows) x
+      wpFold (OpSpec.budgetUnder c allows B) x
         (fun a s' => IsChargeBoundUnder (f a) c allows B s') s := by
   unfold IsChargeBoundUnder
   rw [wpFold_bind']
@@ -678,7 +689,7 @@ theorem isChargeBoundUnder_bind_iff {γ : Type v'} (x : FreeM P α) (f : α → 
 @[simp]
 theorem isChargeBoundUnder_bind_iff' (x : FreeM P α) (f : α → FreeM P β) :
     IsChargeBoundUnder (x >>= f) c allows B s ↔
-      wpFold (OpSpec.budgetUnder c B allows) x
+      wpFold (OpSpec.budgetUnder c allows B) x
         (fun a s' => IsChargeBoundUnder (f a) c allows B s') s :=
   isChargeBoundUnder_bind_iff x f
 
@@ -728,7 +739,6 @@ theorem IsChargeBoundUnder.bind_of_le {γ : Type v'} {x : FreeM P α} {f : α �
   induction x using FreeM.rec generalizing s with
   | pure a => exact hf a hpost s hx
   | liftBind a r ih => exact ⟨hx.1.trans hL, fun b hb => ih b (hx.2 b hb) (hpost b hb)⟩
-
 
 /-- Starting from less spent keeps a program within budget. -/
 theorem IsChargeBoundUnder.mono_spent {x : FreeM P α} (h : IsChargeBoundUnder x c allows B s)

@@ -25,8 +25,8 @@ open _root_.PFunctor
 
 variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {ω : Type w} {α : Type v}
 
-example (m : Lens Q (C.{w, uE} ω)) (l : Lens P Q) :
-    (m ∘ₗ l).toCharge = m.toCharge ∘ l.toFunA :=
+example (c : Q.A → ω) (l : Lens P Q) :
+    ((Lens.toConst c : Lens Q (C.{w, uE} ω)) ∘ₗ l).toFunA = c ∘ l.toFunA :=
   rfl
 
 example [Add ω] [LE ω] [Zero ω] (c : P.A → ω) (B s : ω) (a : P.A) (r : P.B a → FreeM P α) :

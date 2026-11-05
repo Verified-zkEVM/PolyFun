@@ -22,7 +22,10 @@ Checks for `PolyFun.PFunctor.Free.Cost` and for the lens transport of roll bound
 * simulating through a handler that doubles every call doubles a unit budget;
 * a non-additive roll bound transports along a lens into a sum;
 * contracts need care: a per-kind budget over infinitely many kinds does not bound total use, and
-  with a negative price a refund call meets a budget the work alone would exceed.
+  with a negative price a refund call meets a budget the work alone would exceed;
+* a bound restricted to allowed answers holds where the unrestricted one fails, matches the
+  restricted roll bound and transfers through a handler, and a lens that answers only some
+  directions can hide calls from a bound.
 -/
 
 public section
@@ -279,5 +282,25 @@ example (x : FreeM Coin Bool) (n : ℕ) :
 example (x : FreeM Coin Bool) (n : ℕ) (h : x.IsChargeBound (fun _ => (1 : ℕ)) n) :
     x.IsChargeBoundUnder (fun _ => (1 : ℕ)) (fun _ b => b = true) n :=
   h.under _
+
+/-- The restricted charge bound is the restricted roll bound on the amount spent. -/
+example : flipThenMore.IsRollBoundUnder 0 (fun _ t => t + 1 ≤ 1) (fun _ t => t + 1)
+    (fun _ b => b = true) :=
+  ((isChargeBoundUnder_iff_isRollBoundUnder flipThenMore).1 (by simp [flipThenMore])).2
+
+/-- A handler that answers each flip with a flip of its own, along the same allowed answers,
+transfers the restricted bound. -/
+example : (flipThenMore.liftM fun _ => FreeM.lift (P := Coin) ()).IsChargeBoundUnder
+    (fun _ => (1 : ℕ)) (fun _ b => b = true) 1 :=
+  IsChargeBoundUnder.liftM (P := Coin) (c := fun _ => 1) (allows := fun _ b => b = true)
+    (allowsQ := fun _ b => b = true) (fun _ => FreeM.lift (P := Coin) ()) (fun _ => by simp)
+    (fun _ _ hb => hb) (by simp [flipThenMore])
+
+/-- A lens whose map of directions is not surjective: every flip is answered `true`, so the mapped
+program meets the budget `1` that the program itself exceeds. Pulling a bound back along a lens
+needs surjective maps of directions (`isChargeBound_mapLens_iff`). -/
+example : (flipThenMore.mapLens (id ⇆ fun _ _ => true : Lens Coin Coin)).IsChargeBound
+    (fun _ => (1 : ℕ)) 1 :=
+  ⟨le_rfl, fun _ => le_rfl⟩
 
 end PolyFunTest.Charge

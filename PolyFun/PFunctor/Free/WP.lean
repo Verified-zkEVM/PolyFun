@@ -585,8 +585,7 @@ theorem wpFold_liftM (handler : (position : P.A) → FreeM Q (P.B position)) (Φ
 /-- **Transfer along a handler.** If, for every continuation, the fold of `Ψ` over each
 implementation is below the spec `Φ` of its call, then folding `Ψ` over the substituted program is
 below folding `Φ` over the original. Upper-bound readings, such as the worst-case charge, transfer
-this way. A budget read as a predicate on the amount spent is the dual case: the inequality
-reverses, and only continuations that are antitone in the amount spent are admissible. -/
+this way; budgets transfer through `FreeM.IsChargeBound.liftM`. -/
 theorem wpFold_liftM_le [Preorder l] (handler : (position : P.A) → FreeM Q (P.B position))
     {Ψ : OpSpec Q l} {Φ : OpSpec P l} (hΦ : Φ.Monotone)
     (h : ∀ position (k : P.B position → l), wpFold Ψ (handler position) k ≤ Φ position k)
