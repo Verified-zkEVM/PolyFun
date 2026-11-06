@@ -56,13 +56,18 @@ measure-valued instances of those parameters.
   `IsSubprobabilityKernel κ` bounds every fibre. Constant, restricted, pushed-forward,
   pulled-back, composed and product kernels keep the bound, and every Markov kernel is a
   subprobability kernel.
-- **Answer measures and the measure fold**
+- **The measure fold**
   ([`AnswerMeasure`](../../PolyFunProbability/PFunctor/AnswerMeasure.lean),
   [`Free/Measure`](../../PolyFunProbability/PFunctor/Free/Measure.lean)).
-  `PFunctor.AnswerMeasure` assigns a probability measure to the answers of each operation, and
-  `PFunctor.FreeM.denote` folds a free program into a measure on its results with `Measure.bind`.
-  An unmeasurable continuation denotes zero, so every program denotes a subprobability measure,
-  and over discrete answers a probability measure. Over discrete answers the fold preserves bind
+  `PFunctor.FreeM.measureFold μ` folds a free program into a measure on its results with
+  `Measure.bind`, under arbitrary per-operation answer measures `μ`: probability measures,
+  subprobability measures for operations that can fail, or other weightings. An unmeasurable
+  continuation folds to zero. Subprobability answers give a subprobability result, and over
+  discrete answers probability answers give a probability result. Substitution is pullback:
+  folding a program simulated by a free handler is folding the source program under the
+  measures its implementations fold to (`measureFold_liftM`), the measure counterpart of
+  `wpFold_liftM`. `PFunctor.AnswerMeasure` assigns a probability measure to each operation, and
+  `PFunctor.FreeM.denote` is the fold under it. Over discrete answers the fold preserves bind
   and map (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two independent runs denote
   the product measure (`denote_bind_bind_prod_mk_eq_prod`).
 - **Kernel handlers**
@@ -74,6 +79,12 @@ measure-valued instances of those parameters.
   states, and it agrees with first interpreting a free handler's implementations
   (`runKernel_liftM`). Almost-everywhere state invariants and state projections transport from
   single steps to whole programs. `Wiring.runKernel` interprets recursive polynomial wiring.
+- **Possible outputs and positive mass**
+  ([`Free/Support`](../../PolyFunProbability/PFunctor/Free/Support.lean)).
+  Over discrete answers, every result of positive mass is in PolyFun's `MonadAttach` support of
+  the program, and under answer measures of full support the two sets agree
+  (`support_eq_setOf_measureFold_ne_zero`). Without full support, reachability and positive
+  probability differ.
 - **Path measures**
   ([`Free/Path/Measure`](../../PolyFunProbability/PFunctor/Free/Path/Measure.lean)).
   `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path
