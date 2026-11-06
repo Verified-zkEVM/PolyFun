@@ -160,6 +160,30 @@ Mathlib's theorems and tactics, and the lens-level statements otherwise.
 | Compare possibly infinite trees | [M-types](../../PolyFun/PFunctor/M.lean), [resumptions](../../PolyFun/PFunctor/Resumption.lean) |
 | Study the categorical structure | [Monoidal structures](../../PolyFun/PFunctor/Category/Monoidal.lean), [coherence](../../PolyFun/PFunctor/Lens/Coherence.lean), [Tensor internal hom](../../PolyFun/PFunctor/InternalHom.lean), [cartesian exponential](../../PolyFun/PFunctor/CartesianClosed.lean), [mathematical background](../reference/mathematical-background.md) |
 | Relate free and cofree constructions | [Pattern runs on matter](../reference/pattern-runs-on-matter.md) |
+| Present an inductive program type as a free monad | [signature derivation](../../PolyFun/PFunctor/Free/DeriveSig.lean), [codes and relational lifts](../../PolyFun/PFunctor/Free/Code.lean), [relations between codes](../../PolyFun/PFunctor/Free/CodeRel.lean), [cost folds](../../PolyFun/PFunctor/Free/WP/Cost.lean), [free monads modulo equations](../../PolyFun/PFunctor/Free/Quotient.lean) |
+| Work with Σ, Π and pullback along maps | [slices and the distributive law](../../PolyFun/PFunctor/Slice.lean), [natural models](../../PolyFun/PFunctor/NaturalModel.lean) |
+
+### Signatures of program types
+
+`derive_free_sig T` reads an inductive type `T p₁ ⋯ pₘ α` of program trees (one return
+constructor `ret (a : α)` and operations with at most one continuation) and defines its
+operations `T.Op`, the polynomial functor `T.Sig`, the equivalence
+`T.equivFreeM : T p₁ ⋯ pₘ α ≃ PFunctor.FreeM (T.Sig p₁ ⋯ pₘ) α` with its two round trips, the
+one-operation summands `T.Sig.op` and the decomposition `T.sigEquivSum` of `T.Sig` as their sum.
+The option `(bind := f)` adds `T.toFreeM_bind`; the option `(code := true)` adds the code
+`T.code` of the signature (`PFunctor.Code`, a list of telescopes of fields ending in a
+direction type) and `T.equivCode`, so that the relational lift `PFunctor.FreeRel`
+(`Code.Rel`), the heterogeneous lift `PFunctor.HFreeRel` along a relation between codes of the
+same shape, and the cost fold `PFunctor.FreeM.cost` of a charge apply to `T`.
+
+`PFunctor.QFreeM T` is the free monad modulo an equational theory `T`, a lawful monad and the
+free model of `T`; for a quotient container (a polynomial functor with a group of symmetries of
+the directions at each position) it is the initial algebra of `X ↦ α ⊕ ⟦Q⟧ X`.
+
+`PFunctor.Slice` gives the adjoint triple `Σ_f ⊣ f* ⊣ Π_f` on families, the polynomial functor
+`P_f` of a map, the distributive law of `Π` over `Σ`, and the closure of `IPFunctor` under Σ, Π
+and pullback. `PFunctor.NaturalModel` gives the Σ- and Π-structures of a universe polynomial as
+cartesian maps of polynomials, and Awodey's Π-pullback square.
 
 Mathlib owns `PFunctor`, its object action, and W/M-type foundations. CSLib
 owns the basic polynomial constructions (`A y^ B`, `C`, `linear`,

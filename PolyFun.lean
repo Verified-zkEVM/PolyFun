@@ -285,11 +285,14 @@ public import PolyFun.PFunctor.Dynamical.Trajectory
 public import PolyFun.PFunctor.Equiv.Basic
 public import PolyFun.PFunctor.Equiv.Special
 public import PolyFun.PFunctor.Free.Basic
+public import PolyFun.PFunctor.Free.Code
+public import PolyFun.PFunctor.Free.CodeRel
 public import PolyFun.PFunctor.Free.Cursor
 public import PolyFun.PFunctor.Free.Cursor.Append
 public import PolyFun.PFunctor.Free.Cursor.Fork
 public import PolyFun.PFunctor.Free.Cursor.Occurrence
 public import PolyFun.PFunctor.Free.Cursor.ReplayTree
+public import PolyFun.PFunctor.Free.DeriveSig
 public import PolyFun.PFunctor.Free.Displayed
 public import PolyFun.PFunctor.Free.Displayed.Append
 public import PolyFun.PFunctor.Free.Displayed.Cursor
@@ -304,6 +307,7 @@ public import PolyFun.PFunctor.Free.Path
 public import PolyFun.PFunctor.Free.Path.Bounded
 public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Polynomial
+public import PolyFun.PFunctor.Free.Quotient
 public import PolyFun.PFunctor.Free.Replicate
 public import PolyFun.PFunctor.Free.Resumption
 public import PolyFun.PFunctor.Free.Sigma
@@ -311,6 +315,7 @@ public import PolyFun.PFunctor.Free.Support
 public import PolyFun.PFunctor.Free.Universal
 public import PolyFun.PFunctor.Free.WP
 public import PolyFun.PFunctor.Free.WP.Charge
+public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Free
@@ -340,6 +345,7 @@ public import PolyFun.PFunctor.Lens.Yoneda
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex
 public import PolyFun.PFunctor.M.WellFounded
+public import PolyFun.PFunctor.NaturalModel
 public import PolyFun.PFunctor.Obj
 public import PolyFun.PFunctor.Parallel
 public import PolyFun.PFunctor.PatternRunsOnMatter.Applications
@@ -357,6 +363,7 @@ public import PolyFun.PFunctor.Resumption.DomainTruncate
 public import PolyFun.PFunctor.Resumption.Empty
 public import PolyFun.PFunctor.Resumption.Truncate
 public import PolyFun.PFunctor.Resumption.WellFounded
+public import PolyFun.PFunctor.Slice
 public import PolyFun.PFunctor.SubstMonoid
 public import PolyFun.PFunctor.SubstMonoid.Convolution
 public import PolyFun.PFunctor.SubstMonoid.Extension

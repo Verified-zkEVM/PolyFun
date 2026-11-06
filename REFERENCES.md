@@ -515,6 +515,72 @@ realizability at the class "given by a finite `FreeM` term".
 
 Used in: `PolyFun/Realizability/Basic.lean`.
 
+## Polynomial-functor and container citations
+
+### GK13 — Gambino and Kock, *Polynomial functors and polynomial monads*
+
+Nicola Gambino and Joachim Kock.
+*Polynomial Functors and Polynomial Monads*.
+*Mathematical Proceedings of the Cambridge Philosophical Society* 154(1),
+pp. 153–192, 2013.
+DOI: <https://doi.org/10.1017/S0305004112000394>
+
+Polynomial functors over a locally cartesian closed category as composites
+`Σ_t ∘ Π_p ∘ s*` of the adjoint triple along the maps of a diagram `I ← E → D → J`,
+and the distributive law of `Π` over `Σ` (Lemma 2.3).
+
+Used in: `PolyFun/PFunctor/Slice.lean`, `PolyFun/PFunctor/NaturalModel.lean`.
+
+### Web15 — Weber, *Polynomials in categories with pullbacks*
+
+Mark Weber.
+*Polynomials in Categories with Pullbacks*.
+*Theory and Applications of Categories* 30(16), pp. 533–598, 2015.
+
+Polynomials and their distributivity pullbacks in a category with pullbacks, without
+assuming local cartesian closure.
+
+Used in: `PolyFun/PFunctor/Slice.lean`.
+
+### Awo18 — Awodey, *Natural models of homotopy type theory*
+
+Steve Awodey.
+*Natural Models of Homotopy Type Theory*.
+*Mathematical Structures in Computer Science* 28(2), pp. 241–286, 2018.
+DOI: <https://doi.org/10.1017/S0960129516000268>
+
+A universe as a representable map `u : Ũ → U`, with the type formers Σ and Π given by
+cartesian maps of polynomials into its polynomial `P_u`.
+
+Used in: `PolyFun/PFunctor/Slice.lean`, `PolyFun/PFunctor/NaturalModel.lean`.
+
+### AAGM04 — Abbott, Altenkirch, Ghani, McBride, *Constructing polymorphic programs with quotient types*
+
+Michael Abbott, Thorsten Altenkirch, Neil Ghani, and Conor McBride.
+*Constructing Polymorphic Programs with Quotient Types*.
+In *Mathematics of Program Construction (MPC 2004)*, LNCS 3125, pp. 2–15, 2004.
+DOI: <https://doi.org/10.1007/978-3-540-27764-4_2>
+
+Quotient containers: a container with a group of symmetries of the directions at each
+position, whose extension identifies a family of directions with its composite with a
+symmetry.
+
+Used in: `PolyFun/PFunctor/Free/Quotient.lean`.
+
+### CDMM10 — Chapman, Dagand, McBride, Morris, *The gentle art of levitation*
+
+James Chapman, Pierre-Évariste Dagand, Conor McBride, and Peter Morris.
+*The Gentle Art of Levitation*.
+In *Proceedings of the 15th ACM SIGPLAN International Conference on Functional
+Programming (ICFP 2010)*, pp. 3–14, 2010.
+DOI: <https://doi.org/10.1145/1863543.1863547>
+
+A universe of descriptions of inductive types, closed under its own description. The
+codes of signatures in `PolyFun/PFunctor/Free/Code.lean` are descriptions of this kind
+for program-tree signatures.
+
+Used in: `PolyFun/PFunctor/Free/Code.lean`.
+
 ## Distributive-category citations
 
 The closure structure a step class needs — finite products, finite coproducts, and
