@@ -31,14 +31,14 @@ or erase failures.
 
 `RelationalContract.iff_of_liftFun` handles representation relations. The
 embedding-based contract is a special case, and its transfer theorem uses this
-same proof. VCVio's Foundation-list view is a concrete consumer: a finite list
-observes a length and a stream prefix, while different unused tails represent
-the same list. An empty list may even have a bottom stream component. Requiring
-an equivalence or a unique semantic representative there would impose the
-wrong definedness requirement. No additional correspondence class is needed;
+same proof. A lazy list stored as a stream and a length is a concrete case: a
+finite list observes a length and a stream prefix, while different unused tails
+represent the same list. An empty list may even have a bottom stream component.
+Requiring an equivalence or a unique semantic representative there would impose
+the wrong definedness requirement. No additional correspondence class is needed;
 function compatibility is Mathlib's `Relator.LiftFun`.
 
-## Two consumers
+## Two frontends
 
 [ScopedExecution.lean](../../Examples/Tutorials/ScopedExecution.lean) supplies a
 strict evaluator for the arithmetic, let and bounded-loop fragment of the
@@ -47,11 +47,11 @@ steps. `compile_correct` relates it to the scoped algebra for every supported
 term and environment; `executes` and `execution_correct` connect its transitions
 to that meaning. `sumCertificate` demonstrates all-input contract transfer.
 
-VCVio's optional Cryptol development uses the same correspondence and transition
-interfaces with lazy partial values, typed machine states and language-specific
-errors. Cryptol source schemes, primitives, adequacy, Foundation provenance and
-crypto specification transfer remain in VCVio. The two frontends share neither
-an opcode vocabulary nor an evaluation strategy.
+A draft Cryptol case study ([#356](https://github.com/Verified-zkEVM/PolyFun/pull/356)
+and [VCVio#910](https://github.com/Verified-zkEVM/VCVio/pull/910)) uses the same
+correspondence and transition interfaces with lazy partial values, typed machine
+states and language-specific errors. The two frontends share neither an opcode
+vocabulary nor an evaluation strategy.
 
 ## Further connections
 
@@ -71,9 +71,3 @@ The [cross-repository tracker](https://github.com/Verified-zkEVM/VCVio/issues/87
 records the next substantial workloads for these APIs and their dependencies.
 Generic PolyFun work remains fully proved while downstream source/algorithm
 obligations are reported at their own boundary.
-
-The axiom scanner's `sorryGraph` report retains direct kernel dependencies,
-elaborated proposition text, and internal auxiliary nodes for the `sorryAx`
-closure. Consumers can use that report to explain inherited proof obligations.
-This does not change PolyFun's policy: `--check` still rejects every admission
-and every nonstandard axiom, and its baseline must remain empty.
