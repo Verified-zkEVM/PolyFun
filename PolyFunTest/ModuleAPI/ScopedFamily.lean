@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-import Examples.Tutorials.ScopedFamily
+public import Examples.Tutorials.ScopedFamily
 import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
 import PolyFun.IPFunctor.Scoped.FamilyMapCongr
 
@@ -147,3 +147,112 @@ example {W : Type uScope} {S : W → Type uSort}
     exact eq_of_heq he
   · intros
     trivial
+
+/-! ## Value substitution with a lawful reindexing action
+
+The source context is `f : α → α, y : α`, with `α` as `.param 0`. Below a type binder, `α` is
+`.param 1`. Every local value below the inner lambda of `lifted` has type `.param 1`, so the exact
+equalities, not the typing, check its binding positions. Elaborator reduction of nested parameter
+maps is expensive, so the checks evaluate one stage at a time on normal forms.
+-/
+
+namespace PolyFunTest.ModuleAPI.ScopedFamily
+
+open Examples.ScopedFamily
+
+@[expose] public section
+
+/-- `Λβ. λ (x : α). f`, which uses `f` below a type binder and a value binder. -/
+def source : Term 1 [.mono (.arrow (.param 0) (.param 0)), .mono (.param 0)]
+    (.poly (.arrow (.param 1) (.arrow (.param 1) (.param 1)))) :=
+  .liftBind (.typeAbs (.arrow (.param 1) (.arrow (.param 1) (.param 1)))) (fun _ =>
+    .liftBind (.lam (.param 1) (.arrow (.param 1) (.param 1))) (fun _ => .pure (.succ .zero)))
+
+/-- The non-variable value `λ (_ : α). y`, with a lambda at `.param 0`. -/
+def value : Term 1 [.mono (.param 0)] (.mono (.arrow (.param 0) (.param 0))) :=
+  .liftBind (.lam (.param 0) (.param 0)) (fun _ => .pure (.succ .zero))
+
+/-- `value` below the type binder: its lambda is at `.param 1`. -/
+def shifted : Term 2 [.mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))) :=
+  .liftBind (.lam (.param 1) (.param 1)) (fun _ => .pure (.succ .zero))
+
+/-- `shifted` below the value binder: `y` is one binding position farther away. -/
+def lifted : Term 2 [.mono (.param 1), .mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))) :=
+  .liftBind (.lam (.param 1) (.param 1)) (fun _ => .pure (.succ (.succ .zero)))
+
+/-- The exact result `Λβ. λ (x : α). λ (_ : α). y` of substituting `value` for `f`. -/
+def expected : Term 1 [.mono (.param 0)]
+    (.poly (.arrow (.param 1) (.arrow (.param 1) (.param 1)))) :=
+  .liftBind (.typeAbs (.arrow (.param 1) (.arrow (.param 1) (.param 1)))) (fun _ =>
+    .liftBind (.lam (.param 1) (.arrow (.param 1) (.param 1))) (fun _ => lifted))
+
+/-- Enter the type binder of `source`. -/
+def belowType (t : Term 1 [.mono (.param 0)] (.mono (.arrow (.param 0) (.param 0))))
+    (p : Fin 1) : Term 2 [.mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))) :=
+  reindexAction (.typeAbs (n := 1) (.arrow (.param 1) (.arrow (.param 1) (.param 1)))) p t
+
+/-- Enter the value binder of `source`, which keeps the parameter context. -/
+def belowValue (t : Term 2 [.mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))))
+    (p : Fin 1) : Term 2 [.mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))) :=
+  reindexAction (.lam (n := 2) (.param 1) (.arrow (.param 1) (.param 1))) p t
+
+/-- Reindex an image at both binders of `source` and move it past the bound variable. -/
+def image (t : Term 1 [.mono (.param 0)] (.mono (.arrow (.param 0) (.param 0))))
+    (p₀ p₁ : Fin 1) :
+    Term 2 [.mono (.param 1), .mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))) :=
+  (belowValue (belowType t p₀) p₁).rename ScopedVar.succ
+
+theorem belowType_value (p : Fin 1) : belowType value p = shifted := rfl
+
+theorem belowValue_shifted (p : Fin 1) : belowValue shifted p = shifted := rfl
+
+theorem rename_shifted :
+    shifted.rename (ScopedVar.succ (b := ValueSort.mono (.param 1))) = lifted := rfl
+
+theorem image_value (p₀ p₁ : Fin 1) : image value p₀ p₁ = lifted := by
+  rw [image, belowType_value, belowValue_shifted, rename_shifted]
+
+/-- Substitution sends `f` to its image below both binders, for every substituted term. -/
+theorem substOne_source (t : Term 1 [.mono (.param 0)] (.mono (.arrow (.param 0) (.param 0)))) :
+    source.substOne reindexAction t =
+      .liftBind (.typeAbs (.arrow (.param 1) (.arrow (.param 1) (.param 1)))) (fun p₀ =>
+        .liftBind (.lam (.param 1) (.arrow (.param 1) (.param 1))) (fun p₁ => image t p₀ p₁)) :=
+  rfl
+
+/-- Substituting a non-variable term below both binders gives the exact expected term. -/
+theorem substOne_source_value : source.substOne reindexAction value = expected := by
+  rw [substOne_source]
+  simp only [image_value]
+  rfl
+
+/-- Substitution leaves the variable bound by the lambda at the nearest position. -/
+example :
+    ScopedFamily.Term.substOne reindexAction
+      (.liftBind (.typeAbs (.arrow (.param 1) (.param 1))) (fun _ =>
+        .liftBind (.lam (.param 1) (.param 1)) (fun _ => .pure .zero)) :
+          Term 1 [.mono (.arrow (.param 0) (.param 0)), .mono (.param 0)]
+            (.poly (.arrow (.param 1) (.param 1)))) value =
+      .liftBind (.typeAbs (.arrow (.param 1) (.param 1))) (fun _ =>
+        .liftBind (.lam (.param 1) (.param 1)) (fun _ => .pure .zero)) := rfl
+
+/-- The lawful action discharges the assumption of the composition law. -/
+example {n : Nat} {Γ Δ Θ : List (ValueSort n)} {s : ValueSort n} (t : Term n Γ s)
+    (θ : signature.Substitution Γ Δ) (τ : signature.Substitution Δ Θ) :
+    (t.subst reindexAction θ).subst reindexAction τ =
+      t.subst reindexAction (fun x => (θ x).subst reindexAction τ) :=
+  IPFunctor.ScopedFamily.Term.subst_subst reindexAction reindexAction_lawful t θ τ
+
+/-- The lawful action discharges the assumption of the closing law on the concrete terms. -/
+example :
+    (source.subst reindexAction
+        (IPFunctor.ScopedFamily.Substitution.lift
+          (fun x => IPFunctor.ScopedFamily.Term.var x) _)).substOne reindexAction value =
+      source.subst reindexAction
+        (IPFunctor.ScopedFamily.Substitution.cons
+          (fun x => IPFunctor.ScopedFamily.Term.var x) value) :=
+  IPFunctor.ScopedFamily.Term.substOne_subst_lift reindexAction reindexAction_lawful
+    source _ value
+
+end
+
+end PolyFunTest.ModuleAPI.ScopedFamily

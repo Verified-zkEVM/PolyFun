@@ -592,7 +592,11 @@ and measures neither execution cost nor the size of a semantic value.
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
-remaining free below a type binder and a value binder. It has no Cryptol or cryptography
+remaining free below a type binder and a value binder. Its `reindexAction` builds
+a lawful parameter action from parameter renaming, in steps that another language
+can repeat. It has no Cryptol or cryptography
 dependency. [Public API checks](../../PolyFunTest/ModuleAPI/ScopedFamily.lean)
 and the separate documentation consumer exercise the same theorems through
-ordinary imports.
+ordinary imports. The public API checks also substitute a lambda below both binder
+kinds, compare the exact term, and apply `subst_subst` and `substOne_subst_lift`
+with `reindexAction_lawful`.

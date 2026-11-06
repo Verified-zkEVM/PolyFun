@@ -6,8 +6,9 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Scoped.FamilyMap
+public import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
+import PolyFun.IPFunctor.Scoped.FamilyMapCongr
 
 /-!
 # A finite polymorphic IR built from a binding family
@@ -16,6 +17,7 @@ This small language has Boolean values, ordinary functions and one explicit
 type quantifier. It illustrates changing parameter contexts independently of
 any effect or source language. Its runtime erasure is a generic polynomial fold.
 Parameter renaming is a generic family homomorphism, including under binders.
+That homomorphism also supplies the lawful reindexing action for value substitution.
 -/
 
 public section
@@ -247,5 +249,184 @@ theorem erase_rename_ambientValue :
   simp only [erase, ambientValue, IPFunctor.ScopedFamily.Term.rename, IFreeM.fold_liftBind,
     IFreeM.fold_pure, eraseOp]
   rfl
+
+/-! ## A lawful reindexing action
+
+Family substitution takes a language's action on terms for each child's parameter-context
+change. Here that action comes from parameter renaming, in steps that another language can
+repeat with its own parameter maps:
+
+1. `Op.binderMap` names the parameter map entering each child, and `Op.binderMap_sort` shows
+   that this map acts on sorts as the signature's `reindex`.
+2. `reindexAction` maps a term along `Op.binderMap` and normalizes its context and sort.
+3. `Term.map_var` and `Term.map_rename` give the variable and renaming laws.
+4. `Op.binderMap_next` commutes entering a child with renaming its parameters.
+   `parameters_parameters_heq` composes whole-term renamings with `Term.map_map` and
+   `Term.map_congr`, so `parameterHom_preservesReindex` lifts that square to terms.
+   `Hom.PreservesReindex.preservesSubstitution` and `Term.map_subst` then give the
+   substitution law.
+-/
+
+theorem lift_id {n : Nat} : lift (id : Fin n → Fin n) = id := by
+  funext i
+  cases i using Fin.cases <;> rfl
+
+theorem Ty.rename_id {n : Nat} (a : Ty n) : a.rename id = a := by
+  induction a <;> simp_all [rename]
+
+theorem ValueSort.rename_id {n : Nat} (a : ValueSort n) : a.rename id = a := by
+  cases a <;> simp only [rename, Ty.rename_id, lift_id]
+
+namespace Op
+
+/-- Renaming a head twice agrees with renaming it along the composite. -/
+theorem rename_rename_heq {n m k : Nat} (ρ : Fin n → Fin m) (τ : Fin m → Fin k)
+    {s : ValueSort n} (o : Op n s) : HEq ((o.rename ρ).rename τ) (o.rename (τ ∘ ρ)) := by
+  cases o with
+  | bit b => rfl
+  | lam a b =>
+      change HEq (Op.lam _ _) (Op.lam _ _)
+      rw [Ty.rename_rename, Ty.rename_rename]
+  | app a b =>
+      change HEq (Op.app _ _) (Op.app _ _)
+      rw [Ty.rename_rename, Ty.rename_rename]
+  | typeAbs body =>
+      change HEq (Op.typeAbs _) (Op.typeAbs _)
+      rw [Ty.rename_rename, lift_comp]
+
+/-- The parameter map entering a child: weakening at a type abstraction, identity elsewhere. -/
+@[expose] def binderMap {n : Nat} : {s : ValueSort n} → (o : Op n s) →
+    (p : Fin o.arity) → Fin n → Fin (o.world p)
+  | _, .typeAbs _, _ => Fin.succ
+  | _, .bit _, _ | _, .lam _ _, _ | _, .app _ _, _ => id
+
+/-- A child's parameter map acts on sorts as the signature's reindexing. -/
+theorem binderMap_sort {n : Nat} {s : ValueSort n} (o : Op n s) (p : Fin o.arity) :
+    ValueSort.rename (o.binderMap p) = o.reindex p := by
+  cases o <;> first | rfl | exact funext ValueSort.rename_id
+
+/-- Entering a child and renaming the parameters can be applied in either order. -/
+theorem binderMap_next {n m : Nat} (ρ : Fin n → Fin m) {s : ValueSort n} (o : Op n s)
+    (p : Fin (o.rename ρ).arity) :
+    o.next ρ p ∘ o.binderMap (p.cast (o.arity_rename ρ)) = (o.rename ρ).binderMap p ∘ ρ := by
+  cases o <;> rfl
+
+end Op
+
+/-- Move existing syntax into a child's parameter context by renaming its parameters. -/
+@[expose] def reindexAction : signature.ReindexAction :=
+  fun {_ _} o p {Γ b} t => (t.map parameterHom (Op.binderMap o p)).cast
+    (congrArg (List.map · Γ) (Op.binderMap_sort o p)) (congrFun (Op.binderMap_sort o p) b)
+
+/-- Normalizing along equal sort maps sends a mapped variable to its other mapped form. -/
+theorem cast_var_map {n m : Nat} {f g : ValueSort n → ValueSort m} (h : f = g)
+    {Γ : List (ValueSort n)} {b : ValueSort n} (x : ScopedVar Γ b) :
+    (IPFunctor.ScopedFamily.Term.var (σ := signature) (x.map f)).cast
+      (congrArg (List.map · Γ) h) (congrFun h b) =
+      IPFunctor.ScopedFamily.Term.var (x.map g) := by
+  cases h
+  rfl
+
+/-- Normalizing along equal sort maps commutes with a mapped value renaming. -/
+theorem cast_rename_map {n m : Nat} {f g : ValueSort n → ValueSort m} (h : f = g)
+    {Γ Δ : List (ValueSort n)} {b : ValueSort n} (ρ : ScopedSignature.Renaming Γ Δ)
+    (t : Term m (Γ.map f) (f b)) :
+    (t.rename (ScopedSignature.Renaming.map f ρ)).cast
+      (congrArg (List.map · Δ) h) (congrFun h b) =
+      (t.cast (congrArg (List.map · Γ) h) (congrFun h b)).rename
+        (ScopedSignature.Renaming.map g ρ) := by
+  cases h
+  rfl
+
+/-- Reindexing keeps every variable at its binding position. -/
+theorem reindexAction_preservesVars : reindexAction.PreservesVars signature := by
+  intro _ _ o p _ _ x
+  exact cast_var_map (Op.binderMap_sort o p) x
+
+/-- Reindexing commutes with value renaming. -/
+theorem reindexAction_preservesRenaming : reindexAction.PreservesRenaming signature := by
+  intro _ _ o p _ _ _ ρ t
+  change ((t.rename ρ).map parameterHom _).cast _ _ = _
+  rw [IPFunctor.ScopedFamily.Term.map_rename]
+  exact cast_rename_map (Op.binderMap_sort o p) ρ _
+
+/-- Successive parameter renamings compose throughout a term. -/
+theorem parameters_parameters_heq {n m k : Nat} (ρ : Fin n → Fin m) (τ : Fin m → Fin k)
+    {Γ : List (ValueSort n)} {s : ValueSort n} (t : Term n Γ s) :
+    HEq ((t.map parameterHom ρ).map parameterHom τ) (t.map parameterHom (τ ∘ ρ)) := by
+  apply (IPFunctor.ScopedFamily.Term.cast_heq _ _ _).symm.trans
+  apply (heq_of_eq (IPFunctor.ScopedFamily.Term.map_map parameterHom parameterHom ρ τ t)).trans
+  apply IPFunctor.ScopedFamily.Term.map_congr (parameterHom.comp parameterHom) parameterHom
+    (fun {_ b c} μ ν => b = c ∧ HEq (μ.2.2 ∘ μ.2.1) ν) ?_ ?_ ?_ ?_ ?_ ⟨rfl, HEq.rfl⟩ t
+  · intro _ _ _ _ _ hr
+    exact hr.1
+  · rintro _ _ _ μ _ ⟨rfl, hμ⟩
+    cases eq_of_heq hμ
+    exact heq_of_eq (funext fun s => ValueSort.rename_rename s μ.2.1 μ.2.2)
+  · rintro _ _ _ μ _ ⟨rfl, hμ⟩ _ o
+    cases eq_of_heq hμ
+    exact Op.rename_rename_heq μ.2.1 μ.2.2 o
+  · rintro _ _ _ μ _ ⟨rfl, hμ⟩ _ _ p q he
+    cases eq_of_heq hμ
+    exact Fin.ext (show p.val = q.val from Fin.val_eq_val_of_heq he)
+  · rintro _ _ _ ⟨_, ρ, τ⟩ _ ⟨rfl, hμ⟩ _ o _ _ _
+    cases eq_of_heq hμ
+    cases o
+    · exact ⟨rfl, HEq.rfl⟩
+    · exact ⟨rfl, HEq.rfl⟩
+    · exact ⟨rfl, HEq.rfl⟩
+    · exact ⟨rfl, heq_of_eq (lift_comp ρ τ).symm⟩
+
+/-- Entering a child commutes with parameter renaming on whole terms. -/
+theorem parameterHom_preservesReindex :
+    parameterHom.PreservesReindex reindexAction reindexAction := by
+  intro _ _ ρ _ o p _ _ t
+  change HEq (((t.map parameterHom _).cast _ _).map parameterHom _)
+    (((t.map parameterHom ρ).map parameterHom _).cast _ _)
+  rw [IPFunctor.ScopedFamily.Term.map_cast]
+  apply (IPFunctor.ScopedFamily.Term.cast_heq _ _ _).trans
+  apply HEq.trans ?_ (IPFunctor.ScopedFamily.Term.cast_heq _ _ _).symm
+  apply (parameters_parameters_heq _ _ t).trans
+  apply HEq.trans ?_ (parameters_parameters_heq _ _ t).symm
+  have square : parameterHom.next ρ o p ∘ Op.binderMap o (parameterHom.arg ρ o p) =
+      Op.binderMap (parameterHom.op ρ o) p ∘ ρ := Op.binderMap_next ρ o p
+  rw [square]
+
+/-- Parameter renaming and value substitution commute. -/
+theorem parameters_subst {n m : Nat} (μ : Fin n → Fin m)
+    {Γ Δ : List (ValueSort n)} {s : ValueSort n}
+    (θ : signature.Substitution Γ Δ) (t : Term n Γ s) :
+    (t.subst reindexAction θ).map parameterHom μ =
+      (t.map parameterHom μ).subst reindexAction (θ.map parameterHom μ) :=
+  IPFunctor.ScopedFamily.Term.map_subst parameterHom reindexAction reindexAction
+    (parameterHom_preservesReindex.preservesSubstitution _ _ _) μ θ t
+
+/-- Reindexing a substitution maps each image and normalizes both contexts. -/
+theorem substitution_reindex_eq_map {n : Nat} {a : ValueSort n} (o : Op n a) (p : Fin o.arity)
+    {Γ Δ : List (ValueSort n)} (θ : signature.Substitution Γ Δ) :
+    (θ.reindex reindexAction o p : signature.Substitution _ _) =
+      (IPFunctor.ScopedFamily.Substitution.cast
+        (congrArg (List.map · Γ) (Op.binderMap_sort o p))
+        (congrArg (List.map · Δ) (Op.binderMap_sort o p))
+        (θ.map parameterHom (Op.binderMap o p)) : signature.Substitution _ _) := by
+  apply eq_of_heq
+  apply HEq.trans ?_ (IPFunctor.ScopedFamily.Substitution.cast_heq _ _ _).symm
+  apply ScopedVar.mapLookup_heq (Op.binderMap_sort o p).symm
+  · exact funext fun s => congrArg (fun Δ => Term (o.world p) Δ s)
+      (congrArg (List.map · Δ) (Op.binderMap_sort o p).symm)
+  · intro _ _
+    exact IPFunctor.ScopedFamily.Term.cast_heq _ _ _
+
+/-- Reindexing commutes with simultaneous value substitution. -/
+theorem reindexAction_preservesSubstitution : reindexAction.PreservesSubstitution signature := by
+  intro _ _ o p _ _ _ θ t
+  change ((t.subst reindexAction θ).map parameterHom _).cast _ _ =
+    ((t.map parameterHom _).cast _ _).subst reindexAction _
+  rw [parameters_subst, IPFunctor.ScopedFamily.Term.cast_subst, substitution_reindex_eq_map]
+
+/-- Renaming-based reindexing satisfies the whole substitution algebra. -/
+theorem reindexAction_lawful : reindexAction.Lawful signature :=
+  ⟨reindexAction_preservesVars, reindexAction_preservesRenaming,
+    reindexAction_preservesSubstitution⟩
 
 end Examples.ScopedFamily
