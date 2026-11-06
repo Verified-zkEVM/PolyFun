@@ -9,6 +9,7 @@ module
 public import PolyFunProbability.PFunctor.AnswerMeasure
 public import PolyFunProbability.PFunctor.Free.Expectation
 public import PolyFunProbability.PFunctor.Free.Kernel
+public import PolyFunProbability.PFunctor.Free.Kernel.Handler
 public import PolyFunProbability.PFunctor.Free.Kernel.Transport
 public import PolyFunProbability.PFunctor.Free.Measure
 public import PolyFunProbability.PFunctor.Free.Path.Measure
