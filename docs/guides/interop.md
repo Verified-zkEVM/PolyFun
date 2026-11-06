@@ -9,7 +9,7 @@ and cryptographic interpretations belong to their consumers.
 
 | Boundary | Reusable interface | Frontend obligation |
 |---|---|---|
-| External source to scoped syntax | `IPFunctor.ScopedSignature` | Validate binding, types, constraints and the supported fragment; state parser/exporter trust |
+| External source to scoped syntax | `IPFunctor.ScopedSignature`, `ScopedFamily` | Validate binding, types, constraints and the supported fragment; state parser/exporter trust |
 | Scoped syntax to meaning | Algebraic folds and semantic substitution; `Control.Domain.Result` for partial carriers | Give primitive and recursion equations, retaining distinctions between failure, divergence and partial values |
 | Represented meaning to implementation | `Control.Semantics.CorrespondsOn`, `CertifiedMeaning` | Supply injective input/output encodings and prove agreement on the stated admissible inputs |
 | Partial representations to native values | Mathlib `Relator.LiftFun`, `Control.Semantics.RelationalContract` | Cover admissible inputs and prove output left-uniqueness; irrelevant tails need not have unique representations |
