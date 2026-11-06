@@ -12,8 +12,9 @@ public import PolyFun.Control.Domain.Pointed
 /-!
 # Continuous environments for scoped syntax
 
-Lookup uses binding positions. Reindexing therefore permits distinct source
-sorts to become equal, as happens when substituting type parameters.
+Lookup uses binding positions. Mapping environments along a sort map therefore
+permits distinct source sorts to become equal, as happens when substituting type
+parameters.
 -/
 
 public section
@@ -121,11 +122,12 @@ theorem rename_append (ρ : ScopedSignature.Renaming Γ Δ) {Ξ : List S}
             (((fun b v => p.1 b (.succ v)) : Env D Ξ), p.2)) := by fun_prop
         exact ih.comp h)
 
-/-- Reindex binding positions while transporting their domains. -/
-@[expose] noncomputable def reindex (E : T → PointedDomain) (f : S → T)
-    (h : ∀ a, E (f a) = D a) : Env D Γ →𝒄 Env E (Γ.map f) :=
+/-- Apply a family of continuous maps at every binding position. The sort map need
+not be injective, and the two families of domains may lie in different universes. -/
+@[expose] noncomputable def map (E : T → PointedDomain) (f : S → T)
+    (t : ∀ a, D a →𝒄 E (f a)) : Env D Γ →𝒄 Env E (Γ.map f) :=
   .ofFun (fun η _ x => ScopedVar.mapLookup f (V := fun b => E b)
-    (fun {a} v => PointedDomain.cast (h a).symm (η a v)) x) (by
+    (fun {a} v => t a (η a v)) x) (by
       apply ωScottContinuous.of_apply₂
       intro b
       apply ωScottContinuous.of_apply₂
@@ -135,57 +137,59 @@ theorem rename_append (ρ : ScopedSignature.Renaming Γ Δ) {Ξ : List S}
           simp only [ScopedVar.mapLookup_map]
           fun_prop)
 
-@[simp] theorem reindex_map (E : T → PointedDomain) (f : S → T)
-    (h : ∀ a, E (f a) = D a) (η : Env D Γ) {a : S} (x : ScopedVar Γ a) :
-    reindex D E f h η (f a) (x.map f) = PointedDomain.cast (h a).symm (η a x) :=
+@[simp] theorem map_apply (E : T → PointedDomain) (f : S → T)
+    (t : ∀ a, D a →𝒄 E (f a)) (η : Env D Γ) {a : S} (x : ScopedVar Γ a) :
+    map D E f t η (f a) (x.map f) = t a (η a x) :=
   ScopedVar.mapLookup_map f (V := fun b => E b) _ x
 
-/-- Reindexing by identity performs only context normalization. -/
-theorem reindex_id (η : Env D Γ) :
-    reindex D D id (fun _ => rfl) η = (List.map_id Γ).symm ▸ η := by
+/-- The identity family at the identity sort map performs only context normalization. -/
+theorem map_id (η : Env D Γ) :
+    map D D id (fun _ => ContinuousHom.id) η = (List.map_id Γ).symm ▸ η := by
   funext a x
   induction x using ScopedVar.map_inductionOn id with
   | h a x =>
-      rw [reindex_map, ScopedVar.map_id, cast_apply]
+      rw [map_apply, ScopedVar.map_id, cast_apply]
       rfl
 
-/-- Transport retains the nearest binding and reindexes the older positions. -/
-theorem reindex_cons (E : T → PointedDomain) (f : S → T)
-    (h : ∀ a, E (f a) = D a) {a : S} (x : D a) (η : Env D Γ) :
-    reindex D E f h (cons D x η) =
-      cons E (PointedDomain.cast (h a).symm x) (reindex D E f h η) := by
+/-- Mapping retains the nearest binding and maps the older positions. -/
+theorem map_cons (E : T → PointedDomain) (f : S → T)
+    (t : ∀ a, D a →𝒄 E (f a)) {a : S} (x : D a) (η : Env D Γ) :
+    map D E f t (cons D x η) = cons E (t a x) (map D E f t η) := by
   funext b v
   cases v <;> rfl
 
 /-- Changing sorts commutes with changing binding positions, even for noninjective maps. -/
-theorem reindex_rename (E : T → PointedDomain) (f : S → T)
-    (h : ∀ a, E (f a) = D a) (ρ : ScopedSignature.Renaming Γ Δ) (η : Env D Δ) :
-    reindex D E f h (rename D ρ η) =
-      rename E (ScopedSignature.Renaming.map f ρ) (reindex D E f h η) := by
+theorem map_rename (E : T → PointedDomain) (f : S → T)
+    (t : ∀ a, D a →𝒄 E (f a)) (ρ : ScopedSignature.Renaming Γ Δ) (η : Env D Δ) :
+    map D E f t (rename D ρ η) =
+      rename E (ScopedSignature.Renaming.map f ρ) (map D E f t η) := by
   funext b x
   induction x using ScopedVar.map_inductionOn f with
-  | h a x => simp only [reindex_map, rename_apply, ScopedSignature.Renaming.map_apply]
+  | h a x => simp only [map_apply, rename_apply, ScopedSignature.Renaming.map_apply]
 
-/-- Consecutive environment transports compose, retaining each binding position. -/
-theorem reindex_reindex {U : Type*} (E : T → PointedDomain) (F : U → PointedDomain)
-    (f : S → T) (g : T → U) (h : ∀ a, E (f a) = D a) (k : ∀ a, F (g a) = E a)
-    (η : Env D Γ) :
-    (List.map_map ▸ reindex E F g k (reindex D E f h η)) =
-      reindex D F (g ∘ f) (fun a => (k (f a)).trans (h a)) η := by
-  funext b x
-  induction x using ScopedVar.map_inductionOn (g ∘ f) with
-  | h a x =>
-      rw [← ScopedVar.map_map f g x, cast_apply]
-      simp only [ScopedVar.map_map, Function.comp_apply, reindex_map,
-        PointedDomain.cast_cast]
-      exact (reindex_map D F (g ∘ f) _ η x).symm
+/-- Consecutive maps compose at each original binding position. The two contexts are
+equal only propositionally, so the law compares lookups; `ScopedVar.map_inductionOn`
+shows that these positions exhaust both contexts. -/
+theorem map_map {U : Type*} (E : T → PointedDomain) (F : U → PointedDomain)
+    (f : S → T) (g : T → U) (t : ∀ a, D a →𝒄 E (f a)) (u : ∀ b, E b →𝒄 F (g b))
+    (η : Env D Γ) {a : S} (x : ScopedVar Γ a) :
+    map E F g u (map D E f t η) (g (f a)) ((x.map f).map g) =
+      map D F (g ∘ f) (fun a => (u (f a)).comp (t a)) η (g (f a)) (x.map (g ∘ f)) := by
+  rw [map_apply, map_apply]
+  exact (map_apply D F (g ∘ f) (fun a => (u (f a)).comp (t a)) η x).symm
 
-/-- Environment transport maps the empty information state to itself. -/
-@[simp] theorem reindex_bot (E : T → PointedDomain) (f : S → T)
-    (h : ∀ a, E (f a) = D a) : reindex D E f h (⊥ : Env D Γ) = ⊥ := by
+/-- A strict family maps the empty information state to itself. -/
+theorem map_bot (E : T → PointedDomain) (f : S → T)
+    (t : ∀ a, D a →𝒄 E (f a)) (ht : ∀ a, t a ⊥ = ⊥) :
+    map D E f t (⊥ : Env D Γ) = ⊥ := by
   funext b x
   induction x using ScopedVar.map_inductionOn f with
-  | h a x => simp only [reindex_map, Pi.bot_apply, PointedDomain.cast_bot]
+  | h a x => simp only [map_apply, Pi.bot_apply, ht]
+
+/-- Map binding positions along an equation of their domains. -/
+@[expose] noncomputable def reindex (E : T → PointedDomain) (f : S → T)
+    (h : ∀ a, E (f a) = D a) : Env D Γ →𝒄 Env E (Γ.map f) :=
+  map D E f (fun a => PointedDomain.cast (h a).symm)
 
 /-- Tie a finite, possibly heterogeneous recursive group by one least fixed point.
 Every right-hand side sees the entire group and the ambient environment. -/
@@ -244,6 +248,18 @@ theorem fixGroup_fusion (E : T → PointedDomain) {Ξ : List S} {Ψ Λ : List T}
       ofFin E (fun i => rhs' i (append E (transport ξ) η'))) :
     transport (fixGroup D rhs η) = fixGroup E rhs' η' :=
   ContinuousHom.fix_fusion _ _ transport hbot hstep
+
+/-- A strict family of continuous maps commuting with whole-group unfolding maps one
+simultaneous least fixed point to the other. -/
+theorem fixGroup_map (E : T → PointedDomain) (f : S → T) (t : ∀ a, D a →𝒄 E (f a))
+    (ht : ∀ a, t a ⊥ = ⊥) {Ξ : List S} {Λ : List T}
+    (rhs : (i : Fin Ξ.length) → Env D (Ξ ++ Γ) →𝒄 D Ξ[i])
+    (rhs' : (i : Fin (Ξ.map f).length) → Env E (Ξ.map f ++ Λ) →𝒄 E (Ξ.map f)[i])
+    (η : Env D Γ) (η' : Env E Λ)
+    (hstep : ∀ ξ, map D E f t (ofFin D (fun i => rhs i (append D ξ η))) =
+      ofFin E (fun i => rhs' i (append E (map D E f t ξ) η'))) :
+    map D E f t (fixGroup D rhs η) = fixGroup E rhs' η' :=
+  fixGroup_fusion D E rhs rhs' η η' (map D E f t) (map_bot D E f t ht) hstep
 
 end Env
 end IPFunctor.ScopedDomain
