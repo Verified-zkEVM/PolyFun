@@ -15,7 +15,7 @@ and return values may all differ. An `EventSignatureRel E F` supplies a
 relation on event names and, for each related pair of names, a dependent
 relation on their replies.
 
-The Coq Interaction Trees library calls the corresponding construction `rutt`,
+The Rocq Interaction Trees library calls the corresponding construction `rutt`,
 short for “relation up to tau”. PolyFun uses the descriptive semantic name in
 its public API and retains `rutt` only as source provenance.
 
@@ -24,7 +24,7 @@ greatest fixed point.  This rules out an unsound proof that a terminating tree
 is related to silent divergence by infinitely many one-sided τ rules.
 
 The initial API is deliberately consumer-shaped rather than a port of the
-Paco up-to tower from the Coq Interaction Trees library.  It contains:
+Paco up-to tower from the Rocq Interaction Trees library.  It contains:
 
 * coinduction, unfolding, folding, constructors, and symmetry;
 * equivalence with `WeakBisimRel` for the identity event-signature relation;

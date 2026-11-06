@@ -17,7 +17,7 @@ fixed set of events. We follow the construction of Xia, Zakowski, He, Hur,
 Malecha, Pierce, and Zdancewic, *Interaction Trees: Representing Recursive
 and Impure Programs in Coq* (POPL 2020), and adapt it to Lean 4 / Mathlib.
 
-The Coq presentation defines
+The Rocq presentation defines
 
 ```coq
 CoInductive itree (E : Type → Type) (R : Type) :=
@@ -36,7 +36,7 @@ or visible queries.
 
 ## Naming conventions
 
-| Coq                | Lean                                    |
+| Rocq               | Lean                                    |
 | ------------------ | --------------------------------------- |
 | `itree E R`        | `ITree F α`                             |
 | `itreeF E R T`     | `ITree.Shape F α`                       |
@@ -56,7 +56,7 @@ or visible queries.
 * `ITree F α` — interaction trees over events `F` with leaves of type `α`.
 * `ITree.toM`, `ITree.ofM`, `ITree.equivM` — the raw-carrier equivalence.
 * `ITree.pure`, `ITree.step`, `ITree.query` — smart constructors.
-* `ITree.shape` — one-step destructor, the analogue of Coq's `observe`.
+* `ITree.shape` — one-step destructor, the analogue of Rocq's `observe`.
 * `ITree.bind` — monadic bind, defined via `ITree.corec`.
 * `ITree.iter` — iteration combinator turning `β → ITree F (β ⊕ α)` into
   `β → ITree F α`, the canonical `MonadIter` operator.
@@ -84,14 +84,14 @@ namespace ITree
 /-! ### Carrier and computational-view polynomial functors -/
 
 /-- One-step view of an ITree node: a pure leaf, a silent step, or a visible
-query. Mirrors Coq's `itreeF` (`Core/ITreeDefinition.v`). -/
+query. Mirrors Rocq's `itreeF` (`Core/ITreeDefinition.v`). -/
 inductive Shape (F : PFunctor.{uA, uB}) (α : Type uα) : Type (max uA uα) where
-  /-- A leaf carrying a result of type `α`. (Coq `RetF`.) -/
+  /-- A leaf carrying a result of type `α`. (Rocq `RetF`.) -/
   | pure (r : α) : Shape F α
-  /-- A silent (`τ`) step. (Coq `TauF`.) -/
+  /-- A silent (`τ`) step. (Rocq `TauF`.) -/
   | step : Shape F α
   /-- A visible event named by `a : F.A`; the continuation will be indexed by
-  `F.B a`. (Coq `VisF`.) -/
+  `F.B a`. (Rocq `VisF`.) -/
   | query (a : F.A) : Shape F α
 
 /-- Computational-view polynomial for one layer of an ITree.
@@ -185,7 +185,7 @@ end ITree
 Event names, event answers, and returned values may live in independent
 universes. The resulting tree lives in `Type (max uA uB uα)`.
 
-This is the Lean / Mathlib analogue of Coq's `itree E R`
+This is the Lean / Mathlib analogue of Rocq's `itree E R`
 (`InteractionTrees/theories/Core/ITreeDefinition.v`). -/
 structure ITree (F : PFunctor.{uA, uB}) (α : Type uα) : Type (max uA uB uα) where
   /-- Wrap the raw sum-polynomial M-type as an interaction tree. -/
@@ -265,16 +265,16 @@ theorem shape'_mk (layer : (ViewPoly F α).Obj (ITree F α)) :
 
 /-! ### Smart constructors -/
 
-/-- Build the `.pure` ITree node carrying a result `r : α`. (Coq `Ret`.) -/
+/-- Build the `.pure` ITree node carrying a result `r : α`. (Rocq `Ret`.) -/
 def pure (r : α) : ITree F α :=
   ofShape (.mk (.pure r) PEmpty.elim)
 
-/-- Build the `.step` ITree node — a silent step in front of `t`. (Coq `Tau`.) -/
+/-- Build the `.step` ITree node — a silent step in front of `t`. (Rocq `Tau`.) -/
 def step (t : ITree F α) : ITree F α :=
   ofShape (.mk .step (fun _ => t))
 
 /-- Build the `.query` ITree node — a visible event `a : F.A` together with a
-continuation `k : F.B a → ITree F α`. (Coq `Vis`.) -/
+continuation `k : F.B a → ITree F α`. (Rocq `Vis`.) -/
 def query (a : F.A) (k : F.B a → ITree F α) : ITree F α :=
   ofShape (.mk (.query a) k)
 
@@ -455,7 +455,7 @@ theorem eq_query_of_dest {t : ITree F α} {a : F.A}
 
 /-! ### Monadic bind via `ITree.corec`
 
-The Coq `bind` (`Core/ITreeDefinition.v:157-168`) is a `cofix` over `subst`.
+The Rocq `bind` (`Core/ITreeDefinition.v:157-168`) is a `cofix` over `subst`.
 We translate it to `ITree.corec` by carrying a sum state: `Sum.inl t` means "we
 are still consuming the original tree `t`", `Sum.inr u` means "we have spliced
 in `k r` for some leaf `r` and are now propagating `u`'s structure". -/
@@ -488,13 +488,13 @@ theorem bindStep_inr (k : α → ITree F β) (u : ITree F β) : bindStep k (.inr
         | .mk s c => .mk s (fun b => .inr (c b))) := rfl
 
 /-- Monadic bind on ITrees. `t.bind k` runs `t` until it reaches a `.pure r`
-leaf and then continues with `k r`. (Coq `ITree.bind`.) -/
+leaf and then continues with `k r`. (Rocq `ITree.bind`.) -/
 def bind (t : ITree F α) (k : α → ITree F β) : ITree F β :=
   corec (bindStep k) (.inl t)
 
 /-! ### Iteration via `ITree.corec`
 
-The Coq `iter` (`Core/ITreeDefinition.v:192-194`) is
+The Rocq `iter` (`Core/ITreeDefinition.v:192-194`) is
 
 ```coq
 CoFixpoint iter body i :=
@@ -524,14 +524,14 @@ def iterStep (body : β → ITree F (β ⊕ α)) :
 loop on `j`, intermediate `Sum.inr r` results terminate with `r`.
 
 Each loop iteration is silent-step-guarded so the corecursive definition is
-productive. (Coq `ITree.iter`.) -/
+productive. (Rocq `ITree.iter`.) -/
 def iter (body : β → ITree F (β ⊕ α)) (init : β) : ITree F α :=
   corec (iterStep body) (body init)
 
 /-! ### Lifting events -/
 
 /-- Lift a single event `a : F.A` into an ITree, returning the answer
-unchanged. (Coq `ITree.trigger`.) -/
+unchanged. (Rocq `ITree.trigger`.) -/
 def lift (a : F.A) : ITree F (F.B a) :=
   query a pure
 
@@ -562,7 +562,7 @@ theorem iterM_eq_iter {β : Type uα} (body : β → ITree F (β ⊕ α)) (init 
 
 /-! ### Definitional unfoldings
 
-These match Coq's `Core/ITreeDefinition.v:208-217` (`unfold_bind`,
+These match Rocq's `Core/ITreeDefinition.v:208-217` (`unfold_bind`,
 `unfold_iter`) but as one-step `simp` lemmas on `shape'`. The full equational
 theory (`bind_pure_left`, `bind_assoc`, `iter_unfold`, …) requires
 bisimulation reasoning and lives in `PolyFun.ITree.Bisim.*`. -/

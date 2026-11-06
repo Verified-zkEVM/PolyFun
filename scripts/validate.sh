@@ -19,7 +19,7 @@ Default checks:
   - lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
   - ./scripts/check-modules.sh
   - ./scripts/check-imports.sh
-  - python3 ./scripts/check-docs-integrity.py
+  - uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
 
 Optional checks:
   --lint    Run environment and text-style linters over production, tutorials, and case studies
@@ -64,13 +64,19 @@ echo "# Checking umbrella imports"
 
 echo ""
 echo "# Checking docs integrity"
-python3 ./scripts/test-docs-integrity.py
-python3 ./scripts/check-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/test-docs-integrity.py
+uv run --no-project --python 3.12 python ./scripts/check-docs-integrity.py
 
 if (( run_lint )); then
   echo ""
-  echo "# Running environment linters (lake lint)"
-  lake lint
+  echo "# Running environment linters (runLinter, one process per lintDriverArgs root)"
+  # One process per root, as in CI: a single `lake lint` keeps every root's imports alive and
+  # reads each later root's oleans into memory instead of mapping them (docs/development/linting.md).
+  lint_roots="$(uv run --no-project --python 3.12 python -c \
+    "import tomllib; print('\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))")"
+  for root in $lint_roots; do
+    lake exe runLinter "$root"
+  done
   lake exe lint-style PolyFun ToCslib ComplexityBackends \
     Examples.Tutorials.Requests Examples.Tutorials.Machines Examples.Tutorials.IndexedPrograms \
     Examples.Tutorials.InteractionTrees Examples.Tutorials.ParallelReports \
@@ -87,7 +93,7 @@ if (( run_test )); then
   lake test
   lake -d test/DocumentationConsumer build --wfail
   lake build polyfun-parliament --wfail
-  python3 scripts/test-parliament-cli.py
+  uv run --no-project --python 3.12 python scripts/test-parliament-cli.py
   lake -d test/ParliamentConsumer build --wfail
 fi
 

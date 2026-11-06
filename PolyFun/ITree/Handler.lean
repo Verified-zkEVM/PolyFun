@@ -28,7 +28,7 @@ each `query` node of an interaction tree along an event-spec morphism.
 
 ## Naming
 
-| Coq                | Lean                              |
+| Rocq               | Lean                              |
 | ------------------ | --------------------------------- |
 | `E ~> itree F`     | `ITree.Handler E F`               |
 | `E ~> F`           | `PFunctor.Lens E F`               |
@@ -49,7 +49,7 @@ namespace ITree
 Concretely, for each event name `a : E.A` we choose an interaction tree of
 type `ITree F (E.B a)` returning the answer expected by the source signature.
 
-This is the Lean version of Coq's `Handler E F := E ~> itree F`. -/
+This is the Lean version of Rocq's `Handler E F := E ~> itree F`. -/
 @[reducible]
 def Handler (E : PFunctor.{uEA, uEB}) (F : PFunctor.{uFA, uFB}) :
     Type (max uEA uEB uFA uFB) :=

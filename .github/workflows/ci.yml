@@ -22,13 +22,18 @@ concurrency:
   # running one instead of cancelling it.
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
-# The three jobs run in parallel and share two caches with different lifetimes. Dependencies
-# (`.lake/packages`, including Mathlib's oleans and the cslib build) change only with the toolchain
-# and manifest. PolyFun's own build (`.lake/build`) changes with every commit, so it is keyed per
-# commit and restored from the newest `main` build. Lake decides what to rebuild from content
-# hashes, so a restored build is only a starting point: whatever the checkout changed, and
-# everything importing it, is rebuilt. Only the `build` job on `main` saves either cache. Lake
-# regenerates `*.setup.json` files per build and never reads old ones, so they are not cached.
+# The three jobs run in parallel and share two caches with different lifetimes. Each job restores
+# the newest `main` entry for the same toolchain and manifest. Lake decides what to rebuild from
+# content hashes, so a restored build is only a starting point: whatever the checkout changed, and
+# everything importing it, is rebuilt. Lake regenerates `*.setup.json` files per build and never
+# reads old ones, so they are not cached.
+#
+# Only the `build` job on `main` saves either cache, after it also builds what only `Lint` and
+# `Test` use:
+# - Dependencies (`.lake/packages`, including Mathlib's oleans, the cslib build and dependency C
+#   objects) are saved when the list of their build outputs changes. The pins change that list, and
+#   so does a PolyFun import that first reaches a dependency module.
+# - PolyFun's own build (`.lake/build`) changes with every commit, so it is saved on every run.
 #
 # The job names `build`, `Lint (environment linters)` and `Test` are required status checks on
 # `main`; keep them stable.
@@ -47,6 +52,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.6"
+          enable-cache: false
+
       - name: Restore dependency cache
         id: deps-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
@@ -54,11 +65,13 @@ jobs:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
-          # On a dependency bump, start from the previous packages; Lake checks out the new
-          # revisions and rebuilds only the packages that changed.
+          # Saved keys end in a hash of the output list, so this key never matches and the restore
+          # takes the newest entry for these pins.
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          # No fallback to other pins: the old pins' build outputs would stay in the cache through
+          # every bump, and `lake exe cache get` replaces Mathlib's outputs either way.
           restore-keys: |
-            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
 
       - name: Restore build cache
         if: env.CLEAN_BUILD != 'true'
@@ -72,12 +85,8 @@ jobs:
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
-        with:
-          python-version: "3.12"
-
       - name: Set up Lean environment
-        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
         with:
           auto-config: false
           build: false
@@ -92,14 +101,34 @@ jobs:
       - name: Run validation wrapper
         run: ./scripts/validate.sh --axioms
 
+      # Every job starts from what `main` saves, so `main` also builds the targets that only `Lint`
+      # and `Test` use. Pull requests leave them to those jobs. This build only fills the caches:
+      # `Lint` and `Test` report its failures and warnings, and a failure here still saves what did
+      # build.
+      - name: Build what Lint and Test need
+        if: success() && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: lake build PolyFunTest polyfun-parliament @batteries/runLinter
+
+      - name: Name the dependency outputs
+        id: deps-outputs
+        if: success() && github.ref == 'refs/heads/main'
+        env:
+          KEY_PREFIX: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+        run: |
+          outputs="$(find .lake/packages -path '*/.lake/build/*' -type f ! -name '*.setup.json' ! -name lock -printf '%P\n' | LC_ALL=C sort | sha256sum | cut -c1-16)"
+          echo "key=$KEY_PREFIX-$outputs" >> "$GITHUB_OUTPUT"
+
+      # Cache entries are immutable, so a changed output list needs a new key. For fixed pins the
+      # list only grows, because each run starts from the newest entry, so a key never comes back.
       - name: Save dependency cache
-        if: success() && github.ref == 'refs/heads/main' && steps.deps-cache.outputs.cache-hit != 'true'
+        if: success() && github.ref == 'refs/heads/main' && steps.deps-outputs.outputs.key != steps.deps-cache.outputs.cache-matched-key
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: ${{ steps.deps-cache.outputs.cache-primary-key }}
+          key: ${{ steps.deps-outputs.outputs.key }}
 
       # Keyed by run as well as commit, so a rerun on `main` still saves; restores take the newest
       # match for the same pins.
@@ -125,16 +154,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.6"
+          enable-cache: false
+
+      # Paths and key prefixes must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
-            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
 
       - name: Restore build cache
         if: env.CLEAN_BUILD != 'true'
@@ -149,7 +184,7 @@ jobs:
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set up Lean environment
-        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
         with:
           auto-config: false
           build: false
@@ -164,11 +199,12 @@ jobs:
       - name: Build production and example libraries
         run: lake build PolyFun ToCslib ComplexityBackends PolyFunIO PolyFunExamples +PolyFunParliamentMain --wfail
 
-      # One process per lint root. `lake lint` loads every root's environment into a single
-      # process (about 7 GB in total); on Lean v4.35.0 the runner was shut down during that step.
+      # One process per lint root. A single `lake lint` keeps every root's imports alive and reads
+      # each later root's oleans into memory instead of mapping them, so it exhausts the runner
+      # (docs/development/linting.md#commands-and-coverage).
       - name: Run environment linters
         run: |
-          python3 -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
+          uv run --no-project --python 3.12 python -c "import tomllib; print('\\n'.join(tomllib.load(open('lakefile.toml', 'rb'))['lintDriverArgs']))" |
             while read -r root; do
               lake exe runLinter "$root"
             done
@@ -186,16 +222,22 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Paths and keys must match the saves in `build` exactly, or the restore misses.
+      - name: Set up uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: "0.13.6"
+          enable-cache: false
+
+      # Paths and key prefixes must match the saves in `build` exactly, or the restore misses.
       - name: Restore dependency cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
         with:
           path: |
             .lake/packages
             !.lake/packages/**/*.setup.json
-          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+          key: lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
           restore-keys: |
-            lake-deps-${{ runner.os }}-${{ runner.arch }}-
+            lake-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-
 
       - name: Restore build cache
         if: env.CLEAN_BUILD != 'true'
@@ -210,7 +252,7 @@ jobs:
             polyfun-build-${{ runner.os }}-${{ runner.arch }}-
 
       - name: Set up Lean environment
-        uses: leanprover/lean-action@50fcf42d2e460296f1a34b402e990d1b24f8b596 # v1.6.0
+        uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
         with:
           auto-config: false
           build: false
@@ -228,5 +270,5 @@ jobs:
           lake test
           lake -d test/DocumentationConsumer build --wfail
           lake build polyfun-parliament --wfail
-          python3 scripts/test-parliament-cli.py
+          uv run --no-project --python 3.12 python scripts/test-parliament-cli.py
           lake -d test/ParliamentConsumer build --wfail
