@@ -12,6 +12,9 @@ public import ToCslib.Order.PrefixRecursion
 /-!
 # Recursively generated partial arrays
 
+A lazy language can define a sequence by recursion on itself, with each entry
+reading earlier ones. This module computes the meaning of such a definition.
+
 A generator exposes an array constructor before its elements are demanded.
 If every element uses only the strict prefix, its least fixed point agrees
 with finite prefix recursion. This holds even when individual entries are

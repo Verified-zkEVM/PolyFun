@@ -19,6 +19,7 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Reviewable workflows](Tutorials/ReviewableWorkflows.lean) | Edit approval, source metadata, dependent certificates, and cursor navigation |
 | [Fair work queues](Tutorials/FairWorkQueues.lean) | Fair service drains finite backlogs; valid executions can still starve |
 | [Bounded controller](Tutorials/BoundedController.lean) | Two worker slots, finite-state realizability, and equivalent representations |
+| [Lazy languages](Tutorials/LazyLanguages.lean) | Divergence, errors and lazy data kept apart, recursion as a least fixed point, and domains computed from polymorphic types |
 
 Use ordinary imports such as `import Examples.Tutorials.Requests`.
 The Lake target is `PolyFunExamples`, so it can coexist with downstream

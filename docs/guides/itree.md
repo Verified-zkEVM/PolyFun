@@ -222,6 +222,15 @@ chunks to resumption truncation; this does not require the meeting to terminate.
 
 ## Continuous domain interpretations
 
+Domain interpretations give meanings to languages with general recursion, runtime
+errors and lazy data. In such a language a computation can diverge, fail, or return
+a value whose entries, arguments and results are still partial.
+[`DomainResult`](../../PolyFun/Control/Domain/Result.lean) keeps those outcomes
+apart. A result with a flat order, such as `Part (Except ε α)`, has no partial
+information inside a returned value. The
+[lazy-language tutorial](../../Examples/Tutorials/LazyLanguages.lean) works through
+numbers, vectors, functions, recursion and a quantifier.
+
 [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) bundles the carrier,
 omega-CPO structure, and bottom when a semantic domain depends on syntax.
 Dependent products preserve each coordinate's partial information; `result`

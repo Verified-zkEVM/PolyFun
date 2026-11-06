@@ -11,9 +11,15 @@ public import PolyFun.Control.Domain.Result
 /-!
 # Bundled pointed domains and dependent families
 
-An indexed semantic type can compute its carrier, information order, and bottom
-together. Dependent products introduce no extra suspension; `result` adds a fresh
-outer bottom and error alternative, even when the inner domain already has bottom.
+A language can define the meaning of a type by recursion on its syntax. A
+`PointedDomain` lets that recursion compute the carrier, information order, and
+bottom together. A quantifier over a parameter, for example, can denote a dependent
+product behind one suspension.
+
+Dependent products introduce no extra suspension; `result` adds a fresh outer
+bottom and error alternative, even when the inner domain already has bottom. `cast`
+transports a computation along an equality of domains, which a polymorphic language
+needs where substitution into a type gives an equal domain only propositionally.
 -/
 
 public section

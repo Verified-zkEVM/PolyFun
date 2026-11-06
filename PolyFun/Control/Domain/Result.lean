@@ -14,9 +14,16 @@ public import ToCslib.Order.WithBotOmegaCompletePartialOrder
 /-!
 # Partial results with errors and ordered values
 
-`DomainResult ε α` distinguishes divergence, a discrete error, and a value
-whose components may still be partial. Binding is strict in the outer result
-and continuous in both the result and the continuation.
+`DomainResult ε α` is a semantic target for languages with general recursion,
+runtime errors and lazy data. It distinguishes divergence, a discrete error, and
+a value whose components may still be partial. An error is not bottom, and no
+later approximation can turn it into a value.
+
+Binding is strict in the outer result and continuous in both the result and the
+continuation. The other operations fix an evaluation order: `force` demands only
+an outer constructor, `bind₂` demands two results from left to right, and
+`applyContinuous` demands a function but suspends its argument. `elim` eliminates
+into any pointed domain, so a family of meanings needs no further suspension.
 -/
 
 public section
