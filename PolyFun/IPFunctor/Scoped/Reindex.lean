@@ -56,7 +56,9 @@ variable {σ : ScopedSignature.{u, v, w} S} {τ : ScopedSignature.{u', v', w'} T
       rw [List.map_append, h.binders]
     · exact h.sort o p
 
-/-- Instantiate or translate all sorts in a term without changing variable positions. -/
+/-- Instantiate or translate all sorts in a term without changing variable positions. Each target
+argument translates the source argument that `h.arg` selects, so a homomorphism may drop or repeat
+subterms. -/
 @[expose] def Term.map (h : Hom σ τ f) {Γ : List S} {a : S}
     (t : σ.Term Γ a) : τ.Term (Γ.map f) (f a) :=
   t.reindex h.toReindexing (fun _ x => x.map f)
