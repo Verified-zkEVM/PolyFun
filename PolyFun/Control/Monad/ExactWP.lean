@@ -31,7 +31,7 @@ laws read in the order dual, so an exact interpretation is one that is sound on 
   with the original, and `exactWPMonad_iff_dual` states both directions.
 
 The lax and oplax laws together make `wp_pure` and `wp_bind` equations, so the interpretation
-`fun x => WP.wpTrans x` is a monad morphism into `PredTrans Pred EPred` (`isMonadHom`,
+`fun x => WP.trans x` is a monad morphism into `PredTrans Pred EPred` (`isMonadHom`,
 `ofIsMonadHom`). Three uses need exactness: upper bounds through a `bind`, exact values, and a
 rewriting normal form for `simp`.
 
@@ -139,7 +139,7 @@ theorem wp_seqRight (x : m α) (y : m β) (post : β → Pred) (epost : EPred) :
 /-- Exactness is exactly the statement that the interpretation is a monad morphism into
 core's predicate-transformer monad. -/
 theorem isMonadHom :
-    Cslib.IsMonadHom m (PredTrans Pred EPred) (fun x => WP.wpTrans x) :=
+    Cslib.IsMonadHom m (PredTrans Pred EPred) (fun x => WP.trans x) :=
   Cslib.IsMonadHom.mk' (fun a => PredTrans.ext fun post epost => wp_pure a post epost)
     (fun x f => PredTrans.ext fun post epost => wp_bind x f post epost)
 
@@ -148,7 +148,7 @@ end Laws
 /-- An interpretation that is a monad morphism into `PredTrans Pred EPred` is exact. -/
 theorem ofIsMonadHom {m : Type u → Type v} {Pred : Type w} {EPred : Type w'} [Monad m]
     [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
-    (h : Cslib.IsMonadHom m (PredTrans Pred EPred) (fun x => WP.wpTrans x)) :
+    (h : Cslib.IsMonadHom m (PredTrans Pred EPred) (fun x => WP.trans x)) :
     ExactWPMonad m Pred EPred :=
   of_eq (fun a post epost => congrArg (fun t => PredTrans.apply t post epost) (h.map_pure a))
     (fun x f post epost => congrArg (fun t => PredTrans.apply t post epost) (h.map_bind x f))
@@ -166,8 +166,8 @@ variable {m : Type u → Type v} {Pred : Type w} {EPred : Type w'} [Monad m] [As
 postconditions and preconditions compared backwards. -/
 @[instance_reducible]
 def dualWP (α : Type u) : WP (m α) α Predᵒᵈ EPredᵒᵈ where
-  wpTrans x := ⟨fun post epost => toDual (wp x (fun a => ofDual (post a)) (ofDual epost))⟩
-  wp_trans_monotone x _ _ _ _ hepost hpost := WP.wp_trans_monotone x _ _ _ _ hepost hpost
+  trans x := ⟨fun post epost => toDual (wp x (fun a => ofDual (post a)) (ofDual epost))⟩
+  trans_monotone x _ _ _ _ hepost hpost := WP.trans_monotone x _ _ _ _ hepost hpost
 
 /-- The dual reading of an exact interpretation: the same interpretation as a core `WPMonad` over
 the order duals, which is sound because the original satisfies the oplax laws. Its triples
@@ -298,7 +298,7 @@ instance ExactWPMonad.instEStateM {ε σ : Type} :
   pure_wp_le _ _ _ := PartialOrder.rel_of_eq <| rfl
   wp_bind_le x f post epost := PartialOrder.rel_of_eq <| by
     funext s
-    simp only [WP.wp, WP.wpTrans, bind, EStateM.bind]
+    simp only [WP.wp, WP.trans, bind, EStateM.bind]
     cases x s <;> rfl
 
 /-! ## Core's transformer lifts preserve exactness -/

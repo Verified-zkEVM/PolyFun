@@ -126,7 +126,7 @@ example : AllOutputs (fun r => r = 2 ∨ r = 3) choose12 := by
   have := toWPMonadDemonic_lawfulWPMonadAttach (m := SetM)
   refine allOutputs_of_wp ?_
   intro _
-  simpa only [Lean.Order.ofProp_prop_eq] using choose12_spec.le_wp trivial
+  simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using choose12_spec.le_wp trivial
 
 /-- A `let mut` accumulator over a `for` loop. -/
 def sumList (xs : List Nat) : SetM Nat := do
@@ -147,7 +147,7 @@ example (xs : List Nat) : AllOutputs (fun r => r = xs.sum) (sumList xs) := by
   have := toWPMonadDemonic_lawfulWPMonadAttach (m := SetM)
   refine allOutputs_of_wp ?_
   intro _
-  simpa only [Lean.Order.ofProp_prop_eq] using (sumList_spec xs).le_wp trivial
+  simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using (sumList_spec xs).le_wp trivial
 
 /-- A `forM` loop whose body is a nondeterministic choice constrained by the element. -/
 def checkAll (xs : List Nat) : SetM PUnit :=

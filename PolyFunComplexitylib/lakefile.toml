@@ -1,0 +1,35 @@
+name = "PolyFunComplexitylib"
+defaultTargets = ["PolyFunComplexitylib"]
+lintDriver = "batteries/runLinter"
+lintDriverArgs = ["PolyFunComplexitylib"]
+# Spike setting: the root checkout already pins complexitylib's exact cslib and Mathlib
+# revisions, so this package reuses its dependency cache. Use a separate `packagesDir`
+# once the two pin sets can diverge.
+packagesDir = "../.lake/packages"
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longFile = 1500
+
+[[require]]
+name = "PolyFun"
+path = ".."
+
+# Pin a full commit: complexitylib publishes no code tags and its cslib pin follows
+# cslib `main`. See PROVENANCE.md before moving this revision.
+[[require]]
+name = "complexitylib"
+git = "https://github.com/cslib-community/complexitylib"
+rev = "62bbf525e2d7edce00dc8b6c79a52040223c5bed"
+
+[[lean_lib]]
+name = "PolyFunComplexitylib"
+
+# Glob-based regression library; built explicitly with
+# `lake build PolyFunComplexitylibTest`.
+[[lean_lib]]
+name = "PolyFunComplexitylibTest"
+globs = ["PolyFunComplexitylibTest.+"]
