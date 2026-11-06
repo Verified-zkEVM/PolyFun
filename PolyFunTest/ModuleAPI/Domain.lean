@@ -7,8 +7,8 @@ Authors: Devon Tuma
 module
 
 import PolyFun.ITree.Domain
-import PolyFun.Control.Domain.Pointed
-import PolyFun.IPFunctor.Scoped.DomainRelation
+public import PolyFun.Control.Domain.Pointed
+public import PolyFun.IPFunctor.Scoped.DomainRelation
 
 /-!
 # Public partial-result canaries
@@ -91,3 +91,50 @@ example {S T : Type} {X : PointedDomain} (f : S → T) {Γ : List S} {Δ : List 
       (IPFunctor.ScopedDomain.Env.fixGroup _ rhs' ζ) :=
   IPFunctor.ScopedDomain.Env.fixGroup_forall₂ f (fun _ => le_rfl)
     (fun _ _ hc => ωSup_le_ωSup_of_le fun n => ⟨n, hc n⟩) rhs rhs' η ζ h
+
+/-! ## Recursive groups -/
+
+namespace PolyFunTest.RecursiveGroup
+
+open IPFunctor IPFunctor.ScopedDomain
+
+/-- One sort of partial numbers. -/
+noncomputable abbrev Num : Unit → PointedDomain :=
+  fun _ => PointedDomain.ofType (DomainResult Unit (DiscreteOrder Nat))
+
+/-- Read one binding position of an environment. -/
+noncomputable def lookup {Γ : List Unit} (x : ScopedVar Γ ()) : Env Num Γ →𝒄 Num () :=
+  .ofFun fun η => η () x
+
+/-- The first binding reads the second, and the second reads the ambient binding. -/
+noncomputable def chain : (i : Fin ([(), ()] : List Unit).length) →
+    Env Num ([(), ()] ++ [()]) →𝒄 Num ([(), ()] : List Unit)[i] :=
+  fun i => if i.val = 0 then lookup (.succ .zero) else lookup (.succ (.succ .zero))
+
+/-- The second binding reads past the whole group to the ambient binding. -/
+example (v : Num ()) :
+    Env.fixGroup Num chain (Env.cons Num v (Env.empty Num)) () (.succ .zero) = v := by
+  rw [Env.fixGroup_unfold]
+  rfl
+
+/-- The first binding reads the second inside the group, and so reaches the ambient binding. -/
+example (v : Num ()) : Env.fixGroup Num chain (Env.cons Num v (Env.empty Num)) () .zero = v := by
+  rw [Env.fixGroup_unfold]
+  change Env.fixGroup Num chain (Env.cons Num v (Env.empty Num)) () (.succ .zero) = v
+  rw [Env.fixGroup_unfold]
+  rfl
+
+/-- A binding defined as itself. -/
+noncomputable def selfReference : (i : Fin ([()] : List Unit).length) →
+    Env Num ([()] ++ []) →𝒄 Num ([()] : List Unit)[i] :=
+  fun _ => lookup .zero
+
+/-- A self-recursive singleton carries no information, so the least fixed point is bottom. -/
+example : Env.fixGroup Num selfReference (Env.empty Num) () .zero = ⊥ := by
+  refine le_antisymm (Env.fixGroup_le Num selfReference (Env.empty Num) ⊥ ?_ () .zero) bot_le
+  intro _ x
+  cases x with
+  | zero => exact le_rfl
+  | succ x => cases x
+
+end PolyFunTest.RecursiveGroup
