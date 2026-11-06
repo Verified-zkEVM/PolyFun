@@ -14,6 +14,8 @@ import Examples.Tutorials.ParallelReports
 import Examples.Tutorials.VersionedRequests
 import Examples.Tutorials.UpdatePolicies
 import PolyFun.PFunctor.Handler.Sum
+import Examples.Tutorials.ScopedPrograms
+import Examples.Tutorials.ScopedExecution
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -81,3 +83,16 @@ example : VersionedRequests.Store.B .read := true
 example (T : Open.OpenTheory) (Δ : PortBoundary) (system : T.Obj Δ) :
     Open.Emulates system system (Open.Observation.eq T) :=
   Open.Emulates.refl _ _
+
+example : Examples.ScopedPrograms.captureExample.denote Examples.ScopedPrograms.algebra
+    IPFunctor.ScopedSignature.Env.empty 3 = 10 := rfl
+
+example (n : Nat) : Examples.ScopedPrograms.FirstOrder.sumCertificate.meaning n =
+    (Examples.ScopedPrograms.sumTo n).denote Examples.ScopedPrograms.algebra
+      IPFunctor.ScopedSignature.Env.empty :=
+  Examples.ScopedPrograms.FirstOrder.sumCertificate.correct n
+
+example {S R : Type} (step : Control.Transition S R) (fuel : Nat) (state : S) :
+    (Control.Transition.toMachine step).runChunk Control.Transition.tickHandler fuel
+      (.inr state) = Control.Transition.toChunk (Control.Transition.run step fuel state) :=
+  Control.Transition.runChunk_toMachine step fuel state
