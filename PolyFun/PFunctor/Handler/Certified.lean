@@ -112,7 +112,7 @@ theorem Certified.cost_liftM_le {c : P.A → ω} {d : Q.A → ω'} (f : Certifie
     {α : Type uB} (x : FreeM P α) :
     FreeM.cost d (x.liftM f.handler) ≤ f.exchange (FreeM.cost c x) := by
   refine (FreeM.cost_liftM_le d f.handler x).trans
-    ((FreeM.cost_mono_charge (fun a => ?_) x).trans (FreeM.cost_comp_le f.exchange c x))
+    ((FreeM.cost_mono (fun a => ?_) x).trans (FreeM.cost_comp_le f.exchange c x))
   have h := FreeM.cost_le_of_isChargeBound (f.certificate a)
   rw [zero_add] at h
   exact h
