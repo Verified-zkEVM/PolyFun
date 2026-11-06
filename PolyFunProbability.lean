@@ -6,6 +6,13 @@ Authors: Devon Tuma
 
 module
 
+public import PolyFunProbability.PFunctor.AnswerMeasure
+public import PolyFunProbability.PFunctor.Free.Kernel
+public import PolyFunProbability.PFunctor.Free.Kernel.Transport
+public import PolyFunProbability.PFunctor.Free.Measure
+public import PolyFunProbability.PFunctor.Free.Path.Measure
+public import PolyFunProbability.PFunctor.Wiring.Kernel
+public import PolyFunProbability.ToMathlib.MeasureTheory.Measure.AEBind
 public import PolyFunProbability.ToMathlib.MeasureTheory.Measure.Subprobability
 public import PolyFunProbability.ToMathlib.Probability.Kernel.Subprobability
 
