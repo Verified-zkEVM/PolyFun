@@ -511,7 +511,7 @@ functions of environments and proves `denote_rename`, `denote_subst`, and
 meanings as functions of new bound values, so entering a binder does not
 execute its body.
 
-For a different semantic carrier, `IPFunctor.Algebra` and `IFreeM.fold` provide
+For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
 can fold into **continuous** environment functions; it need not erase continuity
