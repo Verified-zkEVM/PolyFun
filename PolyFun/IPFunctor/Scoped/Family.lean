@@ -13,8 +13,9 @@ public import PolyFun.IPFunctor.Free.Traversal
 # Binding signatures over changing parameter contexts
 
 Each child can enter a different parameter context, reindex the types of existing
-variables, and bind new value variables. The resulting finite syntax is an indexed
-free polynomial tree. Ordinary binding signatures are the constant-context case.
+variables, and bind new value variables. The resulting well-founded syntax is an
+indexed free polynomial tree, and each term is finite when every constructor has
+finitely many arguments. Ordinary binding signatures are the constant-context case.
 -/
 
 public section
@@ -53,7 +54,7 @@ abbrev Judgment (S : W → Type v) := (w : W) × List (S w) × S w
   src j op p := ⟨σ.world op p,
     σ.binders op p ++ j.2.1.map (σ.reindex op p), σ.sort op p⟩
 
-/-- Finite syntax with typed variables at the leaves. -/
+/-- Well-founded syntax with typed variables at the leaves. -/
 abbrev Term (σ : ScopedFamily.{u, v, w, z} W S) (w : W) (Γ : List (S w)) (a : S w) :=
   IFreeM σ.polynomial (fun j => ScopedVar j.2.1 j.2.2) ⟨w, Γ, a⟩
 

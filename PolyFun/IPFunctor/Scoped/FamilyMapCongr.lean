@@ -11,8 +11,9 @@ public import PolyFun.IPFunctor.Scoped.FamilyMap
 /-!
 # Congruence of binding-family maps
 
-Constructor translations with related parameter states act identically on finite
-syntax when they select the same children and preserve the relation under binders.
+Constructor translations with related parameter states act identically on
+well-founded syntax when they select the same children and preserve the relation
+under binders.
 The result uses heterogeneous equality to retain arbitrary context transports.
 -/
 

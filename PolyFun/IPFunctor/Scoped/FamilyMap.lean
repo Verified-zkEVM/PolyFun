@@ -12,8 +12,8 @@ public import PolyFun.IPFunctor.Scoped.Family
 # Parameter substitutions for binding families
 
 A family homomorphism supplies constructor-local compatibility with changing
-parameter contexts. Its finite-tree action is an indexed traversal, so generic
-traversal fusion and relational interpretation laws apply to it.
+parameter contexts. Its action on well-founded trees is an indexed traversal, so
+generic traversal fusion and relational interpretation laws apply to it.
 -/
 
 public section
@@ -158,7 +158,7 @@ theorem context_renaming (h : Hom σ τ M f) {w z : W} (μ : M w z)
 
 end Hom
 
-/-- Substitute parameters in finite syntax using the language's constructor laws. -/
+/-- Substitute parameters in well-founded syntax using the language's constructor laws. -/
 @[expose] def Term.map {σ τ : ScopedFamily.{u, v, w, z} W S}
     {M : W → W → Type m} {f : ∀ {w z}, M w z → S w → S z}
     (h : Hom σ τ M f) {w z : W} (μ : M w z) {Γ : List (S w)} {a : S w}
