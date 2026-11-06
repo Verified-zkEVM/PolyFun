@@ -13,8 +13,8 @@ upstream README can describe APIs that the pinned revision does not yet supply.
 | [Mathlib](https://github.com/leanprover-community/mathlib4) | `PFunctor`, W/M-types, algebra, order and category theory | Extend existing structures, notation, and typeclasses; use its naming and documentation conventions. |
 | [CSLib](https://github.com/leanprover/cslib) | Polynomial and generic free monads, transition systems, temporal and machine foundations | Reuse `PFunctor.FreeM`, `Cslib.FreeM`, relational LTS laws and machine APIs; stage reusable additions in `ToCslib`. |
 | [Batteries](https://github.com/leanprover-community/batteries) | Lean utilities and environment linter driver | Use the existing linter integration rather than a second policy implementation. |
-| PolyFun | Polynomial interaction, machines, handlers, open composition, generic logic and realizability | Keep applications and cryptographic interpretations separate from the generic APIs. |
-| [VCVio](https://github.com/Verified-zkEVM/VCVio) | Oracle computations, probabilistic semantics, cryptographic definitions and proofs | Consume PolyFun's public equations and instantiate its abstract observations and resource predicates. |
+| PolyFun | Polynomial interaction, machines, handlers, open composition, generic logic and realizability; measure interpretations in the optional `PolyFunProbability` | Keep applications and cryptographic security interpretations separate from the generic APIs. |
+| [VCVio](https://github.com/Verified-zkEVM/VCVio) | Oracle computations and their probability conventions, cryptographic definitions and proofs | Consume PolyFun's public equations and instantiate its abstract observations and resource predicates. |
 
 The remaining resolved packages support proof automation, widgets, import
 graphs, search, and testing. They do not introduce another interaction model.

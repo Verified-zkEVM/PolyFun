@@ -14,6 +14,7 @@ lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
     'Examples/*.lean' 'PolyFunParliamentMain.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
+    'PolyFunProbability.lean' 'PolyFunProbability/*.lean' \
     'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
 }
 
@@ -133,6 +134,63 @@ while IFS= read -r file; do
   fi
 done < <(lean_sources)
 
+# Probability quarantine (AGENTS.md, "Probability quarantine"): measure theory and probability enter
+# only through the optional `PolyFunProbability` library and its tests, and the layer is
+# measure-native, so nothing imports Mathlib's probability mass functions, whose lawful monad
+# instance pulls in most of Mathlib's analysis. Like the Std.WP rules, these check direct imports.
+measure_allowed() {
+  case "$1" in
+    PolyFunProbability.lean|PolyFunProbability/*|PolyFunTest/Probability/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+measure_pattern="${import_prefix}Mathlib\.(MeasureTheory|Probability|InformationTheory)([[:space:]]|\.|$)"
+pmf_pattern="${import_prefix}Mathlib\.Probability\.ProbabilityMassFunction([[:space:]]|\.|$)"
+
+for measure_import in \
+    'import Mathlib.MeasureTheory.Measure.GiryMonad' \
+    'public import Mathlib.Probability.Kernel.Basic' \
+    'import all Mathlib.MeasureTheory.Integral.Lebesgue.Basic' \
+    'public import all Mathlib.InformationTheory.KullbackLeibler.Basic' \
+    'meta import Mathlib.Probability.Kernel.Defs' \
+    'public meta import Mathlib.MeasureTheory.Measure.Dirac.Basic' \
+    'meta import all Mathlib.Probability' \
+    'public meta import all Mathlib.MeasureTheory -- comment'; do
+  if ! grep -qE "$measure_pattern" <<< "$measure_import"; then
+    echo "ERROR: measure-theory matcher does not recognize: $measure_import" >&2
+    status=1
+  fi
+done
+for pmf_import in \
+    'import Mathlib.Probability.ProbabilityMassFunction.Constructions' \
+    'public import Mathlib.Probability.ProbabilityMassFunction.Basic' \
+    'public meta import all Mathlib.Probability.ProbabilityMassFunction'; do
+  if ! grep -qE "$pmf_pattern" <<< "$pmf_import"; then
+    echo "ERROR: probability-mass-function matcher does not recognize: $pmf_import" >&2
+    status=1
+  fi
+done
+if grep -qE "$measure_pattern" <<< 'import Mathlib.MeasureTheoryExtra'; then
+  echo "ERROR: measure-theory matcher must match whole module components." >&2
+  status=1
+fi
+if grep -qE "$pmf_pattern" <<< 'import Mathlib.Probability.Kernel.Basic'; then
+  echo "ERROR: probability-mass-function matcher must not classify other probability imports." >&2
+  status=1
+fi
+
+while IFS= read -r file; do
+  if grep -qE "$measure_pattern" "$file" && ! measure_allowed "$file"; then
+    echo "ERROR: $file imports Mathlib measure theory or probability outside PolyFunProbability." >&2
+    echo "See AGENTS.md, \"Probability quarantine\"." >&2
+    status=1
+  fi
+  if grep -qE "$pmf_pattern" "$file"; then
+    echo "ERROR: $file imports Mathlib's probability mass functions; use Measure and Kernel." >&2
+    status=1
+  fi
+done < <(lean_sources)
+
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2
@@ -146,7 +204,8 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean')
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
+  'PolyFunProbability.lean' 'PolyFunProbability/*.lean')
 
 # Layering (docs/reference/repo-map.md): `ToCslib` is upstream staging and never imports PolyFun or
 # a complexity backend; the generic `PolyFun` library never imports a concrete complexity backend.
@@ -163,6 +222,22 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean')
+
+# The optional measure-theoretic layer sits above the other production libraries: none of them
+# imports it, and it does not import a complexity backend.
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}PolyFunProbability([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports the optional PolyFunProbability library from a lower production library." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean')
+while IFS= read -r file; do
+  if grep -qE "${import_prefix}ComplexityBackends([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file imports a concrete complexity backend from PolyFunProbability." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFunProbability.lean' 'PolyFunProbability/*.lean')
 
 # `import all` boundaries (docs/development/module-api.md, "Who may open whose bodies"): bodies are
 # opened only inside the library that owns them. Tests may open a complexity backend; nothing opens a
@@ -235,6 +310,14 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
+
+# `PolyFunProbability` reaches PolyFun and ToCslib through their public API only.
+while IFS= read -r file; do
+  if grep -qE "${import_all_prefix}(PolyFun|ToCslib)([[:space:]]|\.|$)" "$file"; then
+    echo "ERROR: $file opens PolyFun or ToCslib bodies from PolyFunProbability." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFunProbability.lean' 'PolyFunProbability/*.lean')
 
 # `ToCslib` opens nothing. Staging modules are meant to be lifted into cslib unchanged, and cslib
 # has no access to this repository's bodies, so a proof that needs an opened body is not portable.

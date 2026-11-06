@@ -45,7 +45,8 @@ also re-exported by `Basic.lean`.
 log. `runPrefix_trace` supplies its syntactic trace witness; `observedCost` adds initialization
 and the final observation exactly once. A prefix that has not returned consumes its full query
 budget (`runPrefix_queries`). Probability laws and expected-potential reasoning for these
-prefixes live downstream in VCVio, outside PolyFun's generic layer.
+prefixes need a measure interpretation; they belong in the optional `PolyFunProbability`
+library or downstream, outside PolyFun's core libraries.
 
 ## `StepClass`: A Class Of Admissible Functions
 

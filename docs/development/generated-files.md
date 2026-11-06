@@ -9,6 +9,7 @@ Edit the source of truth, not the output.
 | `ToCslib.lean` | generated umbrella for the staging library | No | `./scripts/update-lib.sh ToCslib` or `./scripts/check-imports.sh` |
 | `ComplexityBackends.lean` | generated umbrella for the optional backend library | No | `./scripts/update-lib.sh ComplexityBackends` or `./scripts/check-imports.sh` |
 | `PolyFunIO.lean` | generated umbrella for the optional IO library | No | `./scripts/update-lib.sh PolyFunIO` or `./scripts/check-imports.sh` |
+| `PolyFunProbability.lean` | generated umbrella for the optional measure-theoretic library | No | `./scripts/update-lib.sh PolyFunProbability` or `./scripts/check-imports.sh` |
 | `Examples/Parliament.lean` | generated case-study umbrella | No | `./scripts/update-lib.sh Examples.Parliament` |
 | `.lake/` | build artifacts and cache | No | `lake build`, `lake exe cache get` |
 | `lake-manifest.json` | resolved dependency lockfile | Manual edits unsafe | Update `lean-toolchain` and both dependency pins in `lakefile.toml`, then run `lake update` |

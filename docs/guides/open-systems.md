@@ -18,8 +18,10 @@ for the distinction from instantiated cryptographic UC security.
 
 PolyFun owns typed boundaries, open systems, structural composition,
 contextual equivalence, corruption-event vocabularies, and classes of allowed
-systems. Probability, distinguishing advantage, negligibility, and cryptographic
-security games are VCVio instantiations. Generic resource bounds and optional
+systems. These judgments take the observation and the allowed classes as
+parameters. Distinguishing advantage, negligibility, and cryptographic security
+games are VCVio instantiations; a distributional observation that needs no
+security notion can come from the optional `PolyFunProbability` library. Generic resource bounds and optional
 complexity certificates are covered by [realizability](realizability.md).
 
 The current comparison target is the paper's static/simple UC fragment.
