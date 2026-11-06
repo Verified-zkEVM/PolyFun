@@ -102,6 +102,10 @@ The two readings agree in canonically ordered monoids:
   imported);
 - `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound in `ℕ∞`.
 
+A natural-number charge `χ` enters through its cast, `cost (fun a => (χ a : ℕ∞)) x`. Programs related
+by the relational lift `FreeRel` have the same cost at any charge (`FreeRel.cost_eq`, in
+`PolyFun/PFunctor/Free/WP/Cost.lean`).
+
 Over restricted answers, `costUnder c allows x` is the fold of `OpSpec.chargeUnder c allows`,
 which takes the worst continuation over the allowed answers only. It is `cost` when every answer
 is allowed (`costUnder_true`) and at most `cost` in general (`costUnder_le_cost`). When addition
@@ -159,8 +163,8 @@ only on `S` (`IsChargeBound.congr_charge`, `costWith_congr_charge`, `liftM_congr
 `x.MayCall a` says a call at `a` occurs in the tree, and the calls that occur form the least such
 `S` (`callsIn_iff_forall_mayCall`, `callsIn_setOf_mayCall`).
 
-**Monotonicity.** `IsChargeBound.mono`, `.mono_charge` and `.mono_spent`; `cost_mono_charge` is
-tagged `@[gcongr]`.
+**Monotonicity.** `IsChargeBound.mono`, `.mono_charge` and `.mono_spent`; `cost_mono` is tagged
+`@[gcongr]`.
 
 **Changing the cost type.**
 
