@@ -18,11 +18,14 @@ public import PolyFun.PFunctor.Free.Code
 polynomial functor `T.Sig` of its operations, together with the equivalence between `T α` and
 the free monad `PFunctor.FreeM T.Sig α`.
 
-The type `T` has parameters `p₁ ⋯ pₘ α`, the last one the result type `α`, and no indices. Its
+The type `T` has parameters `p₁ ⋯ pₘ α`, the last one the result type `α`, and no indices. The
+parameters `p₁ ⋯ pₘ` may have any binder info (explicit, implicit, strict implicit or instance
+implicit), and `T` may be universe polymorphic, with `α` in a universe of its own. Its
 constructors are
 
 * exactly one return `ret (a : α)`, whose only field has type `α`;
-* operations `op x₁ ⋯ xₙ k` with at most one continuation `k`: a field `k : D → T p₁ ⋯ pₘ α`
+* any number of operations, possibly none, each of the form `op x₁ ⋯ xₙ k` with at most one
+  continuation `k`: a field `k : D → T p₁ ⋯ pₘ α`
   (direction `D`, which may depend on the fields `xᵢ`, including type fields such as
   `sample (β : Type) (k : β → T α)`), a field `k : T p₁ ⋯ pₘ α` (direction `PUnit`), or none
   (direction `PEmpty`).
@@ -70,6 +73,16 @@ for each constructor, the kind (`FieldKind`) of each field, a parameter, a recur
 program-tree shape off this description (the return constructor, the continuation of each
 operation and its direction) and `sigSource` prints the declarations. When `T` is declared in a
 `meta section`, `toFreeM`, `ofFreeM` and `equivFreeM` are declared `noncomputable`.
+
+The generated declarations bind `p₁ ⋯ pₘ` with the binder infos of `T` (the declarations that
+take them implicitly keep instance-implicit binders), and every application to the parameters
+is explicit (`@`). A declaration that mentions `T` or `α` takes the universe parameters of `T`;
+the others (`N.Op`, `N.Op.dir`, `N.Sig`, the summands, `N.SigSum`, `N.sigEquivSum`, `N.code`,
+`N.sigEquivCode`) take the universe parameters of `T` that occur in the types of the parameters
+`p₁ ⋯ pₘ`, of the fields of the operations and of their directions. A universe parameter of `T`
+whose name is declared by `universe` in the current scope is renamed apart. When `T` has no
+operation, `N.Op` is an empty type in `Type`, `N.SigSum` is `0`, and the generated functions
+and proofs dismiss operations by `nomatch` and `nofun`.
 
 All generated proofs are tactic proofs (`induction`, `cases`, `simp only`, `rfl`) checked by the
 kernel.
@@ -142,8 +155,8 @@ structure OpData where
 structure SigData where
   /-- The inductive type. -/
   T : Name
-  /-- The parameters before the result type: names and printed types. -/
-  params : Array (Name × String)
+  /-- The parameters before the result type: names, printed types and binder infos. -/
+  params : Array (Name × String × BinderInfo)
   /-- The result type parameter: name and printed type. -/
   alpha : Name × String
   /-- The return constructor. -/
@@ -152,8 +165,12 @@ structure SigData where
   ops : Array OpData
   /-- The printed sort of the directions. -/
   dirSort : String
-  /-- The universe parameters of `T`. -/
+  /-- The universe parameters of `T`, each renamed apart from the universe names in scope. -/
   lvls : List Name
+  /-- The universe parameters of `T` that occur in the types of the parameters `p₁ ⋯ pₘ`, of the
+  fields of the operations or of their directions: the universe parameters of `N.Op`, `N.Sig`
+  and the other declarations that do not mention `T` or `α`. -/
+  sigLvls : List Name
   /-- Whether `T` is declared `meta` (in a `meta section` of a module); the generated
   functions are then `noncomputable`. -/
   isMeta : Bool
@@ -265,10 +282,30 @@ def toIndDesc (T : Name) : MetaM IndDesc := do
 
 /-! ## The signature -/
 
-/-- Read the inductive type `T`, with description `desc`, as a type of program trees. -/
-def readSig (desc : IndDesc) : TermElabM SigData := do
+/-- The universe parameters `lvls`, each one named in `scope` replaced by a fresh name, distinct
+from `scope` and from the other parameters. -/
+def renameLevels (lvls scope : List Name) : List Name :=
+  (lvls.foldl (init := ([], (scope ++ lvls).toArray)) fun (acc, used) l =>
+    if scope.contains l then
+      let l' := freshIn l used
+      (acc ++ [l'], used.push l')
+    else (acc ++ [l], used)).1
+
+/-- The universe parameters occurring in `e`, added to `acc`. -/
+def addLevels (acc : Array Name) (e : Expr) : Array Name :=
+  (collectLevelParams {} e).params.foldl (init := acc) fun acc l =>
+    if acc.contains l then acc else acc.push l
+
+/-- Read the inductive type `T`, with description `desc`, as a type of program trees. The
+universe parameters of `T` named in `scopeLvls` (declared by `universe` in the current scope)
+are renamed apart. -/
+def readSig (desc : IndDesc) (scopeLvls : List Name := []) : TermElabM SigData := do
   let T := desc.name
   let iv ← getConstInfoInduct T
+  let lvls := renameLevels iv.levelParams scopeLvls
+  let lvlSubst (e : Expr) : Expr :=
+    e.instantiateLevelParams iv.levelParams (lvls.map mkLevelParam)
+  let ivType := lvlSubst iv.type
   unless iv.numIndices == 0 do
     throwError "derive_free_sig: `{T}` has indices; the result type must be its last parameter"
   unless iv.numParams ≥ 1 do
@@ -277,15 +314,18 @@ def readSig (desc : IndDesc) : TermElabM SigData := do
     throwError "derive_free_sig: `{T}` is a nested inductive type"
   -- a parameter named like a generated declaration would be shadowed by it
   let reserved := #[`Op, `Sig, `SigSum, `dir]
-  let (pnames, used) := accessibleNames (binderNames iv.type (iv.numParams - 1)) reserved `p
+  let (pnames, used) := accessibleNames (binderNames ivType (iv.numParams - 1)) reserved `p
   let (anames, used) := accessibleNames
-    ((binderNames iv.type iv.numParams).drop (iv.numParams - 1)) used `α
+    ((binderNames ivType iv.numParams).drop (iv.numParams - 1)) used `α
   let pnames := pnames ++ anames
-  forallBoundedTelescope (renameBinders iv.type pnames) iv.numParams fun ps _ => do
+  forallBoundedTelescope (renameBinders ivType pnames) iv.numParams fun ps _ => do
     let α := ps.back!
     let mut params := #[]
+    let mut sigLvls : Array Name := #[]
     for p in ps.pop do
-      params := params.push ((← p.fvarId!.getUserName), ← ppText (← inferType p))
+      let pty ← inferType p
+      sigLvls := addLevels sigLvls pty
+      params := params.push ((← p.fvarId!.getUserName), ← ppText pty, ← p.fvarId!.getBinderInfo)
     let alpha := ((← α.fvarId!.getUserName), ← ppText (← inferType α))
     let pused := used
     let mut used := used
@@ -295,7 +335,7 @@ def readSig (desc : IndDesc) : TermElabM SigData := do
     for cd in desc.ctors do
       let ctor := cd.name
       let cv ← getConstInfoCtor ctor
-      let ty ← instantiateForall cv.type ps
+      let ty ← instantiateForall (lvlSubst cv.type) ps
       let (fnames, used') := accessibleNames (binderNames ty cv.numFields) pused `x
       used := used ++ used'
       let r ← forallBoundedTelescope (renameBinders ty fnames) cv.numFields fun fs _ => do
@@ -318,9 +358,11 @@ def readSig (desc : IndDesc) : TermElabM SigData := do
             cont? := some (i, .fn (← ppText D), D)
         let mut fields := #[]
         let mut sort? : Option String := none
+        let mut opLvls : Array Name := #[]
         for i in [:fs.size] do
           if cont?.map (·.1) == some i then continue
           let fty ← inferType fs[i]!
+          opLvls := addLevels opLvls fty
           if fty.containsFVar α.fvarId! then
             throwError "derive_free_sig: the field {i} of `{ctor}` mentions the result type"
           let inDir := match cont? with
@@ -335,7 +377,9 @@ def readSig (desc : IndDesc) : TermElabM SigData := do
             { name := (← fs[i]!.fvarId!.getUserName), type := ← ppText fty, inDir
               isProp := pr, used }
         if let some (_, .fn _, D) := cont? then
-          sort? := some (← ppText (← inferType D))
+          let s ← inferType D
+          opLvls := addLevels (addLevels opLvls D) s
+          sort? := some (← ppText s)
         let dir := match cont? with
           | some (_, d, _) => d
           | none => .empty
@@ -344,13 +388,15 @@ def readSig (desc : IndDesc) : TermElabM SigData := do
         let op : OpData :=
           { ctor := ctor, short := sh, fields := fields, contIdx := contIdx, dir := dir,
             numFields := fs.size }
-        return Sum.inr (op, sort?)
+        return Sum.inr (op, sort?, opLvls)
       match r with
       | .inl c =>
         if ret?.isSome then throwError "derive_free_sig: `{T}` has two return constructors"
         ret? := some c
-      | .inr (op, sort?) =>
+      | .inr (op, sort?, opLvls) =>
         ops := ops.push op
+        sigLvls := opLvls.foldl (init := sigLvls) fun acc l =>
+          if acc.contains l then acc else acc.push l
         if let some s := sort? then
           match dirSort? with
           | none => dirSort? := some s
@@ -361,8 +407,28 @@ def readSig (desc : IndDesc) : TermElabM SigData := do
     let freshNames := #[`k, `d, `s, `f, `o, `q, `a, `β].map (freshIn · used)
     return {
       T := T, params := params, alpha := alpha, ret := ret, ops := ops
-      dirSort := dirSort?.getD "Type", lvls := iv.levelParams
+      dirSort := dirSort?.getD "Type", lvls := lvls
+      sigLvls := lvls.filter sigLvls.contains
       isMeta := isMarkedMeta (← getEnv) T, freshNames := freshNames }
+
+/-- The binder `(n : t)`, `{n : t}`, `⦃n : t⦄` or `[n : t]` of binder info `bi`. -/
+def binderText (bi : BinderInfo) (n : Name) (t : String) : String :=
+  match bi with
+  | .implicit => s!"\{{n} : {t}}"
+  | .strictImplicit => s!"⦃{n} : {t}⦄"
+  | .instImplicit => s!"[{n} : {t}]"
+  | .default => s!"({n} : {t})"
+
+/-- The binders of the parameters `p₁ ⋯ pₘ`: with their binder infos, or, when `impl` is true,
+implicit except for the instance-implicit ones. -/
+def paramBinders (d : SigData) (impl : Bool) : String :=
+  String.join (d.params.toList.map fun (n, t, bi) =>
+    let bi := if impl && bi != .instImplicit then .implicit else bi
+    s!" {binderText bi n t}")
+
+/-- The explicit universe arguments `.{u₁, ⋯}` of the universe names `ls`, empty for none. -/
+def levelText (ls : List Name) : String :=
+  if ls.isEmpty then "" else ".{" ++ ", ".intercalate (ls.map toString) ++ "}"
 
 /-- The number of leading commands of `sigSource` that define `N.Op`, `N.Op.dir` and `N.Sig`;
 they do not depend on the universe argument of `sigSource`. -/
@@ -384,17 +450,22 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
   let T := d.T.toString
   let mk := if d.isMeta then "noncomputable " else ""
   let nm (s : String) := s!"{N}.{s}"
-  let lv := if d.lvls.isEmpty then "" else ".{" ++ ", ".intercalate (d.lvls.map toString) ++ "}"
-  let decl (s : String) := s!"_root_.{nm s}{lv}"
-  let pExpl := String.join (d.params.toList.map fun (n, t) => s!" ({n} : {t})")
-  let pImpl := String.join (d.params.toList.map fun (n, t) => s!" \{{n} : {t}}")
+  -- the declarations that mention `T` take all its universes, the others those they use
+  let decl (s : String) := s!"_root_.{nm s}{levelText d.lvls}"
+  let sdecl (s : String) := s!"_root_.{nm s}{levelText d.sigLvls}"
+  -- a reference to a declaration that does not mention `T`, with its universes
+  let sref (s : String) := s!"{nm s}{levelText d.sigLvls}"
+  let pExpl := paramBinders d false
+  let pImpl := paramBinders d true
   let pArgs := String.join (d.params.toList.map fun (n, _) => s!" {n}")
   let pHoles := String.join (d.params.toList.map fun _ => " _")
   let (a, aTy) := d.alpha
   let aImpl := s!" \{{a} : {aTy}}"
-  let tA := s!"{T}{pArgs} {a}"
-  let sig := s!"({nm "Sig"}{pArgs})"
-  let opTy := s!"{nm "Op"}{pArgs}"
+  -- every application to the parameters is explicit (`@`), whatever their binder infos
+  let tA := s!"@{T}{pArgs} {a}"
+  let sig := s!"(@{sref "Sig"}{pArgs})"
+  let opTy := s!"@{sref "Op"}{pArgs}"
+  let noOps := d.ops.isEmpty
   let short (o : OpData) := o.short.toString
   -- patterns of the fields of an operation, `_` where `useAll` is false and the direction does
   -- not mention the field
@@ -419,7 +490,7 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
     s!"\n  /-- The operation `{o.ctor}`. -/\n  | {short o}" ++
       String.join (o.fields.toList.map fun f => s!" ({f.name} : {f.type})"))
   cmds := cmds.push (s!"/-- The operations of `{T}`, the positions of `{nm "Sig"}`. -/\n" ++
-    s!"inductive {decl "Op"}{pExpl} : Type _ where{ctors}")
+    s!"inductive {sdecl "Op"}{pExpl} : {if noOps then "Type" else "Type _"} where{ctors}")
   -- the directions
   let dirCases := String.join (d.ops.toList.map fun o =>
     let rhs := match o.dir with
@@ -428,10 +499,13 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
       | .fn D => D
     s!"\n  | .{short o}{fieldPats o false} => {rhs}")
   cmds := cmds.push (s!"/-- The result type of an operation of `{T}`, the directions of " ++
-    s!"`{nm "Sig"}`. -/\ndef {decl "Op.dir"}{pImpl} : {opTy} → {d.dirSort}{dirCases}")
+    s!"`{nm "Sig"}`. -/\ndef {sdecl "Op.dir"}{pImpl} : {opTy} → {d.dirSort}" ++
+    (if noOps then " := nofun" else dirCases))
   -- the signature
   cmds := cmds.push (s!"/-- The polynomial functor of the operations of `{T}`. -/\n" ++
-    s!"def {decl "Sig"}{pExpl} : PFunctor := ⟨{opTy}, {nm "Op.dir"}⟩")
+    s!"def {sdecl "Sig"}{pExpl} : PFunctor := ⟨{opTy}, @{sref "Op.dir"}{pArgs}⟩")
+  -- the case of an operation node when there are no operations
+  let noOpCase := if noOps then s!"\n  | .liftBind {ov} _ => nomatch {ov}" else ""
   -- `toFreeM`
   let toCases := String.join (d.ops.toList.map fun o =>
     let pat := s!"@{o.ctor}{pHoles} _" ++ ctorArgs o k
@@ -456,7 +530,7 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
       s!"@{o.ctor}{pArgs} {a}{ctorArgs o cont}")
   cmds := cmds.push (s!"/-- The tree of `{T}` of a free-monad tree over `{nm "Sig"}`. -/\n" ++
     s!"{mk}def {decl "ofFreeM"}{pImpl}{aImpl} : PFunctor.FreeM {sig} {a} → {tA}\n" ++
-    s!"  | .pure {av} => @{d.ret}{pArgs} {a} {av}{ofCases}")
+    s!"  | .pure {av} => @{d.ret}{pArgs} {a} {av}{ofCases}{noOpCase}")
   -- the round trips
   cmds := cmds.push (s!"/-- `{nm "ofFreeM"}` inverts `{nm "toFreeM"}`. -/\n" ++
     s!"theorem {decl "ofFreeM_toFreeM"}{pImpl}{aImpl} ({sv} : {tA}) :\n" ++
@@ -471,7 +545,7 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
   cmds := cmds.push (s!"/-- `{nm "toFreeM"}` inverts `{nm "ofFreeM"}`. -/\n" ++
     s!"theorem {decl "toFreeM_ofFreeM"}{pImpl}{aImpl} :\n" ++
     s!"    ({sv} : PFunctor.FreeM {sig} {a}) → {nm "toFreeM"} ({nm "ofFreeM"} {sv}) = {sv}\n" ++
-    s!"  | .pure _ => rfl{rtCases}")
+    s!"  | .pure _ => rfl{rtCases}{noOpCase}")
   cmds := cmds.push (s!"/-- `{T}` is equivalent to the free monad over `{nm "Sig"}`. -/\n" ++
     s!"{mk}def {decl "equivFreeM"}{pImpl}{aImpl} : {tA} ≃ PFunctor.FreeM {sig} {a} where\n" ++
     s!"  toFun := {nm "toFreeM"}\n  invFun := {nm "ofFreeM"}\n" ++
@@ -494,18 +568,18 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
           s!", {last.type}"
     cmds := cmds.push (s!"/-- The summand of `{nm "Sig"}` at the operation `{o.ctor}`: " ++
       s!"positions its arguments, directions those of `{nm "Op"}.{short o}`. -/\n" ++
-      s!"def {decl s!"Sig.{short o}"}{pExpl} : PFunctor :=\n" ++
+      s!"def {sdecl s!"Sig.{short o}"}{pExpl} : PFunctor :=\n" ++
       s!"  ⟨{pos}, fun {if o.fields.isEmpty then "_" else tuple o true} => " ++
-      s!"@{nm "Op.dir"}{pArgs} (@{nm "Op"}.{short o}{pArgs}{fieldPats o true})⟩")
+      s!"@{sref "Op.dir"}{pArgs} (@{sref s!"Op.{short o}"}{pArgs}{fieldPats o true})⟩")
   -- the sum
-  let summand (o : OpData) := s!"{nm "Sig"}.{short o}{pArgs}"
+  let summand (o : OpData) := s!"@{sref s!"Sig.{short o}"}{pArgs}"
   let rec nest : List OpData → String
     | [] => "0"
     | [o] => summand o
     | o :: os => s!"({summand o} + {nest os})"
   cmds := cmds.push (
     s!"/-- The sum of the summands of `{nm "Sig"}`, one for each operation. -/\n" ++
-    s!"def {decl "SigSum"}{pExpl} : PFunctor := {nest d.ops.toList}")
+    s!"def {sdecl "SigSum"}{pExpl} : PFunctor := {nest d.ops.toList}")
   -- the injection of a summand into the nested sum
   let n := d.ops.size
   let inj (i : Nat) (x : String) : String := Id.run do
@@ -527,20 +601,25 @@ def sigSource (d : SigData) (N : Name) (bind? : Option Name) (lA : String) :
     | [] => "⟨⟩"
     | [f] => f.name.toString
     | fs => "⟨" ++ ", ".intercalate (fs.map (·.name.toString)) ++ "⟩")
+  let equivA :=
+    if noOps then
+      s!"    \{ toFun := nofun\n      invFun := nofun\n      left_inv := nofun\n" ++
+        s!"      right_inv := nofun }\n"
+    else
+      s!"    \{ toFun := fun{toA}\n" ++
+        s!"      invFun := fun{ofA}\n" ++
+        s!"      left_inv := fun {ov} => by cases {ov} <;> rfl\n" ++
+        s!"      right_inv := fun {qv} => by rcases {qv} with {rcasesPat} <;> rfl }\n"
   cmds := cmds.push (s!"/-- `{nm "Sig"}` is the sum of its summands. -/\n" ++
-    s!"def {decl "sigEquivSum"}{pExpl} :\n" ++
-    s!"    PFunctor.Equiv {sig} ({nm "SigSum"}{pArgs}) where\n" ++
-    s!"  equivA :=\n" ++
-    s!"    \{ toFun := fun{toA}\n" ++
-    s!"      invFun := fun{ofA}\n" ++
-    s!"      left_inv := fun {ov} => by cases {ov} <;> rfl\n" ++
-    s!"      right_inv := fun {qv} => by rcases {qv} with {rcasesPat} <;> rfl }\n" ++
+    s!"def {sdecl "sigEquivSum"}{pExpl} :\n" ++
+    s!"    PFunctor.Equiv {sig} (@{sref "SigSum"}{pArgs}) where\n" ++
+    s!"  equivA :=\n" ++ equivA ++
     s!"  equivB := fun {ov} => by cases {ov} <;> exact _root_.Equiv.refl _")
   -- bind
   if let some b := bind? then
     cmds := cmds.push (s!"/-- `{nm "toFreeM"}` carries `{b}` to `FreeM.bind`. -/\n" ++
       s!"theorem {decl "toFreeM_bind"}{pImpl}{aImpl} \{{bv} : {aTy}}\n" ++
-      s!"    ({sv} : {tA}) ({fv} : {a} → {T}{pArgs} {bv}) :\n" ++
+      s!"    ({sv} : {tA}) ({fv} : {a} → @{T}{pArgs} {bv}) :\n" ++
       s!"    {nm "toFreeM"} ({b} {sv} {fv}) =\n" ++
       s!"      ({nm "toFreeM"} {sv}).bind fun {av} => {nm "toFreeM"} ({fv} {av}) := by\n" ++
       s!"  induction {sv} <;> simp only [{nm "toFreeM"}, {b}, PFunctor.FreeM.bind, *] <;>\n" ++
@@ -557,14 +636,15 @@ def codeSource (d : SigData) (N : Name) (lA lB : String) : Array String := Id.ru
   let T := d.T.toString
   let mk := if d.isMeta then "noncomputable " else ""
   let nm (s : String) := s!"{N}.{s}"
-  let lv := if d.lvls.isEmpty then "" else ".{" ++ ", ".intercalate (d.lvls.map toString) ++ "}"
-  let decl (s : String) := s!"_root_.{nm s}{lv}"
-  let pExpl := String.join (d.params.toList.map fun (n, t) => s!" ({n} : {t})")
-  let pImpl := String.join (d.params.toList.map fun (n, t) => s!" \{{n} : {t}}")
+  let decl (s : String) := s!"_root_.{nm s}{levelText d.lvls}"
+  let sdecl (s : String) := s!"_root_.{nm s}{levelText d.sigLvls}"
+  let sref (s : String) := s!"{nm s}{levelText d.sigLvls}"
+  let pExpl := paramBinders d false
+  let pImpl := paramBinders d true
   let pArgs := String.join (d.params.toList.map fun (n, _) => s!" {n}")
   let (a, aTy) := d.alpha
   let short (o : OpData) := o.short.toString
-  let interp := s!"(PFunctor.Code.interp ({nm "code"}{pArgs}))"
+  let interp := s!"(PFunctor.Code.interp (@{sref "code"}{pArgs}))"
   -- the code of an operation: one `field` for each field, then the direction
   let opCode (o : OpData) : String :=
     let dir := match o.dir with
@@ -580,7 +660,7 @@ def codeSource (d : SigData) (N : Name) (lA lB : String) : Array String := Id.ru
   let ops := ",\n  ".intercalate (d.ops.toList.map opCode)
   let mut cmds := #[]
   cmds := cmds.push (s!"/-- The code of the signature of `{T}`. -/\n" ++
-    s!"def {decl "code"}{pExpl} : PFunctor.Code.\{{lA}, {lB}} := ⟨[\n  {ops}]⟩")
+    s!"def {sdecl "code"}{pExpl} : PFunctor.Code.\{{lA}, {lB}} := ⟨[\n  {ops}]⟩")
   -- the position of the code at an operation, as a term and as patterns
   let posTerm (o : OpData) : String :=
     o.fields.foldr (init := "PUnit.unit") fun f rest =>
@@ -606,22 +686,27 @@ def codeSource (d : SigData) (N : Name) (lA lB : String) : Array String := Id.ru
     let o := d.ops[i]!
     s!"\n        | {inj i (posPat o "_")} => .{short o}{fieldArgs o}")
   let rcasesPat := " | ".intercalate (d.ops.toList.map fun o => posPat o "⟨⟩")
+  let equivA :=
+    if d.ops.isEmpty then
+      s!"    \{ toFun := nofun\n      invFun := nofun\n      left_inv := nofun\n" ++
+        s!"      right_inv := nofun }\n"
+    else
+      s!"    \{ toFun := fun{toA}\n" ++
+        s!"      invFun := fun{ofA}\n" ++
+        s!"      left_inv := fun {ov} => by cases {ov} <;> rfl\n" ++
+        s!"      right_inv := fun {qv} => by rcases {qv} with {rcasesPat} <;> rfl }\n"
   cmds := cmds.push (s!"/-- `{nm "Sig"}` is the interpretation of the code `{nm "code"}`. -/\n" ++
-    s!"def {decl "sigEquivCode"}{pExpl} :\n" ++
-    s!"    PFunctor.Equiv ({nm "Sig"}{pArgs}) {interp} where\n" ++
-    s!"  equivA :=\n" ++
-    s!"    \{ toFun := fun{toA}\n" ++
-    s!"      invFun := fun{ofA}\n" ++
-    s!"      left_inv := fun {ov} => by cases {ov} <;> rfl\n" ++
-    s!"      right_inv := fun {qv} => by rcases {qv} with {rcasesPat} <;> rfl }\n" ++
+    s!"def {sdecl "sigEquivCode"}{pExpl} :\n" ++
+    s!"    PFunctor.Equiv (@{sref "Sig"}{pArgs}) {interp} where\n" ++
+    s!"  equivA :=\n" ++ equivA ++
     s!"  equivB := fun {ov} => by cases {ov} <;> exact _root_.Equiv.refl _")
   cmds := cmds.push (s!"/-- `{T}` is equivalent to the free monad over the interpretation of " ++
     s!"`{nm "code"}`. -/\n" ++
     s!"{mk}def {decl "equivCode"}{pImpl} \{{a} : {aTy}} :\n" ++
-    s!"    {T}{pArgs} {a} ≃ PFunctor.FreeM {interp} {a} :=\n" ++
+    s!"    @{T}{pArgs} {a} ≃ PFunctor.FreeM {interp} {a} :=\n" ++
     s!"  {nm "equivFreeM"}.trans\n" ++
     s!"    (PFunctor.freeMCongr " ++
-    s!"(PFunctor.Equiv.toLensEquiv ({nm "sigEquivCode"}{pArgs})))")
+    s!"(PFunctor.Equiv.toLensEquiv (@{sref "sigEquivCode"}{pArgs})))")
   return cmds
 
 /-- `stx` with every source position replaced by the synthetic position of `ref`. -/
@@ -685,7 +770,8 @@ def elabDeriveFreeSig : CommandElab := fun stx => do
         throwErrorAt val "derive_free_sig: the option `code` takes `true` or `false`"
       code := val.getId == `true
     | _ => throwErrorAt opt "derive_free_sig: unknown option `{key}`"
-  let d ← liftTermElabM do readSig (← toIndDesc T)
+  let scopeLvls := (← getScope).levelNames
+  let d ← liftTermElabM do readSig (← toIndDesc T) scopeLvls
   -- `N.Op`, `N.Op.dir` and `N.Sig` first: the later declarations use the universes of `N.Sig`
   for c in (sigSource d N bind? "0").extract 0 sigHeadSize do
     elabText stx c
