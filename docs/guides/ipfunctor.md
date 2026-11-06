@@ -589,6 +589,20 @@ provides both proved round trips to the existing `ScopedSignature` API.
 every constructor has finitely many children. The count excludes head payloads
 and measures neither execution cost nor the size of a semantic value.
 
+[`ScopedDomain.Env`](../../PolyFun/IPFunctor/Scoped/Domain.lean) interprets local
+contexts in bundled [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean)
+carriers. Extension, append, and `Env.map` are continuous maps. `Env.map` applies a
+family of continuous maps along a sort map, and `Env.reindex` is its instance for an
+equation of domains. `Env.fixGroup` ties a finite heterogeneous group with one least
+fixed point; its unfolding and leastness laws apply to the whole environment.
+Environment renaming commutes with extension, append, and `Env.map`. Consecutive maps
+compose at each original binding position. `fixGroup_rename` handles ambient value
+renaming, and `fixGroup_fusion` transports recursion through a strict continuous map
+that commutes with whole-group unfolding. `Env.Forall₂` relates two environments by
+binding position for any family of relations, and `fixGroup_forall₂` carries a relation
+that is admissible at corresponding sorts through a recursive group. Language specific
+errors and quantifier stages remain outside this generic layer.
+
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
