@@ -24,10 +24,12 @@ ordered monoids: `isChargeBound_of_cost_le` holds in general, and `cost_le_of_is
 addition to distribute over nonempty suprema (`AddSupDistrib`, which holds in `ℕ∞` and pointwise,
 from `ToCslib.Order.AddSupDistrib`, and in `ℝ≥0∞` from `ToCslib.Data.ENNReal.AddSupDistrib`).
 `isChargeBound_iff_cost_natCast_le` reads a natural-number budget as a bound on the cost in `ℕ∞`.
+A natural-number charge `χ` enters through its cast, `cost (fun a => (χ a : ℕ∞)) x`.
 
 Costs transport along lenses (`cost_mapLens_le`, with equality when the lens reaches every answer)
 and through free handlers, where each call is charged the worst case of its implementation
-(`handlerCost`, `cost_liftM_le`).
+(`handlerCost`, `cost_liftM_le`). `PolyFun.PFunctor.Free.WP.Cost` adds invariance under the
+relational lift of a code (`FreeRel.cost_eq`).
 -/
 
 @[expose] public section
@@ -105,6 +107,10 @@ theorem costWith_eq_wpFold (c : P.A → ω) (x : FreeM P α) (k : α → ω) :
 
 theorem cost_eq_costWith [Zero ω] (c : P.A → ω) (x : FreeM P α) :
     cost c x = costWith c x fun _ => 0 :=
+  rfl
+
+theorem cost_eq_wpFold [Zero ω] (c : P.A → ω) (x : FreeM P α) :
+    cost c x = wpFold (OpSpec.charge c) x fun _ => 0 :=
   rfl
 
 @[simp, freeM_unfold]
@@ -256,8 +262,9 @@ theorem costWith_mono_charge (hc : c ≤ c') (x : FreeM P α) (k : α → ω) :
   | pure a => exact le_rfl
   | liftBind a r ih => exact add_le_add (hc a) (iSup_mono ih)
 
+/-- The worst-case cost is monotone in the charge. -/
 @[gcongr]
-theorem cost_mono_charge (hc : c ≤ c') (x : FreeM P α) : cost c x ≤ cost c' x :=
+theorem cost_mono (hc : c ≤ c') (x : FreeM P α) : cost c x ≤ cost c' x :=
   costWith_mono_charge hc x _
 
 /-- The leaf costs split off: the cost-to-go is at most the cost plus the largest leaf cost. -/
