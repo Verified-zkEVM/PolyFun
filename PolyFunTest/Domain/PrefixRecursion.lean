@@ -24,6 +24,35 @@ namespace PolyFunTest.PrefixRecursion
 /-- Partial scalar entries used by these recurrence regressions. -/
 abbrev Entry := DomainResult String (DiscreteOrder Nat)
 
+/-- A two-entry generator whose second entry reads the first. -/
+noncomputable def copyFirst (first : Entry) :
+    DomainResult String (Fin 2 → Entry) →𝒄 (Fin 2 → Entry) :=
+  DomainResult.elim (fun e _ => .error e)
+    (.ofFun (fun xs i => if i.val = 0 then first else xs 0) (by
+      apply ωScottContinuous.of_apply₂
+      intro i
+      by_cases hi : i.val = 0
+      · simp only [hi, ↓reduceIte]
+        exact ωScottContinuous.const
+      · simp only [hi, ↓reduceIte]
+        exact ωScottContinuous.apply 0))
+
+/-- The first entry reaches the second through the prefix hypothesis, whether it is a value,
+an error or bottom. -/
+example (first : Entry) : (DomainResult.generateStep (copyFirst first)).fix =
+    DomainResult.value (fun _ => first) := by
+  apply DomainResult.generateStep_fix_eq
+  · intro i x y h
+    obtain ⟨_ | _ | _, hi⟩ := i
+    · rfl
+    · exact h 0 (Nat.succ_pos 0)
+    · omega
+  · funext i
+    obtain ⟨_ | _ | _, hi⟩ := i
+    · rfl
+    · rfl
+    · omega
+
 example : (DomainResult.generateStep (ε := String)
     (.const (fun i : Fin 2 => if i.val = 0 then (⊥ : Entry) else .error "entry"))).fix =
       DomainResult.value (fun i : Fin 2 => if i.val = 0 then (⊥ : Entry) else .error "entry") := by

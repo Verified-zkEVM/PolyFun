@@ -103,8 +103,7 @@ may itself return a function, without introducing another suspension. -/
 its partial components, to the continuation. -/
 @[expose] noncomputable def bind (f : α →𝒄 DomainResult ε β) :
     DomainResult ε α →𝒄 DomainResult ε β :=
-  WithBot.extend (Sum.elimContinuous
-    (DiscreteOrder.continuousMap error) f)
+  elim error f
 
 @[simp] theorem bind_bot (f : α →𝒄 DomainResult ε β) : bind f ⊥ = ⊥ := rfl
 
@@ -116,16 +115,8 @@ its partial components, to the continuation. -/
 
 /-- Binding also depends continuously on the continuation. -/
 @[fun_prop] theorem ωScottContinuous_bind :
-    ωScottContinuous (bind (ε := ε) (α := α) (β := β)) := by
-  apply ContinuousHom.ωScottContinuous_of_apply
-  intro x
-  induction x using WithBot.recBotCoe with
-  | bot => exact ωScottContinuous.const
-  | coe x =>
-      cases x with
-      | inl e => exact ωScottContinuous.const
-      | inr a =>
-          exact ContinuousHom.ωScottContinuous_apply ωScottContinuous.id ωScottContinuous.const
+    ωScottContinuous (bind (ε := ε) (α := α) (β := β)) :=
+  ωScottContinuous_elim error
 
 /-- Binding as a continuous operation on continuations and computations. -/
 @[expose] noncomputable def bindContinuous :
