@@ -23,6 +23,9 @@ The definition is structural via `FreeM.rec`: `pure` satisfies any bound,
 and `liftBind a r` satisfies the bound when `canRoll a b` holds and each
 continuation `r y` satisfies the bound at `cost a b`.
 
+A lens relabels a bounded program into a bounded program (`IsRollBound.mapLens`), and the two
+bounds agree when the lens reaches every answer (`isRollBound_mapLens_iff`).
+
 `OracleComp.IsQueryBound` (in `VCVio/OracleComp/QueryTracking/QueryBound.lean`)
 is the specialization of this predicate to `FreeM (spec.toPFunctor)` and is
 equal to `IsRollBound` definitionally; the bridge lemma in `QueryBound.lean`
@@ -310,20 +313,41 @@ lemma isTotalRollBound_seq {og : FreeM P (α → β)} {oa : FreeM P α}
     IsTotalRollBound (og <*> oa) (n₁ + n₂) := by
   refine isRollBound_seq (fun a b => a + b) ?_ ?_ h₁ h₂ <;> grind
 
-/-- Interface transport along a lens preserves total roll bounds. A lens relabels
-positions and reindexes directions, leaving the branching structure — and hence the
-number of rolls along each branch — untouched. -/
+/-- A lens carries a roll bound whose admission test and update are read through `l.toFunA` to
+the relabelled program. -/
+lemma IsRollBound.mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) {oa : FreeM P α} {b : B}
+    {canRoll : Q.A → B → Prop} {cost : Q.A → B → B}
+    (h : oa.IsRollBound b (fun a => canRoll (l.toFunA a)) (fun a => cost (l.toFunA a))) :
+    (oa.mapLens l).IsRollBound b canRoll cost := by
+  induction oa using FreeM.rec generalizing b with
+  | pure x => trivial
+  | liftBind a r ih =>
+      rw [isRollBound_liftBind_iff] at h
+      rw [FreeM.mapLens_liftBind, isRollBound_liftBind_iff]
+      exact ⟨h.1, fun d => ih _ (h.2 _)⟩
+
+/-- When the lens reaches every answer of the target, the bound on the relabelled program is the
+bound on the original. -/
+theorem isRollBound_mapLens_iff {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
+    (hl : ∀ a, Function.Surjective (l.toFunB a)) {oa : FreeM P α} {b : B}
+    {canRoll : Q.A → B → Prop} {cost : Q.A → B → B} :
+    (oa.mapLens l).IsRollBound b canRoll cost ↔
+      oa.IsRollBound b (fun a => canRoll (l.toFunA a)) (fun a => cost (l.toFunA a)) := by
+  induction oa using FreeM.rec generalizing b with
+  | pure x => exact Iff.rfl
+  | liftBind a r ih =>
+      rw [FreeM.mapLens_liftBind, isRollBound_liftBind_iff, isRollBound_liftBind_iff]
+      refine and_congr_right fun _ => ⟨fun h y => ?_, fun h d => (ih _).2 (h _)⟩
+      obtain ⟨d, rfl⟩ := hl a y
+      exact (ih _).1 (h d)
+
+/-- Interface transport along a lens preserves total roll bounds. A lens relabels positions and
+reindexes directions, leaving the branching structure, and hence the number of rolls along each
+branch, untouched. -/
 lemma isTotalRollBound_mapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
     (oa : FreeM P α) {n : ℕ} (h : oa.IsTotalRollBound n) :
-    (oa.mapLens l).IsTotalRollBound n := by
-  induction oa generalizing n with
-  | pure x => simp
-  | lift_bind a cont ih =>
-      rw [isTotalRollBound_lift_bind_iff] at h
-      change IsTotalRollBound (FreeM.liftBind (l.toFunA a)
-        (fun d => (cont (l.toFunB a d)).mapLens l)) n
-      rw [FreeM.liftBind_eq, isTotalRollBound_lift_bind_iff]
-      exact ⟨h.1, fun d => ih _ (h.2 _)⟩
+    (oa.mapLens l).IsTotalRollBound n :=
+  IsRollBound.mapLens l h
 
 /-! ### Error-handling transformers
 
@@ -442,6 +466,13 @@ lemma programProgress_lift_bind_iff (a : P.A) (r : P.B a → FreeM P α) :
 lemma programProgress_liftBind_iff (a : P.A) (r : P.B a → FreeM P α) :
     ProgramProgress (FreeM.liftBind a r) ↔ Nonempty (P.B a) ∧ ∀ y, ProgramProgress (r y) :=
   Iff.rfl
+
+/-- Over an interface whose every call has an answer, every program makes progress. -/
+theorem programProgress_of_nonempty [∀ a, Nonempty (P.B a)] (x : FreeM P α) :
+    x.ProgramProgress := by
+  induction x using FreeM.rec with
+  | pure a => exact programProgress_pure a
+  | liftBind a r ih => exact (programProgress_liftBind_iff a r).2 ⟨inferInstance, ih⟩
 
 /-- Mapping returned values preserves the reachable query tree and hence
 program progress. -/
