@@ -52,6 +52,7 @@ public import PolyFun.IPFunctor.Chart.Basic
 public import PolyFun.IPFunctor.Equiv.Basic
 public import PolyFun.IPFunctor.Free.Basic
 public import PolyFun.IPFunctor.Free.Bound
+public import PolyFun.IPFunctor.Free.Bound.Charge
 public import PolyFun.IPFunctor.Free.Bound.Loops
 public import PolyFun.IPFunctor.Free.Bound.Reindex
 public import PolyFun.IPFunctor.Free.Bound.Substitution
@@ -92,6 +93,7 @@ public import PolyFun.ITree.Bisim.CrossSignature
 public import PolyFun.ITree.Bisim.Defs
 public import PolyFun.ITree.Bisim.Equiv
 public import PolyFun.ITree.Bisim.Iter
+public import PolyFun.ITree.Charge
 public import PolyFun.ITree.Construct
 public import PolyFun.ITree.Do
 public import PolyFun.ITree.Domain
@@ -276,6 +278,7 @@ public import PolyFun.PFunctor.Dynamical.Combinators
 public import PolyFun.PFunctor.Dynamical.DynComputation
 public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
+public import PolyFun.PFunctor.Dynamical.DynComputation.Charge
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
@@ -385,6 +388,7 @@ public import PolyFun.PFunctor.PatternRunsOnMatter.Operational
 public import PolyFun.PFunctor.PatternRunsOnMatter.Parallel
 public import PolyFun.PFunctor.PatternRunsOnMatter.Universal
 public import PolyFun.PFunctor.Resumption
+public import PolyFun.PFunctor.Resumption.Charge
 public import PolyFun.PFunctor.Resumption.Domain
 public import PolyFun.PFunctor.Resumption.DomainLaws
 public import PolyFun.PFunctor.Resumption.DomainTruncate
