@@ -388,3 +388,7 @@ finite prefixes are.
   (`budgetWPMonad`), or keep the amount spent as `StateT` state (`withCharge`), and let `vcgen`
   step through the calls with loop invariants
   ([program logic](program-logic.md#charges-and-budgets)).
+- **Universes of the interface.** State helper lemmas over an interface `P : PFunctor.{u, v}` with
+  universe variables. A helper stated at `PFunctor.{0, 0}` does not match an interface whose answer
+  universe is a variable, such as VCVio's `OracleSpec`, and `rw` then reports only that it found no
+  occurrence of the pattern.
