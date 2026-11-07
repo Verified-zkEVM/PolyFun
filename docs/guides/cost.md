@@ -279,6 +279,33 @@ continuation stays within the interrupted program's budget (`IsChargeBound.runUn
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
 
+## Measured and budgeted programs
+
+`MeasuredProgram Input Result ω` (`PolyFun/PFunctor/Free/Cost/Measured.lean`) computes a function
+by a free program whose interface depends on an uncharged view of the input, with deterministic
+answers and a price per operation.
+
+- `run` answers every call and returns the output of the one path the answers pick
+  (`run_eq_output`).
+- `Realizes f` says the run computes `f`.
+- `CostAtMost B` bounds the charge of every completed path of every view's program, so signed
+  prices are allowed.
+
+`comp outer inner` runs `inner`, computes `outer`'s view from the actual intermediate result, and
+runs `outer`, on the sum of the two interfaces, each operation tagged with the view it belongs to.
+It realizes the composite (`run_comp`, `Realizes.comp`), and budgets add (`CostAtMost.comp`). `contramap` precomposes an uncharged map, and `ofFun` is the program with no
+operations. `BudgetedProgram f ω` bundles a measured program realizing `f` with its budget, and
+composes the same way.
+
+Only the operations are charged: the view, the answering function and the code between calls are
+free, so `ofFun f` realizes any `f` at cost `0`. A cost statement therefore names its measured
+program instead of quantifying over one, and the uncharged parts are bounded one layer down. Prices
+do not depend on the view; for a family of inputs, fix the size measure and the budget envelope
+independently of the program, and prove growth separately.
+
+`Budgeted c B α` is the subtype of free programs within budget `B`. Graded by `Multiplicative ω`,
+it is a `GradedMonad`: `gbind` adds budgets.
+
 ## Other models
 
 The other models of computation reduce to free programs: resumptions, machines and interaction
