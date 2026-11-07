@@ -86,6 +86,16 @@ theorem charge_liftBind [Add ω] [Zero ω] (a : P.A) (next : P.B a → FreeM P �
     charge c (FreeM.liftBind a next) ⟨answer, tail⟩ = c a + charge c (next answer) tail :=
   rfl
 
+/-- A zero charge costs nothing along a path. -/
+@[simp]
+theorem charge_const_zero [AddZeroClass ω] (x : FreeM P α) (p : Path x) :
+    charge (fun _ => (0 : ω)) x p = 0 := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    rw [charge_liftBind, ih, add_zero]
+
 /-- The charge of a path is the valuation of its event trace by the charge of each call. -/
 theorem charge_eq_traceList_charge [AddMonoid ω] (x : FreeM P α) (p : Path x) :
     charge c x p = TraceList.charge (fun i => c i.1) (trace x p) := by
