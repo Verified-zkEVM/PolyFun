@@ -23,7 +23,8 @@ Checks for `PolyFun.PFunctor.Free.WP.Charge` and `Spec.lift_upper` on a coin int
 * over a counting `StateT` handler, `triple_liftM_invariant` carries the parity of the counter
   through every simulated program, and `triple_liftM_of_isRollBound` bounds the counter by a budget
   that charges only the metered operation, alone or paired with a total bound by
-  `IsRollBound.prod`.
+  `IsRollBound.prod`, and `triple_liftM_of_isChargeBound` does the same from a charge bound with
+  ranks indexed by the amount spent.
 -/
 
 public section
@@ -163,5 +164,24 @@ example (x : FreeM Metered Bool) (k n : ℕ) (hx : MeteredBound x k)
   · vcgen [countMetered]
     all_goals simp_all
     omega
+
+/-- The metered calls as a charge. -/
+def meteredCharge (a : Metered.A) : ℕ := if a then 1 else 0
+
+/-- Spent-amount ranks over a charge bound: the counter never exceeds the amount spent. -/
+theorem countMetered_le_of_isChargeBound (x : FreeM Metered Bool) (k : ℕ)
+    (hx : x.IsChargeBound meteredCharge k) :
+    ⦃ fun s => s ≤ 0 ⦄ (x.liftM countMetered) ⦃ fun _ s => s ≤ k ⦄ := by
+  refine FreeM.triple_liftM_of_isChargeBound countMetered (fun t s => s ≤ t) (fun s => s ≤ k)
+    _ (fun a t _ => ?_) (fun t ht s hs => by omega) x 0 hx
+  cases a
+  · vcgen [countMetered]
+    all_goals simp_all [meteredCharge]
+  · vcgen [countMetered]
+    all_goals simp_all [meteredCharge]
+
+example (x : FreeM Metered Bool) (k : ℕ) (hx : x.IsChargeBound meteredCharge k) :
+    ⦃ fun s => s = 0 ⦄ (x.liftM countMetered) ⦃ fun _ s => s ≤ k ⦄ :=
+  ⟨Triple.entails_wp_of_pre (countMetered_le_of_isChargeBound x k hx) fun s hs => by simp [hs]⟩
 
 end PFunctor.ChargeTest
