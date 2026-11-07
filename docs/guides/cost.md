@@ -312,6 +312,16 @@ through a certified handler, and a finishing program, and the handler and the fi
 use what the setup returned. Its bound is affine in the source budget,
 `setupCost + E B + finishCost` (`CostedReduction.run_isChargeBound`).
 
+Charges with values in `ι → ω` count one resource per index
+(`PolyFun/PFunctor/Handler/CertifiedVec.lean`). Worst-case vector costs are computed componentwise
+(`cost_pi_apply`, `cost_le_pi_iff`). Pricing at nonnegative prices `p`, `u ↦ ∑ i, p i * u i`
+(`priceHom`), turns a vector bound into a scalar one (`IsChargeBound.price`, `cost_price_le`).
+Per-resource demands `d : ι → ι' → ω` give the exchange `u ↦ ∑ i, u i • d i` (`demandHom`): a
+handler whose call at `a` uses at most `∑ i, c a i • d i` is certified by it
+(`Certified.ofDemand`), a program with use vector `u` then runs with use vector `∑ i, u i • d i`
+(`Handler.isChargeBound_liftM_demand`), and demands compose
+(`demandHom_demandHom`, `Handler.isChargeBound_liftM_demand_comp`).
+
 Stateful packages have certificates in a single cost type
 (`PolyFun/PFunctor/Handler/Stateful/Charge.lean`): `Stateful.WithinCharge` bounds each call from
 every state. A stateless certificate lifts to it
@@ -378,3 +388,7 @@ finite prefixes are.
   (`budgetWPMonad`), or keep the amount spent as `StateT` state (`withCharge`), and let `vcgen`
   step through the calls with loop invariants
   ([program logic](program-logic.md#charges-and-budgets)).
+- **Universes of the interface.** State helper lemmas over an interface `P : PFunctor.{u, v}` with
+  universe variables. A helper stated at `PFunctor.{0, 0}` does not match an interface whose answer
+  universe is a variable, such as VCVio's `OracleSpec`, and `rw` then reports only that it found no
+  occurrence of the pattern.
