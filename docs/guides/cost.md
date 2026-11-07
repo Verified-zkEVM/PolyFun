@@ -240,12 +240,52 @@ program, with equality when the lens reaches every answer (`cost_mapLens_of_surj
 Roll bounds transport the same way (`IsRollBound.mapLens`,
 `isRollBound_mapLens_iff`).
 
-**Free handlers.** If each implementation `h a` stays within `c a` under the target charge `d`,
-simulating a program within budget through `h` stays within the same budget
+**Free handlers.** `Handler.WithinCharge h d c` (`PolyFun/PFunctor/Handler/Charge.lean`) says
+that each implementation `h a` stays within `c a` under the target charge `d`. Simulating a
+program within budget through such a handler stays within the same budget
 (`IsChargeBound.liftM`). With a uniform step bound `k`, a program of `n` calls is simulated within
-`n • k` (`IsChargeBound.liftM_nsmul`). In value form, a simulated program costs at most the
-original with each call charged the worst case of its implementation, `handlerCost`
-(`cost_liftM_le`).
+`n • k` (`IsChargeBound.liftM_nsmul`). Certificates hold for identity, lens and sum handlers, and
+they compose (`WithinCharge.comp`). In value form, a simulated program costs at most the original
+with each call charged the worst case of its implementation, `handlerCost` (`cost_liftM_le`).
+
+**Stateful handlers.** For handlers into `StateT σ (FreeM Q)`, a step bound that holds from every
+state gives the same transfer (`IsChargeBound.run_liftM`). When the step's target charge depends
+on the state, a potential pays for it: `Path.exists_run_liftM_amortized` bounds the target charge
+of every completed path by the source charge plus the growth of the potential. A cache whose size
+is the potential makes at most as many target calls as it grows. A handler that may pause
+(`runUntil`, returning the pending call and its continuation) has a budget form
+(`IsChargeBound.runUntil`, in a cancellative cost type such as `ℕ`), and every paused
+continuation stays within the interrupted program's budget (`IsChargeBound.runUntil_paused`).
+
+The budget form's potential has the opposite sign. It is nonnegative and pays by decreasing, so the
+program's budget plus the initial potential is a target budget. A budget must bound every prefix
+before the run starts. A nonnegative potential that decreases does this, while a growing potential
+bounds the charge only by its final value. In a cost type with negation, such as `ℤ`, negating the
+potential turns one step condition into the other.
+
+All three transfers require the step bound from every handler state. A handler that meets it only
+on reachable states needs a state type that excludes the unreachable ones.
+
+**Handlers into any monad.**
+
+- `h.withCharge c` keeps the amount spent as `StateT` state, and forgetting it recovers the
+  handler (`fst_map_run_liftM_withCharge`). `h.withChargeW c` logs it in a writer instead, as
+  writer tracing of the charge (`withChargeW_eq_withTraceBefore`, `fst_map_run_liftM_writerT`,
+  `run_liftM_withChargeW_id`, `supp_run_liftM_id_withChargeW`).
+- On every possible result of a run of a program within budget `B`, the amount spent is at most
+  `B` (`IsChargeBound.le_of_canReturn_run_liftM_withCharge`).
+- That is an instance of resource growth (`IsChargeBound.le_of_canReturn_run_liftM`): if each call
+  at `a` raises a measure of the handler state by at most `c a`, a program within budget `B`
+  raises it by at most `B`. Counters, logs, caches and tables are such measures.
+- A run through a deterministic handler returns the output and the charge of the one path that
+  handler picks (`run_liftM_withCharge_id`): the instrumentation measures that path, not the
+  program's worst case.
+- An expected-cost reading needs a probability semantics, which this guide does not cover. It
+  transfers through a handler only from a per-call bound that holds for every call argument and every handler state. A bound
+  that holds only on average can fail once later calls depend on earlier answers.
+- `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
+  answers it with a fallback. On a program within budget neither intervenes
+  (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
 
 ## Proving bounds
 
