@@ -160,7 +160,7 @@ Mathlib's theorems and tactics, and the lens-level statements otherwise.
 | Compare possibly infinite trees | [M-types](../../PolyFun/PFunctor/M.lean), [resumptions](../../PolyFun/PFunctor/Resumption.lean) |
 | Study the categorical structure | [Monoidal structures](../../PolyFun/PFunctor/Category/Monoidal.lean), [coherence](../../PolyFun/PFunctor/Lens/Coherence.lean), [Tensor internal hom](../../PolyFun/PFunctor/InternalHom.lean), [cartesian exponential](../../PolyFun/PFunctor/CartesianClosed.lean), [mathematical background](../reference/mathematical-background.md) |
 | Relate free and cofree constructions | [Pattern runs on matter](../reference/pattern-runs-on-matter.md) |
-| Present an inductive program type as a free monad | [signature derivation](../../PolyFun/PFunctor/Free/DeriveSig.lean), [codes and relational lifts](../../PolyFun/PFunctor/Free/Code.lean), [relations between codes](../../PolyFun/PFunctor/Free/CodeRel.lean), [cost folds](../../PolyFun/PFunctor/Free/WP/Cost.lean), [free monads modulo equations](../../PolyFun/PFunctor/Free/Quotient.lean) |
+| Present an inductive program type as a free monad | [signature derivation](../../PolyFun/PFunctor/Free/DeriveSig.lean), [codes and relational lifts](../../PolyFun/PFunctor/Free/Code.lean), [relations between codes](../../PolyFun/PFunctor/Free/CodeRel.lean), [cost over codes](../../PolyFun/PFunctor/Free/WP/Cost.lean), [free monads modulo equations](../../PolyFun/PFunctor/Free/Quotient.lean) |
 | Work with Σ, Π and pullback along maps | [slices and the distributive law](../../PolyFun/PFunctor/Slice.lean), [natural models](../../PolyFun/PFunctor/NaturalModel.lean) |
 
 ### Signatures of program types

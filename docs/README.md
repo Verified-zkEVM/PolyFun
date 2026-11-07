@@ -33,7 +33,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [Execution](guides/execution.md): machine state, handler state, bounded runs, and networks.
 - [Open systems](guides/open-systems.md): composition laws, contexts, observations, and instantiation obligations.
 - [Program logic](guides/program-logic.md): support, ordered algebras, and weakest preconditions.
-- [Interaction cost](guides/cost.md): charges and budgets of interface use, across models and through handlers.
+- [Interaction cost](guides/cost.md): charges, budgets and worst-case costs of interface use, across models and through handlers.
 - [Realizability](guides/realizability.md): represented boundaries, admissible machines, and resource certificates.
 - [Bisimulation](guides/bisimulation.md): strong, delay, and weak behavioral relations.
 - [PolyFun and VCVio](guides/polyfun-and-vcvio.md): generic constructions and cryptographic interpretations.

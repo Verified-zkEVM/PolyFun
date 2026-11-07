@@ -63,7 +63,7 @@ def doubled : (a : Coin.A) → FreeM Coin (Coin.B a) := fun _ => do
 /-- The doubled handler costs two units per call. -/
 theorem handlerCost_doubled (a : Coin.A) :
     FreeM.handlerCost (fun _ => (1 : ℕ∞)) doubled a = 2 := by
-  simp [FreeM.handlerCost, doubled, FreeM.wpFold_bind, one_add_one_eq_two]
+  simp [FreeM.handlerCost, doubled, one_add_one_eq_two]
 
 example :
     FreeM.wpFold (OpSpec.charge fun _ => (1 : ℕ∞)) (twoFlips.liftM doubled) (fun _ => 0) ≤ 4 := by

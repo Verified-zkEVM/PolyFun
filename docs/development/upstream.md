@@ -110,6 +110,19 @@ The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
 version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
 `PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
 
+`ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
+rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums but not over `Fin`;
+`cost_bound` uses it to evaluate worst-case costs over finite answer types. It belongs beside
+Mathlib's `iSup_bool_eq`.
+
+`ToCslib/Order/AddSupDistrib.lean` names the hypothesis that addition distributes over nonempty
+suprema (`AddSupDistrib`), with the `ℕ∞` and pointwise instances, and the constant supremum
+`iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves both separately for
+`ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`, `ENat.iSup_zero`, `ENNReal.iSup_zero`); the
+general forms belong in Mathlib's order library, with those as instances.
+`ToCslib/Data/ENNReal/AddSupDistrib.lean` adds the `ℝ≥0∞` instance in a module of its own, so that
+PolyFun's core does not import the reals.
+
 ## Omega-CPO fixed points
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,

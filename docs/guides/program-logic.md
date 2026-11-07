@@ -409,10 +409,11 @@ on core's `wp`. VCVio presents its expectation reading this way, as an
 
 ## Charges and budgets
 
-The cost API itself (charges, budgets, and their transport through lenses and handlers) is in
+The cost API itself (charges, budgets, worst-case costs, and their transport through lenses and
+handlers) is in
 [interaction cost](cost.md). This section covers its program-logic side.
 
-`OpSpec.charge c` (`PolyFun/PFunctor/Free/WP/Charge.lean`) reads a call at `a` as costing `c a`,
+`OpSpec.charge c` (`PolyFun/PFunctor/Free/Cost/Value.lean`) reads a call at `a` as costing `c a`,
 followed by its worst continuation: `c a + ⨆ b, k b`. Its fold is the worst-case charge-to-go of
 a program. Subtractive per-position budgets are exactly upper bounds on that fold in `ℕ∞`
 (`isRollBound_iff_wpFold_charge`, with `isTotalRollBound_iff_wpFold_charge` for unit charges),
