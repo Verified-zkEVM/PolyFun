@@ -33,15 +33,16 @@ and sum handlers and the bound `handlerCost_comp_le` for composites.
 For a handler into `StateT σ (FreeM Q)` whose step bound holds from every state, the same transfer
 holds (`FreeM.IsChargeBound.run_liftM`). When the step's target charge depends on the state, a
 potential pays for it: `Path.exists_run_liftM_amortized` bounds the target charge of every
-completed path by the source charge plus the growth of the potential.
+completed path by the source charge plus the growth of the potential. Every step condition in this
+module is required from every handler state.
 
 ## Pausing runs
 
 `FreeM.runUntil h x state` runs `x` through a handler that may decline a call, returning either the
 output or the pending call with its continuation. `FreeM.IsChargeBound.runUntil` is the budget form
-of the amortized transfer: a nonnegative potential that pays for each step gives the run a target
-budget. Every paused continuation stays within the budget of the program it interrupts
-(`FreeM.IsChargeBound.runUntil_paused`).
+of the amortized transfer, with the opposite sign: a nonnegative potential whose decrease pays for
+each step gives the run a target budget. Every paused continuation stays within the budget of the
+program it interrupts (`FreeM.IsChargeBound.runUntil_paused`).
 
 ## Running in any monad
 

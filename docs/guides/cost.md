@@ -253,10 +253,18 @@ state gives the same transfer (`IsChargeBound.run_liftM`). When the step's targe
 on the state, a potential pays for it: `Path.exists_run_liftM_amortized` bounds the target charge
 of every completed path by the source charge plus the growth of the potential. A cache whose size
 is the potential makes at most as many target calls as it grows. A handler that may pause
-(`runUntil`, returning the pending call and its continuation) has the budget form of the same
-argument: a nonnegative potential that pays for each step turns the program's budget into a
-target budget (`IsChargeBound.runUntil`, in a cancellative cost type such as `ℕ`), and every paused
+(`runUntil`, returning the pending call and its continuation) has a budget form
+(`IsChargeBound.runUntil`, in a cancellative cost type such as `ℕ`), and every paused
 continuation stays within the interrupted program's budget (`IsChargeBound.runUntil_paused`).
+
+The budget form's potential has the opposite sign. It is nonnegative and pays by decreasing, so the
+program's budget plus the initial potential is a target budget. A budget must bound every prefix
+before the run starts. A nonnegative potential that decreases does this, while a growing potential
+bounds the charge only by its final value. In a cost type with negation, such as `ℤ`, negating the
+potential turns one step condition into the other.
+
+All three transfers require the step bound from every handler state. A handler that meets it only
+on reachable states needs a state type that excludes the unreachable ones.
 
 **Handlers into any monad.**
 
