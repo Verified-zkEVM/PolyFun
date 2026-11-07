@@ -1,0 +1,528 @@
+/-
+Copyright (c) 2026 PolyFun Contributors. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Devon Tuma
+-/
+
+module
+
+public import PolyFun.PFunctor.Charge
+public import PolyFun.PFunctor.Free.Cost.Value
+public import PolyFun.PFunctor.Free.Path.Execution
+public import PolyFun.PFunctor.Free.Displayed.Decoration
+
+/-!
+# Charges along completed paths
+
+`Path.charge c x p` is the total charge of the calls along the completed path `p` through `x`: the
+cost of one run, once every answer is fixed. It is the additive valuation of the path's event
+trace (`charge_eq_traceList_charge`).
+
+A structural bound bounds every completed path (`charge_le_of_isChargeBound`). The converse needs
+every reachable call to have an answer (`isChargeBound_of_forall_charge_le`, under
+`ProgramProgress`): a call with no answers ends no completed path, but `IsChargeBound` still
+charges it. The worst-case cost is at least the charge of every completed path
+(`charge_le_cost`), and under `ProgramProgress` it is their supremum (`cost_eq_iSup_charge`).
+
+The completed-path reading has its own calculus, valid for any ordered cost type, including
+signed weights, for which a prefix may overspend a budget that every completed path respects:
+
+* `splitBind` splits a path through `x.bind f` into a path through `x` and a path through the
+  continuation at its output, `joinBind` is its inverse (`splitBind_joinBind`,
+  `joinBind_splitBind`), and the charge adds (`charge_splitBind`, `charge_joinBind`);
+* paths pull back along lenses and leaf maps with the pulled-back charge (`charge_pullMapLens`,
+  `charge_pullMap`), and along a lens whose charges agree up to an additive map the charge is
+  that map applied (`charge_mapLens_eq_map`);
+* a path through a simulated program refines to a path through the source program with the
+  same output and at least its charge, when each implementation is within its call's charge on
+  every completed path (`exists_path_liftM`, `charge_liftM_le_of_forall`), also for bounds
+  restricted to an output predicate (`charge_liftM_le_of_forall_output`);
+* exactly, the paths through a simulated program are the paths through the source program
+  together with a path through each call's implementation returning the answer taken
+  (`exists_path_liftM_iff`, with `Demand`);
+* with subsingleton answers there is exactly one path, so the completed-path bound is the charge
+  of that path (`forall_charge_le_iff_ofHandler`).
+
+Charges that depend on the node rather than the operation are decorations: `Path.chargeDec`
+sums the weights a `Decoration (fun _ => ω)` puts on the nodes along a path. It generalizes
+`Path.charge` through the decoration `Decoration.ofCharge` (`chargeDec_ofCharge`), and node weights
+at most `bound` (`Decoration.AllLE`) bound it by `length • bound` (`chargeDec_le_length_nsmul`).
+-/
+
+@[expose] public section
+
+universe uA uB uA₂ uB₂ uA₃ uB₃ v v' w w'
+
+namespace PFunctor.FreeM
+
+variable {P : PFunctor.{uA, uB}} {α : Type v} {ω : Type w}
+
+/-- A program in which every reachable call has an answer has a completed path. -/
+theorem ProgramProgress.nonempty_path {x : FreeM P α} (hx : x.ProgramProgress) :
+    Nonempty (Path x) := by
+  induction x using FreeM.rec with
+  | pure a => exact ⟨PUnit.unit⟩
+  | liftBind a r ih =>
+    obtain ⟨⟨b⟩, hr⟩ := hx
+    obtain ⟨p⟩ := ih b (hr b)
+    exact ⟨⟨b, p⟩⟩
+
+namespace Path
+
+/-- The total charge of the calls along a completed path. -/
+def charge [Add ω] [Zero ω] (c : P.A → ω) : (x : FreeM P α) → Path x → ω
+  | .pure _, _ => 0
+  | .liftBind a next, ⟨answer, tail⟩ => c a + charge c (next answer) tail
+
+variable {c : P.A → ω}
+
+@[simp]
+theorem charge_pure [Add ω] [Zero ω] (a : α) (p : Path (pure a : FreeM P α)) :
+    charge c (pure a) p = 0 :=
+  rfl
+
+theorem charge_liftBind [Add ω] [Zero ω] (a : P.A) (next : P.B a → FreeM P α) (answer : P.B a)
+    (tail : Path (next answer)) :
+    charge c (FreeM.liftBind a next) ⟨answer, tail⟩ = c a + charge c (next answer) tail :=
+  rfl
+
+/-- A zero charge costs nothing along a path. -/
+@[simp]
+theorem charge_const_zero [AddZeroClass ω] (x : FreeM P α) (p : Path x) :
+    charge (fun _ => (0 : ω)) x p = 0 := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    rw [charge_liftBind, ih, add_zero]
+
+/-- The charge of a path is the valuation of its event trace by the charge of each call. -/
+theorem charge_eq_traceList_charge [AddMonoid ω] (x : FreeM P α) (p : Path x) :
+    charge c x p = TraceList.charge (fun i => c i.1) (trace x p) := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    exact congrArg (c a + ·) (ih b p)
+
+/-- The number of calls along a path is its unit charge. -/
+theorem length_eq_charge_one (x : FreeM P α) (p : Path x) :
+    length x p = charge (fun _ => 1) x p := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    rw [length_liftBind, charge_liftBind, ih, add_comm]
+
+section Ordered
+
+variable [AddMonoid ω] [Preorder ω] {B s : ω}
+
+/-- A structural bound bounds the charge of every completed path. -/
+theorem charge_le_of_isChargeBound {x : FreeM P α} (h : x.IsChargeBound c B s) (p : Path x) :
+    s + charge c x p ≤ B := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => simpa using h
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    rw [charge_liftBind, ← add_assoc]
+    exact ih b (h.2 b) p
+
+/-- When every reachable call has an answer, bounding the completed paths bounds the program. -/
+theorem isChargeBound_of_forall_charge_le [CanonicallyOrderedAdd ω]
+    {x : FreeM P α} (hx : x.ProgramProgress) (h : ∀ p : Path x, s + charge c x p ≤ B) :
+    x.IsChargeBound c B s := by
+  induction x using FreeM.rec generalizing s with
+  | pure a => simpa using h PUnit.unit
+  | liftBind a r ih =>
+    obtain ⟨⟨b₀⟩, hr⟩ := hx
+    obtain ⟨p₀⟩ := (hr b₀).nonempty_path
+    have hpath : ∀ b (p : Path (r b)), (s + c a) + charge c (r b) p ≤ B := fun b p => by
+      rw [add_assoc]; exact h ⟨b, p⟩
+    exact ⟨le_self_add.trans (hpath b₀ p₀), fun b => ih b (hr b) (hpath b)⟩
+
+end Ordered
+
+/-- The worst-case cost is at least the charge of every completed path. -/
+theorem charge_le_cost [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω]
+    (x : FreeM P α) (p : Path x) : charge c x p ≤ cost c x := by
+  induction x using FreeM.rec with
+  | pure a => exact le_rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    rw [charge_liftBind, cost_liftBind]
+    exact add_le_add_right ((ih b p).trans (le_iSup (fun b => cost c (r b)) b)) _
+
+/-- When every reachable call has an answer, the worst-case cost is the supremum of the charges of
+the completed paths. Without that hypothesis it fails: a call whose answer type is empty is charged
+by the cost, but ends no completed path. -/
+theorem cost_eq_iSup_charge [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω]
+    [AddSupDistrib ω] {x : FreeM P α} (hx : x.ProgramProgress) :
+    cost c x = ⨆ p : Path x, charge c x p := by
+  refine le_antisymm ?_ (iSup_le (charge_le_cost x))
+  induction x using FreeM.rec with
+  | pure a => exact le_iSup (fun p : Path (FreeM.pure a : FreeM P α) => charge c _ p) PUnit.unit
+  | liftBind a r ih =>
+    obtain ⟨⟨b₀⟩, hr⟩ := hx
+    have : Nonempty (P.B a) := ⟨b₀⟩
+    rw [cost_liftBind]
+    calc c a + ⨆ b, cost c (r b)
+        ≤ c a + ⨆ b, ⨆ p : Path (r b), charge c (r b) p :=
+          add_le_add le_rfl (iSup_mono fun b => ih b (hr b))
+      _ ≤ ⨆ b, (c a + ⨆ p : Path (r b), charge c (r b) p) := add_iSup_le_iSup_add _ _
+      _ ≤ ⨆ b, ⨆ p : Path (r b), (c a + charge c (r b) p) := iSup_mono fun b => by
+          have := (hr b).nonempty_path
+          exact add_iSup_le_iSup_add _ _
+      _ ≤ ⨆ q : Path (FreeM.liftBind a r), charge c (FreeM.liftBind a r) q :=
+          iSup_le fun b => iSup_le fun p =>
+            le_iSup (fun q : Path (FreeM.liftBind a r) => charge c (FreeM.liftBind a r) q) ⟨b, p⟩
+
+/-! ## The completed-path calculus -/
+
+/-- Split a completed path through `x.bind f` into a path through `x` and a path through the
+continuation at that path's output. -/
+def splitBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) → Path (FreeM.bind x f) →
+    (p : Path x) × Path (f (output x p))
+  | .pure _, _, q => ⟨⟨⟩, q⟩
+  | .liftBind _ r, f, ⟨b, q⟩ =>
+      let rest := splitBind (r b) f q
+      ⟨⟨b, rest.1⟩, rest.2⟩
+
+theorem output_splitBind {β : Type v'} (x : FreeM P α) (f : α → FreeM P β)
+    (q : Path (FreeM.bind x f)) :
+    output (FreeM.bind x f) q = output (f (output x (splitBind x f q).1)) (splitBind x f q).2 := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases q with ⟨b, q⟩
+    exact ih b q
+
+theorem charge_splitBind [AddMonoid ω] {β : Type v'} (x : FreeM P α) (f : α → FreeM P β)
+    (q : Path (FreeM.bind x f)) :
+    charge c (FreeM.bind x f) q =
+      charge c x (splitBind x f q).1 + charge c _ (splitBind x f q).2 := by
+  induction x using FreeM.rec with
+  | pure a => exact (zero_add _).symm
+  | liftBind a r ih =>
+    rcases q with ⟨b, q⟩
+    change c a + charge c _ q = (c a + charge c (r b) (splitBind (r b) f q).1) + _
+    rw [ih b q, add_assoc]
+    rfl
+
+/-- Join a completed path through `x` with a completed path through the continuation at its
+output: the inverse of `splitBind`. -/
+def joinBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) → (p : Path x) →
+    Path (f (output x p)) → Path (FreeM.bind x f)
+  | .pure _, _, _, q => q
+  | .liftBind _ r, f, ⟨b, p⟩, q => ⟨b, joinBind (r b) f p q⟩
+
+theorem output_joinBind {β : Type v'} (x : FreeM P α) (f : α → FreeM P β) (p : Path x)
+    (q : Path (f (output x p))) :
+    output (FreeM.bind x f) (joinBind x f p q) = output (f (output x p)) q := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    exact ih b p q
+
+theorem charge_joinBind [AddMonoid ω] {β : Type v'} (x : FreeM P α) (f : α → FreeM P β)
+    (p : Path x) (q : Path (f (output x p))) :
+    charge c (FreeM.bind x f) (joinBind x f p q) = charge c x p + charge c _ q := by
+  induction x using FreeM.rec with
+  | pure a => exact (zero_add _).symm
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change c a + charge c _ (joinBind (r b) f p q) = (c a + charge c (r b) p) + _
+    rw [ih b p q, add_assoc]
+    rfl
+
+@[simp]
+theorem splitBind_joinBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) → (p : Path x) →
+    (q : Path (f (output x p))) → splitBind x f (joinBind x f p q) = ⟨p, q⟩
+  | .pure _, _, ⟨⟩, _ => rfl
+  | .liftBind _ r, f, ⟨b, p⟩, q => by
+      simp only [joinBind, splitBind]
+      generalize hs : splitBind (r b) f (joinBind (r b) f p q) = t
+      obtain rfl : t = ⟨p, q⟩ := hs.symm.trans (splitBind_joinBind (r b) f p q)
+      rfl
+
+@[simp]
+theorem joinBind_splitBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) →
+    (q : Path (FreeM.bind x f)) → joinBind x f (splitBind x f q).1 (splitBind x f q).2 = q
+  | .pure _, _, _ => rfl
+  | .liftBind _ r, f, ⟨b, q⟩ => by
+      simp only [splitBind, joinBind, joinBind_splitBind]
+      rfl
+
+theorem output_pullMapLens {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q) (x : FreeM P α)
+    (q : Path (x.mapLens l)) : output x (pullMapLens l x q) = output (x.mapLens l) q := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases q with ⟨d, q⟩
+    exact ih _ q
+
+theorem charge_pullMapLens [Add ω] [Zero ω] {Q : PFunctor.{uA₂, uB₂}} (l : Lens P Q)
+    {d : Q.A → ω} (x : FreeM P α) (q : Path (x.mapLens l)) :
+    charge d (x.mapLens l) q = charge (d ∘ l.toFunA) x (pullMapLens l x q) := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases q with ⟨e, q⟩
+    exact congrArg (d (l.toFunA a) + ·) (ih _ q)
+
+theorem charge_pullMap [Add ω] [Zero ω] {β : Type v'} (f : α → β) (x : FreeM P α)
+    (q : Path (x.map f)) : charge c (x.map f) q = charge c x (pullMap f x q) := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases q with ⟨b, q⟩
+    exact congrArg (c a + ·) (ih b q)
+
+/-- The charge of a path pushes forward along an additive map. -/
+theorem charge_map_addMonoidHom {ω' : Type w'} [AddMonoid ω] [AddMonoid ω'] (φ : ω →+ ω')
+    (x : FreeM P α) (p : Path x) : charge (φ ∘ c) x p = φ (charge c x p) := by
+  induction x using FreeM.rec with
+  | pure a => exact φ.map_zero.symm
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change φ (c a) + charge (φ ∘ c) (r b) p = φ (c a + charge c (r b) p)
+    rw [ih b p, map_add]
+
+/-- Relabelling along a lens whose target charge agrees with the source charge up to an additive
+map `φ` charges every path by `φ` of the charge of its pullback. -/
+theorem charge_mapLens_eq_map {ω' : Type w'} [AddMonoid ω] [AddMonoid ω']
+    {Q : PFunctor.{uA₂, uB₂}} (φ : ω →+ ω') (l : Lens P Q) {d : Q.A → ω'}
+    (hcd : ∀ a, d (l.toFunA a) = φ (c a)) (x : FreeM P α) (q : Path (x.mapLens l)) :
+    charge d (x.mapLens l) q = φ (charge c x (pullMapLens l x q)) := by
+  rw [charge_pullMapLens, ← charge_map_addMonoidHom]
+  exact congrArg (charge · x _) (funext hcd)
+
+/-- The charge of a path under a sum of charges is the sum of its charges. -/
+theorem charge_finsetSum [AddCommMonoid ω] {ι : Type*} (s : Finset ι) (c : ι → P.A → ω)
+    (x : FreeM P α) (p : Path x) :
+    charge (fun a => ∑ i ∈ s, c i a) x p = ∑ i ∈ s, charge (c i) x p := by
+  induction x using FreeM.rec with
+  | pure a => exact Finset.sum_const_zero.symm
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change (∑ i ∈ s, c i a) + charge _ (r b) p = ∑ i ∈ s, (c i a + charge (c i) (r b) p)
+    rw [ih b p, Finset.sum_add_distrib]
+
+/-- A coordinate of a vector-valued path charge is the charge of that coordinate. -/
+theorem charge_apply {ι : Type*} {ν : ι → Type w} [∀ i, AddMonoid (ν i)] (c : P.A → ∀ i, ν i)
+    (x : FreeM P α) (p : Path x) (i : ι) :
+    charge c x p i = charge (fun a => c a i) x p := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    change (c a + charge c (r b) p) i = c a i + charge _ (r b) p
+    rw [Pi.add_apply, ih b p]
+
+/-- **Sequencing relabelled programs.** A program relabelled into a common interface, followed by
+relabelled continuations, has every completed path within the sum of the two path budgets, when the
+common charge agrees with the source charges along the relabellings. -/
+theorem charge_bind_mapLens_le [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
+    {R : PFunctor.{uA₂, uB₂}} {β : Type v'} {Q : α → PFunctor.{uA₃, uB₃}} (x : FreeM P α)
+    (l : Lens P R) (y : (a : α) → FreeM (Q a) β) (l' : (a : α) → Lens (Q a) R)
+    {c : P.A → ω} {d : (a : α) → (Q a).A → ω} {e : R.A → ω} {B₁ B₂ : ω}
+    (hc : ∀ a, e (l.toFunA a) = c a) (hd : ∀ m a, e ((l' m).toFunA a) = d m a)
+    (hx : ∀ p, charge c x p ≤ B₁) (hy : ∀ m p, charge (d m) (y m) p ≤ B₂)
+    (q : Path (FreeM.bind (x.mapLens l) fun m => (y m).mapLens (l' m))) :
+    charge e _ q ≤ B₁ + B₂ := by
+  refine (charge_splitBind (c := e) (x.mapLens l) (fun m => (y m).mapLens (l' m)) q).trans_le
+    (add_le_add ?_ ?_)
+  · rw [charge_pullMapLens, show e ∘ l.toFunA = c from funext hc]
+    exact hx _
+  · rw [charge_pullMapLens, show e ∘ (l' _).toFunA = d _ from funext (hd _)]
+    exact hy _ _
+
+section Refinement
+
+variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω] {Q : PFunctor.{uA₂, uB₂}}
+  {α : Type uB}
+
+/-- **Completed-path transfer through a free handler.** If every completed path through the
+implementation of a call at `a` is charged at most `c a`, then every completed path through the
+simulated program refines to a completed path through the source program with the same output
+and at least its charge. No sign condition on the cost type is needed. -/
+theorem exists_path_liftM (h : (a : P.A) → FreeM Q (P.B a)) {d : Q.A → ω}
+    (hstep : ∀ a (r : Path (h a)), charge d (h a) r ≤ c a) (x : FreeM P α)
+    (q : Path (x.liftM h)) :
+    ∃ p : Path x, output x p = output (x.liftM h) q ∧ charge d (x.liftM h) q ≤ charge c x p := by
+  induction x using FreeM.rec with
+  | pure a => exact ⟨⟨⟩, rfl, le_rfl⟩
+  | liftBind a r ih =>
+    let s := splitBind (h a) (fun b => (r b).liftM h) q
+    obtain ⟨p, hout, hle⟩ := ih (output (h a) s.1) s.2
+    refine ⟨⟨output (h a) s.1, p⟩, ?_, ?_⟩
+    · exact hout.trans (output_splitBind (h a) (fun b => (r b).liftM h) q).symm
+    · exact (charge_splitBind (c := d) (h a) (fun b => (r b).liftM h) q).trans_le
+        (add_le_add (hstep a s.1) hle)
+
+/-- Completed-path bounds transfer through a free handler. -/
+theorem charge_liftM_le_of_forall (h : (a : P.A) → FreeM Q (P.B a)) {d : Q.A → ω} {B : ω}
+    (hstep : ∀ a (r : Path (h a)), charge d (h a) r ≤ c a) {x : FreeM P α}
+    (hx : ∀ p : Path x, charge c x p ≤ B) (q : Path (x.liftM h)) :
+    charge d (x.liftM h) q ≤ B := by
+  obtain ⟨p, -, hle⟩ := exists_path_liftM h hstep x q
+  exact hle.trans (hx p)
+
+/-- Completed-path bounds restricted to an output predicate, such as success, transfer through a
+free handler. -/
+theorem charge_liftM_le_of_forall_output (h : (a : P.A) → FreeM Q (P.B a)) {d : Q.A → ω} {B : ω}
+    (hstep : ∀ a (r : Path (h a)), charge d (h a) r ≤ c a) {x : FreeM P α} {S : α → Prop}
+    (hx : ∀ p : Path x, S (output x p) → charge c x p ≤ B) (q : Path (x.liftM h))
+    (hq : S (output (x.liftM h) q)) : charge d (x.liftM h) q ≤ B := by
+  obtain ⟨p, hout, hle⟩ := exists_path_liftM h hstep x q
+  exact hle.trans (hx p (by rw [hout]; exact hq))
+
+end Refinement
+
+section Exact
+
+variable [AddMonoid ω] {Q : PFunctor.{uA₂, uB₂}} {α : Type uB}
+
+/-- `Demand h d x p e`: the calls along `p` can each be answered by a completed path through its
+implementation returning the answer `p` takes, with total target charge `e`. -/
+def Demand (h : (a : P.A) → FreeM Q (P.B a)) (d : Q.A → ω) : (x : FreeM P α) → Path x → ω → Prop
+  | .pure _, _, e => e = 0
+  | .liftBind a r, ⟨b, p⟩, e => ∃ q : Path (h a), output (h a) q = b ∧
+      ∃ e', Demand h d (r b) p e' ∧ e = charge d (h a) q + e'
+
+/-- **The exact law of substitution.** The completed paths through a simulated program, read as
+an output and a target charge, are exactly the completed paths through the source program
+together with, for each call, a completed path through its implementation returning the answer
+taken. -/
+theorem exists_path_liftM_iff (h : (a : P.A) → FreeM Q (P.B a)) (d : Q.A → ω) (x : FreeM P α)
+    (v : α) (e : ω) :
+    (∃ q : Path (x.liftM h), output (x.liftM h) q = v ∧ charge d (x.liftM h) q = e) ↔
+      ∃ p : Path x, output x p = v ∧ Demand h d x p e := by
+  induction x using FreeM.rec generalizing e with
+  | pure a => exact ⟨fun ⟨_, hv, he⟩ => ⟨⟨⟩, hv, he.symm⟩, fun ⟨_, hv, he⟩ => ⟨⟨⟩, hv, he.symm⟩⟩
+  | liftBind a r ih =>
+    constructor
+    · rintro ⟨q, hv, rfl⟩
+      let s := splitBind (h a) (fun b => (r b).liftM h) q
+      obtain ⟨p, hp, hd⟩ := (ih (output (h a) s.1) _).1
+        ⟨s.2, (output_splitBind (h a) (fun b => (r b).liftM h) q).symm.trans hv, rfl⟩
+      exact ⟨⟨output (h a) s.1, p⟩, hp, s.1, rfl, _, hd,
+        charge_splitBind (c := d) (h a) (fun b => (r b).liftM h) q⟩
+    · rintro ⟨⟨b, p⟩, hv, q₁, rfl, e', hd, rfl⟩
+      obtain ⟨q₂, hq₂, rfl⟩ := (ih (output (h a) q₁) e').2 ⟨p, hv, hd⟩
+      exact ⟨joinBind (h a) (fun b => (r b).liftM h) q₁ q₂,
+        (output_joinBind (h a) (fun b => (r b).liftM h) q₁ q₂).trans hq₂,
+        charge_joinBind (c := d) (h a) (fun b => (r b).liftM h) q₁ q₂⟩
+
+end Exact
+
+/-- With subsingleton answers a program has exactly one completed path. -/
+instance subsingleton [∀ a, Subsingleton (P.B a)] (x : FreeM P α) : Subsingleton (Path x) := by
+  induction x using FreeM.rec with
+  | pure a => exact inferInstanceAs (Subsingleton PUnit)
+  | liftBind a r ih =>
+    constructor
+    rintro ⟨b₁, p₁⟩ ⟨b₂, p₂⟩
+    obtain rfl := Subsingleton.elim b₁ b₂
+    rw [Subsingleton.elim p₁ p₂]
+
+/-- With subsingleton answers the completed-path bound is the charge of the one path, which any
+answering function picks. -/
+theorem forall_charge_le_iff_ofHandler [∀ a, Subsingleton (P.B a)] [Add ω] [Zero ω] [LE ω]
+    (choose : (a : P.A) → P.B a) (x : FreeM P α) {B : ω} :
+    (∀ p : Path x, charge c x p ≤ B) ↔ charge c x (Path.ofHandler choose x) ≤ B :=
+  ⟨fun h => h _, fun h p => Subsingleton.elim (Path.ofHandler choose x) p ▸ h⟩
+
+end Path
+
+/-! ## Charges that depend on the node -/
+
+namespace Displayed.Decoration
+
+/-- The node weights of `x` read off the charge of each node's operation. -/
+def ofCharge (c : P.A → ω) : (x : FreeM P α) → Decoration (fun _ => ω) x
+  | .pure _ => PUnit.unit
+  | .liftBind a r => ⟨c a, fun b => ofCharge c (r b)⟩
+
+/-- Every node weight is at most `bound`. -/
+def AllLE [LE ω] (bound : ω) : (x : FreeM P α) → Decoration (fun _ => ω) x → Prop
+  | .pure _, _ => True
+  | .liftBind _ r, ⟨w, ds⟩ => w ≤ bound ∧ ∀ b, AllLE bound (r b) (ds b)
+
+end Displayed.Decoration
+
+namespace Path
+
+open Displayed
+
+variable {c : P.A → ω}
+
+/-- The total weight of the nodes along a completed path. -/
+def chargeDec [Add ω] [Zero ω] :
+    (x : FreeM P α) → Displayed.Decoration (fun _ => ω) x → Path x → ω
+  | .pure _, _, _ => 0
+  | .liftBind _ r, ⟨w, ds⟩, ⟨b, p⟩ => w + chargeDec (r b) (ds b) p
+
+/-- Position charges are the node weights read off the operations. -/
+theorem chargeDec_ofCharge [Add ω] [Zero ω] (x : FreeM P α) (p : Path x) :
+    chargeDec x (Decoration.ofCharge c x) p = charge c x p := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    exact congrArg (c a + ·) (ih b p)
+
+/-- Node weights at most `bound` bound a path's weight by its length times `bound`. -/
+theorem chargeDec_le_length_nsmul [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
+    {bound : ω} (x : FreeM P α) (d : Displayed.Decoration (fun _ => ω) x)
+    (hd : Decoration.AllLE bound x d) (p : Path x) : chargeDec x d p ≤ length x p • bound := by
+  induction x using FreeM.rec with
+  | pure a => exact (zero_nsmul bound).ge
+  | liftBind a r ih =>
+    rcases d with ⟨w, ds⟩
+    rcases p with ⟨b, p⟩
+    change w + chargeDec (r b) (ds b) p ≤ (length (r b) p + 1) • bound
+    rw [succ_nsmul']
+    exact add_le_add hd.1 (ih b (ds b) (hd.2 b) p)
+
+end Path
+
+/-! ## Running with the charge of the path taken -/
+
+/-- Run a free program and return the charge of the completed path it takes: the charge analogue
+of `withPathLength`. -/
+def withPathCharge [Add ω] [Zero ω] (c : P.A → ω) (program : FreeM P α) : FreeM P ω :=
+  FreeM.map (Path.charge c program) (withPath program)
+
+@[simp]
+theorem withPathCharge_pure [Add ω] [Zero ω] (c : P.A → ω) (x : α) :
+    withPathCharge c (pure x : FreeM P α) = pure 0 :=
+  rfl
+
+theorem withPathCharge_liftBind [Add ω] [Zero ω] (c : P.A → ω) (a : P.A)
+    (next : P.B a → FreeM P α) :
+    withPathCharge c (FreeM.liftBind a next) =
+      FreeM.liftBind a fun answer => FreeM.map (c a + ·) (withPathCharge c (next answer)) := by
+  unfold withPathCharge
+  change FreeM.liftBind a (fun answer =>
+      FreeM.map (Path.charge c (FreeM.liftBind a next))
+        (FreeM.map (fun path : Path (next answer) =>
+          (⟨answer, path⟩ : Path (FreeM.liftBind a next)))
+          (withPath (next answer)))) =
+    FreeM.liftBind a (fun answer =>
+      FreeM.map (c a + ·) (FreeM.map (Path.charge c (next answer)) (withPath (next answer))))
+  apply congrArg (FreeM.liftBind a)
+  funext answer
+  rw [← FreeM.comp_map, ← FreeM.comp_map]
+  apply congrArg (fun f => FreeM.map f (withPath (next answer)))
+  funext tail
+  rfl
+
+/-- The length of the path taken is its unit charge. -/
+theorem withPathLength_eq_withPathCharge (program : FreeM P α) :
+    withPathLength program = withPathCharge (fun _ => 1) program := by
+  unfold withPathLength withPathCharge
+  exact congrArg (fun f => FreeM.map f (withPath program)) (funext (Path.length_eq_charge_one _))
+
+end PFunctor.FreeM
