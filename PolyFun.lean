@@ -311,6 +311,7 @@ public import PolyFun.PFunctor.Free.Basic
 public import PolyFun.PFunctor.Free.Code
 public import PolyFun.PFunctor.Free.CodeRel
 public import PolyFun.PFunctor.Free.Cost
+public import PolyFun.PFunctor.Free.Cost.Event
 public import PolyFun.PFunctor.Free.Cost.Loops
 public import PolyFun.PFunctor.Free.Cost.Measured
 public import PolyFun.PFunctor.Free.Cost.Support
