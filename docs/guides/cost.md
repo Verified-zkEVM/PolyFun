@@ -117,6 +117,56 @@ a demonic invariant (`costUnder_bind_le_of_wpFold`; `cost_bind_le_of_wpFold` and
 return only allowed source answers along the target's allowed answers, each call costs the
 restricted worst case of its implementation (`costUnder_liftM_le`).
 
+## Completed paths
+
+`Path.charge c x p` (`PolyFun/PFunctor/Free/Path/Charge.lean`) is the total charge along a
+completed path `p` through `x`: the cost of one run, once every answer is fixed. It is the
+additive valuation of the path's event trace (`charge_eq_traceList_charge`), and it generalizes
+`Path.length` (`length_eq_charge_one`).
+
+- A budget bounds every completed path (`charge_le_of_isChargeBound`), and so does the worst-case
+  cost (`charge_le_cost`). When every reachable call has an answer and addition distributes over
+  suprema (`AddSupDistrib`), the worst-case cost is the supremum of the path charges
+  (`cost_eq_iSup_charge`).
+- The converse needs every reachable call to have an answer (`isChargeBound_of_forall_charge_le`,
+  under `ProgramProgress`): a call with no answers ends no completed path but is still charged.
+- With signed weights the readings differ even then: a prefix may overspend a budget that every
+  completed path respects. So the completed-path reading has its own calculus, valid in any
+  ordered cost type.
+
+The calculus:
+
+- `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the
+  continuation at its output, and `Path.joinBind` is its inverse (`splitBind_joinBind`,
+  `joinBind_splitBind`). The charge adds (`charge_splitBind`, `charge_joinBind`).
+- Paths pull back along lenses and leaf maps (`charge_pullMapLens`, `charge_pullMap`); along a
+  lens whose charges agree up to an additive map, the charge is that map applied
+  (`charge_mapLens_eq_map`).
+- A path through a program simulated by a free handler refines to a path through the source with
+  the same output, when each implementation stays within its call's charge on every completed
+  path (`exists_path_liftM`, `charge_liftM_le_of_forall`), also for bounds on the paths whose
+  output satisfies a predicate such as success (`charge_liftM_le_of_forall_output`). Exactly, the
+  paths through a simulated program are the source paths together with a path through each call's
+  implementation returning the answer taken (`exists_path_liftM_iff`, with `Demand`).
+- With subsingleton answers there is exactly one path (`forall_charge_le_iff_ofHandler`).
+- A program relabelled into a common interface, followed by relabelled continuations, has every
+  path within the sum of the two path budgets (`charge_bind_mapLens_le`), over any presentation of
+  the common interface.
+- Charges of sums and coordinates distribute (`charge_finsetSum`, `charge_apply`), and
+  `withPathCharge c x` runs `x` and returns the charge of the path taken, generalizing
+  `withPathLength`.
+
+**Node weights.** A charge that depends on the node rather than the operation is a decoration:
+`Path.chargeDec` sums the weights a `Decoration (fun _ => ω)` puts on the nodes along a path. It
+generalizes `Path.charge` through `Decoration.ofCharge` (`chargeDec_ofCharge`), and node weights
+at most `bound` (`Decoration.AllLE`) bound it by `length • bound` (`chargeDec_le_length_nsmul`).
+
+**Non-additive valuations.** Some costs are not additive under sequencing.
+`TraceList.freshCharge w K t` (`PolyFun/PFunctor/Charge.lean`) charges each position of `t`
+outside `K` once, however often it is called: the weighted count of distinct new queries. It is
+subadditive under concatenation (`freshCharge_mul_le`), at most the additive charge
+(`freshCharge_le_charge`), and antitone in the set of known positions (`freshCharge_antitone`).
+
 ## Accounting boundary
 
 A charge bound is a bound on interface use, relative to an accounting boundary. It charges the
