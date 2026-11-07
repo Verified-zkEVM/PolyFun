@@ -144,6 +144,17 @@ theorem support_map {γ : Type v} {δ : Type w} (f : γ → δ) (program : FreeM
   | lift_bind position next ih =>
     simp only [map_bind, support_lift_bind, ih, Set.image_iUnion]
 
+/-- Sequencing free trees joins the reachable leaves of the continuations, independently of result
+universes. -/
+theorem support_bind {γ : Type v} {δ : Type w} (program : FreeM P γ) (f : γ → FreeM P δ) :
+    support (FreeM.bind program f) = ⋃ x ∈ support program, support (f x) := by
+  induction program with
+  | pure value => simp
+  | lift_bind position next ih =>
+    change support (FreeM.liftBind position fun b => FreeM.bind (next b) f) =
+      ⋃ x ∈ support (FreeM.liftBind position next), support (f x)
+    simp only [support_liftBind, ih, Set.biUnion_iUnion]
+
 /-- An operation object can return exactly the outputs of its continuation. -/
 -- Prefer the public projection over unfolding `liftObj` through the generic map equation.
 @[simp 1100]
