@@ -343,6 +343,22 @@ overhead. Together they yield the generic bounded sequential-composition
 theorem without pretending that arbitrary unreachable values have small
 encodings.
 
+### Interface charges on realizations
+
+`executionCost` charges a realization's backend work, never the answering of a visible query: answers
+come from the environment. Interface charges price exactly those calls, and
+`PolyFun/Realizability/Quantitative/Charge.lean` connects the two accountings.
+`ExecutionTrace.charge c` prices the calls of a prefix, generalizing `length`
+(`length_eq_charge_one`) and `queryCount`, the indicator charge of one interface
+(`queryCount_eq_charge`). A charge bound on the machine bounds the charge of every prefix
+(`ExecutionTrace.charge_le_of_isChargeBound`), and `RunsWithin.isChargeBound` bounds an
+implemented program's charge by the query budget times the largest price.
+`RunsWithinUnder.executionCost_add_charge_le` adds the two parts: if the machine implements a
+program within `B` under `c`, and answering a call at `a` costs at most `π a ≤ φ (c a)` units of
+work, every conforming prefix costs at most the run bound plus `φ B` work with its calls paid for.
+The answering prices are a parameter here; realizers for the visible queries, whose costs would
+determine `π`, are not part of a realization. See [interaction cost](cost.md#machines-and-realizations).
+
 ### Strength and the strong bind
 
 A `seqComp` continuation sees only the first phase's result. Reductions usually

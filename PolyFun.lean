@@ -280,6 +280,7 @@ public import PolyFun.PFunctor.Dynamical.DynComputation.Bounded
 public import PolyFun.PFunctor.Dynamical.DynComputation.BoundedFold
 public import PolyFun.PFunctor.Dynamical.DynComputation.Charge
 public import PolyFun.PFunctor.Dynamical.DynComputation.IO
+public import PolyFun.PFunctor.Dynamical.DynComputation.Refine
 public import PolyFun.PFunctor.Dynamical.DynComputation.Resumable
 public import PolyFun.PFunctor.Dynamical.DynComputation.Termination
 public import PolyFun.PFunctor.Dynamical.DynComputation.WrapState
@@ -418,6 +419,7 @@ public import PolyFun.Realizability.Machine
 public import PolyFun.Realizability.Quantitative
 public import PolyFun.Realizability.Quantitative.BoundedClosure
 public import PolyFun.Realizability.Quantitative.Carry
+public import PolyFun.Realizability.Quantitative.Charge
 public import PolyFun.Realizability.Quantitative.Closure
 public import PolyFun.Realizability.Quantitative.CostLaws
 public import PolyFun.Realizability.Quantitative.Counting

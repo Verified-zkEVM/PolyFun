@@ -330,6 +330,29 @@ every state. A stateless certificate lifts to it
 (`Stateful.WithinCharge.map`), and certificates compose along `Stateful.link`
 (`Stateful.WithinCharge.link`).
 
+### Machines and realizations
+
+The lowest links reach machines and backend cost.
+
+- **Machines.** A machine implementing a program inherits its bound
+  (`Implements.isChargeBound_init_iff`). `RefinesVia L h x σ₀`
+  (`PolyFun/PFunctor/Dynamical/DynComputation/Refine.lean`) says the machine `L` implements the run
+  of the program family `x` through a stateful package `h`. If the package is certified and the
+  programs are within budget, the machine is within budget from every initial state
+  (`RefinesVia.isChargeBound`). The machine of the run refines it (`refinesVia_ofFreeM`), any
+  machine in lockstep simulation with that run does too (`RefinesVia.of_isSimulation`), and a
+  machine refining an inner package's runs refines through the linked package
+  (`RefinesVia.link`). Steps a machine takes per call must be visible calls of its interface:
+  `RefinesVia` relates each call to a run of visible operations, with no hidden internal steps.
+- **Realizations.** A quantitative realization charges its machine's backend work, but never the
+  answering of a query (`PolyFun/Realizability/Quantitative/Charge.lean`). `ExecutionTrace.charge`
+  prices the calls of an execution prefix, and a charge bound on the machine bounds it
+  (`ExecutionTrace.charge_le_of_isChargeBound`). If the machine implements a program within `B`
+  and answering a call at `a` costs at most `π a ≤ φ (c a)` units of work, every conforming prefix
+  costs at most the run bound plus `φ B` work with its calls paid for
+  (`RunsWithinUnder.executionCost_add_charge_le`). Here `π` is a price function supplied by the
+  caller; the realization layer has no per-operation realizers that produce it.
+
 ## Measured and budgeted programs
 
 `MeasuredProgram Input Result ω` (`PolyFun/PFunctor/Free/Cost/Measured.lean`) computes a function
