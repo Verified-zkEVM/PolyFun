@@ -281,11 +281,43 @@ on reachable states needs a state type that excludes the unreachable ones.
   handler picks (`run_liftM_withCharge_id`): the instrumentation measures that path, not the
   program's worst case.
 - An expected-cost reading needs a probability semantics, which this guide does not cover. It
-  transfers through a handler only from a per-call bound that holds for every call argument and every handler state. A bound
-  that holds only on average can fail once later calls depend on earlier answers.
+  transfers through a handler only from a per-call bound that holds for every call argument and
+  every handler state. A bound that holds only on average can fail once later calls depend on
+  earlier answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
+
+The upper-bound readings share one transfer principle: if each implementation is observed below the
+spec of its call, the simulated program is observed below the program (`wpFold_liftM_le`).
+`costWith_liftM_le` is an instance. The budget reading is its dual, which is why its transfer
+lemmas are proved directly.
+
+## Layers and certified implementations
+
+A cost argument usually spans layers. A specification is priced by its calls, an algorithm
+implements each call by operations, and the operations run as instructions or gates. Each link
+between two layers is a **certified implementation** (`PolyFun/PFunctor/Handler/Certified.lean`):
+
+- an implementation of the upper interface `P` by programs over the lower interface `Q`;
+- an **exchange** `E : ω →+o ω'` that converts prices, such as "one hash is two compressions";
+- a certificate that each call at `a` is implemented within `E (c a)`.
+
+`Handler.Certified P Q c d` packages the three. Bounds transfer along it: a program within `B` is
+simulated within `E B` (`Certified.transfer`), and in value form a simulated program costs at most
+`E` of the original's cost (`Certified.cost_liftM_le`). Certified implementations compose, and so
+do their exchanges (`Certified.comp`), so a chain of layers gives a bound at the bottom by
+composition, without unfolding the programs. A reduction runs a setup program, the source program
+through a certified handler, and a finishing program, and the handler and the finishing program may
+use what the setup returned. Its bound is affine in the source budget,
+`setupCost + E B + finishCost` (`CostedReduction.run_isChargeBound`).
+
+Stateful packages have certificates in a single cost type
+(`PolyFun/PFunctor/Handler/Stateful/Charge.lean`): `Stateful.WithinCharge` bounds each call from
+every state. A stateless certificate lifts to it
+(`Handler.WithinCharge.lift`), a change of cost type pushes it forward
+(`Stateful.WithinCharge.map`), and certificates compose along `Stateful.link`
+(`Stateful.WithinCharge.link`).
 
 ## Measured and budgeted programs
 
@@ -301,8 +333,8 @@ answers and a price per operation.
 
 `comp outer inner` runs `inner`, computes `outer`'s view from the actual intermediate result, and
 runs `outer`, on the sum of the two interfaces, each operation tagged with the view it belongs to.
-It realizes the composite (`run_comp`, `Realizes.comp`), and budgets add (`CostAtMost.comp`). `contramap` precomposes an uncharged map, and `ofFun` is the program with no
-operations. `BudgetedProgram f ω` bundles a measured program realizing `f` with its budget, and
+It realizes the composite (`run_comp`, `Realizes.comp`), and budgets add (`CostAtMost.comp`).
+`contramap` precomposes an uncharged map, and `ofFun` is the program with no operations. `BudgetedProgram f ω` bundles a measured program realizing `f` with its budget, and
 composes the same way.
 
 Only the operations are charged: the view, the answering function and the code between calls are

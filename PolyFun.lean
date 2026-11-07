@@ -350,6 +350,7 @@ public import PolyFun.PFunctor.Free.WP.Charge
 public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
+public import PolyFun.PFunctor.Handler.Certified
 public import PolyFun.PFunctor.Handler.Charge
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
@@ -358,6 +359,7 @@ public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.StateLens
 public import PolyFun.PFunctor.Handler.Stateful
+public import PolyFun.PFunctor.Handler.Stateful.Charge
 public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Handler.Stateful.Link
 public import PolyFun.PFunctor.Handler.Stateful.Projection
