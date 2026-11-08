@@ -570,6 +570,19 @@ it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn
 term through its relation at function sorts. The lazy-language tutorial certifies a program
 against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`.
 
+[`Scoped.Adequacy`](../../PolyFun/IPFunctor/Scoped/Adequacy.lean) relates a continuous meaning to
+closed syntax, the generic part of an adequacy proof. A relation
+`R : ∀ a, V a → σ.Term [] a → Prop` can describe an operational semantics, for example "the term
+evaluates to a value term related to the semantic value". Suppose that each constructor's result
+is related to the closed node whenever each argument's meaning is related to the argument closed
+by related terms (`DomainInterpretation.RelatedSyntax`). Then
+`Term.denoteDomain_relatedSyntax` relates every term's meaning in an environment to the term
+closed by a related substitution, and each closed term is related to its own meaning. Each
+argument is closed with `Term.instantiate`, which below one binder is `substOne`
+(`instantiate_single`). The lazy-language tutorial proves computational adequacy for a
+call-by-name evaluator this way. A closed numeric term means `n` exactly when it evaluates to the
+numeral `n`, and a closed term means bottom exactly when it does not evaluate.
+
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
