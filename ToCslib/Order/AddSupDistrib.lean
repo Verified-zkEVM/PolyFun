@@ -15,7 +15,9 @@ public import Mathlib.Data.ENat.Lattice
 over suprema of nonempty sets: `a + sSup s ≤ ⨆ b ∈ s, a + b`. The reverse inequality holds whenever
 addition is monotone. It holds in `ℕ∞` (from `ENat.add_sSup`) and pointwise in families. Mathlib
 proves the equation separately for `ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`); the
-class names the common hypothesis.
+class names the common hypothesis. Mathlib's `IsAddQuantale` asks for the equation on every set,
+the empty one included, where it reads `a + ⊥ = ⊥`. That fails in `ℕ∞`, whose bottom is `0`, so
+this class asks only for nonempty sets.
 
 `iSup_zero_eq_zero` is the constant supremum of `0` over a possibly empty index in a canonically
 ordered monoid, whose bottom is `0`. Mathlib has it for `ℕ∞` and `ℝ≥0∞` (`ENat.iSup_zero`,

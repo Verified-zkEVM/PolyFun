@@ -16,7 +16,8 @@ public import ToCslib.Data.ENNReal.AddSupDistrib
 
 Checks for `PolyFun.PFunctor.Free.Cost.Value` and its companions:
 
-* `cost_bound` computes the worst-case cost of a concrete program and decides its budget;
+* `cost_bound` computes the worst-case cost of a concrete program and decides its budget, and on
+  a false budget leaves the goal open rather than failing;
 * a call with no answers is charged by the worst-case cost;
 * `q` hash queries in a loop and one group operation have the per-kind budget
   `q • hash + group`;
@@ -55,6 +56,15 @@ example : IsChargeBound prog chgN 5 := by
   cost_bound [prog, chgN]
 
 example : ¬ IsChargeBound prog chgN 4 := by
+  cost_bound [prog, chgN]
+
+-- On a false budget, `cost_bound` neither fails nor proves it: it leaves the goal open.
+/--
+error: unsolved goals
+⊢ False
+-/
+#guard_msgs in
+example : IsChargeBound prog chgN 4 := by
   cost_bound [prog, chgN]
 
 /-- A natural-number budget is a bound on the cost in `ℕ∞`. -/
