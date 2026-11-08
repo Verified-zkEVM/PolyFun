@@ -67,7 +67,8 @@ lawfulness classes `LawfulMonadFunctor` and `LawfulMonadControl` under `Control/
 `Control/Semantics/Correspondence` owns represented-data contract transfer;
 `Control/Transition` and `ITree/Transition` connect deterministic execution to
 resumable machines. Their frontend obligations are in the [interop guide](../guides/interop.md).
-`Logic/` holds small logic helpers. `Complexity/` supplies resource-bound syntax;
+`Logic/` holds small logic helpers and the `kernel_rfl` tactic, which leaves a definitional
+equation to the kernel. `Complexity/` supplies resource-bound syntax;
 concrete machine complexity lives in the optional `ComplexityBackends` library.
 
 The quantitative realizability layer separates code-local certificates from run bounds.
