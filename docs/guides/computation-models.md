@@ -59,9 +59,10 @@ or partial values, corresponds to a native implementation on an explicit set of
 admissible inputs (`CorrespondsOn`). `DataContract` requires a represented output,
 so a contract over such a correspondence is equivalent to the native postcondition.
 Representation relations are handled by `RelationalContract.iff_of_liftFun` through
-Mathlib's `Relator.LiftFun`; it needs a representative of each admissible input and a
-left-unique output relation, not a unique representative, and the embedding case is
-proved by it. These interfaces do not manufacture totality or erase failures.
+Mathlib's `Relator.LiftFun`. It needs a representative of each admissible input, not a unique
+one. It also needs a right-unique output relation, so that a semantic output determines its
+native result. The embedding case is proved by it. Each relation takes the semantic value first.
+These interfaces do not manufacture totality or erase failures.
 
 ## Equality and observation
 
