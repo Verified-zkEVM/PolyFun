@@ -135,6 +135,109 @@ while IFS= read -r file; do
   fi
 done < <(lean_sources)
 
+# PMF bridges (docs/guides/probability.md): measure interpretations use Mathlib's `Measure` and
+# `Kernel`, not its probability mass functions. Only a PMF bridge imports
+# `Mathlib.Probability.ProbabilityMassFunction`, and only its `Basic` or `Monad` module:
+# `Constructions`, which holds the lawful monad instance on `PMF`, brings in most of Mathlib's
+# analysis. A bridge is a module `<M>/PMF.lean` beside a tracked module `<M>.lean`, by convention
+# the measure module whose construction it relates to `PMF`; the check does not read `<M>.lean`.
+# Like the Std.WP rules, these checks read direct imports.
+pmf_bridge_path() {
+  case "$1" in
+    */*/PMF.lean) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+# The module `<M>.lean` that the bridge `<M>/PMF.lean` sits beside.
+pmf_bridge_sibling() {
+  printf '%s.lean' "${1%/PMF.lean}"
+}
+pmf_pattern="${import_prefix}Mathlib\.Probability\.ProbabilityMassFunction([[:space:]]|\.|$)"
+pmf_light_pattern="${import_prefix}Mathlib\.Probability\.ProbabilityMassFunction\.(Basic|Monad)([[:space:]]|$)"
+
+for pmf_import in \
+    'import Mathlib.Probability.ProbabilityMassFunction.Constructions' \
+    'public import Mathlib.Probability.ProbabilityMassFunction.Basic' \
+    'meta import Mathlib.Probability.ProbabilityMassFunction.Monad' \
+    'public meta import all Mathlib.Probability.ProbabilityMassFunction'; do
+  if ! grep -qE "$pmf_pattern" <<< "$pmf_import"; then
+    echo "ERROR: probability-mass-function matcher does not recognize: $pmf_import" >&2
+    status=1
+  fi
+done
+for other_import in 'import Mathlib.Probability.Kernel.Basic' 'import Mathlib.Probability.UniformOn' \
+    'import Mathlib.Probability.ProbabilityMassFunctionExtra'; do
+  if grep -qE "$pmf_pattern" <<< "$other_import"; then
+    echo "ERROR: probability-mass-function matcher must not classify: $other_import" >&2
+    status=1
+  fi
+done
+for light_import in 'public import Mathlib.Probability.ProbabilityMassFunction.Basic' \
+    'import Mathlib.Probability.ProbabilityMassFunction.Monad -- bind'; do
+  if ! grep -qE "$pmf_light_pattern" <<< "$light_import"; then
+    echo "ERROR: PMF bridge import matcher does not allow: $light_import" >&2
+    status=1
+  fi
+done
+for heavy_import in 'import Mathlib.Probability.ProbabilityMassFunction.Constructions' \
+    'import Mathlib.Probability.ProbabilityMassFunction.Integrals' \
+    'import Mathlib.Probability.ProbabilityMassFunction.Basic.Extra' \
+    'import Mathlib.Probability.ProbabilityMassFunction'; do
+  if grep -qE "$pmf_light_pattern" <<< "$heavy_import"; then
+    echo "ERROR: PMF bridge import matcher must not allow: $heavy_import" >&2
+    status=1
+  fi
+done
+for bridge in \
+    'ToCslib/Probability/UniformOn/PMF.lean' \
+    'PolyFun/PFunctor/Free/Measure/PMF.lean' \
+    'PolyFunTest/Probability/Uniform/PMF.lean'; do
+  if ! pmf_bridge_path "$bridge"; then
+    echo "ERROR: PMF bridge matcher does not recognize: $bridge" >&2
+    status=1
+  fi
+done
+for non_bridge in \
+    'PolyFun.lean' \
+    'PolyFun/PMF.lean' \
+    'PolyFunTest/PMF.lean' \
+    'ToCslib/Probability/UniformOn.lean' \
+    'ToCslib/Probability/UniformOn/PMFBridge.lean' \
+    'ToCslib/Probability/UniformOn/PMF/Extra.lean'; do
+  if pmf_bridge_path "$non_bridge"; then
+    echo "ERROR: PMF bridge matcher must reject: $non_bridge" >&2
+    status=1
+  fi
+done
+if [[ "$(pmf_bridge_sibling 'ToCslib/Probability/UniformOn/PMF.lean')" \
+    != 'ToCslib/Probability/UniformOn.lean' ]]; then
+  echo "ERROR: PMF bridge sibling does not name the module beside the bridge." >&2
+  status=1
+fi
+
+while IFS= read -r file; do
+  if ! grep -qE "$pmf_pattern" "$file"; then
+    continue
+  fi
+  if ! pmf_bridge_path "$file"; then
+    echo "ERROR: $file imports Mathlib's probability mass functions outside a PMF bridge." >&2
+    echo "Use Measure and Kernel, or relate a measure module <M>.lean to PMF in <M>/PMF.lean." >&2
+    echo "See docs/guides/probability.md, \"Where the modules live\"." >&2
+    status=1
+    continue
+  fi
+  sibling="$(pmf_bridge_sibling "$file")"
+  if [[ -z "$(git ls-files -- "$sibling")" ]]; then
+    echo "ERROR: PMF bridge $file has no module $sibling beside it." >&2
+    status=1
+  fi
+  if grep -E "$pmf_pattern" "$file" | grep -qvE "$pmf_light_pattern"; then
+    echo "ERROR: PMF bridge $file imports a module of Mathlib's probability mass functions" >&2
+    echo "other than Basic and Monad. See docs/guides/probability.md." >&2
+    status=1
+  fi
+done < <(lean_sources)
+
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2
