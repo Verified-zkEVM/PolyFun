@@ -39,6 +39,7 @@ public import ToCslib.Order.SumOmegaCompletePartialOrder
 public import ToCslib.Order.WithBotOmegaCompletePartialOrder
 public import ToCslib.Probability.Kernel.Subprobability
 public import ToCslib.Probability.UniformOn
+public import ToCslib.Probability.UniformOn.PMF
 
 /-!
 # Extensions of the pinned cslib library
