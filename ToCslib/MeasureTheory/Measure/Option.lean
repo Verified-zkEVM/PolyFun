@@ -177,6 +177,24 @@ theorem dropNone_apply_univ (μ : Measure (Option α)) :
   intro value
   cases value <;> simp [Set.indicator]
 
+/-- A measure on optional values is determined by its present outcomes and the mass of `none`. -/
+theorem ext_dropNone {μ ν : Measure (Option α)} (hsome : μ.dropNone = ν.dropNone)
+    (hnone : μ {none} = ν {none}) : μ = ν := by
+  ext s hs
+  have hsplit : s = some '' (some ⁻¹' s) ∪ (s ∩ {none}) := by
+    ext (_ | x) <;> simp
+  have hdisjoint : Disjoint (some '' (some ⁻¹' s)) (s ∩ {none}) := by
+    rw [Set.disjoint_left]
+    rintro _ ⟨x, -, rfl⟩ ⟨-, h⟩
+    simp at h
+  have hpresent : MeasurableSet (some ⁻¹' s) := Option.measurableSet_option_iff.1 hs
+  have hnoneSet : MeasurableSet (s ∩ {none}) := hs.inter Option.measurableSet_none
+  rw [hsplit, measure_union hdisjoint hnoneSet, measure_union hdisjoint hnoneSet,
+    ← dropNone_apply μ hpresent, ← dropNone_apply ν hpresent, hsome]
+  by_cases h : none ∈ s
+  · rw [Set.inter_eq_right.2 (Set.singleton_subset_iff.2 h), hnone]
+  · rw [Set.inter_singleton_eq_empty.2 h, measure_empty, measure_empty]
+
 /-! ## Completing a subprobability measure with an explicit failure outcome -/
 
 /-- Turn a subprobability measure into a measure on `Option α` by mapping successful outcomes
@@ -228,6 +246,28 @@ theorem withFailure_apply_some [MeasurableSingletonClass α] (μ : Measure α) (
   rw [show some ⁻¹' ({some x} : Set (Option α)) = {x} by ext y; simp]
   rw [Set.indicator_of_notMem (by simp)]
   simp only [smul_zero, add_zero]
+
+/-- Discarding the failure outcome of a completion recovers the completed measure. -/
+@[simp]
+theorem dropNone_withFailure (μ : Measure α) : μ.withFailure.dropNone = μ := by
+  ext s hs
+  rw [dropNone_apply _ hs, withFailure, Measure.add_apply, Measure.smul_apply,
+    Option.measurableEmbedding_some.map_apply,
+    Set.preimage_image_eq s (fun _ _ h => Option.some.inj h),
+    Measure.dirac_apply' none (Option.measurableSet_some_image.2 hs)]
+  simp
+
+/-- A probability measure on optional values is the completion of its present outcomes. Together
+with `dropNone_withFailure`, completion and discarding `none` are inverse bijections between
+subprobability measures on `α` and probability measures on `Option α`. -/
+theorem withFailure_dropNone (μ : Measure (Option α)) [IsProbabilityMeasure μ] :
+    μ.dropNone.withFailure = μ := by
+  refine ext_dropNone (dropNone_withFailure _) ?_
+  have hpresent : {value : Option α | value.isSome} = ({none} : Set (Option α))ᶜ := by
+    ext (_ | x) <;> simp
+  rw [withFailure_apply_none, dropNone_apply_univ, hpresent,
+    measure_compl Option.measurableSet_none (measure_ne_top _ _), measure_univ,
+    ENNReal.sub_sub_cancel ENNReal.one_ne_top (prob_le_one)]
 
 /-- Finite selector fibers of optional outputs have total mass at most the mass of present
 outputs. Only the fibers need be measurable; the selector's target needs no measurable space. -/

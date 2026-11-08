@@ -123,3 +123,21 @@ instance instDiscreteMeasurableSpace [MeasurableSpace α] [DiscreteMeasurableSpa
     exact ⟨MeasurableSet.of_discrete, MeasurableSet.of_discrete⟩
 
 end Option
+
+namespace MeasurableEquiv
+
+variable {α β : Type*} [MeasurableSpace α] [MeasurableSpace β]
+
+/-- A measurable equivalence extends to optional values, fixing `none`. -/
+def optionCongr (e : α ≃ᵐ β) : Option α ≃ᵐ Option β where
+  toEquiv := e.toEquiv.optionCongr
+  measurable_toFun := Option.measurable_map e.measurable
+  measurable_invFun := Option.measurable_map e.symm.measurable
+
+@[simp]
+theorem optionCongr_apply (e : α ≃ᵐ β) (x : Option α) : e.optionCongr x = x.map e := rfl
+
+@[simp]
+theorem optionCongr_symm (e : α ≃ᵐ β) : e.optionCongr.symm = e.symm.optionCongr := rfl
+
+end MeasurableEquiv
