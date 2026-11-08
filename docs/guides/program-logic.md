@@ -567,9 +567,10 @@ theorems need. An expectation reading does not change the attachment instance, a
 
 ## What lives elsewhere
 
-The program-logic modules import no measure theory. Measure interpretations of programs live
-in `Measure` companions (see [probability](probability.md)). VCVio
-keeps its oracle-specific readings and their notation: output measures (`evalDist`), the `Prob`
+Outside the `Measure` companions, the program-logic modules import no measure theory. Measure
+interpretations of programs live in those companions (see [probability](probability.md)),
+including the output measure `evalDist` of a monadic computation, which VCVio instantiates for
+its oracle computations. VCVio keeps its oracle-specific readings and their notation: the `Prob`
 carrier, couplings and pRHL/eRHL over oracle computations, concrete handler specifications, and
 verification tactics specific to those readings. Any dependency on Loom2 or Iris/Bluebell stays
 downstream. PolyFun supplies the generic definitions, the rule lemmas, and the quarantined `vcgen`
@@ -586,4 +587,4 @@ VCVio, which builds on PolyFun, has its own names for the readings of its oracle
 | the angelic reading (`MonadAttach.toWPMonadAngelic`) | the *possible* reading (`OracleComp.Possible`) |
 | the expectation reading, whose triples state lower bounds | the *lower* reading (`OracleComp.Lower`) |
 | the dual reading (`ExactWPMonad.dual`) of the expectation reading, whose triples state upper bounds | the *upper* reading (`OracleComp.Upper`) |
-| the output measure | the *successful-output measure* (`evalDist`) |
+| the output measure (`evalDist`) | the *successful-output measure* (PolyFun's `evalDist`) |

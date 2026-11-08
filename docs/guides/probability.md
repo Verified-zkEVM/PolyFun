@@ -139,6 +139,43 @@ the rest of `ToCslib`, they import no PolyFun module.
   ([`Free/Measure/Path`](../../PolyFun/PFunctor/Free/Measure/Path.lean)).
   `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path
   length, bounded by a total roll bound (`expectedQueryCount_le_of_isTotalRollBound`).
+- **Measure semantics of monads**
+  ([`Monad/Measure`](../../PolyFun/Control/Monad/Measure.lean),
+  [`Monad/Measure/Failure`](../../PolyFun/Control/Monad/Measure/Failure.lean),
+  [`Monad/Measure/Lossless`](../../PolyFun/Control/Monad/Measure/Lossless.lean)).
+  `EvalDistSemantics m` interprets each computation `mx : m α` as a subprobability measure
+  `evalDist mx` on its successful outputs, in every measurable structure on `α`. The missing mass
+  is the probability of failure or divergence. Three `Prop` mixins state laws:
+  `LawfulPureEvalDistSemantics` sends `pure` to a Dirac measure, `LawfulEvalDistSemantics` sends a
+  bind with a measurable continuation to the Giry bind, and `LawfulFailureEvalDistSemantics` sends
+  `failure` to zero. A fourth, `LosslessEvalDistSemantics`, states that every computation denotes a
+  probability measure. Over a discrete source the laws need no measurability proofs
+  (`evalDist_bind_of_discrete`, `evalDist_map_of_discrete`), and two independent draws denote the
+  product measure (`evalDist_pair`).
+- **Events and failure**
+  ([`Monad/Measure/Event`](../../PolyFun/Control/Monad/Measure/Event.lean),
+  [`Monad/Measure/WithFailure`](../../PolyFun/Control/Monad/Measure/WithFailure.lean),
+  [`Monad/Measure/EvalDistEq`](../../PolyFun/Control/Monad/Measure/EvalDistEq.lean)).
+  `prEvent mx` is the mass that `mx : m Prop` puts on `True`, so an event `p` of `mx : m α` has
+  probability `prEvent (p <$> mx)`. The measure modules define no notation, and state the event
+  laws in this form. `prFail mx` is the defect of the output measure. It is read on the image of the
+  outputs in `PUnit`, so it needs no measurable structure and is defined at every universe. Under
+  lawful semantics it is the defect in every measurable structure (`prFail_eq_defect`), and a
+  lossless semantics never fails (`prFail_eq_zero_of_lossless`). `evalDistWithFailure` completes
+  the output measure to a probability measure on `Option α` that puts `prFail` on `none`.
+  `EvalDistEq mx my` says that two computations, possibly in different monads, give every event the
+  same probability. Under lawful semantics it is equality of the output measures in the discrete
+  structure (`evalDistEq_iff_evalDist_eq`), and maps and binds preserve it (`EvalDistEq.map`,
+  `EvalDistEq.bind`, `EvalDistEq.bind_right`). Event probabilities and equality in distribution are
+  stated for outputs in `Type`.
+- **Instances**
+  ([`Monad/Measure/Deterministic`](../../PolyFun/Control/Monad/Measure/Deterministic.lean),
+  [`Domain/Measure/EvalDist`](../../PolyFun/Control/Domain/Measure/EvalDist.lean)).
+  `Id`, `Option` and `Except ε` have lawful semantics: a Dirac measure at a returned value, and zero
+  at a failure. `Id` is lossless. The instances name the universe of the results, as in
+  `Except.{u, v} ε`, so they apply at results in any universe. `DomainResult ε` is not a monad. A partial result reaches the semantics through `toOption` and the
+  `Option` instance, under which it denotes the values of its Dirac measure
+  (`DomainResult.evalDist_toOption`).
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
 so VCVio can import them without renaming.
@@ -146,8 +183,10 @@ so VCVio can import them without renaming.
 ## Relation to VCVio and to interaction cost
 
 VCVio specializes these interpretations to oracle computations. Its `OracleComp` programs are
-PolyFun free programs, and its `evalDist`, `Pr{…}[…]` notation and `EvalDistSemantics` class
-read the measures defined here.
+PolyFun free programs, and its measure semantics is an `EvalDistSemantics` instance. VCVio
+supplies the notation for the declarations defined here: `𝒟[…]` for `evalDist`, `Pr{…}[…]` for
+`prEvent` and `=ᵈ` for `EvalDistEq`. `Pr{let x ← mx}[p x]` elaborates to `prEvent (p <$> mx)`,
+the form in which the measure modules state the event laws.
 
 The interaction-cost modules are probability-free. An expected cost is a measure-valued reading
 of the same programs, so it belongs in a measure companion.
