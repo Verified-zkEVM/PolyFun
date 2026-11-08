@@ -17,10 +17,12 @@ public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
+public import ToCslib.MeasureTheory.MeasurableSpace.Except
 public import ToCslib.MeasureTheory.MeasurableSpace.Instances
 public import ToCslib.MeasureTheory.MeasurableSpace.Option
 public import ToCslib.MeasureTheory.MeasurableSpace.Sum
 public import ToCslib.MeasureTheory.Measure.AEBind
+public import ToCslib.MeasureTheory.Measure.Except
 public import ToCslib.MeasureTheory.Measure.Option
 public import ToCslib.MeasureTheory.Measure.Prop
 public import ToCslib.MeasureTheory.Measure.Subprobability
