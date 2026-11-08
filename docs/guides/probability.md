@@ -326,6 +326,17 @@ when its path is `<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does
   (`evalDistEq_iff_relWP_eq`). `ExpectationWP.couplingAlgebra m₁ m₂` presents `RelWP`, read in the
   discrete structures, as a `MAlgRelOrdered m₁ m₂ Prop`, so PolyFun's relational triple rules apply
   to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
+- **Certified meanings**
+  ([`Semantics/Measure`](../../PolyFun/Control/Semantics/Measure.lean)).
+  A certified meaning `f : Control.Semantics.CertifiedMeaning input output` agrees with its native
+  implementation on every encoded input. Pushing a measure on native inputs forward along the
+  encoded meaning `f.meaning ∘ input` therefore gives the encoding of the implementation's
+  pushforward (`CertifiedMeaning.map_meaning`). A correspondence on an admissible set gives the
+  same equation when almost every input is admissible (`CorrespondsOn.map_meaning_ae`). For a
+  computation `mx`, the meaning's pushforward of its output measure is the encoding of the output
+  measure of `f.implementation <$> mx` (`CertifiedMeaning.evalDist_map_meaning`,
+  `CorrespondsOn.evalDist_map_meaning_ae`). The statements need measurability of the output
+  encoding and of the implementation only.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
 so VCVio can import them without renaming. The coupling predicates and the expectation algebra
