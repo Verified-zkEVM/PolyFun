@@ -698,3 +698,10 @@ Two-child type formers do not commute with substitution definitionally: their ch
 selected by a match on the child index. Where a substituted type meets a type written
 independently, as after an instantiation, a language uses a coercion head. Its side condition
 `WF` carries the evidence that the two types agree in the sense the language chooses.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) builds size-indexed vectors
+this way. Applications take terms in the ambient context with no coercion. A coercion's side
+condition compares the shapes of the two evaluated types, with their lengths erased, at every
+assignment. Its evidence is therefore `rfl` for any two vector types with one entry shape, such
+as `[m + n]nat` and `[n + m]nat`, but also `[1]nat` and `[1000]nat`; no size arithmetic is
+checked.
