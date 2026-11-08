@@ -10,6 +10,7 @@ public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Domain.Pointed
 public import PolyFun.Control.Domain.PrefixRecursion
 public import PolyFun.Control.Domain.Result
+public import PolyFun.Control.Domain.ResultRel
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.MonadControl
 public import PolyFun.Control.Lawful.MonadFunctor
