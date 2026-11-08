@@ -239,6 +239,16 @@ adds a new outer suspension and an explicit error alternative. The strict
 family without an additional suspension. For continuous local environments and
 simultaneous recursive groups, see [binding families](ipfunctor.md#binders-that-change-parameter-contexts).
 
+[`DomainResult.LiftRel E R`](../../PolyFun/Control/Domain/ResultRel.lean) relates two results
+constructor by constructor: bottom to bottom, errors by `E` and returned values by `R`. Neither
+side needs an order, so the other side can be a native evaluator's result. It is core's
+`Option.Rel` of `Sum.LiftRel` read through the encoding of results (`liftRel_iff_optionRel`), so
+lemmas about those relations transfer. A relation that says
+nothing about a semantic bottom is the disjunction `d = ⊥ ∨ ∃ r, P r ∧ LiftRel E R d r`. When at
+most one result satisfies `P`, as for the outcome of a deterministic evaluation,
+`admissible_bot_or_liftRel` makes it admissible, so it holds of a least fixed point by fixed-point
+induction.
+
 [`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
 pointed omega-CPO with a continuous algebra for each visible query. Silent
 steps use identity. `ITree.denote` interprets the exact resumption-with-tau
