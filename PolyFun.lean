@@ -344,6 +344,7 @@ public import PolyFun.PFunctor.Free.Path.AppendAlong
 public import PolyFun.PFunctor.Free.Path.Bounded
 public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Free.Path.Execution
+public import PolyFun.PFunctor.Free.Path.MapMoves
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Quotient
 public import PolyFun.PFunctor.Free.Replicate
