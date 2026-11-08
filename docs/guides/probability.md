@@ -90,6 +90,16 @@ the rest of `ToCslib`, they import no PolyFun module.
 - **Bit vectors**
   ([`MeasurableSpace/Instances`](../../ToCslib/MeasureTheory/MeasurableSpace/Instances.lean)).
   `BitVec n` carries the discrete σ-algebra `⊤`.
+- **Uniform measures**
+  ([`UniformOn`](../../ToCslib/Probability/UniformOn.lean)).
+  Mathlib's `uniformOn s` is the counting measure conditioned on `s`: a probability measure when
+  `s` is finite and nonempty, and zero when `s` is infinite. The staged lemmas give the mass of a
+  point and of a decidable event under the uniform measure on a finite type or a finite set, and
+  integrals and products of uniform measures. A measurable equivalence carries `uniformOn s` to
+  `uniformOn (e '' s)` for every set, with no finiteness or measurable singletons
+  (`MeasurableEquiv.map_uniformOn`). With measurable singletons, a measurable map injective on `s`
+  does the same (`map_uniformOn_of_injOn`), so a measurable bijection preserves the uniform measure
+  on the whole space (`map_uniformOn_univ_of_bijective`, `uniformOn_univ_map_equiv`).
 - **Partial results**
   ([`Domain/Measure/Measurable`](../../PolyFun/Control/Domain/Measure/Measurable.lean),
   [`Domain/Measure`](../../PolyFun/Control/Domain/Measure.lean)).
@@ -240,6 +250,25 @@ the rest of `ToCslib`, they import no PolyFun module.
   `DomainResult ε` is not a monad. A partial result reaches the semantics through `toOption` and the
   `Option` instance, under which it denotes the values of its Dirac measure
   (`DomainResult.evalDist_toOption`).
+- **Uniform draws**
+  ([`Monad/Measure/Uniform`](../../PolyFun/Control/Monad/Measure/Uniform.lean),
+  [`Free/Measure/Uniform`](../../PolyFun/PFunctor/Free/Measure/Uniform.lean)).
+  `EvalDist.IsUniformOn mx s` states that the output measure of `mx` is `uniformOn s` in every
+  measurable structure with measurable singletons, and `EvalDist.IsUniform mx` is the case
+  `s = Set.univ`. The predicate names no sampler. On a finite type one output measure establishes
+  it (`IsUniformOn.of_evalDist_eq`). Under lawful semantics, a map injective on `s` gives a uniform
+  draw from the image (`IsUniformOn.map_of_injOn`), so a bijection keeps a draw uniform
+  (`IsUniform.map_of_bijective`). A uniform draw from a finite nonempty set never fails
+  (`IsUniformOn.prFail_eq_zero`). Two independent uniform draws are a uniform pair
+  (`IsUniform.pair`). Two uniform draws from one set are equal in distribution
+  (`IsUniformOn.evalDistEq`), and equality in distribution preserves uniformity
+  (`EvalDistEq.isUniformOn_iff`). Events of a uniform draw are counting statements
+  (`IsUniformOn.prEvent_eq`, `IsUniform.prEvent_eq` and the `prEvent_eq_singleton`,
+  `prEvent_eq_zero_iff`, `prEvent_pos_iff` and `prEvent_eq_one_iff` forms). A bijection onto a
+  second uniform draw transports events (`IsUniform.prEvent_comp_of_bijective`) and continuations
+  (`IsUniform.evalDistEq_bind_comp`). A call to an operation whose answer measure is uniform is a
+  uniform draw (`PFunctor.FreeM.isUniform_lift`). The answer measures of
+  `PFunctor.AnswerMeasure.uniformOfFiniteNonempty` satisfy its hypothesis by `rfl`.
 - **Transformers**
   ([`Monad/Measure/OptionT`](../../PolyFun/Control/Monad/Measure/OptionT.lean),
   [`Monad/Measure/ExceptT`](../../PolyFun/Control/Monad/Measure/ExceptT.lean)).
@@ -303,7 +332,9 @@ abstract `MAlgRelOrdered.RelWP`.
 VCVio specializes these interpretations to oracle computations. Its `OracleComp` programs are
 PolyFun free programs, and its measure semantics is an `EvalDistSemantics` instance. VCVio
 supplies the notation for the declarations defined here: `𝒟[…]` for `evalDist`, `Pr{…}[…]` for
-`prEvent` and `=ᵈ` for `EvalDistEq`. `Pr{let x ← mx}[p x]` elaborates to `prEvent (p <$> mx)`,
+`prEvent` and `=ᵈ` for `EvalDistEq`. Its canonical samplers `$ᵗ α` (`SampleableType`) stay in
+VCVio. The law of a sampler is the field of `EvalDist.IsUniform` for its program, so the
+uniform-draw laws here apply to it. `Pr{let x ← mx}[p x]` elaborates to `prEvent (p <$> mx)`,
 the form in which the measure modules state the event laws. That notation takes the functor of the
 map from the monad. Over `OptionT m` and an `AlternativeMonad`, `p <$> mx` finds its functor through
 `Alternative` instead. The event laws over these monads therefore write the map as `p <$>ₘ mx`, a
