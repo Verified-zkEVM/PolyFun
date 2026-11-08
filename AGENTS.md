@@ -145,7 +145,8 @@ No module imports `Mathlib.Probability.ProbabilityMassFunction`. The layer is
 measure-native: it uses Mathlib's `Measure` and `Kernel`, not `PMF`, whose lawful
 monad instance pulls in most of Mathlib's analysis. Mathlib lemmas that the layer
 needs are staged under `PolyFunProbability/ToMathlib/`. `scripts/check-modules.sh`
-enforces the quarantine. See [probability](docs/guides/probability.md).
+enforces the quarantine, both on direct imports and on the full import closure of the
+production roots. See [probability](docs/guides/probability.md).
 
 ## Attribution and documentation
 

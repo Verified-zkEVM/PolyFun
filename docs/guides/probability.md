@@ -42,6 +42,9 @@ measure-valued instances of those parameters.
 - no module imports `Mathlib.Probability.ProbabilityMassFunction`;
 - `PolyFun`, `ToCslib`, `ComplexityBackends` and `PolyFunIO` do not import
   `PolyFunProbability`;
+- the import closure of those four roots, through Mathlib and the other packages, reaches
+  none of these modules either, so an indirect import cannot bring measure theory into the
+  core;
 - `PolyFunProbability` opens no `PolyFun` or `ToCslib` bodies.
 
 ## Contents

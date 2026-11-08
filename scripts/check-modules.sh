@@ -191,6 +191,108 @@ while IFS= read -r file; do
   fi
 done < <(lean_sources)
 
+# The checks above read only this repository's import lines. The import closure of the
+# production roots, through Mathlib and every other package, must not reach measure theory,
+# probability, information theory or PolyFunProbability either. The closure is read from the
+# module headers under `.lake/packages`, so it needs the dependencies to be checked out.
+if [[ -d .lake/packages/mathlib ]]; then
+  if ! python3 - "$REPO_ROOT" <<'PY'
+import os
+import re
+import sys
+from collections import deque
+
+IMPORT_RE = re.compile(r"^\s*(?:public\s+)?(?:meta\s+)?import(?:\s+all)?\s+([A-Za-z0-9_.']+)")
+FORBIDDEN = ("Mathlib.MeasureTheory", "Mathlib.Probability", "Mathlib.InformationTheory",
+             "PolyFunProbability")
+ROOTS = ("PolyFun", "ToCslib", "ComplexityBackends", "PolyFunIO")
+
+
+def forbidden(module):
+    return any(module == f or module.startswith(f + ".") for f in FORBIDDEN)
+
+
+def header_imports(lines):
+    """Modules imported by a Lean header, stopping at its first line of other content."""
+    out, depth = [], 0
+    for raw in lines:
+        line = raw.strip()
+        if depth > 0:
+            depth += line.count("/-") - line.count("-/")
+            continue
+        if line.startswith("/-!"):
+            break
+        if line.startswith("/-"):
+            depth = line.count("/-") - line.count("-/")
+            continue
+        if not line or line.startswith("--") or line in ("module", "prelude"):
+            continue
+        match = IMPORT_RE.match(raw)
+        if not match:
+            break
+        out.append(match.group(1))
+    return out
+
+
+def first_violation(roots, imports_of):
+    """A chain from a root to a forbidden module, or None. `imports_of` returns None for a
+    module outside the searched packages (core `Init`, `Std` and `Lean`)."""
+    parent = {root: None for root in roots}
+    queue = deque(roots)
+    while queue:
+        module = queue.popleft()
+        if forbidden(module):
+            chain = [module]
+            while parent[chain[-1]] is not None:
+                chain.append(parent[chain[-1]])
+            return list(reversed(chain))
+        for dep in imports_of(module) or ():
+            if dep not in parent:
+                parent[dep] = module
+                queue.append(dep)
+    return None
+
+
+# Self-tests on synthetic headers and graphs, so the matcher cannot silently stop matching.
+assert header_imports(["/- Copyright -/", "", "module", "", "public import A.B",
+                       "meta import all C", "import D -- note", "", "/-! doc -/", "import E"]) \
+    == ["A.B", "C", "D"]
+graph = {"Root": ["A"], "A": ["B", "Mathlib.MeasureTheory.Measure.Dirac"], "B": []}
+assert first_violation(["Root"], graph.get) == ["Root", "A", "Mathlib.MeasureTheory.Measure.Dirac"]
+assert first_violation(["Root"], {"Root": ["Mathlib.MeasureTheoryExtra"]}.get) is None
+assert first_violation(["Root"], {"Root": ["PolyFunProbability.Free.Measure"]}.get) \
+    == ["Root", "PolyFunProbability.Free.Measure"]
+
+repo = sys.argv[1]
+packages = os.path.join(repo, ".lake", "packages")
+search = [repo] + sorted(os.path.join(packages, name) for name in os.listdir(packages))
+
+
+def imports_of(module):
+    rel = module.replace(".", os.sep) + ".lean"
+    for base in search:
+        path = os.path.join(base, rel)
+        if os.path.isfile(path):
+            with open(path, encoding="utf-8") as handle:
+                return header_imports(handle)
+    return None
+
+
+roots = [root for root in ROOTS if os.path.isfile(os.path.join(repo, root + ".lean"))]
+chain = first_violation(roots, imports_of)
+if chain is not None:
+    print("ERROR: a production root reaches the probability quarantine transitively:", file=sys.stderr)
+    print("  " + " -> ".join(chain), file=sys.stderr)
+    print('See AGENTS.md, "Probability quarantine".', file=sys.stderr)
+    sys.exit(1)
+PY
+  then
+    status=1
+  fi
+else
+  echo "NOTE: .lake/packages/mathlib is missing; skipping the transitive probability quarantine check." >&2
+fi
+
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2
