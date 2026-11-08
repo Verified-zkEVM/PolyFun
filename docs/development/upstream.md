@@ -242,6 +242,7 @@ removal conditions. They do not require exposing the free-monoid carrier.
 
 | Area | Next check and acceptance condition |
 |---|---|
+| Kernel-only `rfl` | [`KernelRfl.lean`](../../PolyFun/Logic/KernelRfl.lean) adds `kernel_rfl`, built like core's `decide +kernel` but for equations without a `Decidable` instance. Propose it to core as `rfl +kernel`, with the restore after a kernel failure; remove the local tactic at the pin that ships it. |
 | Dependent events and request-network transport | Test an owning constructor/eliminator API against the generator reproducer; remove each override only after dependent lookup, supply, and transport consumers compile. |
 | Cofree polynomials, displayed constructions, and pattern-runs-on-matter | Follow an object equality and dependent continuation through public object/lens equations; preserve type-level tensor and unit computation. |
 | Reactive networks and realizability closure | Minimize actual transport/update consumers, retaining coherent representation and admissible-step data. |

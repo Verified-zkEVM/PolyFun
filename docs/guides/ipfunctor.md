@@ -538,6 +538,9 @@ continuous map `ofFun G (id (α := ωScottContinuous G) k)`. The kernel compares
 its function, the second comparison repeats the first and the kernel reuses it, so the check takes
 time linear in the nesting depth. A composite with `Env.bindOne` unfolds to a structure instead,
 and the time grows exponentially with the depth.
+[`KernelBudget`](../../PolyFunTest/IPFunctor/Scoped/KernelBudget.lean) checks eight nested
+abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They need
+between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
 
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
