@@ -282,10 +282,12 @@ on reachable states needs a state type that excludes the unreachable ones.
 - A run through a deterministic handler returns the output and the charge of the one path that
   handler picks (`run_liftM_withCharge_id`): the instrumentation measures that path, not the
   program's worst case.
-- An expected-cost reading needs a probability semantics, which this guide does not cover. It
-  transfers through a handler only from a per-call bound that holds for every call argument and
-  every handler state. A bound that holds only on average can fail once later calls depend on
-  earlier answers.
+- An expected-cost reading needs a probability semantics, which this guide does not cover;
+  PolyFun's measure companions define one as a fold
+  (`PFunctor/Free/Measure/ExpectedCharge.lean`; see [probability](probability.md)). It transfers
+  through a handler only from a per-call bound that holds for every call argument and every
+  handler state. A bound that holds only on average can fail once later calls depend on earlier
+  answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).

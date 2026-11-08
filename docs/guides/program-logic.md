@@ -447,6 +447,12 @@ has no such constraint. On free programs, `OpSpec.ulift` reads a spec over `ULif
 lattice in `Type` therefore induces `Φ.ulift.toMAlgOrdered hΦ.ulift`, an algebra on programs with
 values in any universe. `PolyFunTest/PFunctor/FreeWP.lean` lifts the demonic reading this way.
 
+The expectation reading of free programs is such an algebra. PolyFun's measure companions define
+the integration spec `OpSpec.lintegral ν`, which specifies a call by the integral
+of its continuation under the answer measure `ν a`. Its algebra is `expectationAlgebra ν`, and
+its lifted algebra `expectationAlgebraULift ν` applies to values in any universe. See
+[probability](probability.md).
+
 ## Frame rules for sums of stateful handlers
 
 `PolyFun/PFunctor/Free/WP/StatefulFrame.lean` proves that a program run on one summand of
