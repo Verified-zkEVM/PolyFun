@@ -87,15 +87,16 @@ example {valid valid' : Nat → Prop} {f g : Nat → Nat}
 
 /-- A value represented with an irrelevant flag: every native input has two semantic
 representatives, so the representation is a relation rather than an embedding. -/
-def flagged (x : Nat) (d : Nat × Bool) : Prop := d.1 = x
+def flagged (d : Nat × Bool) (x : Nat) : Prop := d.1 = x
 
 /-- Contracts transfer through the relation with `Relator.LiftFun`, using one representative
-per admissible input and a left-unique output relation. -/
+per admissible input and an output relation that determines the native result. The semantic
+value comes first in both relations. -/
 example (pre : Nat → Prop) (post : Nat → Nat → Prop) :
-    RelationalContract flagged (fun y e => e = some y) (fun d : Nat × Bool => some (d.1 + 1))
+    RelationalContract flagged (fun e y => e = some y) (fun d : Nat × Bool => some (d.1 + 1))
       pre post ↔ ∀ x, pre x → post x (x + 1) :=
   RelationalContract.iff_of_liftFun pre post
-    (fun _ _ hxd => by simp only [flagged] at hxd; simp [hxd.2])
+    (fun _ _ hdx => by simp only [flagged] at hdx; simp [hdx.1])
     (fun x _ => ⟨(x, false), rfl⟩)
     (fun _ _ _ hy hy' => Option.some_injective _ (hy.symm.trans hy'))
 
