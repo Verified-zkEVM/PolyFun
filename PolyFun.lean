@@ -72,6 +72,7 @@ public import PolyFun.IPFunctor.Notation.Common
 public import PolyFun.IPFunctor.Notation.Deterministic
 public import PolyFun.IPFunctor.Notation.Indexed
 public import PolyFun.IPFunctor.Scoped.Basic
+public import PolyFun.IPFunctor.Scoped.Certificate
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
 public import PolyFun.IPFunctor.Scoped.DomainInterpretation
