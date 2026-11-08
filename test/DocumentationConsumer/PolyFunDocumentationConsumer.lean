@@ -121,3 +121,14 @@ example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
     (h : IPFunctor.ScopedSignature.Env.Pointwise η ζ) :
     IPFunctor.ScopedSignature.Env.transport f hf η = ζ :=
   IPFunctor.ScopedSignature.Env.pointwise_transport_eq hf h
+
+/-- Renamings are environments of variables, so reading through two renamings reads through
+their composite. -/
+example {Γ Δ Θ : List Examples.ScopedPrograms.Ty} {a : Examples.ScopedPrograms.Ty}
+    (e : Examples.ScopedPrograms.Expr Γ a) (ρ : IPFunctor.ScopedSignature.Renaming Γ Δ)
+    (τ : IPFunctor.ScopedSignature.Renaming Δ Θ)
+    (η : IPFunctor.ScopedSignature.Env Examples.ScopedPrograms.Ty.Value Θ) :
+    ((e.rename ρ).rename τ).denote Examples.ScopedPrograms.algebra η =
+      e.denote Examples.ScopedPrograms.algebra
+        (IPFunctor.ScopedSignature.Env.rename (IPFunctor.ScopedSignature.Env.rename ρ τ) η) := by
+  rw [IPFunctor.ScopedSignature.Term.rename_rename, IPFunctor.ScopedSignature.Term.denote_rename]

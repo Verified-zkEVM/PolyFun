@@ -139,4 +139,26 @@ example : Env.fixGroup selfReference (Env.empty (V := Num)) () .zero = ⊥ := by
   | zero => exact le_rfl
   | succ x => cases x
 
+/-! ## One-variable binders -/
+
+/-- Extension is continuous in the new value and the environment, by `fun_prop`. -/
+example {S : Type} {V : S → Type} [∀ a, OmegaCompletePartialOrder (V a)] {Γ : List S} {a : S}
+    {α : Type} [OmegaCompletePartialOrder α] (f : α →𝒄 V a) (g : α →𝒄 Env V Γ) :
+    ωScottContinuous fun t => Env.cons (f t) (g t) := by
+  fun_prop
+
+/-- A meaning of a one-variable body, as a continuous function of that variable. -/
+example (v : Num ()) : Env.bindOne (lookup .zero) v = v := by
+  rw [Env.bindOne_apply]
+  rfl
+
+/-- A lazy binding passes its value to the body without forcing it. -/
+example : Env.bindOne (E := Num ()) (.const (.value ⟨3⟩)) (⊥ : Num ()) = .value ⟨3⟩ := rfl
+
+/-- A one-variable body that returns its own variable has bottom as least fixed point. -/
+example : ContinuousHom.fixContinuous (Env.bindOne (lookup (Γ := [()]) .zero)) = ⊥ := by
+  refine le_antisymm (ContinuousHom.fix_le _ ?_) bot_le
+  rw [Env.bindOne_apply]
+  exact le_rfl
+
 end PolyFunTest.RecursiveGroup
