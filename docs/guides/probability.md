@@ -79,6 +79,20 @@ the rest of `ToCslib`, they import no PolyFun module.
 - **Bit vectors**
   ([`MeasurableSpace/Instances`](../../ToCslib/MeasureTheory/MeasurableSpace/Instances.lean)).
   `BitVec n` carries the discrete σ-algebra `⊤`.
+- **Partial results**
+  ([`Domain/Measure/Measurable`](../../PolyFun/Control/Domain/Measure/Measurable.lean),
+  [`Domain/Measure`](../../PolyFun/Control/Domain/Measure.lean)).
+  In the measurable structure on `DomainResult ε α`, bottom and every error are atoms, and the
+  values carry the σ-algebra of `α`. `DiscreteOrder ε` carries `⊤`, so errors need no σ-algebra
+  on `ε`. `DomainResult.measurableEquiv` identifies results with `Option (DiscreteOrder ε ⊕ α)`, and
+  its underlying function is the identity. `measurableEquivSum` identifies them with
+  `Option (ε ⊕ α)` when `ε` is discrete. There is no instance on `WithBot α` in general. A measure
+  `ν` on results splits into `DomainResult.success ν`, the subprobability measure of its values,
+  and `DomainResult.failureMass ν`, the mass of bottom plus the errors. For a subprobability
+  measure, the defect of `success ν` is the defect of `ν` plus `failureMass ν` (`defect_success`),
+  so for a probability measure it is `failureMass ν` (`defect_success_eq_failureMass`). The
+  pushforward of a probability measure along `toOption` is the failure completion of `success ν`
+  (`map_toOption_eq_withFailure`).
 - **The measure fold**
   ([`PFunctor/Measure`](../../PolyFun/PFunctor/Measure.lean),
   [`Free/Measure`](../../PolyFun/PFunctor/Free/Measure.lean)).
