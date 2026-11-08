@@ -28,15 +28,23 @@ the earlier declarations it uses; they form its value context, nearest first.
   termination proof: the decoded mirror is the source that acceptance states, and the kernel
   checks every term the elaborator builds.
 
-`toy_import "path.json"` adds each declaration `d`, its acceptance theorem `d.accepted`, and for a
-closed monomorphic declaration the equation lemma `d.evaluate_eq`, whose right side is the native
-meaning written without syntax. Options: `budget n` sets the per-declaration kernel budget,
-`check` only reports the kernel's verdicts, and `decide` proves acceptance by evaluating
-decidable equality instead of by `Eq.refl`.
+`toy_import "path.json"` adds the bundle declarations `declNames` and `declNames_length`, then
+each declaration `d` with its decoded source `d.source`, its acceptance theorem
+`d.accepted : erase d = d.source`, and for a closed declaration its lazy meaning `d.meaning`. A
+closed monomorphic declaration also gets the equation lemma `d.evaluate_eq`, whose right side is
+the native meaning written without syntax, and a closed numeric one `d.meaning_eq`, which states
+its lazy meaning `d.meaning` as a number. Options: `budget n` sets the per-declaration budget,
+`check` only reports the kernel's verdicts, `decide` proves acceptance by evaluating decidable
+equality instead of by `Eq.refl`, and `natives` gives each closed declaration its total evaluation
+`d.native`, compiled, and the theorem `d.meaning_represents : Rep _ d.meaning d.native`, whose proof
+term the frontend assembles and only the kernel checks. With `nolint`, each declaration and its
+auxiliary definitions are marked `@[nolint defsWithUnderscore]` and its equation lemmas
+`@[nolint checkType]`, as a frontend marks names its source dictates. `misrepresent` replaces the
+proof of `d.meaning_represents` by `True.intro`, which the kernel rejects.
 
 A declaration marked `"uncompiled": true` is written through `uncompiled`, a `noncomputable`
 identity on terms. The kernel accepts it, and the code generator cannot compile it, so it tests
-that a compilation error leaves nothing of the declaration behind.
+that a compilation error rolls the import back.
 -/
 
 public section
@@ -373,8 +381,13 @@ def decodeDecl (j : Json) : Except String Decl := do
 /-! ### The frontend -/
 
 /-- The frontend for a list of declarations, each elaborated in the context of its
-dependencies' schemes. -/
-def frontend (decls : Array Decl) : MetaM (Frontend Decl) := do
+dependencies' schemes. With `natives`, a closed declaration also gets its compiled total
+evaluation and the theorem that its lazy meaning represents it; with `misrepresent`, that
+theorem's proof is wrong. With `nolint`, the definitions and equation lemmas carry linters that
+skip them. -/
+def frontend (decls : Array Decl) (natives : Bool := false) (nolint : Bool := false)
+    (misrepresent : Bool := false) : MetaM (Frontend Decl) := do
+  let defNolint := if nolint then #[`defsWithUnderscore] else #[]
   let valSyn ← Syntax.ofStacked (mkConst ``lang)
   let none := (listSuffixes (mkConst ``Kind) 0 #[])[0]!
   return { elaborate := fun d => do
@@ -391,38 +404,107 @@ def frontend (decls : Array Decl) : MetaM (Frontend Decl) := do
         .node (.const ``uncompiled (pre := #[schemeE])) #[(.keep [], tree)]
       else tree
     let type := mkApp3 (mkConst ``Tm) none scope.ctx schemeE
-    let source := toExpr (d.compareWith.getD d.body)
+    let closed := d.deps.isEmpty
     return {
       base := d.name.toName
       doc := s!"The imported declaration `{d.name}`."
       syn := valSyn, scope, type, tree
+      nolint := defNolint
+      equationNolint := if nolint then #[`checkType] else #[]
+      extras := fun c => do
+        let source : Extra :=
+          { suffix := `source
+            type := mkConst ``Src.Expr
+            value := toExpr (d.compareWith.getD d.body)
+            doc := s!"The decoded source of `{d.name}`."
+            nolint := defNolint }
+        unless closed do return #[source]
+        let meaning := mkApp2 (mkConst ``Examples.ScopedVectors.meaning) schemeE c
+        let meaningX : Extra :=
+          { suffix := `meaning, type := ← inferType meaning, value := meaning
+            doc := s!"The lazy meaning of `{d.name}`.", nolint := defNolint }
+        unless natives do return #[source, meaningX]
+        let native := mkApp2 (mkConst ``evaluate) schemeE c
+        return #[source, meaningX,
+          { suffix := `native, type := ← inferType native, value := native, compile := true
+            doc := s!"The total evaluation of `{d.name}`, compiled.", nolint := defNolint }]
       acceptance := fun c =>
-        return (mkApp4 (mkConst ``erase) none scope.ctx schemeE c, source)
+        return (mkApp4 (mkConst ``erase) none scope.ctx schemeE c,
+          mkConst (c.constName! ++ `source))
       equations := fun c => do
-        unless d.deps.isEmpty && d.scheme matches .mono _ do return #[]
+        unless closed && d.scheme matches .mono _ do return #[]
         let some rhs ← nativeExpr [] d.body | return #[]
-        return #[(`evaluate_eq, mkApp2 (mkConst ``evaluate) schemeE c, rhs)] } }
+        let evaluateEq := (`evaluate_eq, mkApp2 (mkConst ``evaluate) schemeE c, rhs)
+        unless d.scheme matches .mono .nat do return #[evaluateEq]
+        -- The left side is the auxiliary definition `d.meaning`, not yet added.
+        let number ← mkAppOptM ``DomainResult.value
+          #[some (mkConst ``Empty), Option.none, some (← mkAppM ``DiscreteOrder.mk #[rhs])]
+        return #[evaluateEq, (`meaning_eq, mkConst (c.constName! ++ `meaning), number)]
+      theorems := fun c => do
+        unless natives && closed do return #[]
+        -- The statement names `d.meaning` and `d.native`, which are not yet added.
+        let meaning := mkApp2 (mkConst ``Examples.ScopedVectors.meaning) schemeE c
+        let scheme := (← inferType meaning).appArg!
+        let type := mkApp3 (mkConst ``Rep) scheme (mkConst (c.constName! ++ `meaning))
+          (mkConst (c.constName! ++ `native))
+        let proof := if misrepresent then mkConst ``True.intro
+          else mkApp2 (mkConst ``meaning_represents) schemeE c
+        return #[{ suffix := `meaning_represents, type, proof
+                   doc := s!"The lazy meaning of `{d.name}` represents its total evaluation." }] } }
 
-/-- `toy_import "path.json" (budget n)? (check)? (decide)?` imports the declarations of a JSON
-file whose path is relative to the package root. -/
+/-- The declarations of a JSON file whose path is relative to the package root. -/
+def readDecls (path : String) : MetaM (Array Decl) := do
+  let .ok items := (← readJsonFile path).getArr? | throwError "{path}: expected an array"
+  match items.mapM decodeDecl with
+  | .ok decls => return decls
+  | .error err => throwError "{path}: {err}"
+
+/-- The bundle declarations: `declNames`, the names the file declares, and `declNames_length`,
+their number, proved by evaluation in the kernel. -/
+def bundleOf (decls : Array Decl) : MetaM (Array BundleDecl) := do
+  let names := mkConst ((← getCurrNamespace) ++ `declNames)
+  let length := mkApp2 (mkConst ``List.length [0]) (mkConst ``String) names
+  let listType ← mkAppM ``List #[mkConst ``String]
+  return #[.defn `declNames listType (toExpr (decls.map (·.name)).toList)
+      "The names of the imported declarations.",
+    .decide `declNames_length (← mkEq length (mkNatLit decls.size))]
+
+/-- `toy_import "path.json" (budget n)? (check)? (decide)? (natives)? (nolint)? (misrepresent)?`
+imports the declarations of a JSON file whose path is relative to the package root. -/
 syntax (name := toyImport)
-  "toy_import " str (&" budget " num)? (&" check")? (&" decide")? : command
+  "toy_import " str (&" budget " num)? (&" check")? (&" decide")? (&" natives")? (&" nolint")?
+    (&" misrepresent")? : command
 
 /-- Elaborate `toy_import`. -/
 @[command_elab toyImport] def elabToyImport : CommandElab
-  | `(toy_import $path:str $[budget $n:num]? $[check%$c]? $[decide%$dec]?) => liftTermElabM do
-    let json ← readJsonFile path.getString
-    let .ok items := json.getArr? | throwError "{path.getString}: expected an array"
-    let decls ← match items.mapM decodeDecl with
-      | .ok ds => pure ds
-      | .error err => throwError "{path.getString}: {err}"
-    let budget ← match n with
-      | some n => pure ⟨n.getNat⟩
-      | none => Budget.ambient
-    importDecls (← frontend decls) decls
-      { budget
-        mode := if c.isSome then .check else .commit
-        acceptBy := if dec.isSome then .decide else .refl }
+  | `(toy_import $path:str $[budget $n:num]? $[check%$c]? $[decide%$dec]? $[natives%$nat]?
+      $[nolint%$nl]? $[misrepresent%$mis]?) =>
+    liftTermElabM do
+      let decls ← readDecls path.getString
+      let budget ← match n with
+        | some n => pure ⟨n.getNat⟩
+        | none => Budget.ambient
+      importDecls (← frontend decls nat.isSome nl.isSome mis.isSome) decls
+        (bundle := ← bundleOf decls)
+        { budget
+          mode := if c.isSome then .check else .commit
+          acceptBy := if dec.isSome then .decide else .refl }
+  | _ => throwUnsupportedSyntax
+
+/-- `toy_import_unscoped "path.json"` commits the declarations in one `atomically` block without
+`importDecls`' per-declaration heartbeat scopes, so they share the command's heartbeats. It is the
+control for the scoping test. -/
+syntax (name := toyImportUnscoped) "toy_import_unscoped " str : command
+
+/-- Elaborate `toy_import_unscoped`. -/
+@[command_elab toyImportUnscoped] def elabToyImportUnscoped : CommandElab
+  | `(toy_import_unscoped $path:str) => liftTermElabM do
+    let decls ← readDecls path.getString
+    let fe ← frontend decls
+    let cfg : IPFunctor.Import.Config := { budget := ← Budget.ambient }
+    atomically do
+      for d in decls do
+        commitDecl cfg (← fe.elaborate d)
   | _ => throwUnsupportedSyntax
 
 end PolyFunTest.ToyImport
