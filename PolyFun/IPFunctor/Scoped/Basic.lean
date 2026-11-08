@@ -65,6 +65,20 @@ theorem ScopedVar.sigma_eq_of_index_eq {S : Type u} {Γ : List S} {a b : S}
       cases he
       rfl
 
+/-- Move a variable past a block of fresh bindings. -/
+@[expose] def ScopedVar.weakenMany {S : Type u} {Γ : List S} {a : S} :
+    (Ξ : List S) → ScopedVar Γ a → ScopedVar (Ξ ++ Γ) a
+  | [], x => x
+  | _ :: Ξ, x => .succ (weakenMany Ξ x)
+
+@[simp] theorem ScopedVar.index_weakenMany {S : Type u} {Γ : List S} {a : S} (Ξ : List S)
+    (x : ScopedVar Γ a) : (x.weakenMany Ξ).index = x.index + Ξ.length := by
+  induction Ξ with
+  | nil => rfl
+  | cons b Ξ ih =>
+    change (x.weakenMany Ξ).index + 1 = _
+    rw [ih, List.length_cons, Nat.add_assoc]
+
 /-- Constructor shapes with explicit binding information for every argument. -/
 structure ScopedSignature (S : Type u) where
   /-- Constructors producing the given sort. -/

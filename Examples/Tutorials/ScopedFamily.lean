@@ -267,6 +267,9 @@ renames parameters along `Fin.succ`:
    `Term.map_congr`, so `parameterHom_preservesReindex` follows from `lift ρ ∘ Fin.succ =
    Fin.succ ∘ ρ`. `Hom.PreservesReindex.preservesSubstitution` and `Term.map_subst` then give
    the substitution law.
+
+`IPFunctor.ScopedSignature.Stacked` derives such an action, with its laws, for every language
+whose parameter contexts are the contexts of a type-level binding signature.
 -/
 
 theorem lift_id {n : Nat} : lift (id : Fin n → Fin n) = id := by

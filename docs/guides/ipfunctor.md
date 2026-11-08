@@ -674,3 +674,27 @@ and the separate documentation consumer exercise the same theorems through
 ordinary imports. The public API checks also substitute a lambda below both binder
 kinds, compare the exact term, and apply `subst_subst` and `substOne_subst_lift`
 with `reindexAction_lawful`.
+
+## Two-level binding families
+
+[`ScopedSignature.Stacked τ k₀ H`](../../PolyFun/IPFunctor/Scoped/Stacked.lean) describes a
+value-level language whose parameter contexts are the contexts of a type-level signature `τ`.
+Its sorts are type-level terms of one kind `k₀`. A head is a shape from `H` together with
+annotations: type-level terms, one per slot, each under its own type binders. A checked head
+`Stacked.Op Θ s` stores its annotations and the proof that they compute the result sort `s`. It
+also stores the side condition `WF`, which can carry the evidence of a coercion between two
+types. The language gives the value binders, child sorts and result sort of each shape as
+functions of the annotations, with one substitution equation for each.
+
+From these equations, `toFamily`, `paramHom` (type-parameter substitution as a
+`ScopedFamily.Hom`), `reindexAction` and `reindexAction_lawful` are derived once. So
+`Stacked.subst_subst`, `Stacked.map_subst` and `Stacked.substOne_subst_lift` hold for every
+stacked family. A child that binds no type parameter keeps its parent's value context
+(`Stacked.enter [] = .keep`). A child below type binders weakens each ambient sort by
+`Substitution.weakenMany`, which agrees with `Term.weaken` below one binder. `Stacked.node`
+builds a node whose result sort is computed from its head, so the check is definitional.
+
+Two-child type formers do not commute with substitution definitionally: their children are
+selected by a match on the child index. Where a substituted type meets a type written
+independently, as after an instantiation, a language uses a coercion head. Its side condition
+`WF` carries the evidence that the two types agree in the sense the language chooses.
