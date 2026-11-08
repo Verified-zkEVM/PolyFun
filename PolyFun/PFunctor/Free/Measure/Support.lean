@@ -7,7 +7,9 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.Support
-public import PolyFun.PFunctor.Free.Measure
+public import PolyFun.Control.Monad.Measure.Countable
+public import PolyFun.PFunctor.Free.Measure.EvalDist
+public import ToCslib.MeasureTheory.Measure.AEBind
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 
 /-!
@@ -22,6 +24,10 @@ answer of every operation has positive mass, every possible output has positive 
 
 Without full support the inclusion is strict: an answer measure may give a reachable answer zero
 mass, so reachability and positive probability stay separate notions.
+
+Over countable answer types the support is countable (`support_countable`), and the measure fold
+is concentrated on it (`ae_mem_support_measureFold`). Free programs over countable discrete answers
+therefore satisfy `CountableEvalDist`.
 -/
 
 @[expose] public section
@@ -79,5 +85,38 @@ theorem support_eq_setOf_measureFold_ne_zero (hμ : ∀ a b, μ a {b} ≠ 0) (pr
     MonadAttach.support program = {v | measureFold μ program {v} ≠ 0} :=
   Set.ext fun _ => ⟨measureFold_singleton_ne_zero_of_mem_support μ hμ,
     mem_support_of_measureFold_singleton_ne_zero μ⟩
+
+/-! ## Countable support -/
+
+omit [∀ a, MeasurableSpace (P.B a)] [∀ a, DiscreteMeasurableSpace (P.B a)] [MeasurableSpace α]
+  [MeasurableSingletonClass α] in
+/-- A free program over countable answer types has countably many possible outputs. -/
+theorem support_countable [∀ a, Countable (P.B a)] (program : FreeM P α) :
+    (MonadAttach.support program).Countable := by
+  induction program using FreeM.rec with
+  | pure x => exact Set.countable_singleton x
+  | liftBind a cont ih => exact Set.countable_iUnion ih
+
+/-- Over countable discrete answer types, the measure fold of a program is concentrated on its
+possible outputs. -/
+theorem ae_mem_support_measureFold [∀ a, Countable (P.B a)] (program : FreeM P α) :
+    ∀ᵐ v ∂measureFold μ program, v ∈ MonadAttach.support program := by
+  induction program using FreeM.rec with
+  | pure x =>
+    change ∀ᵐ v ∂Measure.dirac x, v ∈ ({x} : Set α)
+    rw [ae_dirac_eq]
+    exact Filter.eventually_pure.2 rfl
+  | liftBind a cont ih =>
+    rw [measureFold_liftBind μ a cont Measurable.of_discrete.aemeasurable]
+    exact Measure.ae_bind_of_ae Measurable.of_discrete
+      (support_countable (FreeM.liftBind a cont)).measurableSet
+      (Filter.Eventually.of_forall fun b ↦ (ih b).mono fun _ hv ↦ Set.mem_iUnion.2 ⟨b, hv⟩)
+
+/-- Over countable discrete answer types, every output measure is concentrated on the countable
+set of possible outputs. -/
+instance (priority := 20) instCountableEvalDistFreeM [P.AnswerMeasure] [∀ a, Countable (P.B a)] :
+    CountableEvalDist (FreeM.{v, uA, u} P) where
+  exists_countable_ae_mem program :=
+    ⟨_, support_countable program, ae_mem_support_measureFold _ program⟩
 
 end PFunctor.FreeM
