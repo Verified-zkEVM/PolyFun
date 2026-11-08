@@ -44,10 +44,10 @@ The measure interpretation of a construction lives in a `Measure` companion besi
 measure home of its area. An area is a directory that holds one kind of construction, together with
 its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
 interfaces), `PFunctor/Free/` (free programs), `PFunctor/Wiring/` (polynomial wiring),
-`Control/Monad/` (monads) and `Control/Domain/` (partial results). A measure
-interpretation of another kind of construction starts a new area. Each area whose constructions get
-a measure interpretation has one measure home: `<area>/Measure.lean` holds the area's main measure
-module, and `<area>/Measure/` holds the others.
+`Control/Monad/` (monads), `Control/Domain/` (partial results) and `Control/Semantics/` (certified
+meanings). A measure interpretation of another kind of construction starts a new area. Each area
+whose constructions get a measure interpretation has one measure home: `<area>/Measure.lean` holds
+the area's main measure module, and `<area>/Measure/` holds the others.
 
 A subdirectory of an area uses the area's home, unless it is an area itself. Free programs
 therefore have one home: a measure reading of their paths, weakest preconditions or costs
@@ -342,6 +342,17 @@ measure module.
   (`evalDistEq_iff_relWP_eq`). `ExpectationWP.couplingAlgebra m₁ m₂` presents `RelWP`, read in the
   discrete structures, as a `MAlgRelOrdered m₁ m₂ Prop`, so PolyFun's relational triple rules apply
   to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
+- **Certified meanings**
+  ([`Semantics/Measure`](../../PolyFun/Control/Semantics/Measure.lean)).
+  A certified meaning `f : Control.Semantics.CertifiedMeaning input output` agrees with its native
+  implementation on every encoded input. Pushing a measure on native inputs forward along the
+  encoded meaning `f.meaning ∘ input` therefore gives the encoding of the implementation's
+  pushforward (`CertifiedMeaning.map_meaning`). A correspondence on an admissible set gives the
+  same equation when almost every input is admissible (`CorrespondsOn.map_meaning_ae`). For a
+  computation `mx`, the meaning's pushforward of its output measure is the encoding of the output
+  measure of `f.implementation <$> mx` (`CertifiedMeaning.evalDist_map_meaning`,
+  `CorrespondsOn.evalDist_map_meaning_ae`). The statements need measurability of the output
+  encoding and of the implementation only.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
 so VCVio can import them without renaming. The coupling predicates and the expectation algebra
