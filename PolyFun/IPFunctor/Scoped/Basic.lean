@@ -147,6 +147,13 @@ theorem eq_empty (η : Env V []) : η = empty := by
   | [], _, η => η
   | _ :: _, ξ, η => cons (ξ _ .zero) (append (fun b v => ξ b (.succ v)) η)
 
+/-- A block of fresh bindings does not hide the older positions. -/
+@[simp] theorem append_weakenMany {Ξ : List S} (ξ : Env V Ξ) (η : Env V Γ) {a : S}
+    (x : ScopedVar Γ a) : append ξ η a (x.weakenMany Ξ) = η a x := by
+  induction Ξ with
+  | nil => rfl
+  | cons b Ξ ih => exact ih (fun c y => ξ c (.succ y))
+
 /-- Assemble an environment from its values listed by position. -/
 @[expose] def ofFin : {Ξ : List S} → ((i : Fin Ξ.length) → V Ξ[i]) → Env V Ξ
   | _ :: _, f, _, .zero => f 0

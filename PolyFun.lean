@@ -88,6 +88,7 @@ public import PolyFun.IPFunctor.Scoped.Reindex
 public import PolyFun.IPFunctor.Scoped.Renaming
 public import PolyFun.IPFunctor.Scoped.Size
 public import PolyFun.IPFunctor.Scoped.Stacked
+public import PolyFun.IPFunctor.Scoped.StackedInterpretation
 public import PolyFun.IPFunctor.Scoped.Substitution
 public import PolyFun.IPFunctor.Scoped.Transport
 public import PolyFun.ITree.Basic

@@ -192,6 +192,13 @@ theorem LiftRel.append {R : ∀ a, V a → V' a → Prop} {Ξ : List S} {ξ : En
   | nil => exact he
   | cons a Ξ ih => exact (ih (fun b y => hx b (.succ y))).cons (hx a .zero)
 
+/-- Transport along an equation of contexts preserves a relation over one context. -/
+theorem LiftRel.castCtx {R : ∀ a, V a → V' a → Prop} {Γ' : List S} (hc : Γ = Γ')
+    {η : Env V Γ} {ζ : Env V' Γ} (h : LiftRel R η ζ) :
+    LiftRel R (Env.castCtx hc η) (Env.castCtx hc ζ) := by
+  subst hc
+  exact h
+
 /-- Relations over one context are monotone in the relation between values. -/
 theorem LiftRel.imp {R R' : ∀ a, V a → V' a → Prop} (hR : ∀ a x y, R a x y → R' a x y)
     {η : Env V Γ} {ζ : Env V' Γ} (h : LiftRel R η ζ) : LiftRel R' η ζ :=
@@ -217,6 +224,16 @@ theorem Pointwise.symm {W : T → Type z} {η : Env V Γ} {ζ : Env W Δ} (h : P
 /-- Positional correspondence in one typed context implies equality. -/
 theorem pointwise_eq {η ζ : Env V Γ} (h : Pointwise η ζ) : η = ζ :=
   Forall₂.eq (fun _ _ _ e => eq_of_heq e) h
+
+/-- Reading heterogeneously equal environments at the same binding position gives
+heterogeneously equal values. -/
+theorem apply_heq_of_heq {Γ' : List S} (hΓ : Γ = Γ') {η : Env V Γ} {ζ : Env V Γ'}
+    (h : HEq η ζ) {a b : S} (x : ScopedVar Γ a) (y : ScopedVar Γ' b) (hi : x.index = y.index) :
+    HEq (η a x) (ζ b y) := by
+  subst hΓ
+  cases eq_of_heq h
+  cases ScopedVar.sigma_eq_of_index_eq x y hi
+  rfl
 
 /-- Environments of equal contexts and value families that agree at every binding position
 are heterogeneously equal. -/
