@@ -146,4 +146,42 @@ example (f : Ty → Unit) {Γ : List Ty} (η : Env (fun _ : Ty => Nat) Γ) :
     Env.Forall₂ (fun _ _ m n => m = n) η (Env.reindex f (V := fun _ => Nat) η) :=
   Env.forall₂_reindex_right_iff.mpr fun _ _ => rfl
 
+/-- Positions past the shorter context are unconstrained. -/
+example {Δ : List Ty} (R : ∀ _ b, Nat → Ty.Value b → Prop) (ζ : Env Ty.Value Δ) :
+    Env.Forall₂ R (Env.empty (V := fun _ : Ty => Nat)) ζ := by
+  intro _ _ x
+  nomatch x
+
+/-- Reindexing a relation on one side preserves it, with no order on the values. -/
+example (f : Ty → Unit) {Γ : List Ty} (η ζ : Env (fun _ : Ty => Nat) Γ)
+    (h : Env.Forall₂ (fun _ _ m n => m ≤ n) η ζ) :
+    Env.Forall₂ (fun _ _ m n => m ≤ n) η (Env.reindex f (V := fun _ => Nat) ζ) ∧
+      Env.Forall₂ (fun _ _ m n => m ≤ n) (Env.reindex f (V := fun _ => Nat) η) ζ :=
+  ⟨h.reindex_right, h.reindex_left⟩
+
+/-- The empty environment reindexes to the empty environment. -/
+example (f : Ty → Unit) :
+    Env.reindex f (V := fun _ => Nat) (Env.empty : Env (fun _ : Ty => Nat) []) = Env.empty := by
+  simp
+
+/-- Mapping a renaming along sorts is defined as positional reindexing. -/
+example {Γ Δ : List Ty} (f : Ty → Unit) (ρ : Renaming Γ Δ) :
+    Renaming.map f ρ = Env.reindex f fun a x => (ρ a x).map f := rfl
+
+/-- Exchange two bindings of the same sort. -/
+def swap : Renaming [Ty.nat, .nat] [Ty.nat, .nat] := Env.cons (.succ .zero) (Env.single .zero)
+
+/-- Renaming keeps bindings of equal sorts apart, and the swap is an involution. -/
+example (η : Env Ty.Value [Ty.nat, .nat]) :
+    Env.rename swap (Env.cons (V := Ty.Value) (a := .nat) 1 (Env.single 2)) .nat .zero = 2 ∧
+      Env.rename (Env.rename swap swap) η = η := by
+  refine ⟨rfl, ?_⟩
+  funext a x
+  cases x with
+  | zero => rfl
+  | succ x =>
+    cases x with
+    | zero => rfl
+    | succ x => nomatch x
+
 end PolyFunTest.Scoped

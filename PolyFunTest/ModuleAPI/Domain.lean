@@ -139,6 +139,18 @@ example : Env.fixGroup selfReference (Env.empty (V := Num)) () .zero = ⊥ := by
   | zero => exact le_rfl
   | succ x => cases x
 
+/-- Recursive groups also run over a bundled family, whose bottom comes from `PointedDomain`. -/
+example :
+    let D : Unit → PointedDomain := fun _ => .ofType (DomainResult Unit (DiscreteOrder Nat))
+    Env.fixGroup (V := fun a => D a) (Ξ := [()]) (Γ := [])
+      (fun _ => .ofFun fun η => η () .zero) Env.empty () .zero = ⊥ := by
+  intro D
+  refine le_antisymm (Env.fixGroup_le _ Env.empty ⊥ ?_ () .zero) bot_le
+  intro _ x
+  cases x with
+  | zero => exact le_rfl
+  | succ x => cases x
+
 /-! ## One-variable binders -/
 
 /-- Extension is continuous in the new value and the environment, by `fun_prop`. -/
