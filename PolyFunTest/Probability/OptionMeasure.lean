@@ -8,12 +8,13 @@ module
 
 import ToCslib.MeasureTheory.MeasurableSpace.Instances
 import ToCslib.MeasureTheory.Measure.Option
+import ToCslib.MeasureTheory.MeasurableSpace.Sum
 
 /-!
 # Optional outcomes and discrete words
 
-Regression tests for the staged `Option` measurable space, the `dropNone` and `withFailure`
-measures, and the discrete instances on `BitVec`.
+Regression tests for the staged `Option` and sum measurable spaces, the `dropNone` and
+`withFailure` measures, and the discrete instances on `BitVec`.
 -/
 
 open MeasureTheory
@@ -39,6 +40,22 @@ example (μ : Measure Bool) : μ.withFailure {none} = 1 - μ Set.univ :=
 example : (Measure.dirac (some true)).dropNone = Measure.dirac true := by simp
 
 example : (Measure.dirac (none : Option Bool)).dropNone = 0 := by simp
+
+/-- Completion and discarding `none` are inverse to each other. -/
+example (μ : Measure Bool) : μ.withFailure.dropNone = μ := by simp
+
+example (μ : Measure (Option Bool)) [IsProbabilityMeasure μ] : μ.dropNone.withFailure = μ :=
+  Measure.withFailure_dropNone μ
+
+/-- A measurable equivalence extends to optional values. -/
+example (e : Bool ≃ᵐ Bool) (b : Bool) : e.optionCongr (some b) = some (e b) := by simp
+
+/-- Sums of discrete spaces are discrete, and both injections are measurable embeddings. -/
+example : DiscreteMeasurableSpace (ℕ ⊕ Bool) := inferInstance
+
+example : MeasurableSingletonClass (Option (ℕ ⊕ Bool)) := inferInstance
+
+example : MeasurableEmbedding (Sum.inr : Bool → ℕ ⊕ Bool) := measurableEmbedding_inr
 
 /-- Bit vectors carry the discrete σ-algebra, and it propagates to products. -/
 example : DiscreteMeasurableSpace (BitVec 8) := inferInstance
