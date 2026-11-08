@@ -41,8 +41,11 @@ public import PolyFun.Control.Monad.Measure
 public import PolyFun.Control.Monad.Measure.Deterministic
 public import PolyFun.Control.Monad.Measure.EvalDistEq
 public import PolyFun.Control.Monad.Measure.Event
+public import PolyFun.Control.Monad.Measure.ExceptT
 public import PolyFun.Control.Monad.Measure.Failure
 public import PolyFun.Control.Monad.Measure.Lossless
+public import PolyFun.Control.Monad.Measure.OptionT
+public import PolyFun.Control.Monad.Measure.SemanticsVia
 public import PolyFun.Control.Monad.Measure.WithFailure
 public import PolyFun.Control.Monad.Ordered
 public import PolyFun.Control.Monad.Relation

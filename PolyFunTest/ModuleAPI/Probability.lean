@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Measure.Deterministic
+public import PolyFun.Control.Monad.Measure.SemanticsVia
 public import PolyFun.PFunctor.Free.Measure.EvalDist
 public import PolyFun.PFunctor.Free.Measure.Kernel
 public import PolyFun.PFunctor.Free.Measure
@@ -19,7 +20,9 @@ extension through its step equations. These examples check, through ordinary imp
 `PFunctor.FreeM.denote` of a returned value holds by `rfl`, and that the step equation of
 `PFunctor.FreeM.runKernel`, whose body is private, is available as a lemma. They also check that
 `evalDist` unfolds to the denotation of the deterministic and free-program instances by `rfl`,
-and that `prFail` unfolds to the defect of the output measure.
+and that `prFail` unfolds to the defect of the output measure. The `OptionT` and `ExceptT`
+semantics unfold to pullbacks of the run measure, and the bundled semantics of an instance unfolds
+to its `evalDist`.
 -/
 
 @[expose] public section
@@ -48,5 +51,13 @@ example (x : α) : evalDist (some x) = Measure.dirac x := rfl
 example (mx : Option α) : prFail mx = (evalDist ((fun _ ↦ PUnit.unit) <$> mx)).defect := rfl
 
 example [P.AnswerMeasure] (program : FreeM P α) : evalDist program = FreeM.denote program := rfl
+
+example (mx : OptionT Option α) : evalDist mx = (evalDist mx.run).comap some := rfl
+
+example {ε : Type uR} [MeasurableSpace ε] (mx : ExceptT ε Option α) :
+    evalDist mx = (evalDist mx.run).comap Except.ok := rfl
+
+example (mx : Option α) : (SemanticsVia.ofEvalDistSemantics Option).evalDist mx = evalDist mx :=
+  rfl
 
 end PolyFunTest.ModuleAPI.Probability
