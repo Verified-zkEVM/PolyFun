@@ -21,7 +21,9 @@ the measure modules supply measure-valued instances of those parameters.
   the Giry operations (`Measure.bind`, `Measure.dirac`, `Kernel.comp`). They do not use `PMF`: the
   lawful monad instance on `PMF` lives in
   `Mathlib.Probability.ProbabilityMassFunction.Constructions`, whose import closure brings in most
-  of Mathlib's analysis.
+  of Mathlib's analysis. A PMF bridge relates the construction of a measure module `<M>.lean` to
+  `PMF`, through `PMF.toMeasure` and `Measure.toPMF`, in the sibling module `<M>/PMF.lean`. A
+  bridge imports as little of `Mathlib.Probability.ProbabilityMassFunction` as it needs.
 - **Subprobability for failure.** A computation that may fail to return denotes a measure of total
   mass at most one (`MeasureTheory.IsSubprobabilityMeasure`). The missing mass is the probability
   of failure, so failure needs no `Option` wrapper. Mathlib's `IsZeroOrProbabilityMeasure` is a
@@ -52,6 +54,16 @@ sits inside `PFunctor/`, so its measure module is `PFunctor/Wiring/Measure.lean`
 The staged lemmas are about Mathlib's and core's types, not about PolyFun constructions, so they
 live in `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's. Like
 the rest of `ToCslib`, they import no PolyFun module.
+
+In the whole repository, only a PMF bridge imports `Mathlib.Probability.ProbabilityMassFunction`,
+and a bridge imports only its `Basic` or `Monad` module. `Basic` adds one Mathlib module to the
+measure theory that the measure modules already import, and `Monad` one more, while
+`Constructions`, which holds the lawful monad instance, adds more than a thousand.
+`scripts/check-modules.sh` checks both rules on direct imports only, so a module may still reach
+`Constructions` through another Mathlib module: `Mathlib.Probability.Distributions.Uniform`
+imports it and passes the check. The script takes a module for a bridge when its path is
+`<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does not check that `<M>.lean` is a
+measure module.
 
 ## Contents
 
