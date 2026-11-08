@@ -52,6 +52,7 @@ public import PolyFun.Control.Monad.Measure.Relational.Algebra
 public import PolyFun.Control.Monad.Measure.Relational.Bind
 public import PolyFun.Control.Monad.Measure.Relational.Deterministic
 public import PolyFun.Control.Monad.Measure.SemanticsVia
+public import PolyFun.Control.Monad.Measure.Uniform
 public import PolyFun.Control.Monad.Measure.WithFailure
 public import PolyFun.Control.Monad.Ordered
 public import PolyFun.Control.Monad.Relation
@@ -385,6 +386,7 @@ public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
 public import PolyFun.PFunctor.Free.Measure.Lintegral
 public import PolyFun.PFunctor.Free.Measure.Path
 public import PolyFun.PFunctor.Free.Measure.Support
+public import PolyFun.PFunctor.Free.Measure.Uniform
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
 public import PolyFun.PFunctor.Free.Path.AppendAlong
