@@ -8,6 +8,7 @@ public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
 public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Domain.Measure
+public import PolyFun.Control.Domain.Measure.EvalDist
 public import PolyFun.Control.Domain.Measure.Measurable
 public import PolyFun.Control.Domain.Pointed
 public import PolyFun.Control.Domain.PrefixRecursion
@@ -36,6 +37,13 @@ public import PolyFun.Control.Monad.Hom.Writer
 public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
 public import PolyFun.Control.Monad.Iter.Instances
+public import PolyFun.Control.Monad.Measure
+public import PolyFun.Control.Monad.Measure.Deterministic
+public import PolyFun.Control.Monad.Measure.EvalDistEq
+public import PolyFun.Control.Monad.Measure.Event
+public import PolyFun.Control.Monad.Measure.Failure
+public import PolyFun.Control.Monad.Measure.Lossless
+public import PolyFun.Control.Monad.Measure.WithFailure
 public import PolyFun.Control.Monad.Ordered
 public import PolyFun.Control.Monad.Relation
 public import PolyFun.Control.Monad.Relative
