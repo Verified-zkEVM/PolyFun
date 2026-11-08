@@ -26,6 +26,11 @@ result. `CorrespondsOn.of_liftFun` and `CertifiedMeaning.ofLiftFun` combine the 
 A meaning whose results at encoded inputs are all encoded outputs needs no native evaluator.
 `CertifiedMeaning.ofDecode` certifies it, with the meaning read back by a left inverse of the
 output encoding as its implementation.
+
+Every relation here between a semantic value and a native value takes the semantic value first.
+This matches the order of `meaning` and `implementation` and the fundamental lemmas of the
+scoped layer. In particular, `RelationalContract` and `RelationalContract.iff_of_liftFun` take
+their input and output relations as `D → A → Prop` and `E → B → Prop`.
 -/
 
 public section
@@ -39,25 +44,25 @@ variable {A : Type uA} {B : Type uB} {C : Type uC}
 
 /-- Total correctness for every semantic representative of each admissible input.
 Relations permit partial values and irrelevant components to have many representations. -/
-@[expose] def RelationalContract (input : A → D → Prop) (output : B → E → Prop)
+@[expose] def RelationalContract (input : D → A → Prop) (output : E → B → Prop)
     (meaning : D → E) (pre : A → Prop) (post : A → B → Prop) : Prop :=
-  ∀ x d, pre x → input x d → ∃ y, output y (meaning d) ∧ post x y
+  ∀ x d, pre x → input d x → ∃ y, output (meaning d) y ∧ post x y
 
 /-- A logical relation transfers contracts when represented outputs determine
 a unique native result. Input representations need exist only on the precondition. -/
 theorem RelationalContract.iff_of_liftFun
-    {input : A → D → Prop} {output : B → E → Prop}
+    {input : D → A → Prop} {output : E → B → Prop}
     {meaning : D → E} {implementation : A → B} (pre : A → Prop) (post : A → B → Prop)
-    (h : Relator.LiftFun (fun x d => pre x ∧ input x d) output implementation meaning)
-    (available : ∀ x, pre x → ∃ d, input x d) (unique : Relator.LeftUnique output) :
+    (h : Relator.LiftFun (fun d x => input d x ∧ pre x) output meaning implementation)
+    (available : ∀ x, pre x → ∃ d, input d x) (unique : Relator.RightUnique output) :
     RelationalContract input output meaning pre post ↔ ∀ x, pre x → post x (implementation x) := by
   constructor
   · intro hc x hx
     obtain ⟨d, hd⟩ := available x hx
     obtain ⟨y, hy, hp⟩ := hc x d hx hd
-    exact unique hy (h ⟨hx, hd⟩) ▸ hp
+    exact unique hy (h ⟨hd, hx⟩) ▸ hp
   · intro hp x d hx hd
-    exact ⟨implementation x, h ⟨hx, hd⟩, hp x hx⟩
+    exact ⟨implementation x, h ⟨hd, hx⟩, hp x hx⟩
 
 /-- Total correctness on represented inputs and fully represented outputs. -/
 @[expose] def DataContract (input : A ↪ D) (output : B ↪ E) (meaning : D → E)
@@ -68,7 +73,7 @@ theorem RelationalContract.iff_of_liftFun
 theorem dataContract_iff_relationalContract (input : A ↪ D) (output : B ↪ E)
     (meaning : D → E) (pre : A → Prop) (post : A → B → Prop) :
     DataContract input output meaning pre post ↔
-      RelationalContract (fun x d => input x = d) (fun y e => output y = e)
+      RelationalContract (fun d x => input x = d) (fun e y => output y = e)
         meaning pre post := by
   constructor
   · intro h x d hx hd
@@ -116,12 +121,12 @@ theorem contract_iff (h : CorrespondsOn input output valid meaning implementatio
     DataContract input output meaning pre post ↔ ∀ x, pre x → post x (implementation x) := by
   rw [dataContract_iff_relationalContract]
   apply RelationalContract.iff_of_liftFun pre post
-  · intro x d hx
-    exact hx.2 ▸ (h x (admissible x hx.1)).symm
+  · intro d x hx
+    exact hx.1 ▸ (h x (admissible x hx.2)).symm
   · intro x _
     exact ⟨input x, rfl⟩
-  · intro x y d hx hy
-    exact output.injective (hx.trans hy.symm)
+  · intro e y y' hy hy'
+    exact output.injective (hy.trans hy'.symm)
 
 /-- Equality to a represented result reflects equality of native results. -/
 theorem eq_iff (h : CorrespondsOn input output valid meaning implementation)
@@ -133,11 +138,7 @@ theorem eq_iff (h : CorrespondsOn input output valid meaning implementation)
 on admissible inputs when:
 * each admissible input's encoding is related to a native representative (`represents`);
 * a native representative of an output determines its encoding (`determines`);
-* the evaluator returns the representative of the implementation's result (`total`).
-
-The relations put the semantic value first, as a language's fundamental lemma states them.
-`RelationalContract` puts the native value first instead, because it reads an input relation as
-the set of semantic representatives of each native value. -/
+* the evaluator returns the representative of the implementation's result (`total`). -/
 theorem of_liftFun {Rin : D → W → Prop} {Rout : E → W' → Prop} {eval : W → W'}
     {nativeIn : A → W} {nativeOut : B → W'} (fundamental : Relator.LiftFun Rin Rout meaning eval)
     (represents : ∀ x, valid x → Rin (input x) (nativeIn x))
