@@ -28,7 +28,7 @@ exactly those calls. This module connects the two accountings.
 * **The bridge.** If the machine implements a program family within budget `B`, and answering a
   call at `a` costs at most `π a ≤ φ (c a)` units of work for a monotone additive `φ`, then every
   conforming prefix costs at most the run bound plus `φ B` work, with the calls priced
-  (`RunsWithin.executionCost_add_charge_le`).
+  (`RunsWithinUnder.executionCost_add_charge_le`).
 
 The answering prices `π` are a bare function here: the theorem says which part of the total is
 the machine's own work and which part is paid to the interface, and how the interface part is
