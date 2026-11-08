@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Scoped.DomainInterpretation
+public import PolyFun.IPFunctor.Scoped.Certificate
 public import Mathlib.Order.Category.OmegaCompletePartialOrder
 
 /-!
@@ -21,6 +21,12 @@ A call-by-value evaluator for the recursion-free fragment is an ordinary `Interp
 `Option`. One constructor-local lemma relates the two, and `Term.denoteDomain_related` lifts it
 to every term: whenever the evaluator returns a value, the lazy meaning represents it. The
 converse fails, because the lazy meaning ignores an unused divergent argument.
+
+With a representation of numbers, the same lemma certifies programs. A program with one
+numeric input whose evaluation returns `implementation n` at every input `n` has a
+`CertifiedMeaning` (`addTwoCertified`). A program that the evaluator handles only on some
+inputs corresponds to its implementation there (`pred_correspondsOn`). A decoder into results
+over native numbers composes with a certificate (`addTwoDecoded`).
 -/
 
 public section
@@ -259,5 +265,80 @@ theorem meaning_beta {a b : Ty} (t : Expr [a] b) (x : Expr [] a) :
     meaning (.app (.lam t) x) = meaning (t.substOne x) := by
   rw [meaning, meaning, Term.denoteDomain_substOne]
   rfl
+
+/-! ## Certified evaluation
+
+A program with one numeric input is a term in the context `[.nat]`. Numbers are represented
+faithfully: a computation agrees with an evaluated number exactly when it is that number. So the
+fundamental lemma and the evaluator's result at each input certify the lazy meaning. -/
+
+section Certified
+
+open Control.Semantics
+
+/-- Numbers embed faithfully into numeric computations. -/
+@[expose] noncomputable def natEmbedding : ℕ ↪ Ty.nat.Comp :=
+  ⟨number, fun _ _ h => congrArg DiscreteOrder.value (DomainResult.value_inj.mp h)⟩
+
+/-- A numeric computation agrees with an evaluated number exactly when it is that number. -/
+theorem agrees_some_iff (d : Ty.nat.Comp) (n : ℕ) : Agrees .nat d (some n) ↔ d = number n :=
+  ⟨fun h => h n rfl, fun h _ hx => Option.some.inj hx ▸ h⟩
+
+/-- Add two to the input. -/
+@[expose] def addTwo : Expr [.nat] .nat := .succ (.succ (.var .zero))
+
+/-- The lazy meaning of `addTwo` returns the encoding of `n + 2` at the encoding of every `n`.
+The evaluator computes `n + 2` definitionally. -/
+@[expose] noncomputable def addTwoCertified : CertifiedMeaning natEmbedding natEmbedding :=
+  addTwo.certifiedMeaning algebra_related (nativeIn := some) (nativeOut := some)
+    (fun n => (agrees_some_iff _ n).2 rfl) (fun n d h => (agrees_some_iff d n).1 h) (· + 2)
+    (fun _ => rfl)
+
+/-- A native contract transfers to the lazy meaning on encoded inputs. -/
+theorem addTwo_contract :
+    DataContract natEmbedding natEmbedding addTwoCertified.meaning (fun _ => True)
+      (fun n m => n < m) :=
+  (addTwoCertified.contract_iff _ _).2 fun n _ => Nat.lt_add_of_pos_right (by decide)
+
+/-- The predecessor. At zero the program takes a divergent branch. -/
+@[expose] def pred : Expr [.nat] .nat := .ifz (.var .zero) (.fix (.var .zero)) (.var .zero)
+
+/-- The evaluator handles `pred` only on positive inputs, so its lazy meaning corresponds to
+`(· - 1)` there. The correspondence promises nothing at zero. -/
+theorem pred_correspondsOn :
+    CorrespondsOn natEmbedding natEmbedding (0 < ·)
+      (fun d => pred.denoteDomain algebra (Env.single d)) (· - 1) :=
+  pred.correspondsOn_denoteDomain algebra_related (nativeIn := some) (nativeOut := some)
+    (fun n _ => (agrees_some_iff _ n).2 rfl) (fun n d h => (agrees_some_iff d n).1 h)
+    (fun n hn => match n, hn with | _ + 1, _ => rfl)
+
+/-- At zero, the lazy meaning of `pred` diverges. -/
+theorem pred_zero : pred.denoteDomain algebra (Env.single (number 0)) = ⊥ :=
+  le_bot_iff.mp (ContinuousHom.fix_le _ (le_refl _))
+
+/-- Read a numeric computation as a result over native numbers. -/
+@[expose] noncomputable def decodeNat : Ty.nat.Comp → DomainResult Empty ℕ :=
+  DomainResult.map DiscreteOrder.value
+
+/-- An encoded number decodes to that number. -/
+@[expose] noncomputable def decodeNatCertified :
+    CertifiedMeaning natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) where
+  meaning := decodeNat
+  implementation := id
+  correct _ := rfl
+
+/-- The decoded lazy meaning of `addTwo`, certified against `(· + 2)`. -/
+@[expose] noncomputable def addTwoDecoded :
+    CertifiedMeaning natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) :=
+  decodeNatCertified.comp addTwoCertified
+
+/-- At every native input, the decoded lazy meaning returns `n + 2` as a value: it neither
+diverges nor fails. -/
+theorem decodeNat_addTwo (n : ℕ) :
+    decodeNat (addTwo.denoteDomain algebra (Env.single (number n))) =
+      DomainResult.value (n + 2) :=
+  addTwoDecoded.correct n
+
+end Certified
 
 end Examples.ScopedDomains
