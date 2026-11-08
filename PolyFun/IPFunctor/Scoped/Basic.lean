@@ -108,6 +108,11 @@ variable {V : S → Type z} {Γ : List S}
 /-- The unique environment of an empty context. -/
 @[expose] def empty : Env V [] := fun _ x => nomatch x
 
+/-- Every environment of the empty context is `empty`. -/
+theorem eq_empty (η : Env V []) : η = empty := by
+  funext a x
+  nomatch x
+
 /-- Add a value at the nearest binding position. -/
 @[expose] def cons {a : S} (x : V a) (η : Env V Γ) : Env V (a :: Γ)
   | _, .zero => x

@@ -119,7 +119,7 @@ example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
     (η : IPFunctor.ScopedSignature.Env (fun a => D a) Γ)
     (ζ : IPFunctor.ScopedSignature.Env (fun b => E b) (Γ.map f))
     (h : IPFunctor.ScopedSignature.Env.Pointwise η ζ) :
-    IPFunctor.ScopedSignature.Env.transport f hf η = ζ :=
+    IPFunctor.ScopedSignature.Env.transport E f hf η = ζ :=
   IPFunctor.ScopedSignature.Env.pointwise_transport_eq hf h
 
 /-- Renamings are environments of variables, so reading through two renamings reads through

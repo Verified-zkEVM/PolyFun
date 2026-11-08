@@ -32,14 +32,17 @@ namespace Substitution
       rw [ih]
       rfl
 
+/-- A lifted substitution weakens the image of each older variable. -/
+theorem rename_succ_lift (θ : σ.Substitution Γ Δ) (b : S) :
+    Env.rename (fun _ => ScopedVar.succ) (lift θ b) = fun a x => (θ a x).weaken b :=
+  rfl
+
 theorem lift_rename (θ : σ.Substitution Γ Δ) (ρ : Renaming Δ Θ) (b : S)
     {a : S} (x : ScopedVar (b :: Γ) a) :
     lift (fun a x => (θ a x).rename ρ) b a x = (lift θ b a x).rename (Renaming.lift ρ b) := by
   cases x with
   | zero => rfl
-  | succ x =>
-    simp only [lift, Term.weaken, Term.rename_rename]
-    rfl
+  | succ x => simp only [lift, Term.weaken, Term.rename_rename, Renaming.rename_succ_lift]
 
 theorem liftMany_rename (θ : σ.Substitution Γ Δ) (ρ : Renaming Δ Θ) (Ξ : List S)
     {a : S} (x : ScopedVar (Ξ ++ Γ) a) :
@@ -129,8 +132,7 @@ theorem lift_comp (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) (b :
   cases x with
   | zero => rfl
   | succ x =>
-    simp only [lift, Term.weaken, Term.rename_subst, Term.subst_rename]
-    rfl
+    simp only [lift, Term.weaken, Term.rename_subst, Term.subst_rename, rename_succ_lift]
 
 theorem liftMany_comp (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) (Ξ : List S)
     {a : S} (x : ScopedVar (Ξ ++ Γ) a) :

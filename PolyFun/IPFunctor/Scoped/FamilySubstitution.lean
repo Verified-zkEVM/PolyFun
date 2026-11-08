@@ -60,6 +60,12 @@ variable {σ} {w : W} {Γ Δ : List (S w)}
     θ.reindex A op p _ (x.map (σ.reindex op p)) = A op p (θ b x) :=
   ScopedSignature.Env.reindex_map _ _ x
 
+/-- A lifted substitution weakens the image of each older variable. -/
+theorem rename_succ_lift (θ : σ.Substitution Γ Δ) (b : S w) :
+    ScopedSignature.Env.rename (fun _ => ScopedVar.succ) (lift θ b) =
+      fun a x => (θ a x).rename fun _ => ScopedVar.succ :=
+  rfl
+
 @[simp] theorem liftMany_var (Ξ : List (S w)) {a : S w} (x : ScopedVar (Ξ ++ Γ) a) :
     liftMany (σ := σ) (fun _ x => Term.var x) Ξ a x = Term.var x := by
   induction Ξ generalizing a with
@@ -127,8 +133,7 @@ theorem lift_postrename (θ : σ.Substitution Γ Δ) (ρ : ScopedSignature.Renam
   cases x with
   | zero => rfl
   | succ x =>
-      simp only [lift, Term.rename_rename]
-      rfl
+      simp only [lift, Term.rename_rename, ScopedSignature.Renaming.rename_succ_lift]
 
 /-- Renaming substitution images commutes with protecting a block of binders. -/
 theorem liftMany_postrename (θ : σ.Substitution Γ Δ)
@@ -266,9 +271,7 @@ theorem lift_comp (A : σ.ReindexAction) (hA : A.PreservesRenaming σ)
     lift (fun a x => (θ a x).subst A τ) b a x = (lift θ b a x).subst A (lift τ b) := by
   cases x with
   | zero => rfl
-  | succ x =>
-      simp only [lift, Term.rename_subst A hA, Term.subst_rename]
-      rfl
+  | succ x => simp only [lift, Term.rename_subst A hA, Term.subst_rename, rename_succ_lift]
 
 theorem liftMany_comp (A : σ.ReindexAction) (hA : A.PreservesRenaming σ)
     (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) (Ξ : List (S w))

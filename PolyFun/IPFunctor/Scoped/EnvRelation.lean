@@ -13,15 +13,15 @@ public import PolyFun.IPFunctor.Scoped.Transport
 
 `Forall₂ R` compares the values of two environments at equal de Bruijn positions,
 independently of the syntax of their sorts, using any family of relations. Binding,
-appending and positional assembly preserve it, and against a mapped context it is the
-relation at each mapped position. `Pointwise` is the instance for values whose types
-are equal only propositionally. Nothing here assumes an order on the values; the
-continuous facts are in `PolyFun.IPFunctor.Scoped.DomainRelation`.
+appending, positional assembly and positional reindexing preserve it, and against a
+mapped context it is the relation at each mapped position. `Pointwise` is the instance
+for values whose types are equal only propositionally. Nothing here assumes an order on
+the values; the continuous facts are in `PolyFun.IPFunctor.Scoped.DomainRelation`.
 -/
 
 public section
 
-universe u v z z'
+universe u v w z z' z''
 
 namespace IPFunctor.ScopedSignature.Env
 
@@ -109,12 +109,36 @@ theorem forall₂_iff_map {f : S → T} {η : Env V Γ} {ζ : Env W (Γ.map f)} 
     cases ScopedVar.sigma_eq_of_index_eq x y he
     exact h _ _
 
-/-- Against a positionally reindexed environment, the relation is the one at each original
+/-- Reindexing the target preserves a relation read at the mapped sorts. -/
+theorem Forall₂.reindex_right {U : Type w} {X : U → Type z''} {f : T → U}
+    {R' : ∀ a c, V a → X c → Prop} {η : Env V Γ} {ζ : Env (fun b => X (f b)) Δ}
+    (h : Forall₂ (fun a b x y => R' a (f b) x y) η ζ) : Forall₂ R' η (reindex f ζ) := by
+  intro a c x y he
+  induction y using ScopedVar.map_inductionOn f with
+  | h b y =>
+    rw [reindex_map]
+    exact h x y (by simpa only [ScopedVar.index_map] using he)
+
+/-- Reindexing the source preserves a relation read at the mapped sorts. -/
+theorem Forall₂.reindex_left {U : Type w} {X : U → Type z''} {f : S → U}
+    {R' : ∀ c b, X c → W b → Prop} {η : Env (fun a => X (f a)) Γ} {ζ : Env W Δ}
+    (h : Forall₂ (fun a b x y => R' (f a) b x y) η ζ) : Forall₂ R' (reindex f η) ζ :=
+  (Forall₂.reindex_right (R' := fun b c y x => R' c b x y) h.flip).flip
+
+/-- Against a positionally reindexed target, the relation is the one at each original
 position. -/
-theorem forall₂_reindex_iff {f : S → T} {η : Env V Γ} {ζ : Env (fun a => W (f a)) Γ} :
+theorem forall₂_reindex_right_iff {f : S → T} {η : Env V Γ} {ζ : Env (fun a => W (f a)) Γ} :
     Forall₂ R η (reindex f ζ) ↔ ∀ a (x : ScopedVar Γ a), R a (f a) (η a x) (ζ a x) := by
   rw [forall₂_iff_map]
   simp only [reindex_map]
+
+/-- Against a positionally reindexed source, the relation is the one at each original
+position. -/
+theorem forall₂_reindex_left_iff {U : Type w} {X : U → Type z''} {f : S → U}
+    {R' : ∀ c a, X c → V a → Prop} {η : Env (fun a => X (f a)) Γ} {ζ : Env V Γ} :
+    Forall₂ R' (reindex f η) ζ ↔ ∀ a (x : ScopedVar Γ a), R' (f a) a (η a x) (ζ a x) := by
+  rw [← forall₂_reindex_right_iff (R := fun b c y x => R' c b x y)]
+  exact ⟨Forall₂.flip, Forall₂.flip⟩
 
 /-- Related finite components assemble into related environments. -/
 theorem forall₂_ofFin {Ξ : List S} {Ψ : List T} (hl : Ξ.length = Ψ.length)

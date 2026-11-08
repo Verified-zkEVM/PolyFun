@@ -51,7 +51,7 @@ example :
     let η : IPFunctor.ScopedSignature.Env (fun a => D a) [true, false] :=
       IPFunctor.ScopedSignature.Env.cons (DomainResult.error ())
         (IPFunctor.ScopedSignature.Env.cons ⊥ IPFunctor.ScopedSignature.Env.empty)
-    let ζ := IPFunctor.ScopedSignature.Env.transport (E := E) (fun _ => ()) (fun _ => rfl) η
+    let ζ := IPFunctor.ScopedSignature.Env.transport E (fun _ => ()) (fun _ => rfl) η
     ζ () .zero = DomainResult.error () ∧ ζ () (.succ .zero) = ⊥ := by
   constructor <;> rfl
 

@@ -72,6 +72,11 @@ namespace Renaming
     | zero => rfl
     | succ x => exact congrArg ScopedVar.succ (ih x)
 
+/-- Weakening and then lifting a renaming is renaming and then weakening. -/
+theorem rename_succ_lift (ρ : Renaming Γ Δ) (b : S) :
+    Env.rename (fun _ => ScopedVar.succ) (lift ρ b) = Env.rename ρ fun _ => ScopedVar.succ :=
+  rfl
+
 theorem lift_comp (ρ : Renaming Γ Δ) (τ : Renaming Δ Θ) (b : S)
     {a : S} (x : ScopedVar (b :: Γ) a) :
     lift (Env.rename ρ τ) b a x = lift τ b a (lift ρ b a x) := by cases x <;> rfl

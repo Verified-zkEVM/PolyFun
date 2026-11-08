@@ -598,8 +598,8 @@ and measures neither execution cost nor the size of a semantic value.
 
 [`Scoped.Domain`](../../PolyFun/IPFunctor/Scoped/Domain.lean) orders environments
 pointwise when every value type is an omega-complete partial order, such as a family
-of `DomainResult` computations. No bundling is required. Extension, append,
-renaming and `Env.map` are continuous maps. `ωScottContinuous_cons` lets
+of `DomainResult` computations. Extension, append, renaming and `Env.map` are
+continuous maps. `ωScottContinuous_cons` and `ωScottContinuous_single` let
 `fun_prop` prove continuity through extension. `Env.bindOne` turns the meaning of an
 argument that binds one variable into a continuous function of that variable.
 `Env.map` applies a family of continuous maps along a sort map. `Env.transport` is
@@ -614,11 +614,11 @@ commutes with whole-group unfolding.
 
 [`Scoped.EnvRelation`](../../PolyFun/IPFunctor/Scoped/EnvRelation.lean) defines
 `Env.Forall₂`, which relates two environments by binding position for any family of
-relations and assumes no order on the values. It is preserved by extension, append,
-assembly and positional reindexing. `Env.Pointwise` is its instance for
-heterogeneous equality.
-[`Scoped.DomainRelation`](../../PolyFun/IPFunctor/Scoped/DomainRelation.lean) adds
-preservation by `Env.map`. Its `fixGroup_forall₂` carries a relation that is
+relations and assumes no order on the values. It is preserved by extension, append
+and assembly, and by positional reindexing on either side (`Forall₂.reindex_left` and
+`Forall₂.reindex_right`). `Env.Pointwise` is its instance for heterogeneous equality.
+[`Scoped.DomainRelation`](../../PolyFun/IPFunctor/Scoped/DomainRelation.lean) derives
+preservation by `Env.map` from the reindexing laws. Its `fixGroup_forall₂` carries a relation that is
 admissible at corresponding sorts through a recursive group. Language-specific
 errors and quantifier stages remain outside this generic layer.
 

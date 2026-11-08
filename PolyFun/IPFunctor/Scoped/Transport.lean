@@ -82,6 +82,8 @@ variable {S : Type u} {T : Type v}
   | _ :: _, η, _, .zero => η _ .zero
   | _ :: _, η, _, .succ x => reindex f (fun a x => η a (.succ x)) _ x
 
+@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup := reindex
+
 /-- Looking up an explicitly mapped variable retrieves its original value. -/
 @[simp] theorem reindex_map (f : S → T) {V : T → Type w} {Γ : List S}
     (η : Env (fun a => V (f a)) Γ) {a : S} (x : ScopedVar Γ a) :
@@ -90,6 +92,21 @@ variable {S : Type u} {T : Type v}
   | zero => rfl
   | succ x ih => exact ih _
 
+@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_map :=
+  reindex_map
+
+/-- Reindexing the empty environment gives the empty environment. -/
+@[simp] theorem reindex_empty (f : S → T) {V : T → Type w} :
+    reindex f (empty : Env (fun a => V (f a)) []) = empty :=
+  eq_empty _
+
+/-- Reindexing keeps the nearest binding and reindexes the older positions. -/
+@[simp] theorem reindex_cons (f : S → T) {V : T → Type w} {Γ : List S} {a : S}
+    (x : V (f a)) (η : Env (fun a => V (f a)) Γ) :
+    reindex f (cons x η) = cons x (reindex f η) := by
+  funext b v
+  cases v <;> rfl
+
 /-- Applying a sort-indexed function commutes with positional lookup. -/
 theorem reindex_postcomp (f : S → T) {V : T → Type w} {U : T → Type x}
     {Γ : List S} (η : Env (fun a => V (f a)) Γ)
@@ -97,6 +114,9 @@ theorem reindex_postcomp (f : S → T) {V : T → Type w} {U : T → Type x}
     k b (reindex f η b x) = reindex f (fun a x => k (f a) (η a x)) b x := by
   induction x using ScopedVar.map_inductionOn f with
   | h a x => simp only [reindex_map]
+
+@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_postcomp :=
+  reindex_postcomp
 
 /-- Lookup through two sort maps is lookup through their composite. -/
 theorem reindex_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
@@ -111,6 +131,9 @@ theorem reindex_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
           rw [reindex_map, reindex_map, ScopedVar.map_map]
           exact (reindex_map (g ∘ f) η x).symm
 
+@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_comp :=
+  reindex_comp
+
 /-- Equal sort maps and positionwise equal values give the same lookup. -/
 theorem reindex_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
     (hf : f = g) (hV : V = U)
@@ -124,6 +147,9 @@ theorem reindex_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
     exact eq_of_heq (h a x)
   cases he
   rfl
+
+@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_heq :=
+  reindex_heq
 
 /-- Context transport preserves lookup at the corresponding binding position. -/
 theorem cast_apply {V : S → Type z} {Γ Δ : List S} (h : Γ = Δ) (η : Env V Γ)
@@ -230,13 +256,6 @@ theorem liftMany_heq {Γ' Δ' Ξ Ξ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
   induction x using ScopedVar.map_inductionOn f with
   | h a x => exact map_apply f _ x
 
-/-- Mapping a context commutes with composing its renamings. -/
-theorem map_comp (f : S → T) (ρ : Renaming Γ Δ) (τ : Renaming Δ Θ) :
-    map f (Env.rename ρ τ) = Env.rename (map f ρ) (map f τ) := by
-  funext b x
-  induction x using ScopedVar.map_inductionOn f with
-  | h a x => simp only [map_apply, Env.rename_apply]
-
 end IPFunctor.ScopedSignature.Renaming
 
 namespace IPFunctor.ScopedSignature.Env
@@ -253,15 +272,13 @@ theorem reindex_rename (f : S → T) {V : T → Type w} (ρ : Renaming Γ Δ)
 
 end IPFunctor.ScopedSignature.Env
 
-/-! ## Deprecated aliases -/
+namespace IPFunctor.ScopedSignature.Renaming
 
-namespace IPFunctor.ScopedVar
+variable {S : Type u} {T : Type v} {Γ Δ Θ : List S}
 
-@[deprecated (since := "2026-11-07")] alias mapLookup := ScopedSignature.Env.reindex
-@[deprecated (since := "2026-11-07")] alias mapLookup_map := ScopedSignature.Env.reindex_map
-@[deprecated (since := "2026-11-07")] alias mapLookup_postcomp :=
-  ScopedSignature.Env.reindex_postcomp
-@[deprecated (since := "2026-11-07")] alias mapLookup_comp := ScopedSignature.Env.reindex_comp
-@[deprecated (since := "2026-11-07")] alias mapLookup_heq := ScopedSignature.Env.reindex_heq
+/-- Mapping a context commutes with composing its renamings. -/
+theorem map_comp (f : S → T) (ρ : Renaming Γ Δ) (τ : Renaming Δ Θ) :
+    map f (Env.rename ρ τ) = Env.rename (map f ρ) (map f τ) :=
+  Env.reindex_rename f ρ fun a x => (τ a x).map f
 
-end IPFunctor.ScopedVar
+end IPFunctor.ScopedSignature.Renaming

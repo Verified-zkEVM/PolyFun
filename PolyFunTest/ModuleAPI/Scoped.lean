@@ -144,6 +144,6 @@ example {Γ : List Ty} {a : Ty} (η ζ : Env (fun _ : Ty => Nat) Γ)
 /-- An environment is related to its reindexing at each original binding position. -/
 example (f : Ty → Unit) {Γ : List Ty} (η : Env (fun _ : Ty => Nat) Γ) :
     Env.Forall₂ (fun _ _ m n => m = n) η (Env.reindex f (V := fun _ => Nat) η) :=
-  Env.forall₂_reindex_iff.mpr fun _ _ => rfl
+  Env.forall₂_reindex_right_iff.mpr fun _ _ => rfl
 
 end PolyFunTest.Scoped

@@ -35,12 +35,8 @@ theorem Forall₂.map_right [∀ b, OmegaCompletePartialOrder (W b)] {U : Type w
     {X : U → Type z''} [∀ c, OmegaCompletePartialOrder (X c)] {R' : ∀ a c, V a → X c → Prop}
     {η : Env V Γ} {ζ : Env W Δ} (h : Forall₂ R η ζ) (f : T → U) (t : ∀ b, W b →𝒄 X (f b))
     (ht : ∀ a b x y, R a b x y → R' a (f b) x (t b y)) :
-    Forall₂ R' η (map f t ζ) := by
-  intro a c x y he
-  induction y using ScopedVar.map_inductionOn f with
-  | h b y =>
-    rw [map_apply]
-    exact ht _ _ _ _ (h x y (by simpa only [ScopedVar.index_map] using he))
+    Forall₂ R' η (map f t ζ) :=
+  Forall₂.reindex_right (ζ := fun b y => t b (ζ b y)) fun _ _ x y e => ht _ _ _ _ (h x y e)
 
 /-- Mapping the source preserves a relation that the family carries forward. -/
 theorem Forall₂.map_left [∀ a, OmegaCompletePartialOrder (V a)] {U : Type w}
@@ -48,8 +44,7 @@ theorem Forall₂.map_left [∀ a, OmegaCompletePartialOrder (V a)] {U : Type w}
     {η : Env V Γ} {ζ : Env W Δ} (h : Forall₂ R η ζ) (f : S → U) (t : ∀ a, V a →𝒄 X (f a))
     (ht : ∀ a b x y, R a b x y → R' (f a) b (t a x) y) :
     Forall₂ R' (map f t η) ζ :=
-  (h.flip.map_right (R' := fun b c y z => R' c b z y) f t
-    (fun _ _ _ _ hr => ht _ _ _ _ hr)).flip
+  Forall₂.reindex_left (η := fun a x => t a (η a x)) fun _ _ x y e => ht _ _ _ _ (h x y e)
 
 /-- A relation that is the graph of a family at corresponding sorts is the graph of
 `Env.map`. -/
@@ -97,20 +92,20 @@ variable {D : S → PointedDomain.{z}} {E : T → PointedDomain.{z}}
 theorem Pointwise.transport_right {U : Type w} {F : U → PointedDomain.{z}}
     {η : Env (fun a => D a) Γ} {ζ : Env (fun b => E b) Δ} (h : Pointwise η ζ)
     (f : T → U) (hf : ∀ a, F (f a) = E a) :
-    Pointwise η (transport f hf ζ) :=
+    Pointwise η (transport F f hf ζ) :=
   Forall₂.map_right h f _ fun _ _ _ _ e => e.trans (PointedDomain.cast_heq _ _).symm
 
 /-- Domain transport of the source preserves positional correspondence. -/
 theorem Pointwise.transport_left {U : Type w} {F : U → PointedDomain.{z}}
     {η : Env (fun a => D a) Γ} {ζ : Env (fun b => E b) Δ} (h : Pointwise η ζ)
     (f : S → U) (hf : ∀ a, F (f a) = D a) :
-    Pointwise (transport f hf η) ζ :=
+    Pointwise (transport F f hf η) ζ :=
   Pointwise.symm (Pointwise.transport_right (Pointwise.symm h) f hf)
 
 /-- Domain transport is the unique target environment with the corresponding values. -/
 theorem pointwise_transport_eq {f : S → T} (hf : ∀ a, E (f a) = D a)
     {η : Env (fun a => D a) Γ} {ζ : Env (fun b => E b) (Γ.map f)} (h : Pointwise η ζ) :
-    transport f hf η = ζ :=
+    transport E f hf η = ζ :=
   (forall₂_map_iff _ fun _ _ _ => (PointedDomain.cast_eq_iff _ _ _).symm).mp h
 
 /-- A whole-group unfolding that preserves correspondence preserves its least fixed point. -/

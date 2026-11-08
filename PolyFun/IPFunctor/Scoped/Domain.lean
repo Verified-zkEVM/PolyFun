@@ -38,6 +38,26 @@ variable {S : Type u} {T : Type v} {V : S → Type z} [∀ a, OmegaCompleteParti
 @[simp] theorem renameContinuous_apply (ρ : Renaming Γ Δ) (η : Env V Δ) :
     renameContinuous ρ η = rename ρ η := rfl
 
+theorem renameContinuous_apply_apply (ρ : Renaming Γ Δ) (η : Env V Δ) {a : S}
+    (x : ScopedVar Γ a) : renameContinuous ρ η a x = η a (ρ a x) := rfl
+
+theorem renameContinuous_id (η : Env V Γ) : renameContinuous (fun _ x => x) η = η := rfl
+
+/-- Reading through two renamings reads through their composite. -/
+theorem renameContinuous_renameContinuous {Θ : List S} (ρ : Renaming Γ Δ) (τ : Renaming Δ Θ)
+    (η : Env V Θ) :
+    renameContinuous ρ (renameContinuous τ η) = renameContinuous (rename ρ τ) η := rfl
+
+/-- Protecting a fresh variable preserves its value. -/
+theorem renameContinuous_cons (ρ : Renaming Γ Δ) {a : S} (x : V a) (η : Env V Δ) :
+    renameContinuous (ρ.lift a) (cons x η) = cons x (renameContinuous ρ η) :=
+  rename_cons ρ x η
+
+/-- The fresh block is unchanged when the ambient environment is renamed. -/
+theorem renameContinuous_append (ρ : Renaming Γ Δ) {Ξ : List S} (ξ : Env V Ξ) (η : Env V Δ) :
+    renameContinuous (ρ.liftMany Ξ) (append ξ η) = append ξ (renameContinuous ρ η) :=
+  rename_append ρ ξ η
+
 /-- Assembling environments is continuous in all their components. -/
 @[expose] noncomputable def ofFinContinuous {Ξ : List S} :
     ((i : Fin Ξ.length) → V Ξ[i]) →𝒄 Env V Ξ := .ofFun ofFin (by
@@ -67,19 +87,23 @@ variable {S : Type u} {T : Type v} {V : S → Type z} [∀ a, OmegaCompleteParti
     ωScottContinuous fun t => cons (f t) (g t) :=
   consContinuous.ωScottContinuous.comp (Prod.ωScottContinuous.prodMk hf hg)
 
+/-- A one-variable environment is continuous in its value. -/
+@[fun_prop] theorem ωScottContinuous_single {α : Type w} [OmegaCompletePartialOrder α] {a : S}
+    {f : α → V a} (hf : ωScottContinuous f) : ωScottContinuous fun t => single (f t) := by
+  simp only [single_eq_cons]
+  fun_prop
+
 /-- A meaning in a one-variable environment, as a continuous function of that variable.
 This is the semantic counterpart of a constructor argument binding one variable. -/
 @[expose] noncomputable def bindOne {a : S} {E : Type w} [OmegaCompletePartialOrder E] :
     (Env V [a] →𝒄 E) →𝒄 (V a →𝒄 E) :=
-  .ofFun (fun f => f.comp (.ofFun single (by
-    change ωScottContinuous fun x : V a => cons x (empty : Env V [])
-    fun_prop))) (by
+  .ofFun (fun f => f.comp (.ofFun single (by fun_prop))) (by
     apply ContinuousHom.ωScottContinuous_of_apply
     intro x
     change ωScottContinuous fun f : Env V [a] →𝒄 E => f (single x)
     fun_prop)
 
-theorem bindOne_apply {a : S} {E : Type w} [OmegaCompletePartialOrder E]
+@[simp] theorem bindOne_apply {a : S} {E : Type w} [OmegaCompletePartialOrder E]
     (f : Env V [a] →𝒄 E) (x : V a) : bindOne f x = f (cons x empty) := rfl
 
 /-- Appending a finite block of bindings is jointly continuous. -/
@@ -136,10 +160,14 @@ theorem map_cons (f : S → T) (t : ∀ a, V a →𝒄 W (f a)) {a : S} (x : V a
 
 /-- Changing sorts commutes with changing binding positions, even for noninjective maps. -/
 theorem map_rename (f : S → T) (t : ∀ a, V a →𝒄 W (f a)) (ρ : Renaming Γ Δ) (η : Env V Δ) :
-    map f t (rename ρ η) = rename (Renaming.map f ρ) (map f t η) := by
-  funext b x
-  induction x using ScopedVar.map_inductionOn f with
-  | h a x => simp only [map_apply, rename_apply, Renaming.map_apply]
+    map f t (rename ρ η) = rename (Renaming.map f ρ) (map f t η) :=
+  reindex_rename f ρ fun a x => t a (η a x)
+
+/-- Changing sorts commutes with continuously changing binding positions. -/
+theorem map_renameContinuous (f : S → T) (t : ∀ a, V a →𝒄 W (f a)) (ρ : Renaming Γ Δ)
+    (η : Env V Δ) :
+    map f t (renameContinuous ρ η) = renameContinuous (Renaming.map f ρ) (map f t η) :=
+  map_rename f t ρ η
 
 /-- Consecutive maps compose at each original binding position. The two contexts are
 equal only propositionally, so the law compares lookups; `ScopedVar.map_inductionOn`
@@ -161,7 +189,7 @@ theorem map_bot [∀ a, OrderBot (V a)] [∀ b, OrderBot (W b)]
   | h a x => simp only [map_apply, Pi.bot_apply, ht]
 
 /-- Map binding positions along an equation of their pointed domains. -/
-@[expose] noncomputable def transport {D : S → PointedDomain.{z}} {E : T → PointedDomain.{z}}
+@[expose] noncomputable def transport {D : S → PointedDomain.{z}} (E : T → PointedDomain.{z})
     (f : S → T) (h : ∀ a, E (f a) = D a) :
     Env (fun a => D a) Γ →𝒄 Env (fun b => E b) (Γ.map f) :=
   map f fun a => PointedDomain.cast (h a).symm
@@ -216,6 +244,14 @@ theorem fixGroup_rename {Ξ : List S}
   intro ξ i
   simp only [ContinuousHom.comp_apply, renameContinuous_apply, rename_append]
 
+/-- Continuously renaming the ambient variables commutes with tying a recursive group. -/
+theorem fixGroup_renameContinuous {Ξ : List S}
+    (rhs : (i : Fin Ξ.length) → Env V (Ξ ++ Γ) →𝒄 V Ξ[i])
+    (ρ : Renaming Γ Δ) (η : Env V Δ) :
+    fixGroup rhs (renameContinuous ρ η) =
+      fixGroup (fun i => (rhs i).comp (renameContinuous (ρ.liftMany Ξ))) η :=
+  fixGroup_rename rhs ρ η
+
 variable [∀ b, OrderBot (W b)]
 
 /-- A strict continuous transport commuting with whole-group unfolding preserves
@@ -223,12 +259,12 @@ the simultaneous least fixed point. The target may use different sorts and bindi
 theorem fixGroup_fusion {Ξ : List S} {Ψ Λ : List T}
     (rhs : (i : Fin Ξ.length) → Env V (Ξ ++ Γ) →𝒄 V Ξ[i])
     (rhs' : (i : Fin Ψ.length) → Env W (Ψ ++ Λ) →𝒄 W Ψ[i])
-    (η : Env V Γ) (η' : Env W Λ) (transport : Env V Ξ →𝒄 Env W Ψ)
-    (hbot : transport ⊥ = ⊥)
-    (hstep : ∀ ξ, transport (ofFin (fun i => rhs i (append ξ η))) =
-      ofFin (fun i => rhs' i (append (transport ξ) η'))) :
-    transport (fixGroup rhs η) = fixGroup rhs' η' :=
-  ContinuousHom.fix_fusion _ _ transport hbot hstep
+    (η : Env V Γ) (η' : Env W Λ) (φ : Env V Ξ →𝒄 Env W Ψ)
+    (hbot : φ ⊥ = ⊥)
+    (hstep : ∀ ξ, φ (ofFin (fun i => rhs i (append ξ η))) =
+      ofFin (fun i => rhs' i (append (φ ξ) η'))) :
+    φ (fixGroup rhs η) = fixGroup rhs' η' :=
+  ContinuousHom.fix_fusion _ _ φ hbot hstep
 
 /-- A strict family of continuous maps commuting with whole-group unfolding maps one
 simultaneous least fixed point to the other. -/
@@ -257,9 +293,10 @@ namespace Env
 
 @[deprecated (since := "2026-11-07")] alias rename := ScopedSignature.Env.renameContinuous
 @[deprecated (since := "2026-11-07")] alias rename_apply :=
-  ScopedSignature.Env.renameContinuous_apply
-@[deprecated (since := "2026-11-07")] alias rename_id := ScopedSignature.Env.rename_id
-@[deprecated (since := "2026-11-07")] alias rename_rename := ScopedSignature.Env.rename_rename
+  ScopedSignature.Env.renameContinuous_apply_apply
+@[deprecated (since := "2026-11-07")] alias rename_id := ScopedSignature.Env.renameContinuous_id
+@[deprecated (since := "2026-11-07")] alias rename_rename :=
+  ScopedSignature.Env.renameContinuous_renameContinuous
 @[deprecated (since := "2026-11-07")] alias cast_apply := ScopedSignature.Env.cast_apply
 @[deprecated (since := "2026-11-07")] alias ofFin := ScopedSignature.Env.ofFin
 @[deprecated (since := "2026-11-07")] alias ofFinContinuous :=
@@ -267,8 +304,10 @@ namespace Env
 @[deprecated (since := "2026-11-07")] alias empty := ScopedSignature.Env.empty
 @[deprecated (since := "2026-11-07")] alias cons := ScopedSignature.Env.cons
 @[deprecated (since := "2026-11-07")] alias append := ScopedSignature.Env.append
-@[deprecated (since := "2026-11-07")] alias rename_cons := ScopedSignature.Env.rename_cons
-@[deprecated (since := "2026-11-07")] alias rename_append := ScopedSignature.Env.rename_append
+@[deprecated (since := "2026-11-07")] alias rename_cons :=
+  ScopedSignature.Env.renameContinuous_cons
+@[deprecated (since := "2026-11-07")] alias rename_append :=
+  ScopedSignature.Env.renameContinuous_append
 @[deprecated (since := "2026-11-07")] alias consContinuous := ScopedSignature.Env.consContinuous
 @[deprecated (since := "2026-11-07")] alias appendContinuous :=
   ScopedSignature.Env.appendContinuous
@@ -276,7 +315,8 @@ namespace Env
 @[deprecated (since := "2026-11-07")] alias map_apply := ScopedSignature.Env.map_apply
 @[deprecated (since := "2026-11-07")] alias map_id := ScopedSignature.Env.map_id
 @[deprecated (since := "2026-11-07")] alias map_cons := ScopedSignature.Env.map_cons
-@[deprecated (since := "2026-11-07")] alias map_rename := ScopedSignature.Env.map_rename
+@[deprecated (since := "2026-11-07")] alias map_rename :=
+  ScopedSignature.Env.map_renameContinuous
 @[deprecated (since := "2026-11-07")] alias map_map := ScopedSignature.Env.map_map
 @[deprecated (since := "2026-11-07")] alias map_bot := ScopedSignature.Env.map_bot
 @[deprecated (since := "2026-11-07")] alias reindex := ScopedSignature.Env.transport
@@ -284,7 +324,8 @@ namespace Env
 @[deprecated (since := "2026-11-07")] alias fixGroup_unfold := ScopedSignature.Env.fixGroup_unfold
 @[deprecated (since := "2026-11-07")] alias fixGroup_le := ScopedSignature.Env.fixGroup_le
 @[deprecated (since := "2026-11-07")] alias fixGroup_congr := ScopedSignature.Env.fixGroup_congr
-@[deprecated (since := "2026-11-07")] alias fixGroup_rename := ScopedSignature.Env.fixGroup_rename
+@[deprecated (since := "2026-11-07")] alias fixGroup_rename :=
+  ScopedSignature.Env.fixGroup_renameContinuous
 @[deprecated (since := "2026-11-07")] alias fixGroup_fusion := ScopedSignature.Env.fixGroup_fusion
 @[deprecated (since := "2026-11-07")] alias fixGroup_map := ScopedSignature.Env.fixGroup_map
 
