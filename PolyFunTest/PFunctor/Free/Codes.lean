@@ -16,8 +16,10 @@ public import PolyFun.PFunctor.Free.WP.Cost
 `derive_free_sig` runs on two program-tree types with the option `(code := true)`: a tree type
 whose parameters precede the result type, with its bind, and a tree type in `Type 1` with a type
 field, an instance field, a proof field, dependent directions and an operation without fields.
-The remaining examples pin the relational lift over a generated code, the cost fold and the
-lawful monad of a free monad modulo an equational theory.
+It also runs on a result type in a universe of its own, on a universe declared by `universe`, on
+instance-implicit, implicit and strict-implicit parameters, and on a type with only a return
+constructor. The remaining examples pin the relational lift over a generated code, the cost fold
+and the lawful monad of a free monad modulo an equational theory.
 -/
 
 @[expose] public section
@@ -86,6 +88,90 @@ example : PFunctor.{1, 0} := PickGen.Sig.stop
 /-- The generated equivalence of `Pick` with the free monad over its code. -/
 example (α : Type) : Pick α ≃ FreeM (Code.interp PickGen.code) α :=
   PickGen.equivCode
+
+/-! ## A result type in a universe of its own -/
+
+/-- Programs over a result type in an arbitrary universe; the operations do not mention it. -/
+inductive Guess (α : Type*) : Type _ where
+  /-- Return a value. -/
+  | ret (a : α)
+  /-- Draw a number below `n` and continue with it. -/
+  | guess (n : Nat) (k : Fin n → Guess α)
+  /-- Fail. -/
+  | fail
+
+derive_free_sig Guess (code := true)
+
+/-- The signature of `Guess` takes no universe parameter. -/
+example : PFunctor.{0, 0} := Guess.Sig
+
+/-- The generated equivalence of `Guess` at a result type in `Type 2`. -/
+example (α : Type 2) : Guess α ≃ FreeM Guess.Sig α := Guess.equivFreeM
+
+/-! ## A universe declared by `universe` -/
+
+universe v
+
+/-- Programs whose operations choose an element of a type in the declared universe `v`. -/
+inductive Choose (α : Type v) : Type (v + 1) where
+  /-- Return a value. -/
+  | ret (a : α)
+  /-- Choose an element of `β`. -/
+  | choose (β : Type v) (k : β → Choose α)
+  /-- A step with one continuation. -/
+  | step (k : Choose α)
+
+derive_free_sig Choose (code := true)
+
+/-- The signature of `Choose` at the declared universe `v`. -/
+example : PFunctor.{v + 1, v} := Choose.Sig.{v}
+
+/-- The generated equivalence of `Choose` with the free monad over its code. -/
+example (α : Type v) : Choose α ≃ FreeM (Code.interp Choose.code) α := Choose.equivCode
+
+/-! ## Instance-implicit, implicit and strict-implicit parameters -/
+
+/-- Programs that ask questions of an inhabited type `Q` and receive answers of type `R`. -/
+inductive Quiz (Q : Type) [Inhabited Q] {R : Type} ⦃S : Type⦄ (α : Type) : Type where
+  /-- Return a value. -/
+  | ret (a : α)
+  /-- Ask a question and continue with its answer. -/
+  | ask (q : Q) (k : R → @Quiz Q _ R S α)
+  /-- Report a value of `S`. -/
+  | report (s : S) (k : @Quiz Q _ R S α)
+
+/-- The bind of `Quiz`. -/
+def Quiz.bind {Q : Type} [Inhabited Q] {R S α β : Type} :
+    @Quiz Q _ R S α → (α → @Quiz Q _ R S β) → @Quiz Q _ R S β
+  | .ret a, f => f a
+  | .ask q k, f => .ask q fun r => (k r).bind f
+  | .report s k, f => .report s (k.bind f)
+
+derive_free_sig Quiz (namespace := QuizGen) (bind := Quiz.bind) (code := true)
+
+/-- The generated equivalence of `Quiz` with the free monad over its signature. -/
+example (Q R S α : Type) [Inhabited Q] :
+    @Quiz Q _ R S α ≃ FreeM (@QuizGen.Sig Q _ R S) α :=
+  QuizGen.equivFreeM
+
+/-! ## Only a return constructor -/
+
+/-- Programs with no operation. -/
+inductive Done (α : Type) : Type where
+  /-- Return a value. -/
+  | ret (a : α)
+
+/-- The bind of `Done`. -/
+def Done.bind {α β : Type} : Done α → (α → Done β) → Done β
+  | .ret a, f => f a
+
+derive_free_sig Done (namespace := DoneGen) (bind := Done.bind) (code := true)
+
+/-- The signature of `Done` has no operation. -/
+example : IsEmpty DoneGen.Sig.A := ⟨nofun⟩
+
+/-- The generated equivalence of `Done` with the free monad over its code. -/
+example (α : Type) : Done α ≃ FreeM (Code.interp DoneGen.code) α := DoneGen.equivCode
 
 /-! ## The cost fold -/
 
