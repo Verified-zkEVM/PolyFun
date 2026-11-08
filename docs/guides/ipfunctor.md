@@ -733,3 +733,15 @@ instantiations.
 The stacked meanings have no value-level renaming or substitution laws, which
 `Term.denoteDomain` has at the signature level, and the ordinary fold `Model.denote` has no
 counterpart of `denoteDomain_map`.
+
+Spell value contexts in theorems about meanings as `τ.Term Θ k₀`, the spelling the generic
+lemmas use. The vectors tutorial's `repSeven_three` states `denoteDomain_map_closed` for
+`repSeven`, an application of a coerced instantiation. Defined with its value context written
+through the tutorial's abbreviation, as `[] : List (TyTerm [.size] .scheme)`, the same
+statement exceeds the default heartbeats: the elaborator unfolds both meanings instead of first
+identifying the two spellings of the context. With the generic spelling it checks at once.
+Smaller terms check with either spelling, because the cost is that of evaluating the meanings.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a lazy call-by-name
+meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
+`denoteDomain_map_closed`.
