@@ -35,7 +35,7 @@ variable {W : Type u} {S : W → Type v} {σ : ScopedFamily.{u, v, w, z} W S}
 
 @[simp] theorem nodeCount_node {w : W} {Γ : List (S w)} {a : S w} (op : σ.Op w a)
     (args : (p : σ.Arg op) → σ.Term (σ.world op p)
-      (σ.binders op p ++ Γ.map (σ.reindex op p)) (σ.sort op p)) :
+      (σ.binders op p ++ (σ.ambient op p).context Γ) (σ.sort op p)) :
     (node op args).nodeCount = 1 + ∑ p, (args p).nodeCount := rfl
 
 /-- Value renaming preserves description size across both sorts of binders. -/

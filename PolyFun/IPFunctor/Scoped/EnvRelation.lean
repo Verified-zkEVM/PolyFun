@@ -176,4 +176,11 @@ theorem Pointwise.symm {W : T → Type z} {η : Env V Γ} {ζ : Env W Δ} (h : P
 theorem pointwise_eq {η ζ : Env V Γ} (h : Pointwise η ζ) : η = ζ :=
   Forall₂.eq (fun _ _ _ e => eq_of_heq e) h
 
+/-- Environments of equal contexts and value families that agree at every binding position
+are heterogeneously equal. -/
+theorem heq_of_pointwise {V' : S → Type z} {Γ' : List S} (hΓ : Γ = Γ') (hV : V = V')
+    {η : Env V Γ} {ζ : Env V' Γ'} (h : Pointwise η ζ) : HEq η ζ := by
+  subst hΓ hV
+  exact heq_of_eq (pointwise_eq h)
+
 end IPFunctor.ScopedSignature.Env

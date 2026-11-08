@@ -544,6 +544,15 @@ context, and the result sort. Terms remain `IFreeM` trees. This supports type
 or numeric quantifiers without representing syntax as a callback that builds a
 different term for each instantiation.
 
+The field `ambient` says how a child sees the ambient value context. A child that stays in
+its parent's parameter context can `keep` that context. Its ambient context is then `Γ`
+itself, definitionally, so ambient variables keep their sorts and a denotation passes its
+environment unchanged. A child that changes parameter context moves each ambient sort along
+a `map`. `ScopedFamily.reindex σ op p` is the resulting sort map. At a child,
+`Ambient.context`, `Ambient.var`, `Ambient.env` and `Ambient.mapRenaming` replace `List.map`,
+`ScopedVar.map`, `Env.reindex` and `Renaming.map`. Each of their laws reduces to the
+`List.map` law at `map`.
+
 [`ScopedFamily.Hom`](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean) describes a
 parameter transformation by constructor-local equations. It checks how the
 parameter map lifts at every child, including compatibility with old variable
@@ -553,7 +562,7 @@ into an [`IPFunctor.Traversal`](../../PolyFun/IPFunctor/Free/Traversal.lean).
 `Term.map_rename` proves that mapping parameters commutes with value renaming.
 `Hom.comp` composes the constructor translations and their lifted parameter
 maps. `Term.map_map` identifies successive maps with this composite after
-normalizing the ambient context's two `List.map` applications.
+normalizing the mapped context's two `List.map` applications.
 `Hom.identity` transports between equal parameter contexts; `Term.map_identity`
 normalizes an identity map in one context, and `Term.map_identity_heq` handles
 distinct but provably equal parameter contexts.
@@ -568,8 +577,9 @@ Its self-transport simplifier accepts arbitrary equality proofs, while
 [`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) defines
 `Env.reindex f`, which moves an environment of `Γ` to `Γ.map f` by its original
 binding positions. No injectivity assumption is required: two parameters can
-instantiate to the same type without merging their bindings. `Renaming.map`,
-`Substitution.map` and `Substitution.reindex` are instances of `Env.reindex`.
+instantiate to the same type without merging their bindings. `Renaming.map` and
+`Substitution.map` are instances of `Env.reindex`, and `Substitution.reindex` is an instance
+of `Ambient.env`.
 Value renaming has identity and composition laws. The
 [`family substitution API`](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean)
 requires a language action for reindexing substitution images when entering a
@@ -591,7 +601,8 @@ This does not assume injectivity of sort maps or preservation of an interpretati
 simplifier also covers contexts that are only propositionally equal.
 
 The [constant-family adapter](../../PolyFun/IPFunctor/Scoped/ConstantFamily.lean)
-provides both proved round trips to the existing `ScopedSignature` API.
+provides both proved round trips to the existing `ScopedSignature` API. Every child keeps
+its ambient context, so the two polynomials agree definitionally.
 [`FamilySize`](../../PolyFun/IPFunctor/Scoped/FamilySize.lean) counts nodes when
 every constructor has finitely many children. The count excludes head payloads
 and measures neither execution cost nor the size of a semantic value.
@@ -625,9 +636,9 @@ errors and quantifier stages remain outside this generic layer.
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
-remaining free below a type binder and a value binder. Its `reindexAction` builds
-a lawful parameter action from parameter renaming, in steps that another language
-can repeat. It has no Cryptol or cryptography
+remaining free below a type binder and a value binder. Its `reindexAction` is the
+identity at children that keep their context and parameter renaming below a type
+binder, and it satisfies the whole substitution algebra. It has no Cryptol or cryptography
 dependency. [Public API checks](../../PolyFunTest/ModuleAPI/ScopedFamily.lean)
 and the separate documentation consumer exercise the same theorems through
 ordinary imports. The public API checks also substitute a lambda below both binder
