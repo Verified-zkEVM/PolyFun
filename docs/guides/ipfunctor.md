@@ -542,6 +542,18 @@ and the time grows exponentially with the depth.
 abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They need
 between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
 
+[`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
+lemma into a `Control.Semantics.CertifiedMeaning`. `Term.certifiedMeaning` certifies a term
+with one free variable, its input, against a native implementation. It needs two more facts.
+The representation relates each encoded input to a native representative (`represents`), and a
+representative determines its encoded output (`determines`). Totality says that the evaluator
+returns the representative of the implementation's result (`total`). When the evaluator returns
+it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn` there.
+`Term.liftFun_denoteDomain` states the fundamental lemma as `Relator.LiftFun`, the premise of
+`CertifiedMeaning.ofLiftFun`, so a language with function sorts can certify a closed function
+term through its relation at function sorts. The lazy-language tutorial certifies a program
+against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`.
+
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
@@ -737,3 +749,9 @@ Smaller terms check with either spelling, because the cost is that of evaluating
 The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a lazy call-by-name
 meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
 `denoteDomain_map_closed`.
+
+`Stacked.Model.certifiedMeaning` certifies a term with one free value variable at a type
+assignment, under the premises of `Term.certifiedMeaning`. A total evaluator can be its own
+implementation, so its totality premise holds by definition. The vectors tutorial encodes numbers
+and vectors of data faithfully and so certifies every term with one data input at every size
+assignment (`certifiedEvaluator`).

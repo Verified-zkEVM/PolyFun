@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Scoped.StackedInterpretation
+public import PolyFun.IPFunctor.Scoped.Certificate
 
 /-!
 # Size-indexed vectors as a two-level family
@@ -29,6 +29,10 @@ call-by-name meaning and a total evaluator interpret the heads through their eva
 annotations. The lazy meaning represents the evaluator (`denoteDomain_related`), and size
 instantiation commutes with the lazy meaning (`denoteDomain_map_closed`), with no proof for any
 individual head.
+
+Numbers and vectors of data have faithful encodings (`TShape.Data.embedding`). So the evaluator
+certifies the lazy meaning of every term with one data input, at every size assignment
+(`certifiedEvaluator`).
 -/
 
 public section
@@ -639,5 +643,66 @@ theorem repSeven_three :
       (model.denoteDomain SDom lazy repSeven (Term.substitutionEnv model.tyAlg three Env.empty)
         Env.empty) :=
   model.denoteDomain_map_closed SDom lazy repSeven three Env.empty
+
+/-! ## Certified evaluation on data
+
+Numbers and vectors of data are fully defined lazy values with a unique native reading. The
+evaluator is total, so it is its own implementation, and its totality obligation holds by
+definition. The fundamental lemma then certifies every term with one data input, at every size
+assignment. -/
+
+/-- Shapes of data: numbers and vectors of data, but no functions. -/
+inductive TShape.Data : TShape → Type where
+  | nat : TShape.Data .nat
+  | vec {a : TShape} : TShape.Data a → TShape.Data (.vec a)
+
+namespace TShape.Data
+
+/-- Encode native data as a fully defined lazy value. -/
+@[expose] noncomputable def encode : {a : TShape} → a.Data → a.native → a.dom
+  | _, .nat, n => (DomainResult.value ⟨n⟩ : DomainResult Empty (DiscreteOrder ℕ))
+  | _, .vec h, xs => fun i => h.encode (xs i)
+
+theorem encode_injective {a : TShape} (h : a.Data) : Function.Injective h.encode := by
+  induction h with
+  | nat => exact fun _ _ he => congrArg DiscreteOrder.value (DomainResult.value_inj.mp he)
+  | vec h ih => exact fun _ _ he => funext fun i => ih (congrFun he i)
+
+/-- Native data embeds faithfully into the lazy values of its shape. -/
+@[expose] noncomputable def embedding {a : TShape} (h : a.Data) : a.native ↪ a.dom :=
+  ⟨h.encode, h.encode_injective⟩
+
+/-- An encoding represents its native value. -/
+theorem repT_encode {a : TShape} (h : a.Data) (x : a.native) : RepT a (h.encode x) x := by
+  induction h with
+  | nat => rfl
+  | vec h ih => exact fun i => ih (x i)
+
+/-- A lazy value of a data shape that represents a native value is its encoding. -/
+theorem eq_encode_of_repT {a : TShape} (h : a.Data) {d : a.dom} {x : a.native}
+    (hr : RepT a d x) : d = h.encode x := by
+  induction h with
+  | nat => exact hr
+  | vec h ih => exact funext fun i => ih (hr i)
+
+end TShape.Data
+
+/-- The total evaluator certifies the lazy meaning of a term with one data input, at the size
+assignment `ρ`. -/
+@[expose] noncomputable def certifiedEvaluator {Θ : List Kind} {A B : TySig.Term Θ .type}
+    (t : Tm Θ [mono A] (mono B)) (ρ : Env Den Θ) (hA : (A.denote tyAlg ρ).shape.Data)
+    (hB : (B.denote tyAlg ρ).shape.Data) :
+    Control.Semantics.CertifiedMeaning hA.embedding hB.embedding :=
+  model.certifiedMeaning lazy_related t ρ (input := hA.embedding) (output := hB.embedding)
+    (nativeIn := id) (nativeOut := id) hA.repT_encode (fun _ _ hv => hB.eq_encode_of_repT hv)
+    (fun x => model.denote SNative native t ρ (Env.single x)) (fun _ => rfl)
+
+/-- `(λ x. x) x`, with one numeric input. -/
+@[expose] def applyIdentity : Tm [] [mono nat] (mono nat) :=
+  appT nat nat (lamT nat nat (varT .zero)) (varT .zero)
+
+/-- The certified implementation of `applyIdentity` is the identity. -/
+theorem certifiedEvaluator_applyIdentity (n : ℕ) :
+    (certifiedEvaluator applyIdentity Env.empty .nat .nat).implementation n = n := rfl
 
 end Examples.ScopedVectors
