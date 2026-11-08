@@ -253,6 +253,7 @@ public import PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Logic.HEq
+public import PolyFun.Logic.KernelRfl
 public import PolyFun.PFunctor.Adjunctions
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Bound

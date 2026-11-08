@@ -250,6 +250,53 @@ for ordinary_form in \
   fi
 done
 
+# No file opens an external library (Lean core, Std, Batteries, Mathlib, CSLib or any other
+# dependency). Bodies are opened only inside the library that owns them, and this repository owns
+# none of its dependencies; a body that module mode hides must be reached through a public
+# equation. `import all` may name only this repository's own libraries.
+own_library_pattern="${import_all_prefix}(PolyFun[[:alnum:]_]*|ToCslib|ComplexityBackends|Examples)([[:space:]]|\.|$)"
+
+opens_external_library() {
+  local opened
+  opened=$(grep -E "${import_all_prefix}" | grep -vE "$own_library_pattern" || true)
+  [[ -n "$opened" ]]
+}
+
+for external_form in \
+    'import all Mathlib.Data.List.Sort' \
+    'public import all Batteries.Data.List.Basic' \
+    'meta import all Init.Data.List.Sort.Basic' \
+    'public meta import all Lean.Elab.Command' \
+    'import all Std.Data.HashMap' \
+    'import all Cslib.Foundations.Data.FreeM'; do
+  if ! opens_external_library <<< "$external_form"; then
+    echo "ERROR: external-library matcher does not recognize: $external_form" >&2
+    status=1
+  fi
+done
+
+for own_form in \
+    'import all PolyFun.IPFunctor.Scoped.Basic' \
+    'import all PolyFunTest.Realizability.Quantitative' \
+    'public import all ToCslib.Order.Basic' \
+    'meta import all ComplexityBackends.CslibSingleTape.Counting' \
+    'import all Examples.Tutorials.Requests' \
+    'import Mathlib.Data.List.Sort' \
+    '-- import all Mathlib.Data.List.Sort'; do
+  if opens_external_library <<< "$own_form"; then
+    echo "ERROR: external-library matcher must not classify: $own_form" >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  if opens_external_library < "$file"; then
+    echo "ERROR: $file uses 'import all' on an external library. Reach a hidden body through a" >&2
+    echo "public equation instead; only this repository's own libraries may be opened." >&2
+    status=1
+  fi
+done < <(git ls-files -- '*.lean')
+
 backend_import_all_allowed() {
   case "$1" in
     PolyFunTest/ModuleAPI/*) return 1 ;;
