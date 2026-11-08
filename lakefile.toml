@@ -14,7 +14,7 @@ lintDriverArgs = [
   "Examples.Tutorials.UpdatePolicies", "Examples.Tutorials.ReviewableWorkflows",
   "Examples.Tutorials.FairWorkQueues", "Examples.Tutorials.BoundedController",
   "Examples.Tutorials.ScopedPrograms", "Examples.Tutorials.ScopedExecution",
-  "Examples.Tutorials.ScopedFamily",
+  "Examples.Tutorials.ScopedFamily", "Examples.Tutorials.ScopedDomains",
   "Examples.Tutorials.LazyLanguages",
   "Examples.IO.Console", "Examples.IO.Storage",
   "Examples.Parliament", "PolyFunParliamentMain"

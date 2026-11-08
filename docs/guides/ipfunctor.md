@@ -515,6 +515,30 @@ and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
 constructor algebra. Algebras receive argument meanings as functions of new bound
 values, so entering a binder does not execute its body.
 
+[`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
+interprets a binding signature continuously. A `DomainInterpretation σ V` receives each
+argument as a continuous function of only the variables that argument binds, over an
+unbundled family of omega-complete partial orders `V`. `Term.denoteDomain` folds it into
+continuous functions of the environment. It satisfies `denoteDomain_rename`,
+`denoteDomain_subst` and `denoteDomain_substOne` for every such algebra. Because arguments
+arrive as continuous functions, a constructor can also take a least fixed point of one.
+`Term.denoteDomain_related` is the fundamental lemma. Let a continuous algebra and an
+ordinary `Interpretation` relate their results whenever their arguments are related, by a
+relation `R : ∀ a, V a → W a → Prop`. Then every term has related meanings in environments
+related by `Env.LiftRel R`. The
+[lazy-language tutorial](../../Examples/Tutorials/ScopedDomains.lean) relates a lazy meaning
+with recursion to a call-by-value evaluator this way.
+
+A constructor that returns a function should return `Env.abstraction` of its body's meaning, in
+an `ofFun` clause, as the tutorial's `lam` does. `Env.abstraction f` is `Env.bindOne f` with its
+proof of continuity stated at its own function. The form matters when the kernel checks an
+equation between nested abstractions, such as an importer's equation whose right side writes each
+continuous map `ofFun G (id (α := ωScottContinuous G) k)`. The kernel compares two maps
+`ofFun F h` by the types of their proofs and then by their functions. When each proof is stated at
+its function, the second comparison repeats the first and the kernel reuses it, so the check takes
+time linear in the nesting depth. A composite with `Env.bindOne` unfolds to a structure instead,
+and the time grows exponentially with the depth.
+
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
@@ -613,6 +637,8 @@ of `DomainResult` computations. Extension, append, renaming and `Env.map` are
 continuous maps. `ωScottContinuous_cons` and `ωScottContinuous_single` let
 `fun_prop` prove continuity through extension. `Env.bindOne` turns the meaning of an
 argument that binds one variable into a continuous function of that variable.
+`Env.abstraction` is the same map, written so that the kernel compares nested abstractions in
+linear time.
 `Env.map` applies a family of continuous maps along a sort map. `Env.transport` is
 its instance for an equation of bundled
 [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) carriers. With bottom
@@ -625,7 +651,8 @@ commutes with whole-group unfolding.
 
 [`Scoped.EnvRelation`](../../PolyFun/IPFunctor/Scoped/EnvRelation.lean) defines
 `Env.Forall₂`, which relates two environments by binding position for any family of
-relations and assumes no order on the values. It is preserved by extension, append
+relations and assumes no order on the values. `Env.LiftRel` is the form for two environments
+of one context and a relation indexed by one sort. It is preserved by extension, append
 and assembly, and by positional reindexing on either side (`Forall₂.reindex_left` and
 `Forall₂.reindex_right`). `Env.Pointwise` is its instance for heterogeneous equality.
 [`Scoped.DomainRelation`](../../PolyFun/IPFunctor/Scoped/DomainRelation.lean) derives
