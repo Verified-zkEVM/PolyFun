@@ -802,9 +802,30 @@ a `Tree`, and names an erasure `erase : Term → Mirror`, an exposed fold. For e
 `importDecls` adds:
 
 - `d`, the quoted term, as an exposed definition, whose type the kernel checks;
+- the frontend's auxiliary definitions of `d` (`Extra`), such as its source or its meaning,
+  exposed, and compiled when `Extra.compile` holds, `noncomputable` otherwise;
 - `d.accepted : erase d = src`, by `Eq.refl` (the default) or by evaluating a `Decidable`
   instance, which the kernel decides;
-- the frontend's equation lemmas, each by `Eq.refl`, with right sides written without syntax.
+- the frontend's equation lemmas, each by `Eq.refl`, with right sides written without syntax;
+- the frontend's other theorems about `d` (`ExtraTheorem`), each with a proof term the frontend
+  assembles in meta code. Only the kernel checks it, so the frontend can submit a proof whose
+  elaboration from source would exceed the budget.
+
+The driver prepares a declaration's steps before it adds any of them, so the elaborator cannot
+infer the type of a declaration's own auxiliary definitions. An equation whose left side is one of
+them, possibly applied, takes that definition's `Extra.type` instead; given the type, `reflDecl`
+reads nothing from the environment. `theoremDecl` reads nothing from it either, so a theorem's
+statement and proof can name the declaration and its auxiliary definitions.
+
+Bundle declarations (`BundleDecl`), such as a table the acceptance theorems mention, come before
+the first declaration.
+
+A frontend can name, for each declaration it generates, the environment linters that skip it:
+`Elaborated.nolint` for the term, `Extra.nolint` and `ExtraTheorem.nolint`, and
+`Elaborated.equationNolint` for the equation lemmas. The driver marks the declaration
+`@[nolint …]` in the step that adds it, so a rollback removes the mark with the declaration. The
+marks are for findings that hold by construction, such as a name that the source language
+dictates. A hand-written declaration keeps every linter.
 
 [`Import/Quote.lean`](../../PolyFun/IPFunctor/Scoped/Import/Quote.lean) turns a `Tree` into a
 term. A node carries a `Head` of the frontend's table, usually `Head.const` of a smart
@@ -821,26 +842,33 @@ that names `addDecl`, `addDeclCore`, `addDeclWithoutChecking`, `addAndCompile`, 
 added by another route, such as elaborating a command, is outside it.
 `submit` runs the kernel check synchronously, with `debug.skipKernelTC` off, within a positive
 `Budget` of heartbeats, at most the ambient `maxHeartbeats` when that is positive, and compiles a
-definition that should be compiled in the same synchronous step. When the kernel rejects a
+definition that should be compiled in the same synchronous step; it returns the compilation's
+time, so that `Config.report` gives it apart from the kernel's. When the kernel rejects a
 declaration, `addDecl` keeps its statement as an axiom, even when the error is caught or
 swallowed by `#guard_msgs`. `atomically`, the machinery's only handler, restores the environment
 and rethrows, also after a heartbeat or recursion-depth limit, which an ordinary `try` does not
-catch. A failed import therefore stops at the declaration, and the environment returns to its
-state before that declaration: a kernel rejection, a compilation error, a frontend error or a
-resource limit leaves none of the declaration's definitions, compiled code or fallback axioms,
-while the declarations before it stay. Messages logged before the failure remain.
-[`Import/Driver.lean`](../../PolyFun/IPFunctor/Scoped/Import/Driver.lean) runs a frontend in
-commit mode, or in check mode, which adds and compiles nothing and reports the kernel's verdict on
-each step. Rejection tests use check mode.
+catch. [`Import/Driver.lean`](../../PolyFun/IPFunctor/Scoped/Import/Driver.lean) runs a frontend
+in commit mode, `atomically` over the whole import. Any failure restores the environment from
+before the import: a kernel rejection, a compilation error, a frontend error or a resource limit.
+None of the import's declarations, compiled code or fallback axioms remain; messages logged before
+the failure do. Check mode adds and compiles nothing; it checks every step against an
+accumulating kernel environment and reports each declaration's verdict. Rejection tests use check
+mode.
+
+The kernel's allocations count against the elaborator's heartbeats, which accumulate over a
+command. The driver therefore runs each declaration, its elaboration included, `withBudget`: a
+fresh heartbeat count with the import's budget as its limit. A bundle whose declarations each fit
+the budget imports in one command, however many it has.
 
 **Trust.** The kernel checks that each imported term has the type the frontend declares and that
 each theorem is proved. It does not check that these statements say what the import should
 establish: the frontend chooses them, and they are trusted. The trusted part of a frontend is
-its declared type of each term, the two sides of each acceptance theorem and the statements of
-its equation lemmas; the decoder from the external file to the mirror; the mirror's `ToExpr`
-instances, which write the source as a term; and the exposed erasure. The source side of an
-acceptance theorem must come from the decoded file, not from the term. Only the `Tree` quoted into
-the term is untrusted: a mistake in it is a kernel type mismatch or a failed acceptance theorem.
+its declared type of each term, its auxiliary definitions, such as a declaration's `source`, the
+two sides of each acceptance theorem, and the statements of its equation lemmas and other
+theorems; the decoder from the external file to the mirror; the mirror's `ToExpr` instances,
+which write the source as a term; and the exposed erasure. The source side of an acceptance
+theorem must come from the decoded file, not from the term. Only the `Tree` quoted into the term
+is untrusted: a mistake in it is a kernel type mismatch or a failed acceptance theorem.
 
 Never set `debug.skipKernelTC` where imported declarations are accepted. With it set,
 `addDecl` admits a declaration unchecked, and the declaration depends on no axiom, so neither
@@ -857,8 +885,12 @@ builds.
 The [toy JSON frontend](../../PolyFunTest/IPFunctor/Scoped/Import/Toy.lean) imports the
 [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean)'s language, inserting a coercion
 after each size instantiation. Its [fixtures](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean)
-cover acceptance by both proofs, an equation lemma, a wrong scheme and a mismatched source
-rejected in check mode, a budget the kernel exhausts, and two failures in commit mode, a kernel
-rejection and a declaration that the kernel accepts and the code generator cannot compile. Neither
-leaves a declaration or an axiom behind. The validation wrapper's axiom sweep includes both
-modules.
+cover acceptance by both proofs, auxiliary and bundle declarations, a compiled auxiliary
+definition that compiled code runs, equation lemmas, one of them on an auxiliary definition, a
+theorem whose proof term only the kernel checks, a wrong proof of that theorem, a wrong scheme and a
+mismatched source rejected in check mode, budgets that the kernel or the elaboration exhausts, a
+bundle that fits only with per-declaration scopes, and generated declarations that `#lint` skips
+beside a hand-written one it reports. In commit mode, neither a rejection in the middle of a
+bundle, nor a wrong proof of a theorem, nor a declaration that the kernel accepts and the code
+generator cannot compile leaves a declaration or an axiom behind. The
+validation wrapper's axiom sweep includes both modules.
