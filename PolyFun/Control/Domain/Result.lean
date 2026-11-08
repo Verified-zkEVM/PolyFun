@@ -27,7 +27,8 @@ into any pointed domain, so a family of meanings needs no further suspension.
 
 `valueEmbedding` embeds returned values, and `map` changes them without any order, so a decoder
 into results over native values is a `Control.Semantics.CertifiedMeaning` into
-`valueEmbedding`.
+`valueEmbedding`. `toOption` keeps a returned value and forgets the difference between bottom and
+an error.
 -/
 
 public section
@@ -91,6 +92,26 @@ an order, so `map` also reads a result into a type of native values. -/
 
 @[simp] theorem map_value (f : α → β) (x : α) :
     map f (value x : DomainResult ε α) = value (f x) := rfl
+
+/-- Keep a value, and send bottom and every error to `none`. -/
+@[expose] def toOption : DomainResult ε α → Option α
+  | ⊥ => none
+  | some (.inl _) => none
+  | some (.inr x) => some x
+
+@[simp] theorem toOption_bot : toOption (⊥ : DomainResult ε α) = none := rfl
+
+@[simp] theorem toOption_error (e : ε) : toOption (error e : DomainResult ε α) = none := rfl
+
+@[simp] theorem toOption_value (x : α) : toOption (value x : DomainResult ε α) = some x := rfl
+
+@[simp]
+theorem toOption_comp_value : toOption ∘ (value : α → DomainResult ε α) = some := rfl
+
+/-- Reading a value commutes with changing it. -/
+@[simp] theorem toOption_map (f : α → β) (d : DomainResult ε α) :
+    toOption (map f d) = (toOption d).map f := by
+  induction d using inductionOn <;> rfl
 
 variable [OmegaCompletePartialOrder α] [OmegaCompletePartialOrder β]
 
