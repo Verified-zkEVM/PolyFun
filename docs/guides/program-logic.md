@@ -219,7 +219,9 @@ local instance : Anchored m₁ m₂ Prop := MonadAttach.anchoredPropDemonic
 ```
 
 Use the `Angelic` definitions with the same pattern when existential support is
-the intended observation. `ReaderT` itself is not `ExactMonadAttach`; its named
+the intended observation. PolyFun's measure companions supply a coupling algebra,
+`ExpectationWP.couplingAlgebra`, as another named definition to install the same way; see
+[probability](probability.md). `ReaderT` itself is not `ExactMonadAttach`; its named
 relational lifts instead reason at explicit left/right environments.
 
 ## Support: which interface is canonical

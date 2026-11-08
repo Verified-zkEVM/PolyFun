@@ -220,9 +220,46 @@ the rest of `ToCslib`, they import no PolyFun module.
   subprobability measure. The observation need not preserve bind, so it may fix an initial state
   or an environment. `SemanticsVia.ofEvalDistSemantics`, `SemanticsVia.optionT` and
   `SemanticsVia.exceptT` bundle the instances above.
+- **Couplings**
+  ([`Measure/Coupling`](../../ToCslib/MeasureTheory/Measure/Coupling.lean),
+  [`Measure/Coupling/Bind`](../../ToCslib/MeasureTheory/Measure/Coupling/Bind.lean)).
+  Mathlib has no couplings. `Measure.IsCoupling c μ ν` states that the joint measure `c` has
+  marginals `μ` and `ν`, and `Measure.Coupling μ ν` bundles such a measure. The constructors are
+  the diagonal, the graph of a measurable map, Dirac pairs, the swap and pushforwards. Finite
+  measures of the same total mass are coupled by their normalized product
+  (`IsCoupling.smul_prod`), and only such measures have a coupling. A coupling concentrated on the
+  graph of a measurable map is that map's graph coupling (`IsCoupling.joint_eq_map_of_ae_eq`), and
+  composes with any coupling of its first marginal (`IsCoupling.trans_of_ae_eq`). Couplings of
+  arbitrary relations do not compose in these modules. `IsCoupling.bind` composes a coupling with a
+  measurable family of conditional couplings.
+- **Relational program logic**
+  ([`Monad/Measure/Relational`](../../PolyFun/Control/Monad/Measure/Relational.lean),
+  [`Monad/Measure/Relational/Bind`](../../PolyFun/Control/Monad/Measure/Relational/Bind.lean),
+  [`Monad/Measure/Relational/Deterministic`](../../PolyFun/Control/Monad/Measure/Relational/Deterministic.lean)).
+  `ExpectationWP.CouplingPost μ ν R` states that some coupling of `μ` and `ν` satisfies `R` almost
+  everywhere, and `ExpectationWP.RelWP mx my R` states it of two output measures, possibly in
+  different monads. `ExpectationWP.eRelWP` is the best coupled expectation of a post-expectation.
+  A coupling concentrated on the diagonal has equal marginals even when the diagonal is not
+  measurable, so in a discrete structure an equality coupling gives equality in distribution
+  (`EvalDistEq.of_coupling`, `EvalDistEq.of_relWP_eq`). The converse needs a measurable diagonal
+  (`EvalDistEq.relWP_eq`) or countable concentration
+  (`EvalDistEq.relWP_eq_of_ae_mem_countable`). The bind rules take an explicit measurable family of
+  conditional couplings, or pointwise witnesses when the marginals concentrate on countable sets
+  (`CouplingPost.bind_of_countable`).
+- **Countable support and the coupling algebra**
+  ([`Monad/Measure/Countable`](../../PolyFun/Control/Monad/Measure/Countable.lean),
+  [`Monad/Measure/Relational/Algebra`](../../PolyFun/Control/Monad/Measure/Relational/Algebra.lean)).
+  `CountableEvalDist m` states that every output measure is concentrated on a countable set. `Id`,
+  `Option`, `Except ε`, and free programs over countable discrete answers satisfy it. Under it, a
+  pointwise relational judgment composes by bind with no measurability obligation
+  (`relWP_bind_of_countableEvalDist`), and equality in distribution is the equality coupling
+  (`evalDistEq_iff_relWP_eq`). `ExpectationWP.couplingAlgebra m₁ m₂` presents `RelWP`, read in the
+  discrete structures, as a `MAlgRelOrdered m₁ m₂ Prop`, so PolyFun's relational triple rules apply
+  to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
-so VCVio can import them without renaming.
+so VCVio can import them without renaming. The coupling predicates therefore live in VCVio's
+`ExpectationWP` namespace, apart from the abstract `MAlgRelOrdered.RelWP`.
 
 ## Relation to VCVio and to interaction cost
 

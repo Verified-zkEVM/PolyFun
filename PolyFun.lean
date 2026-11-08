@@ -38,6 +38,7 @@ public import PolyFun.Control.Monad.Indexed
 public import PolyFun.Control.Monad.Iter
 public import PolyFun.Control.Monad.Iter.Instances
 public import PolyFun.Control.Monad.Measure
+public import PolyFun.Control.Monad.Measure.Countable
 public import PolyFun.Control.Monad.Measure.Deterministic
 public import PolyFun.Control.Monad.Measure.EvalDistEq
 public import PolyFun.Control.Monad.Measure.Event
@@ -45,6 +46,10 @@ public import PolyFun.Control.Monad.Measure.ExceptT
 public import PolyFun.Control.Monad.Measure.Failure
 public import PolyFun.Control.Monad.Measure.Lossless
 public import PolyFun.Control.Monad.Measure.OptionT
+public import PolyFun.Control.Monad.Measure.Relational
+public import PolyFun.Control.Monad.Measure.Relational.Algebra
+public import PolyFun.Control.Monad.Measure.Relational.Bind
+public import PolyFun.Control.Monad.Measure.Relational.Deterministic
 public import PolyFun.Control.Monad.Measure.SemanticsVia
 public import PolyFun.Control.Monad.Measure.WithFailure
 public import PolyFun.Control.Monad.Ordered
