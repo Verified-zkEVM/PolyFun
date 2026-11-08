@@ -179,15 +179,28 @@ example (α : Type) : Done α ≃ FreeM (Code.interp DoneGen.code) α := DoneGen
 abbrev coinP : PFunctor.{0, 0} := ⟨PUnit, fun _ => Bool⟩
 
 /-- Two queries cost two at the unit charge. -/
-example : FreeM.cost (P := coinP) (fun _ => 1)
+example : FreeM.cost (P := coinP) (fun _ => (1 : ℕ∞))
     (FreeM.liftBind PUnit.unit fun _ => FreeM.liftBind PUnit.unit fun b => FreeM.pure b) = 2 := by
   simp only [FreeM.cost_liftBind, FreeM.pure_eq_pure, FreeM.cost_pure, ciSup_const, add_zero]
   exact one_add_one_eq_two
 
-/-- Programs related by the relational lift have the same cost. -/
+/-- Programs related by the relational lift have the same cost, at the cast of a natural-number
+charge. -/
 example {α β : Type} (R : α → β → Prop) (χ : coinP.A → ℕ) (x : coinP.FreeM α)
-    (y : coinP.FreeM β) (h : FreeRel coinP R x y) : FreeM.cost χ x = FreeM.cost χ y :=
-  h.cost_eq χ
+    (y : coinP.FreeM β) (h : FreeRel coinP R x y) :
+    FreeM.cost (fun a => (χ a : ℕ∞)) x = FreeM.cost (fun a => (χ a : ℕ∞)) y :=
+  h.cost_eq _
+
+/-- The same holds at a vector charge, whose cost lives in another complete lattice. -/
+example {α β : Type} (R : α → β → Prop) (c : coinP.A → Bool → ℕ∞) (x : coinP.FreeM α)
+    (y : coinP.FreeM β) (h : FreeRel coinP R x y) : FreeM.cost c x = FreeM.cost c y :=
+  h.cost_eq c
+
+/-- The cost of a natural-number charge is the charge fold at its cast. -/
+example {α : Type} (χ : coinP.A → ℕ) (x : coinP.FreeM α) :
+    FreeM.cost (fun a => (χ a : ℕ∞)) x =
+      FreeM.wpFold (OpSpec.charge fun a => (χ a : ℕ∞)) x fun _ => 0 :=
+  FreeM.cost_eq_wpFold _ x
 
 /-! ## Free monads modulo a theory -/
 

@@ -6,15 +6,16 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.WP.Upstream
-public import PolyFun.PFunctor.Bound
+public import PolyFun.PFunctor.Free.Cost.Value
 public import Mathlib.Data.ENat.Lattice
 
 /-!
 # Charges: worst-case cost as a weakest-precondition fold
 
-`OpSpec.charge c` reads a call at `a` as costing `c a`, followed by its worst continuation:
-`c a + ⨆ b, k b`. Its fold `wpFold (OpSpec.charge c) x post` is the worst-case charge-to-go of
-`x`, where `post` gives the cost of each leaf.
+`OpSpec.charge c` (`PolyFun.PFunctor.Free.Cost.Value`) reads a call at `a` as costing `c a`,
+followed by its worst continuation: `c a + ⨆ b, k b`. Its fold `wpFold (OpSpec.charge c) x post`
+is the worst-case charge-to-go of `x` (`FreeM.costWith`), where `post` gives the cost of each
+leaf. This module states its `ℕ∞` laws in fold form and connects roll budgets to core triples.
 
 * `isRollBound_iff_wpFold_charge`: subtractive per-position budgets
   (`IsRollBound x n (fun a b => c a ≤ b) (fun a b => b - c a)`) are exactly upper bounds on the
@@ -30,6 +31,8 @@ public import Mathlib.Data.ENat.Lattice
   bad-event indicator plus the remaining budget, it is the union bound over the calls.
   `triple_liftM_ranked` is the subtractive natural-number budget (a call at `a` consumes `c a`)
   and `triple_liftM_ranked_total` the unit-charge one.
+* `triple_liftM_of_isChargeBound`: the same over a charge bound in any cost type, with ranks
+  indexed by the amount spent.
 * `triple_liftM_invariant`: the unranked case, in which every call preserves one assertion.
 
 Under the upper-bound reading `(OpSpec.charge c).toUpperWPMonad (OpSpec.charge_mono c)`, a triple
@@ -41,36 +44,11 @@ the remaining condition to the fold.
 
 @[expose] public section
 
-universe uA uB uA₂ v w z
+universe uA uB uA₂ uB₂ v w z
 
 open Std.WP
 
 namespace PFunctor
-
-namespace OpSpec
-
-variable {P : PFunctor.{uA, uB}}
-
-/-- The worst-case charge reading: a call at `a` costs `c a`, followed by the worst
-continuation. -/
-noncomputable def charge {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) : OpSpec P R :=
-  fun a k => c a + ⨆ b, k b
-
-@[simp]
-theorem charge_apply {R : Type w} [CompleteLattice R] [Add R] (c : P.A → R) (a : P.A)
-    (k : P.B a → R) :
-    charge c a k = c a + ⨆ b, k b :=
-  rfl
-
-/-- The charge reading is monotone whenever addition is. -/
-theorem charge_mono {R : Type w} [CompleteLattice R] [Add R] [AddLeftMono R] (c : P.A → R) :
-    (charge c).Monotone := by
-  intro a k k' hk
-  change c a + ⨆ b, k b ≤ c a + ⨆ b, k' b
-  gcongr with b
-  exact hk b
-
-end OpSpec
 
 namespace FreeM
 
@@ -78,35 +56,12 @@ variable {P : PFunctor.{uA, uB}} {α : Type uB}
 
 /-! ## Budgets are charge bounds -/
 
-/-- Subtractive per-position budgets are exactly upper bounds on the worst-case charge fold. -/
+/-- Subtractive per-position budgets are exactly upper bounds on the worst-case charge fold: the
+natural-number case of `isChargeBound_iff_cost_natCast_le`. -/
 theorem isRollBound_iff_wpFold_charge (c : P.A → ℕ) (x : FreeM P α) (n : ℕ) :
     IsRollBound x n (fun a b => c a ≤ b) (fun a b => b - c a) ↔
-      wpFold (OpSpec.charge fun a => (c a : ℕ∞)) x (fun _ => 0) ≤ n := by
-  induction x generalizing n with
-  | pure x => exact iff_of_true trivial (by simp)
-  | lift_bind a r ih =>
-    rw [isRollBound_lift_bind_iff]
-    change _ ↔ ((c a : ℕ∞) + ⨆ b, wpFold _ (r b) fun _ => 0) ≤ (n : ℕ∞)
-    constructor
-    · rintro ⟨hc, hr⟩
-      have hsup : (⨆ b, wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) fun _ => 0) ≤
-          ((n - c a : ℕ) : ℕ∞) := iSup_le fun b => (ih b (n - c a)).1 (hr b)
-      calc (c a : ℕ∞) + ⨆ b, wpFold _ (r b) (fun _ => 0)
-          ≤ (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by gcongr
-        _ = n := by rw [← Nat.cast_add, Nat.add_sub_cancel' hc]
-    · intro h
-      have hc : c a ≤ n := by
-        have : (c a : ℕ∞) ≤ n := le_trans le_self_add h
-        exact_mod_cast this
-      refine ⟨hc, fun b => (ih b (n - c a)).2 ?_⟩
-      have hb : wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) (fun _ => 0) ≤
-          ⨆ b, wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) fun _ => 0 :=
-        le_iSup (fun b => wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) fun _ => 0) b
-      have h' : (c a : ℕ∞) + wpFold (OpSpec.charge fun a => (c a : ℕ∞)) (r b) (fun _ => 0) ≤
-          (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by
-        rw [← Nat.cast_add, Nat.add_sub_cancel' hc]
-        exact le_trans (by gcongr) h
-      exact (ENat.add_le_add_iff_left (ENat.natCast_ne_top _)).1 h'
+      wpFold (OpSpec.charge fun a => (c a : ℕ∞)) x (fun _ => 0) ≤ n :=
+  (isChargeBound_iff_isRollBound_nat x c n).symm.trans isChargeBound_iff_cost_natCast_le
 
 /-- Total roll bounds are unit-charge bounds. -/
 theorem isTotalRollBound_iff_wpFold_charge (x : FreeM P α) (n : ℕ) :
@@ -117,38 +72,19 @@ theorem isTotalRollBound_iff_wpFold_charge (x : FreeM P α) (n : ℕ) :
 /-! ## Simulation overhead -/
 
 /-- The charge fold splits off the continuation: the charge-to-go is at most the program's own
-charge plus the worst continuation value. -/
-theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞) {β : Type uB} (y : FreeM Q β)
+charge plus the worst continuation value. This is `costWith_le_cost_add` in `ℕ∞`. -/
+theorem wpFold_charge_le {Q : PFunctor.{uA₂, uB₂}} (c : Q.A → ℕ∞) {β : Type v} (y : FreeM Q β)
     (k : β → ℕ∞) :
-    wpFold (OpSpec.charge c) y k ≤ wpFold (OpSpec.charge c) y (fun _ => 0) + ⨆ b, k b := by
-  induction y with
-  | pure b => simpa using le_iSup k b
-  | lift_bind a r ih =>
-    change c a + (⨆ u, wpFold _ (r u) k) ≤ (c a + ⨆ u, wpFold _ (r u) fun _ => 0) + ⨆ b, k b
-    rw [add_assoc]
-    gcongr
-    refine iSup_le fun u => (ih u).trans ?_
-    gcongr
-    exact le_iSup (fun u => wpFold (OpSpec.charge c) (r u) fun _ => 0) u
-
-/-- The worst-case charge of a handler's implementation of the call at `a`. -/
-noncomputable def handlerCost {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞)
-    (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) : ℕ∞ :=
-  wpFold (OpSpec.charge c) (handler a) fun _ => 0
+    wpFold (OpSpec.charge c) y k ≤ wpFold (OpSpec.charge c) y (fun _ => 0) + ⨆ b, k b :=
+  costWith_le_cost_add y k
 
 /-- **Simulation overhead.** A program simulated through a handler costs at most the program with
-each call at `a` charged the handler's worst-case cost at `a`. -/
-theorem wpFold_charge_liftM_le {Q : PFunctor.{uA₂, uB}} (c : Q.A → ℕ∞)
+each call at `a` charged the handler's worst-case cost at `a`. This is `cost_liftM_le` in `ℕ∞`. -/
+theorem wpFold_charge_liftM_le {Q : PFunctor.{uA₂, uB₂}} (c : Q.A → ℕ∞)
     (handler : (a : P.A) → FreeM Q (P.B a)) (x : FreeM P α) :
     wpFold (OpSpec.charge c) (x.liftM handler) (fun _ => 0) ≤
-      wpFold (OpSpec.charge (handlerCost c handler)) x (fun _ => 0) := by
-  rw [wpFold_liftM]
-  induction x with
-  | pure x => exact le_rfl
-  | lift_bind a r ih =>
-    change wpFold (OpSpec.charge c) (handler a) (fun u => wpFold _ (r u) _) ≤
-      handlerCost c handler a + ⨆ u, wpFold _ (r u) _
-    exact (wpFold_charge_le c (handler a) _).trans (add_le_add (le_refl _) (iSup_mono ih))
+      wpFold (OpSpec.charge (handlerCost c handler)) x (fun _ => 0) :=
+  cost_liftM_le c handler x
 
 /-! ## Ranked simulation triples -/
 
@@ -186,6 +122,23 @@ theorem triple_liftM_of_isRollBound {B : Type*} (handler : (a : P.A) → n (P.B 
     rw [isRollBound_lift_bind_iff] at hx
     change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
     exact Triple.bind _ _ _ (hstep a b hx.1) fun u => ih u (cost a b) (hx.2 u)
+
+/-- **Ranked simulation over a charge bound**, in spent-amount form and over any cost type. If a
+call at `a` admitted with `s` spent turns rank `Φ s` into rank `Φ (s + c a)`, and every rank
+within budget entails the final assertion `Φ₀`, then a program within budget `B`, starting from
+`s` spent, maps rank `Φ s` to `Φ₀`. With `Φ s` reading "the handler state records at most `s`"
+this bounds the state of a counting handler by the budget. -/
+theorem triple_liftM_of_isChargeBound {ω : Type*} [Add ω] [LE ω] [Zero ω]
+    (handler : (a : P.A) → n (P.B a)) {c : P.A → ω} {B : ω} (Φ : ω → Pred) (Φ₀ : Pred)
+    (E : EPred) (hstep : ∀ a s, s + c a ≤ B → Triple (handler a) (Φ s) (fun _ => Φ (s + c a)) E)
+    (hdrop : ∀ s, s ≤ B → Lean.Order.PartialOrder.rel (Φ s) Φ₀)
+    (x : FreeM P α) (s : ω) (hx : x.IsChargeBound c B s) :
+    Triple (x.liftM handler) (Φ s) (fun _ => Φ₀) E := by
+  induction x using FreeM.rec generalizing s with
+  | pure x => exact Triple.pure x (hdrop s hx)
+  | liftBind a r ih =>
+    change Triple (handler a >>= fun u => (r u).liftM handler) _ _ E
+    exact Triple.bind _ _ _ (hstep a s hx.1) fun u => ih u (s + c a) (hx.2 u)
 
 /-- **Ranked simulation.** If every call at `a` consumes `c a` units of rank, then a program
 within budget `k` maps rank `k` to rank `0`, after dropping unspent rank. -/

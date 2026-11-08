@@ -27,11 +27,13 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [Polynomial functors](guides/pfunctor.md): positions, directions, lenses, charts, free and cofree structures.
 - [Indexed polynomial functors](guides/ipfunctor.md): state-dependent interfaces and their free programs.
 - [Computation models](guides/computation-models.md): which model to use and what their connections preserve.
+- [Language interoperability](guides/interop.md): scoped frontends, semantic correspondence and execution adapters.
 - [Interaction trees](guides/itree.md): silent steps, recursion, handlers, and observations.
 - [Interaction](guides/interaction.md): type trees, decorations, strategies, and concurrency.
 - [Execution](guides/execution.md): machine state, handler state, bounded runs, and networks.
 - [Open systems](guides/open-systems.md): composition laws, contexts, observations, and instantiation obligations.
 - [Program logic](guides/program-logic.md): support, ordered algebras, and weakest preconditions.
+- [Interaction cost](guides/cost.md): charges, budgets and worst-case costs of interface use, across models and through handlers.
 - [Realizability](guides/realizability.md): represented boundaries, admissible machines, and resource certificates.
 - [Bisimulation](guides/bisimulation.md): strong, delay, and weak behavioral relations.
 - [PolyFun and VCVio](guides/polyfun-and-vcvio.md): generic constructions and cryptographic interpretations.

@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Basic
+public import Mathlib.Algebra.Order.Monoid.Canonical.Defs
 
 /-!
 # Quantitative realizability
@@ -372,6 +373,25 @@ theorem zero_le (cost : ExecutionCost) : 0 ≤ cost :=
 theorem le_add_right (left right : ExecutionCost) : left ≤ left + right :=
   ⟨Nat.le_add_right .., Nat.le_add_right .., Nat.le_add_right ..,
     Nat.le_max_left .., Nat.le_max_left ..⟩
+
+/-- Resource records form an ordered additive monoid, so they serve as a cost type for charges
+(`PolyFun.PFunctor.Free.Cost`). -/
+instance : IsOrderedAddMonoid ExecutionCost where
+  add_le_add_left _ _ h c := add_le_add h (le_refl c)
+
+/-- Every larger resource record is reached by adding resources: the extra work, queries and
+traffic, and the larger peaks. -/
+instance : CanonicallyOrderedAdd ExecutionCost where
+  exists_add_of_le {left right} h := by
+    refine ⟨⟨right.work - left.work, right.queries - left.queries, right.traffic - left.traffic,
+      right.peakStateSize, right.peakHeadSize⟩, ?_⟩
+    obtain ⟨hw, hq, ht, hs, hh⟩ := h
+    change right = ⟨_, _, _, _, _⟩
+    ext <;> simp <;> omega
+  le_add_self left right :=
+    ⟨Nat.le_add_left .., Nat.le_add_left .., Nat.le_add_left .., Nat.le_max_right ..,
+      Nat.le_max_right ..⟩
+  le_self_add := le_add_right
 
 end ExecutionCost
 

@@ -30,7 +30,9 @@ in two coupled layers:
 
 * **Substitution.** A handler implementing each operation of `P` by a free `Q`-program pulls a
   `Q`-spec back to a `P`-spec (`OpSpec.pullback`), and folding over the substituted program is
-  folding the pullback over the original (`wpFold_liftM`).
+  folding the pullback over the original (`wpFold_liftM`). Relabelling along a lens is the special
+  case in which each operation is one call: folding over `x.mapLens f` is folding the spec read
+  through `f` over `x` (`wpFold_mapLens`).
 
 The canonical `Prop`-carrier specs `OpSpec.demonic` ("every response") and
 `OpSpec.angelic` ("some response") recover the support-based judgments of
@@ -133,6 +135,13 @@ theorem wpFold_lift (Φ : OpSpec P l) (a : P.A) (post : P.B a → l) :
     wpFold (α := no_index (P.B a)) Φ (FreeM.lift (P := P) a) post = Φ a post :=
   rfl
 
+/-- A lifted object, the form in which `MonadLift P (FreeM P)` issues a call, folds as one call
+followed by its continuation. -/
+@[simp]
+theorem wpFold_liftObj (Φ : OpSpec P l) (x : P.Obj α) (post : α → l) :
+    wpFold Φ (FreeM.liftObj x) post = Φ x.1 fun b => post (x.2 b) :=
+  rfl
+
 /-- Weakest preconditions compose through sequencing across result universes. -/
 theorem wpFold_bind' {X : Type uX} {Y : Type uY} (Φ : OpSpec P l)
     (x : FreeM P X) (f : X → FreeM P Y) (post : Y → l) :
@@ -207,6 +216,28 @@ theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Monotone) (x : Free
   induction x with
   | pure x => exact h x
   | lift_bind a r ih => exact hΦ a fun b => ih b
+
+/-- Folding a spec over a program relabelled along a lens is folding the spec read through the
+lens: a call at `a` is read by `Φ` at `f.toFunA a`, with each continuation read through
+`f.toFunB a`. -/
+theorem wpFold_mapLens {Q : PFunctor.{uA₂, uB₂}} (f : Lens P Q) (Φ : OpSpec Q l) (x : FreeM P α)
+    (post : α → l) :
+    wpFold Φ (x.mapLens f) post = wpFold (fun a k => Φ (f.toFunA a) (k ∘ f.toFunB a)) x post := by
+  induction x with
+  | pure a => rfl
+  | lift_bind a r ih =>
+    change Φ (f.toFunA a) (fun d => wpFold Φ ((r (f.toFunB a d)).mapLens f) post) = _
+    simp only [ih]
+    rfl
+
+/-- Allowing fewer answers keeps a demonic postcondition. -/
+theorem wpFold_demonicUnder_mono_allows {allows allows' : (a : P.A) → P.B a → Prop}
+    (hle : ∀ a b, allows' a b → allows a b) {x : FreeM P α} {post : α → Prop}
+    (h : wpFold (OpSpec.demonicUnder allows) x post) :
+    wpFold (OpSpec.demonicUnder allows') x post := by
+  induction x with
+  | pure a => exact h
+  | lift_bind a r ih => exact fun b hb => ih b (h b (hle a b hb))
 
 /-! ## Reachable outputs under an operationalization -/
 
@@ -574,6 +605,44 @@ theorem wpFold_liftM (handler : (position : P.A) → FreeM Q (P.B position)) (Φ
         post = _
       rw [wpFold_bind]
       exact congrArg (wpFold Φ (handler position)) (funext ih)
+
+/-- **Transfer along a handler.** If, for every continuation, the fold of `Ψ` over each
+implementation is below the spec `Φ` of its call, then folding `Ψ` over the substituted program is
+below folding `Φ` over the original. Upper-bound readings, such as the worst-case charge, transfer
+this way; budgets transfer through `FreeM.IsChargeBound.liftM`. -/
+theorem wpFold_liftM_le [Preorder l] (handler : (position : P.A) → FreeM Q (P.B position))
+    {Ψ : OpSpec Q l} {Φ : OpSpec P l} (hΦ : Φ.Monotone)
+    (h : ∀ position (k : P.B position → l), wpFold Ψ (handler position) k ≤ Φ position k)
+    (program : FreeM P α) (post : α → l) :
+    wpFold Ψ (program.liftM handler) post ≤ wpFold Φ program post := by
+  rw [wpFold_liftM]
+  induction program with
+  | pure result => exact le_rfl
+  | lift_bind position next ih => exact (h position _).trans (hΦ position ih)
+
+/-- **Transfer along a stateful handler.** If, for every continuation and every state, the fold
+of `Ψ` over each implementation's run is below the spec `Φ` of its call at that state, then folding
+`Ψ` over the run of the substituted program is below folding `Φ` over the program. -/
+theorem wpFold_run_liftM_le [Preorder l] {σ : Type uB}
+    (handler : (position : P.A) → StateT σ (FreeM Q) (P.B position)) {Ψ : OpSpec Q l}
+    {Φ : OpSpec P (σ → l)} (hΨ : Ψ.Monotone)
+    (h : ∀ position (k : P.B position → σ → l) state,
+      wpFold Ψ ((handler position).run state) (fun z => k z.1 z.2) ≤ Φ position k state)
+    (program : FreeM P α) (post : α → σ → l) (state : σ) :
+    wpFold Ψ ((program.liftM handler).run state) (fun z => post z.1 z.2) ≤
+      wpFold Φ program post state := by
+  induction program generalizing state with
+  | pure result => exact le_rfl
+  | lift_bind position next ih =>
+      change wpFold Ψ ((handler position >>= fun b => (next b).liftM handler).run state)
+        (fun z => post z.1 z.2) ≤ _
+      rw [StateT.run_bind]
+      change wpFold Ψ (FreeM.bind ((handler position).run state)
+        fun p : P.B position × σ => ((next p.1).liftM handler).run p.2)
+        (fun z => post z.1 z.2) ≤ _
+      rw [wpFold_bind']
+      exact (wpFold_mono hΨ _ fun p : P.B position × σ => ih p.1 p.2).trans
+        (h position (fun b s => wpFold Φ (next b) post s) state)
 
 end FreeHandler
 

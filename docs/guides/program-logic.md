@@ -38,7 +38,8 @@ The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing 
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); folding after substitution (`OpSpec.pullback`, `wpFold_liftM`, `OpSpec.pullback_pullback`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
-| `PolyFun/PFunctor/Free/WP/Charge.lean` | The worst-case charge reading `OpSpec.charge`; budgets as charge bounds (`isRollBound_iff_wpFold_charge`); simulation overhead (`wpFold_charge_liftM_le`, `handlerCost`); ranked simulation triples over any roll budget (`triple_liftM_of_isRollBound`, with `triple_liftM_ranked` and `triple_liftM_ranked_total` for natural-number budgets) and the invariant rule `triple_liftM_invariant` |
+| `PolyFun/PFunctor/Free/WP/Charge.lean` | The `ℕ∞` charge fold (`OpSpec.charge` and `handlerCost` live in `Free/Cost/Value.lean`): budgets as charge bounds (`isRollBound_iff_wpFold_charge`), simulation overhead (`wpFold_charge_liftM_le`); ranked simulation triples over any roll budget or charge bound (`triple_liftM_of_isRollBound`, `triple_liftM_of_isChargeBound`, with `triple_liftM_ranked` and `triple_liftM_ranked_total` for natural-number budgets) and the invariant rule `triple_liftM_invariant` |
+| `PolyFun/PFunctor/Free/WP/Budget.lean` | Charge bounds for `vcgen`: the budget reading `budgetWPMonad` with `isChargeBound_iff_triple` and the call rule `Spec.lift_budget`; instrumented calls as state updates (`Handler.withCharge_eq_modify`) and the completed-path reading of their triples (`Handler.triple_liftM_id_withCharge_iff`) |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler`, `Spec.lift_upper` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`, the mixin that makes a core `WPMonad` exact, with its dual reading `ExactWPMonad.dual`, the equational `simp` set on core's `wp` (`wp_pure` to `wp_sum_elim`), and the exactness instances for core's interpretations and transformer lifts (see [Exact interpretations](#exact-interpretations)) |
@@ -409,7 +410,10 @@ on core's `wp`. VCVio presents its expectation reading this way, as an
 
 ## Charges and budgets
 
-`OpSpec.charge c` (`PolyFun/PFunctor/Free/WP/Charge.lean`) reads a call at `a` as costing `c a`,
+The cost API itself (charges, budgets, worst-case costs, and their transport through lenses and
+handlers) is in [interaction cost](cost.md). This section covers its program-logic side.
+
+`OpSpec.charge c` (`PolyFun/PFunctor/Free/Cost/Value.lean`) reads a call at `a` as costing `c a`,
 followed by its worst continuation: `c a + ⨆ b, k b`. Its fold is the worst-case charge-to-go of
 a program. Subtractive per-position budgets are exactly upper bounds on that fold in `ℕ∞`
 (`isRollBound_iff_wpFold_charge`, with `isTotalRollBound_iff_wpFold_charge` for unit charges),
@@ -446,13 +450,37 @@ There are two ways to state such a bound as a core triple.
   call. With ranks that hold a bad-event indicator plus the remaining budget, it is the union
   bound over the calls. `triple_liftM_ranked` is the subtractive natural-number budget, where a
   call at `a` moves the rank from `k + c a` to `k`, and `triple_liftM_ranked_total` its
-  unit-charge case. `IsRollBound.prod` and `IsRollBound.pi` pair budgets or take a family of them,
-  and `triple_liftM_invariant` is the unranked case: a handler that preserves an assertion
-  preserves it through every simulated program.
+  unit-charge case. `triple_liftM_of_isChargeBound` is the same over a charge bound in any cost
+  type, with ranks indexed by the amount spent. `IsRollBound.prod` and `IsRollBound.pi` pair
+  budgets or take a family of them, and `triple_liftM_invariant` is the unranked case: a handler
+  that preserves an assertion preserves it through every simulated program.
 
 `PolyFunTest/Do/Charge.lean` checks both forms on a coin interface. The ranked triple is
 instantiated in the upper-bound reading, where it bounds a simulated program's charge, and over a
 counting `StateT` handler with a budget that charges only one of two operations.
+
+`PolyFun/PFunctor/Free/WP/Budget.lean` gives charge bounds two readings that `vcgen` steps through
+call by call.
+
+- **Instrumented runs.** `h.withCharge c` keeps the amount spent as `StateT` state, and
+  `Handler.withCharge_eq_modify` exposes a call as `modify (· + c a)` followed by `h a`; pass it to
+  `vcgen` or register it with `attribute [local spec]`. Core's `StateT` rules and loop
+  `invariants` then apply unchanged, under any base reading.
+  Under the demonic reading of `FreeM`, a triple about the instrumented run of the identity handler
+  is a bound on the charge of every completed path (`Handler.triple_liftM_id_withCharge_iff`). To
+  unfold `liftM` through a program, pass `FreeM.liftM_lift_bind'`, `FreeM.liftM_ite` and
+  `FreeM.liftM_pure` (and `FreeM.liftM_dite` for dependent branches) to `vcgen` as rules rather
+  than rewriting with `simp` first: on a concrete interface `simp` reduces the value type of each
+  call, which the rules then no longer match. This is the recommended route.
+- **The budget reading.** `FreeM.budgetWPMonad c B` reads `FreeM P` over predicates on the amount
+  spent, and its triples are exactly charge bounds (`isChargeBound_iff_triple`). Its call rule
+  `FreeM.Spec.lift_budget` is stated with the lattice connectives `⊓` and `⨅`, which `vcgen`
+  splits; pass it to `vcgen` or register it with `attribute [local spec]`. The reading fixes `c`
+  and `B`, so install it with `attribute [local instance]`. Neither rule is registered globally or
+  by a scope: `@[spec]` registrations stay in the tactic tier.
+
+`PolyFunTest/Do/Budget.lean` checks both: the budget of a two-call program, the spend of a `for`
+loop and of a branching program, and the conversion to completed-path bounds.
 
 `OpSpec.charge` reads cost off the syntax of a free program: its fold is the worst case over
 every branch, whether or not an interpretation reaches it. `MonadAttach.chargedFoldlM`

@@ -17,6 +17,9 @@ all its branches. A request interface can have infinitely many possible
 responses. A handler can also introduce its own effects or nontermination;
 well-founded syntax alone does not certify arbitrary external execution.
 
+For language frontends, [reusable interoperability](interop.md) connects scoped
+syntax, represented meanings and deterministic transitions to these models.
+
 ## Interfaces, programs, and protocol shapes
 
 A polynomial interface `P` specifies requests `P.A` and responses `P.B a`.
@@ -48,6 +51,8 @@ The corresponding tree presentations are equivalences or embeddings as named
 by their declarations, not interchangeable definitional equalities. A structural
 bridge states which result, trace, state, or behavior it preserves. Probability
 and execution-cost preservation require additional interpretations and evidence.
+Interface charges and budgets do carry across these connections, through truncation, unrolling
+and Σ-erasure; see [interaction cost](cost.md#other-models).
 
 A meaning in an arbitrary semantic carrier, which may contain errors, divergence
 or partial values, corresponds to a native implementation on an explicit set of

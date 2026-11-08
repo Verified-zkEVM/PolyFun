@@ -893,8 +893,10 @@ alone does not establish strict PPT.
   records a composition derivation until that happens, and coincides with the
    direct view under the contract
    (`generatedRealizableSubTheory_eq_realizableSubTheory`).
-- **`ImplementsWithin` is pinned to a uniform `ℕ` budget.** `FreeM.IsRollBound`
-  is already generic in the budget type; `ImplementsWithin` is not.
+- **`ImplementsWithin` is pinned to a uniform `ℕ` budget.** Its charge-generic
+  counterpart is `DynComputation.ImplementsWithinCharge`, with
+  `implementsWithin_iff_implementsWithinCharge_one` for the unit charge; the
+  realization layer does not yet use it.
 - **Terminal and initial representations are not required.** The closure API
   uses binary distributivity. Admissibility of equality tests is a separate
   obligation, not a consequence of the presence or absence of nullary structure.

@@ -37,12 +37,32 @@ theorem Admissible.fix_induction [OrderBot α] {p : α → Prop} (hp : Admissibl
     (f : α →𝒄 α) (hbot : p ⊥) (hstep : ∀ x, p x → p (f x)) : p f.fix :=
   ContinuousHom.fix_induction f p hbot hstep hp
 
+/-- Fixed-point induction for a relation between two least fixed points: it holds of
+the pair when it holds at bottom and the recursive bodies preserve it in lockstep. -/
+theorem Admissible.fix_induction₂ [OrderBot α] [OrderBot β] {p : α → β → Prop}
+    (hp : Admissible fun q : α × β => p q.1 q.2) (f : α →𝒄 α) (g : β →𝒄 β)
+    (hbot : p ⊥ ⊥) (hstep : ∀ x y, p x y → p (f x) (g y)) : p f.fix g.fix := by
+  apply hp (f.approximants.zip g.approximants)
+  intro n
+  induction n with
+  | zero => exact hbot
+  | succ n ih => simpa using hstep _ _ ih
+
 /-- Continuous inverse images of admissible predicates are admissible. -/
 theorem Admissible.comp {p : β → Prop} (hp : Admissible p) (f : α →𝒄 β) :
     Admissible (fun a => p (f a)) := by
   intro c hc
   rw [f.continuous]
   exact hp (c.map f.toOrderHom) hc
+
+/-- The graph of a continuous map is admissible. -/
+theorem admissible_graph (f : α →𝒄 β) : Admissible fun p : α × β => f p.1 = p.2 := by
+  intro c hc
+  change f (ωSup (c.map OrderHom.fst)) = ωSup (c.map OrderHom.snd)
+  rw [f.continuous]
+  congr 1
+  ext n
+  exact hc n
 
 /-- Admissibility is preserved by universal quantification. -/
 theorem Admissible.forall {ι : Sort*} {p : ι → α → Prop}

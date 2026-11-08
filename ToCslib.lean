@@ -11,10 +11,13 @@ public import ToCslib.Algebra.PolynomialGrowth
 public import ToCslib.Control.ForIn
 public import ToCslib.Control.Monad.HomTransport
 public import ToCslib.Data.BitVec
+public import ToCslib.Data.ENNReal.AddSupDistrib
 public import ToCslib.Data.Fin.Cases
+public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
+public import ToCslib.Order.AddSupDistrib
 public import ToCslib.Order.Admissible
 public import ToCslib.Order.DiscreteOmegaCompletePartialOrder
 public import ToCslib.Order.LeanOrder

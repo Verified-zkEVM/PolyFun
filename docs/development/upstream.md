@@ -110,6 +110,19 @@ The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
 version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
 `PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
 
+`ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
+rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums but not over `Fin`;
+`cost_bound` uses it to evaluate worst-case costs over finite answer types. It belongs beside
+Mathlib's `iSup_bool_eq`.
+
+`ToCslib/Order/AddSupDistrib.lean` names the hypothesis that addition distributes over nonempty
+suprema (`AddSupDistrib`), with the `ℕ∞` and pointwise instances, and the constant supremum
+`iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves both separately for
+`ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`, `ENat.iSup_zero`, `ENNReal.iSup_zero`); the
+general forms belong in Mathlib's order library, with those as instances.
+`ToCslib/Data/ENNReal/AddSupDistrib.lean` adds the `ℝ≥0∞` instance in a module of its own, so that
+PolyFun's core does not import the reals.
+
 ## Omega-CPO fixed points
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
@@ -137,6 +150,22 @@ through strict maps, and continuity in the recursive body. `fix_induction` takes
 the chain-closure hypothesis in unfolded form, so an `Admissible` proof can be
 passed directly; `Admissible.fix_induction` states the same principle with the
 named predicate. An upstream version belongs beside `fixedPoints.iterateChain`.
+
+## Binding families and parameter transport
+
+`ScopedFamily` describes changing parameter contexts, typed binding positions,
+and constructor-local maps over the existing `IPFunctor.IFreeM` carrier.
+Identity, composition, renaming, and relational-fold laws belong beside this
+representation. Substitution laws state the compatibility required of the
+language's parameter action explicitly.
+
+The pinned CSLib `Foundations.Syntax.HasSubstitution` provides notation for a
+replacement operation, and its locally nameless lambda calculi provide
+language-specific substitution and binding theories. Neither supplies this
+indexed polynomial family interface. Retain the binding-family layer in
+PolyFun; revisit it when an upstream indexed binding abstraction supplies
+equivalent mixed-binder and noninjective sort-map laws. Language semantics and
+the proof that a concrete parameter action satisfies these laws remain downstream.
 
 ## Object, path, and trace interfaces
 
@@ -211,5 +240,5 @@ removal conditions. They do not require exposing the free-monoid carrier.
 | Cofree polynomials, displayed constructions, and pattern-runs-on-matter | Follow an object equality and dependent continuation through public object/lens equations; preserve type-level tensor and unit computation. |
 | Reactive networks and realizability closure | Minimize actual transport/update consumers, retaining coherent representation and admissible-step data. |
 | Core/CSLib dependent automation | Recheck the independent free-tree and event reproducers at a coordinated pin upgrade; treat WP/`vcgen` result-index matching as a separate question. |
-| Simp lemmas over concrete polynomial abbreviations | A simp lemma whose left side carries `P.B a` in an implicit argument, as `FreeM.lift a` does, misses a goal in which `P` is a concrete `A y^ B`, `y`, `C`, `linear` or `purePower`, because simp reduces that argument to `B` before it consults its index. PolyFun's generic lift equations mark the argument `no_index`, as CSLib's `foldFreeM_lift` does, and [`ConcreteSimp.lean`](../../PolyFunTest/PFunctor/ConcreteSimp.lean) tests them against `Bool y^ Nat`. CSLib's `FreeM.liftM_lift` and `liftM_lift_bind` still miss; once a CSLib pin marks them `no_index`, add their `Bool y^ Nat` cases to that file. `FreeM.allOutputs_lift` and `FreeM.someOutput_lift` also miss, and `no_index` alone does not repair them: simp unifies their predicate `p : P.B a → Prop` before `FreeM.lift a` determines `P`, so the predicate's type is stuck. Rewrite with them on a concrete interface until a restatement fires under plain `simp` there. |
+| Simp lemmas over concrete polynomial abbreviations | A simp lemma whose left side carries `P.B a` in an implicit argument, as `FreeM.lift a` does, misses a goal in which `P` is a concrete `A y^ B`, `y`, `C`, `linear` or `purePower`, because simp reduces that argument to `B` before it consults its index. PolyFun's generic lift equations mark the argument `no_index`, as CSLib's `foldFreeM_lift` does, and [`ConcreteSimp.lean`](../../PolyFunTest/PFunctor/ConcreteSimp.lean) tests them against `Bool y^ Nat`. CSLib's `FreeM.liftM_lift` and `liftM_lift_bind` still miss. [`ToCslib/Data/PFunctor/Free/Basic.lean`](../../ToCslib/Data/PFunctor/Free/Basic.lean) stages `no_index` restatements, `FreeM.liftM_lift'` and `liftM_lift_bind'`, whose `Bool y^ Nat` cases are in `ConcreteSimp.lean`; remove them once a CSLib pin marks the originals `no_index`. The same file stages `FreeM.liftM_ite` and `liftM_dite`, which interpret a conditional and belong beside CSLib's `liftM_pure`. `FreeM.allOutputs_lift` and `FreeM.someOutput_lift` also miss, and `no_index` alone does not repair them: simp unifies their predicate `p : P.B a → Prop` before `FreeM.lift a` determines `P`, so the predicate's type is stuck. Rewrite with them on a concrete interface until a restatement fires under plain `simp` there. |
 | CSLib polynomial W/M-types and resumptions | cslib#1088 adds `FreeM.toW` and `FreeM.ofW` to `Free.W`, which PolyFun does not declare, together with `M.dest_inj`, `M.corec_dest`, `W.toM`, `M.toW_toM`, and a `PFunctor.Resumption` API whose sum lists the summands in the opposite order. PolyFun declares the last five in [`M.lean`](../../PolyFun/PFunctor/M.lean), [`M/WellFounded.lean`](../../PolyFun/PFunctor/M/WellFounded.lean), and [`Resumption.lean`](../../PolyFun/PFunctor/Resumption.lean). At the pin that contains the request, adopt or rename each one so the co-import canary still elaborates. |

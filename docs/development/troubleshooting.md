@@ -462,3 +462,17 @@ has been reduced on the concrete polynomial (see
 `PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
 stays `P.B a`. Downstream interfaces whose `P.B a` reduces to their own type (an oracle spec's
 range, say) need their own `Spec.query`-style rule at that type for the same reason.
+
+The mismatch is in core's matching, not in PolyFun's rules: a `do` block that ends in a call over a
+reducible structure instance fails the same way with no PolyFun rule involved. Ending the block in
+`pure`, or ascribing the last call with `show FreeM P β from …`, also avoids it.
+
+On a concrete interface, a `simp` pass before `vcgen` causes the same mismatch: it reduces the
+value type of each call, so rules such as `Handler.withCharge_eq_modify` no longer match. Pass the
+rewriting equations (`FreeM.liftM_lift_bind'`, `FreeM.liftM_ite`, `FreeM.liftM_dite`,
+`FreeM.liftM_pure`) to `vcgen` as rules instead. Over a generic interface the value type stays
+`P.B a`, and a `simp` pass is harmless.
+
+A `WP` reading that a proof installs with `letI` is not used when `vcgen` builds rules from
+`Triple` specifications (`failed to synthesize WP`); install it with `attribute [local instance]`,
+as for `FreeM.budgetWPMonad`.
