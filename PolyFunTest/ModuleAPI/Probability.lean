@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Measure.Deterministic
+public import PolyFun.PFunctor.Free.Measure.EvalDist
 public import PolyFun.PFunctor.Free.Measure.Kernel
 public import PolyFun.PFunctor.Free.Measure
 
@@ -17,8 +18,8 @@ VCVio's downstream proofs unfold the measure fold by definitional equality, and 
 extension through its step equations. These examples check, through ordinary imports, that
 `PFunctor.FreeM.denote` of a returned value holds by `rfl`, and that the step equation of
 `PFunctor.FreeM.runKernel`, whose body is private, is available as a lemma. They also check that
-`evalDist` unfolds to the denotation of the deterministic instances by `rfl`, and that `prFail`
-unfolds to the defect of the output measure.
+`evalDist` unfolds to the denotation of the deterministic and free-program instances by `rfl`,
+and that `prFail` unfolds to the defect of the output measure.
 -/
 
 @[expose] public section
@@ -45,5 +46,7 @@ example (x : α) : evalDist (pure x : Id α) = Measure.dirac x := rfl
 example (x : α) : evalDist (some x) = Measure.dirac x := rfl
 
 example (mx : Option α) : prFail mx = (evalDist ((fun _ ↦ PUnit.unit) <$> mx)).defect := rfl
+
+example [P.AnswerMeasure] (program : FreeM P α) : evalDist program = FreeM.denote program := rfl
 
 end PolyFunTest.ModuleAPI.Probability
