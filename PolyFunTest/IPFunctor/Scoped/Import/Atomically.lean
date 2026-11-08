@@ -27,7 +27,7 @@ open Lean Elab Command IPFunctor.Import
 
 /-- Add the definition `name := 0`, then exceed a heartbeat limit of one heartbeat. -/
 meta def addThenTimeout (name : Name) : MetaM Unit := do
-  submitDef name (mkConst ``Nat) (mkNatLit 0) (← Budget.ambient)
+  discard <| submitDef name (mkConst ``Nat) (mkNatLit 0) (← Budget.ambient)
   Core.checkMaxHeartbeatsCore "addThenTimeout" `maxHeartbeats 1
 
 /-- Run `addThenTimeout` inside `atomically`. -/
