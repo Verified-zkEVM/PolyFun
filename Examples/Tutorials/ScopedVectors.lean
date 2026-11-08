@@ -6,8 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Scoped.Stacked
-public import PolyFun.IPFunctor.Scoped.Interpretation
+public import PolyFun.IPFunctor.Scoped.StackedInterpretation
 
 /-!
 # Size-indexed vectors as a two-level family
@@ -24,13 +23,19 @@ sizes. A head is a shape with type annotations, and its result sort is computed 
   coercion follows it (`repSeven`).
 * The value-substitution laws and the commutation of size substitution with value substitution
   are the generic `Stacked` lemmas.
+
+The meanings are length-erased: a vector denotes a stream that ignores its length. A lazy
+call-by-name meaning and a total evaluator interpret the heads through their evaluated
+annotations. The lazy meaning represents the evaluator (`denoteDomain_related`), and size
+instantiation commutes with the lazy meaning (`denoteDomain_map_closed`), with no proof for any
+individual head.
 -/
 
 public section
 
 namespace Examples.ScopedVectors
 
-open IPFunctor IPFunctor.ScopedSignature
+open OmegaCompletePartialOrder IPFunctor IPFunctor.ScopedSignature
 
 /-! ## The type level
 
@@ -297,7 +302,9 @@ differ only in their sizes this is `fun _ => rfl`. No other head has a side cond
       exact wf _
     | _ => trivial
 
-/-- Typed terms: size parameters `Θ`, value context `Γ`, scheme `s`. -/
+/-- Typed terms: size parameters `Θ`, value context `Γ`, scheme `s`. The value context is
+spelled `TySig.Term`, as in the generic lemmas, rather than through `TyTerm`; see the guide's
+section on two-level families. -/
 abbrev Tm (Θ : List Kind) (Γ : List (TySig.Term Θ .scheme)) (s : TySig.Term Θ .scheme) :=
   lang.toFamily.Term Θ Γ s
 
@@ -388,5 +395,249 @@ return the written type definitionally, but the shapes agree by `rfl`. -/
 /-- Instantiating the size of `repSeven` at `3` is a generic family map. -/
 example : Tm [] [] ((mono (vec (Term.var .zero) nat)).subst three) :=
   repSeven.map lang.paramHom three
+
+/-! ## Length-erased domains -/
+
+/-- Call-by-name domains. A vector is a stream that ignores its length, and a function is a
+continuous map. -/
+@[expose] noncomputable def TShape.dom : TShape → PointedDomain.{0}
+  | .nat => .ofType (DomainResult Empty (DiscreteOrder ℕ))
+  | .vec a => .pi ℕ fun _ => a.dom
+  | .arrow a b => .ofType (a.dom →𝒄 b.dom)
+
+/-- Native values, with lengths erased in the same way. -/
+@[expose, reducible] def TShape.native : TShape → Type
+  | .nat => ℕ
+  | .vec a => ℕ → a.native
+  | .arrow a b => a.native → b.native
+
+/-- Domains of schemes: a quantifier denotes a family indexed by sizes. -/
+@[expose] noncomputable def SScheme.dom : SScheme → PointedDomain.{0}
+  | .mono t => t.shape.dom
+  | .all f => .pi ℕ fun n => (f n).dom
+
+/-- Native values of schemes. -/
+@[expose, reducible] def SScheme.native : SScheme → Type
+  | .mono t => t.shape.native
+  | .all f => (n : ℕ) → (f n).native
+
+/-- Value carriers of the lazy meaning. -/
+abbrev SDom (s : SScheme) : Type := s.dom
+
+/-- Value carriers of the total evaluator. -/
+abbrev SNative (s : SScheme) : Type := s.native
+
+/-! ## A model over evaluated heads
+
+The value-level typing rules repeat the syntactic ones on evaluated annotations. Each
+coherence equation is `rfl`, except instantiation (`denote_substOne`) and the weakening of
+the closed primitive scheme. -/
+
+/-- Value binders of each child. -/
+@[expose] def bindersV : (h : Shape) → heads.AnnV Den h → (p : h.Arg) → Env Den (h.tbind p) →
+    List SScheme
+  | .lam, v, _, _ => [.mono (v _ .zero Env.empty)]
+  | _, _, _, _ => []
+
+/-- Sorts of the children. -/
+@[expose] def sortV : (h : Shape) → heads.AnnV Den h → (p : h.Arg) → Env Den (h.tbind p) →
+    SScheme
+  | .lit _, _, p, _ => nomatch p
+  | .rep, _, p, _ => nomatch p
+  | .lam, v, _, _ => .mono (v _ (.succ .zero) Env.empty)
+  | .app, v, false, _ => .mono (.arrow (v _ .zero Env.empty) (v _ (.succ .zero) Env.empty))
+  | .app, v, true, _ => .mono (v _ .zero Env.empty)
+  | .sabs, v, _, ξ => v _ .zero ξ
+  | .sapp, v, _, _ => .all fun n => v _ .zero (Env.single n)
+  | .conv, v, _, _ => .mono (v _ .zero Env.empty)
+
+/-- Result sorts. -/
+@[expose] def resultV : (h : Shape) → heads.AnnV Den h → SScheme
+  | .lit _, _ => .mono .nat
+  | .rep, _ => repScheme.denote tyAlg Env.empty
+  | .lam, v => .mono (.arrow (v _ .zero Env.empty) (v _ (.succ .zero) Env.empty))
+  | .app, v => .mono (v _ (.succ .zero) Env.empty)
+  | .sabs, v => .all fun n => v _ .zero (Env.single n)
+  | .sapp, v => v _ .zero (Env.single (v _ (.succ .zero) Env.empty))
+  | .conv, v => .mono (v _ (.succ .zero) Env.empty)
+
+/-- A coercion relates evaluated types of one shape. -/
+@[expose] def wfV : (h : Shape) → heads.AnnV Den h → Prop
+  | .conv, v => (v _ .zero Env.empty).shape = (v _ (.succ .zero) Env.empty).shape
+  | _, _ => True
+
+/-- The model. -/
+@[expose] def model : Stacked.Model lang where
+  Den := Den
+  tyAlg := tyAlg
+  WFV := wfV
+  bindersV := bindersV
+  sortV := sortV
+  resultV := resultV
+  WF_coh h a ρ wf := by
+    cases h with
+    | conv => exact wf ρ
+    | _ => trivial
+  binders_coh h a ρ p ξ _ := by cases h <;> rfl
+  sort_coh h a ρ p ξ _ := by
+    cases h with
+    | app => cases p <;> rfl
+    | lit => nomatch p
+    | rep => nomatch p
+    | _ => rfl
+  result_coh h a ρ _ := by
+    cases h with
+    | sapp => exact Term.denote_substOne _ _ _ _
+    | rep =>
+      change (repScheme.subst closed).denote tyAlg ρ = repScheme.denote tyAlg Env.empty
+      rw [Term.denote_subst]
+      congr 1
+      funext c x
+      nomatch x
+    | _ => rfl
+
+/-! ## The lazy meaning and a total evaluator -/
+
+/-- The carriers of the lazy meaning, at the model's evaluated schemes. -/
+noncomputable scoped instance instSDom :
+    ∀ d : model.Den .scheme, OmegaCompletePartialOrder (SDom d) :=
+  fun d => (SScheme.dom d).cpo
+
+/-- Application of a lazy function, as a continuous map. -/
+@[expose] noncomputable def applyLazy (A B : TValue) :
+    SDom (.mono (.arrow A B)) × SDom (.mono A) →𝒄 SDom (.mono B) :=
+  ContinuousHom.Prod.apply (α := A.shape.dom) (β := B.shape.dom)
+
+/-- A lazy function as a continuous map. -/
+@[expose] noncomputable def asHom {a b : TShape} (d : (TShape.arrow a b).dom) :
+    a.dom →𝒄 b.dom := d
+
+/-- Instantiate a lazy size-polymorphic value, as a continuous map. -/
+@[expose] noncomputable def atSize (f : ℕ → SScheme) (n : ℕ) : SDom (.all f) →𝒄 SDom (f n) :=
+  .ofFun (fun g => (show (m : ℕ) → (f m).dom from g) n)
+    (ωScottContinuous.apply₂ ωScottContinuous.id n)
+
+/-- A coercion between types of one shape, as a continuous map. -/
+@[expose] noncomputable def convLazy (A B : TValue) (h : A.shape = B.shape) :
+    SDom (.mono A) →𝒄 SDom (.mono B) :=
+  ContinuousHom.ofEq (fun sh : TShape => (sh.dom : Type)) h
+
+/-- The constant-vector primitive at any size: the constant stream. -/
+@[expose] noncomputable def repLazy : TShape.nat.dom →𝒄 (TShape.vec .nat).dom :=
+  .ofFun fun x _ => x
+
+/-- The lazy interpretation: call by name, with coercions cast along shapes. An abstraction's value
+is `Env.abstraction` of its body's meaning, as an `ofFun` clause, so that the kernel checks
+equations between nested abstractions in time linear in their depth. -/
+@[expose] noncomputable def lazy : model.DomainInterp SDom
+  | .lit k, _, _ =>
+    .const (show SDom (.mono .nat) from (DomainResult.value ⟨k⟩ : DomainResult Empty _))
+  | .rep, _, _ => .const (show SDom (repScheme.denote tyAlg Env.empty) from fun _ => repLazy)
+  | .lam, v, _ => .ofFun (fun c => Env.abstraction (V := SDom) (a := .mono (v _ .zero Env.empty))
+        (E := SDom (.mono (v _ (.succ .zero) Env.empty))) (c () Env.empty))
+      (Env.abstractionContinuous.ωScottContinuous.comp
+        (ωScottContinuous.apply₂ ωScottContinuous.id () |>.apply₂ Env.empty))
+  | .app, v, _ => (applyLazy (v _ .zero Env.empty) (v _ (.succ .zero) Env.empty)).comp
+      (.ofFun fun c => (c false Env.empty Env.empty, c true Env.empty Env.empty))
+  | .sabs, _, _ => .ofFun fun c n => c () (Env.single n) Env.empty
+  | .sapp, v, _ => (atSize (fun n => v _ .zero (Env.single n)) (v _ (.succ .zero) Env.empty)).comp
+      (.ofFun (fun c => c () Env.empty Env.empty)
+        (ContinuousHom.ωScottContinuous_apply (ωScottContinuous.apply₂
+          (ωScottContinuous.apply₂ ωScottContinuous.id ()) Env.empty) ωScottContinuous.const))
+  | .conv, v, w => (convLazy (v _ .zero Env.empty) (v _ (.succ .zero) Env.empty) w).comp
+      (.ofFun (fun c => c () Env.empty Env.empty)
+        (ContinuousHom.ωScottContinuous_apply (ωScottContinuous.apply₂
+          (ωScottContinuous.apply₂ ωScottContinuous.id ()) Env.empty) ωScottContinuous.const))
+
+/-- The constant-vector primitive on native values. -/
+@[expose] def repNative : SNative (repScheme.denote tyAlg Env.empty) := fun _ x _ => x
+
+/-- A total evaluator into native values. -/
+@[expose] def native : model.Interp SNative
+  | .lit k, _, _, _ => (k : ℕ)
+  | .rep, _, _, _ => repNative
+  | .lam, _, _, c => fun x => c () Env.empty (Env.single x)
+  | .app, _, _, c => c false Env.empty Env.empty (c true Env.empty Env.empty)
+  | .sabs, _, _, c => fun n => c () (Env.single n) Env.empty
+  | .sapp, v, _, c => c () Env.empty Env.empty (v _ (.succ .zero) Env.empty)
+  | .conv, _, w, c => cast (congrArg TShape.native w) (c () Env.empty Env.empty)
+
+/-- A lazy value represents a native value of the same shape. -/
+@[expose] def RepT : (a : TShape) → a.dom → a.native → Prop
+  | .nat, d, n => d = DomainResult.value ⟨n⟩
+  | .vec a, d, xs => ∀ i, RepT a (d i) (xs i)
+  | .arrow a b, d, f => ∀ e x, RepT a e x → RepT b (asHom d e) (f x)
+
+/-- Representation at schemes: a quantifier represents pointwise in its size. -/
+@[expose] def Rep : (s : SScheme) → SDom s → SNative s → Prop
+  | .mono t, d, v => RepT t.shape d v
+  | .all f, d, v => ∀ n, Rep (f n) (d n) (v n)
+
+theorem repT_cast {a b : TShape} (h : a = b) {d : a.dom} {x : a.native} (hr : RepT a d x) :
+    RepT b (cast (congrArg (fun sh : TShape => (sh.dom : Type)) h) d)
+      (cast (congrArg TShape.native h) x) := by
+  subst h
+  exact hr
+
+theorem liftRel_single {s : SScheme} {d : SDom s} {v : SNative s} (h : Rep s d v) :
+    Env.LiftRel Rep (Env.single d) (Env.single (V := SNative) v) :=
+  (Env.liftRel_empty _).cons h
+
+/-- The only constructor-local proof: every head preserves representation. -/
+theorem lazy_related : Stacked.Model.DomainInterp.Related Rep lazy native := by
+  intro h v w c c' hc
+  cases h with
+  | lit k =>
+    exact (rfl : (DomainResult.value (⟨k⟩ : DiscreteOrder ℕ) : DomainResult Empty _) = _)
+  | rep => exact fun _ _ _ hex _ => hex
+  | lam => exact fun e x hex => hc () Env.empty _ _ (liftRel_single hex)
+  | app =>
+    exact hc false Env.empty _ _ (Env.liftRel_empty _) _ _
+      (hc true Env.empty _ _ (Env.liftRel_empty _))
+  | sabs => exact fun n => hc () (Env.single n) _ _ (Env.liftRel_empty _)
+  | sapp => exact hc () Env.empty _ _ (Env.liftRel_empty _) _
+  | conv => exact repT_cast w (hc () Env.empty _ _ (Env.liftRel_empty _))
+
+/-- The lazy meaning of a closed term. -/
+@[expose] noncomputable def meaning {s : TyTerm [] .scheme} (t : Tm [] [] s) :
+    SDom (s.denote tyAlg Env.empty) :=
+  model.denoteDomain SDom lazy t Env.empty Env.empty
+
+/-- The total evaluation of a closed term. -/
+@[expose] def evaluate {s : TyTerm [] .scheme} (t : Tm [] [] s) :
+    SNative (s.denote tyAlg Env.empty) :=
+  model.denote SNative native t Env.empty Env.empty
+
+/-- The lazy meaning represents the total evaluation of every closed term. -/
+theorem meaning_represents {s : TyTerm [] .scheme} (t : Tm [] [] s) :
+    Rep _ (meaning t) (evaluate t) :=
+  model.denoteDomain_related lazy_related t Env.empty (Env.liftRel_empty _)
+
+/-- `swap` evaluates to the identity: the coercion only casts along an equation of shapes. -/
+theorem evaluate_swap (m n : ℕ) (xs : ℕ → ℕ) :
+    (show (m n : ℕ) → (ℕ → ℕ) → ℕ → ℕ from evaluate swap) m n xs = xs := rfl
+
+/-- `twice f x = f (f x)`. -/
+theorem meaning_twice (f : TShape.nat.dom →𝒄 TShape.nat.dom) (x : TShape.nat.dom) :
+    (show (TShape.nat.dom →𝒄 TShape.nat.dom) →𝒄 TShape.nat.dom →𝒄 TShape.nat.dom from
+      meaning twice) f x = f (f x) := rfl
+
+/-! ## Instantiating a size commutes with meaning -/
+
+theorem substitutionEnv_three :
+    Term.substitutionEnv tyAlg three Env.empty = (Env.single (3 : ℕ) : Env Den [.size]) := by
+  funext k x
+  cases x with
+  | zero => rfl
+  | succ x => nomatch x
+
+/-- Instantiating `n := 3` in the syntax, then taking the meaning, agrees with the meaning at
+the evaluated assignment, which `substitutionEnv_three` computes to `n = 3`. No obligation
+was proved for any head of the language. -/
+theorem repSeven_three :
+    HEq (model.denoteDomain SDom lazy (repSeven.map lang.paramHom three) Env.empty Env.empty)
+      (model.denoteDomain SDom lazy repSeven (Term.substitutionEnv model.tyAlg three Env.empty)
+        Env.empty) :=
+  model.denoteDomain_map_closed SDom lazy repSeven three Env.empty
 
 end Examples.ScopedVectors
