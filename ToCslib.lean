@@ -22,6 +22,7 @@ public import ToCslib.MeasureTheory.MeasurableSpace.Option
 public import ToCslib.MeasureTheory.MeasurableSpace.Sum
 public import ToCslib.MeasureTheory.Measure.AEBind
 public import ToCslib.MeasureTheory.Measure.Option
+public import ToCslib.MeasureTheory.Measure.Prop
 public import ToCslib.MeasureTheory.Measure.Subprobability
 public import ToCslib.Order.AddSupDistrib
 public import ToCslib.Order.Admissible
