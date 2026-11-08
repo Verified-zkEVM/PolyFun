@@ -27,7 +27,7 @@ variable {W : Type u} {S : W → Type v} (σ : ScopedFamily.{u, v, w, z} W S)
 /-- Action on syntax of the parameter-context change at each constructor argument. -/
 abbrev ReindexAction := ∀ {w : W} {a : S w} (op : σ.Op w a) (p : σ.Arg op)
   {Γ : List (S w)} {b : S w}, σ.Term w Γ b →
-    σ.Term (σ.world op p) (Γ.map (σ.reindex op p)) (σ.reindex op p b)
+    σ.Term (σ.world op p) ((σ.ambient op p).context Γ) (σ.reindex op p b)
 
 /-- A simultaneous substitution at one parameter context: an environment of terms. -/
 abbrev Substitution {w : W} (Γ Δ : List (S w)) :=
@@ -52,13 +52,15 @@ variable {σ} {w : W} {Γ Δ : List (S w)}
 /-- Move substitution images to a new parameter context without merging positions. -/
 @[expose] def reindex (A : σ.ReindexAction) (θ : σ.Substitution Γ Δ)
     {a : S w} (op : σ.Op w a) (p : σ.Arg op) :
-    σ.Substitution (Γ.map (σ.reindex op p)) (Δ.map (σ.reindex op p)) :=
-  ScopedSignature.Env.reindex (σ.reindex op p) fun _ x => A op p (θ _ x)
+    σ.Substitution ((σ.ambient op p).context Γ) ((σ.ambient op p).context Δ) :=
+  (σ.ambient op p).env fun _ x => A op p (θ _ x)
 
-@[simp] theorem reindex_map (A : σ.ReindexAction) (θ : σ.Substitution Γ Δ)
+@[simp] theorem reindex_var (A : σ.ReindexAction) (θ : σ.Substitution Γ Δ)
     {a b : S w} (op : σ.Op w a) (p : σ.Arg op) (x : ScopedVar Γ b) :
-    θ.reindex A op p _ (x.map (σ.reindex op p)) = A op p (θ b x) :=
-  ScopedSignature.Env.reindex_map _ _ x
+    θ.reindex A op p _ ((σ.ambient op p).var x) = A op p (θ b x) :=
+  Ambient.env_var _ _ x
+
+@[deprecated (since := "2026-11-07")] alias reindex_map := reindex_var
 
 /-- A lifted substitution weakens the image of each older variable. -/
 theorem rename_succ_lift (θ : σ.Substitution Γ Δ) (b : S w) :
@@ -97,13 +99,8 @@ theorem reindex_rename (A : σ.ReindexAction) {Θ : List (S w)}
     (ρ : ScopedSignature.Renaming Γ Δ) (θ : σ.Substitution Δ Θ)
     {a : S w} (op : σ.Op w a) (p : σ.Arg op) :
     reindex A (ScopedSignature.Env.rename ρ θ) op p =
-      ScopedSignature.Env.rename (ScopedSignature.Renaming.map (σ.reindex op p) ρ)
-        (reindex A θ op p) := by
-  funext b x
-  induction x using ScopedVar.map_inductionOn (σ.reindex op p) with
-  | h b x =>
-      simp only [reindex_map, ScopedSignature.Env.rename_apply,
-        ScopedSignature.Renaming.map_apply]
+      ScopedSignature.Env.rename ((σ.ambient op p).mapRenaming ρ) (reindex A θ op p) :=
+  Ambient.env_rename (σ.ambient op p) ρ fun _ x => A op p (θ _ x)
 
 end Substitution
 
@@ -111,15 +108,14 @@ end Substitution
 @[expose] def ReindexAction.PreservesVars (A : σ.ReindexAction) : Prop :=
   ∀ {w : W} {a : S w} (op : σ.Op w a) (p : σ.Arg op)
     {Γ : List (S w)} {b : S w} (x : ScopedVar Γ b),
-    A op p (Term.var x) = Term.var (x.map (σ.reindex op p))
+    A op p (Term.var x) = Term.var ((σ.ambient op p).var x)
 
 /-- Parameter transport commutes with changing value-variable positions. -/
 @[expose] def ReindexAction.PreservesRenaming (A : σ.ReindexAction) : Prop :=
   ∀ {w : W} {a : S w} (op : σ.Op w a) (p : σ.Arg op)
     {Γ Δ : List (S w)} {b : S w} (ρ : ScopedSignature.Renaming Γ Δ)
     (t : σ.Term w Γ b),
-    A op p (t.rename ρ) = (A op p t).rename (ScopedSignature.Renaming.map
-      (σ.reindex op p) ρ)
+    A op p (t.rename ρ) = (A op p t).rename ((σ.ambient op p).mapRenaming ρ)
 
 namespace Substitution
 
@@ -157,11 +153,10 @@ theorem reindex_postrename (A : σ.ReindexAction) (hA : A.PreservesRenaming σ)
     (θ : σ.Substitution Γ Δ) (ρ : ScopedSignature.Renaming Δ Θ)
     {a : S w} (op : σ.Op w a) (p : σ.Arg op) :
     reindex A (fun a x => (θ a x).rename ρ) op p =
-      fun a x => (reindex A θ op p a x).rename
-        (ScopedSignature.Renaming.map (σ.reindex op p) ρ) := by
+      fun a x => (reindex A θ op p a x).rename ((σ.ambient op p).mapRenaming ρ) := by
   funext b x
-  induction x using ScopedVar.map_inductionOn (σ.reindex op p) with
-  | h b x => rw [reindex_map, reindex_map, hA]
+  induction x using Ambient.var_inductionOn (σ.ambient op p) with
+  | h b x => rw [reindex_var, reindex_var, hA]
 
 end Substitution
 
@@ -183,7 +178,7 @@ variable {σ}
 @[simp] theorem subst_node (A : σ.ReindexAction) {w : W} {Γ Δ : List (S w)} {a : S w}
     (θ : σ.Substitution Γ Δ) (op : σ.Op w a)
     (args : (p : σ.Arg op) → σ.Term (σ.world op p)
-      (σ.binders op p ++ Γ.map (σ.reindex op p)) (σ.sort op p)) :
+      (σ.binders op p ++ (σ.ambient op p).context Γ) (σ.sort op p)) :
     (node op args).subst A θ = node op (fun p => (args p).subst A
       (Substitution.liftMany (θ.reindex A op p) (σ.binders op p))) := rfl
 
@@ -200,10 +195,10 @@ variable {σ}
       have hr : Substitution.reindex A
           ((fun _ x => Term.var x) : σ.Substitution Γ Γ) op p = fun _ x => Term.var x := by
         funext b x
-        induction x using ScopedVar.map_inductionOn (σ.reindex op p) with
-        | h b x => rw [Substitution.reindex_map, hA]
+        induction x using Ambient.var_inductionOn (σ.ambient op p) with
+        | h b x => rw [Substitution.reindex_var, hA]
       have hl : (Substitution.liftMany (σ := σ)
-          (Γ := Γ.map (σ.reindex op p)) (fun _ x => Term.var x) (σ.binders op p) :
+          (Γ := (σ.ambient op p).context Γ) (fun _ x => Term.var x) (σ.binders op p) :
           σ.Substitution _ _) = fun _ x => Term.var x := by
         funext b x
         exact Substitution.liftMany_var _ x
@@ -295,8 +290,8 @@ theorem reindex_comp (A : σ.ReindexAction) (hA : A.PreservesSubstitution σ)
     reindex A (fun a x => (θ a x).subst A τ) op p =
       fun a x => (reindex A θ op p a x).subst A (reindex A τ op p) := by
   funext b x
-  induction x using ScopedVar.map_inductionOn (σ.reindex op p) with
-  | h b x => rw [reindex_map, reindex_map, hA]
+  induction x using Ambient.var_inductionOn (σ.ambient op p) with
+  | h b x => rw [reindex_var, reindex_var, hA]
 
 /-- Extend a substitution by an image for the nearest binding position. -/
 @[deprecated ScopedSignature.Env.cons +typeChanged (since := "2026-11-07")]
