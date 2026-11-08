@@ -29,7 +29,9 @@ An input variable needs no function sorts, so first-order languages are covered.
 functions certifies a closed function term through `ofLiftFun` and its relation at function sorts.
 
 The encodings and native representatives are bound after the term, so the term and the relation
-fix their carriers before a representative such as `some` is elaborated.
+fix their carriers before a representative such as `some` is elaborated. Throughout, `V` is the
+family of semantic carriers and `W` the family of native ones; `d` is a semantic value and `w` a
+native one.
 -/
 
 public section
@@ -61,18 +63,18 @@ representative of `implementation x` at every input `x`. -/
 @[expose] noncomputable def Term.certifiedMeaning (h : DomainInterpretation.Related R alg alg')
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} (represents : ∀ x, R a (input x) (nativeIn x))
-    (determines : ∀ y v, R b v (nativeOut y) → v = output y) (implementation : A → B)
+    (determines : ∀ y d, R b d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     CertifiedMeaning input output :=
   CertifiedMeaning.ofLiftFun (fun d => t.denoteDomain alg (Env.single d)) implementation
-    (eval := fun v => t.denote alg' (Env.single v))
-    (fun _ _ hdv => Term.denoteDomain_related h t ((Env.liftRel_empty R).cons hdv))
+    (eval := fun w => t.denote alg' (Env.single w))
+    (fun _ _ hdw => Term.denoteDomain_related h t ((Env.liftRel_empty R).cons hdw))
     represents determines total
 
 theorem Term.certifiedMeaning_meaning (h : DomainInterpretation.Related R alg alg')
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} (represents : ∀ x, R a (input x) (nativeIn x))
-    (determines : ∀ y v, R b v (nativeOut y) → v = output y) (implementation : A → B)
+    (determines : ∀ y d, R b d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     (t.certifiedMeaning h represents determines implementation total).meaning =
       fun d => t.denoteDomain alg (Env.single d) := rfl
@@ -80,7 +82,7 @@ theorem Term.certifiedMeaning_meaning (h : DomainInterpretation.Related R alg al
 theorem Term.certifiedMeaning_implementation (h : DomainInterpretation.Related R alg alg')
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} (represents : ∀ x, R a (input x) (nativeIn x))
-    (determines : ∀ y v, R b v (nativeOut y) → v = output y) (implementation : A → B)
+    (determines : ∀ y d, R b d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     (t.certifiedMeaning h represents determines implementation total).implementation =
       implementation := rfl
@@ -91,13 +93,13 @@ theorem Term.correspondsOn_denoteDomain (h : DomainInterpretation.Related R alg 
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} {valid : A → Prop} {implementation : A → B}
     (represents : ∀ x, valid x → R a (input x) (nativeIn x))
-    (determines : ∀ y v, R b v (nativeOut y) → v = output y)
+    (determines : ∀ y d, R b d (nativeOut y) → d = output y)
     (total : ∀ x, valid x →
       t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     CorrespondsOn input output valid (fun d => t.denoteDomain alg (Env.single d))
       implementation :=
-  CorrespondsOn.of_liftFun (eval := fun v => t.denote alg' (Env.single v))
-    (fun _ _ hdv => Term.denoteDomain_related h t ((Env.liftRel_empty R).cons hdv))
+  CorrespondsOn.of_liftFun (eval := fun w => t.denote alg' (Env.single w))
+    (fun _ _ hdw => Term.denoteDomain_related h t ((Env.liftRel_empty R).cons hdw))
     represents determines total
 
 end Signature
@@ -108,8 +110,8 @@ section Stacked
 
 variable {K : Type u} {τ : ScopedSignature.{u, v, w} K} {k₀ : K} {H : Heads.{u, x, y} K}
   {S : Stacked τ k₀ H} {M : Stacked.Model.{u, v, w, x, y, d} S}
-  {D : M.Den k₀ → Type e} [∀ d, OmegaCompletePartialOrder (D d)] {V : M.Den k₀ → Type e'}
-  {R : ∀ d, D d → V d → Prop} {I : M.DomainInterp D} {I' : M.Interp V}
+  {V : M.Den k₀ → Type e} [∀ δ, OmegaCompletePartialOrder (V δ)] {W : M.Den k₀ → Type e'}
+  {R : ∀ δ, V δ → W δ → Prop} {I : M.DomainInterp V} {I' : M.Interp W}
 
 namespace Stacked.Model
 
@@ -117,7 +119,7 @@ namespace Stacked.Model
 theorem liftFun_denoteDomain (hI : DomainInterp.Related R I I') {Θ : List K}
     {Γ : List (τ.Term Θ k₀)} {s : τ.Term Θ k₀} (t : S.toFamily.Term Θ Γ s) (ρ : Env M.Den Θ) :
     Relator.LiftFun (Env.LiftRel fun s : τ.Term Θ k₀ => R (s.denote M.tyAlg ρ)) (R _)
-      ⇑(M.denoteDomain D I t ρ) (M.denote V I' t ρ) :=
+      ⇑(M.denoteDomain V I t ρ) (M.denote W I' t ρ) :=
   fun _ _ hη => denoteDomain_related hI t ρ hη
 
 variable {Θ : List K} {s s' : τ.Term Θ k₀}
@@ -126,34 +128,34 @@ variable {Θ : List K} {s s' : τ.Term Θ k₀}
 against `implementation`, under the premises of `Term.certifiedMeaning`. -/
 @[expose] noncomputable def certifiedMeaning (hI : DomainInterp.Related R I I')
     (t : S.toFamily.Term Θ [s] s') (ρ : Env M.Den Θ) {A : Type uA} {B : Type uB}
-    {input : A ↪ D (s.denote M.tyAlg ρ)} {output : B ↪ D (s'.denote M.tyAlg ρ)}
-    {nativeIn : A → V (s.denote M.tyAlg ρ)} {nativeOut : B → V (s'.denote M.tyAlg ρ)}
+    {input : A ↪ V (s.denote M.tyAlg ρ)} {output : B ↪ V (s'.denote M.tyAlg ρ)}
+    {nativeIn : A → W (s.denote M.tyAlg ρ)} {nativeOut : B → W (s'.denote M.tyAlg ρ)}
     (represents : ∀ x, R _ (input x) (nativeIn x))
-    (determines : ∀ y v, R _ v (nativeOut y) → v = output y) (implementation : A → B)
-    (total : ∀ x, M.denote V I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
+    (determines : ∀ y d, R _ d (nativeOut y) → d = output y) (implementation : A → B)
+    (total : ∀ x, M.denote W I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     CertifiedMeaning input output :=
-  CertifiedMeaning.ofLiftFun (fun v => M.denoteDomain D I t ρ (Env.single v)) implementation
-    (eval := fun v => M.denote V I' t ρ (Env.single v))
-    (fun _ _ hvw => denoteDomain_related hI t ρ ((Env.liftRel_empty _).cons hvw))
+  CertifiedMeaning.ofLiftFun (fun d => M.denoteDomain V I t ρ (Env.single d)) implementation
+    (eval := fun w => M.denote W I' t ρ (Env.single w))
+    (fun _ _ hdw => denoteDomain_related hI t ρ ((Env.liftRel_empty _).cons hdw))
     represents determines total
 
 theorem certifiedMeaning_meaning (hI : DomainInterp.Related R I I')
     (t : S.toFamily.Term Θ [s] s') (ρ : Env M.Den Θ) {A : Type uA} {B : Type uB}
-    {input : A ↪ D (s.denote M.tyAlg ρ)} {output : B ↪ D (s'.denote M.tyAlg ρ)}
-    {nativeIn : A → V (s.denote M.tyAlg ρ)} {nativeOut : B → V (s'.denote M.tyAlg ρ)}
+    {input : A ↪ V (s.denote M.tyAlg ρ)} {output : B ↪ V (s'.denote M.tyAlg ρ)}
+    {nativeIn : A → W (s.denote M.tyAlg ρ)} {nativeOut : B → W (s'.denote M.tyAlg ρ)}
     (represents : ∀ x, R _ (input x) (nativeIn x))
-    (determines : ∀ y v, R _ v (nativeOut y) → v = output y) (implementation : A → B)
-    (total : ∀ x, M.denote V I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
+    (determines : ∀ y d, R _ d (nativeOut y) → d = output y) (implementation : A → B)
+    (total : ∀ x, M.denote W I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     (certifiedMeaning hI t ρ represents determines implementation total).meaning =
-      fun v => M.denoteDomain D I t ρ (Env.single v) := rfl
+      fun d => M.denoteDomain V I t ρ (Env.single d) := rfl
 
 theorem certifiedMeaning_implementation (hI : DomainInterp.Related R I I')
     (t : S.toFamily.Term Θ [s] s') (ρ : Env M.Den Θ) {A : Type uA} {B : Type uB}
-    {input : A ↪ D (s.denote M.tyAlg ρ)} {output : B ↪ D (s'.denote M.tyAlg ρ)}
-    {nativeIn : A → V (s.denote M.tyAlg ρ)} {nativeOut : B → V (s'.denote M.tyAlg ρ)}
+    {input : A ↪ V (s.denote M.tyAlg ρ)} {output : B ↪ V (s'.denote M.tyAlg ρ)}
+    {nativeIn : A → W (s.denote M.tyAlg ρ)} {nativeOut : B → W (s'.denote M.tyAlg ρ)}
     (represents : ∀ x, R _ (input x) (nativeIn x))
-    (determines : ∀ y v, R _ v (nativeOut y) → v = output y) (implementation : A → B)
-    (total : ∀ x, M.denote V I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
+    (determines : ∀ y d, R _ d (nativeOut y) → d = output y) (implementation : A → B)
+    (total : ∀ x, M.denote W I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
     (certifiedMeaning hI t ρ represents determines implementation total).implementation =
       implementation := rfl
 

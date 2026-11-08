@@ -542,6 +542,22 @@ and the time grows exponentially with the depth.
 abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They need
 between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
 
+Names in the scoped layer follow one rule. A plain name is an ordinary interpretation and its
+fold: `Interpretation` and `Term.denote`, and for stacked families `Model.Interp`, `Model.alg`
+and `Model.denote`. `Domain` marks the continuous counterpart, semantics in omega-complete
+partial orders: `DomainInterpretation`, `Term.denoteDomain`, `substitutionEnvDomain`,
+`Model.DomainInterp`, `Model.domainAlg` and `Model.denoteDomain`. The suffix `Continuous` marks
+instead the bundled `→𝒄` form of an existing function, such as `Env.renameContinuous`.
+`DomainInterpretation` is the binding-signature analogue of `PFunctor.Resumption.ContinuousAlgebra`,
+whose fold over resumptions is called `denote`.
+
+Here an algebra is always a signature algebra, which interprets each constructor given its
+arguments' meanings. `Interpretation` and `DomainInterpretation` are algebras of a binding
+signature, and the tutorials' `algebra` definitions are instances of them. `Model.alg` and
+`Model.domainAlg` are the `IPFunctor.FoldAlgebra`s that a stacked model's interpretation induces
+on the syntax polynomial, the input of `IFreeM.fold`. The ordered monad algebras of the program
+logic, such as `MAlgOrdered`, are a different notion: they interpret the computations of a monad.
+
 [`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
 lemma into a `Control.Semantics.CertifiedMeaning`. `Term.certifiedMeaning` certifies a term
 with one free variable, its input, against a native implementation. It needs two more facts.
