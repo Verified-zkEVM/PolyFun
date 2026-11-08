@@ -41,7 +41,11 @@ Their pins are recorded in the manifest; their README files live under
   `W.toFreeM` (`Free.W`). `ToCslib/Data/PFunctor/Free/` adds
   constructor-spelled equations and loop transport without redeclaring any of
   them, and PolyFun-specific decorations, paths, machines, and handlers remain
-  in `PolyFun/PFunctor/`.
+  in `PolyFun/PFunctor/`. The syntactic weakest precondition `FreeM.wpFold Φ x`
+  (`PolyFun/PFunctor/Free/WP.lean`) is the fold `foldFreeM` with the
+  postcondition taken last, so that `wpFold Φ x` is the predicate transformer of
+  `x`. `wpFold_eq_foldFreeM` states the agreement, so CSLib's fold laws apply to
+  it.
 - **Co-import:** neither PolyFun nor `ToCslib` redeclares a CSLib name, so
   `import Cslib` elaborates together with `import PolyFun`, `import ToCslib`
   and `import ComplexityBackends`. The ordinary-import canary
