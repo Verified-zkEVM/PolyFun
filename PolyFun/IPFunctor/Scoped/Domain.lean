@@ -152,6 +152,20 @@ theorem abstraction_eq_bindOne {a : S} {E : Type w} [OmegaCompletePartialOrder E
             (((fun b v => p.1 b (.succ v)) : Env V Ξ), p.2)) := by fun_prop
         exact ih.comp h)
 
+/-- Appending two blocks of bindings is continuous in both. -/
+@[fun_prop] theorem ωScottContinuous_append {α : Type w} [OmegaCompletePartialOrder α]
+    {Ξ : List S} {f : α → Env V Ξ} {g : α → Env V Γ} (hf : ωScottContinuous f)
+    (hg : ωScottContinuous g) : ωScottContinuous fun t => append (f t) (g t) :=
+  appendContinuous.ωScottContinuous.comp (Prod.ωScottContinuous.prodMk hf hg)
+
+/-- Transport along an equation of contexts is continuous. -/
+@[expose] noncomputable def castCtxContinuous {Γ' : List S} (h : Γ = Γ') :
+    Env V Γ →𝒄 Env V Γ' :=
+  .ofFun (castCtx h) (by subst h; exact ωScottContinuous.id)
+
+@[simp] theorem castCtxContinuous_apply {Γ' : List S} (h : Γ = Γ') (η : Env V Γ) :
+    castCtxContinuous h η = castCtx h η := rfl
+
 /-! ## Positional maps -/
 
 variable {W : T → Type z'} [∀ b, OmegaCompletePartialOrder (W b)]

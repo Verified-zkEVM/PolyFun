@@ -698,3 +698,39 @@ equation of evaluated types, typically `rfl` at every assignment. The
 [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) builds size-indexed vectors
 this way: applications take terms in the ambient context with no coercion, and a coercion
 between `[m + n]nat` and `[n + m]nat` has evidence `rfl`.
+
+[`Scoped.StackedInterpretation`](../../PolyFun/IPFunctor/Scoped/StackedInterpretation.lean)
+interprets a stacked family through evaluated heads. A `Stacked.Model` gives the type-level
+interpretation `tyAlg`, value-level typing rules on evaluated annotations (`bindersV`, `sortV`,
+`resultV`) and a value-level side condition `WFV`, with one coherence equation per rule in the
+type-level meanings. The names follow the signature level: `Model.Interp V` is an ordinary
+interpretation and `Model.denote` its fold, while `Model.DomainInterp D` is a continuous one,
+over an unbundled family of omega-complete partial orders, and `Model.denoteDomain` its fold.
+Both see a head only through its evaluated annotations and receive each child as a function
+of the child's type arguments and fresh value binders. Two theorems need no proof for any
+individual head:
+
+- `Model.denoteDomain_map` and `denoteDomain_map_closed`: substituting type parameters in the
+  syntax and then taking the meaning agrees with taking the meaning at the evaluated
+  assignment;
+- `Model.denoteDomain_related`: if a continuous and an ordinary interpretation are related by
+  `DomainInterp.Related R` at every evaluated head, then every term has related meanings at
+  every type assignment, in environments related by `Env.LiftRel`.
+
+A coercion's carrier equation is stated in `WFV`, and the coercion's interpretation casts
+there with `ContinuousHom.ofEq`; the relation of `denoteDomain_related` needs no other
+invariance. `denote_stackedNode` and `denoteDomain_stackedNode` state one step of a meaning.
+A large meaning is better computed by rewriting with them than by one `rfl` through several
+instantiations.
+
+Spell value contexts in theorems about meanings as `τ.Term Θ k₀`, the spelling the generic
+lemmas use. The vectors tutorial's `repSeven_three` states `denoteDomain_map_closed` for
+`repSeven`, an application of a coerced instantiation. Defined with its value context written
+through the tutorial's abbreviation, as `[] : List (TyTerm [.size] .scheme)`, the same
+statement exceeds the default heartbeats: the elaborator unfolds both meanings instead of first
+identifying the two spellings of the context. With the generic spelling it checks at once.
+Smaller terms check with either spelling, because the cost is that of evaluating the meanings.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a lazy call-by-name
+meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
+`denoteDomain_map_closed`.
