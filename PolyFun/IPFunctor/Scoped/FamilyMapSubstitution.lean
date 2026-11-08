@@ -36,11 +36,11 @@ namespace Substitution
 
 @[simp] theorem cast_self {w : W} {Γ Δ : List (S w)}
     (hΓ : Γ = Γ) (hΔ : Δ = Δ) (θ : σ.Substitution Γ Δ) :
-    (θ.cast hΓ hΔ : σ.Substitution Γ Δ) = @θ := rfl
+    θ.cast hΓ hΔ = θ := rfl
 
 @[simp] theorem cast_heq {w : W} {Γ Δ Γ' Δ' : List (S w)}
     (hΓ : Γ = Γ') (hΔ : Δ = Δ') (θ : σ.Substitution Γ Δ) :
-    HEq (θ.cast hΓ hΔ : σ.Substitution Γ' Δ') (@θ) := by
+    HEq (θ.cast hΓ hΔ) θ := by
   cases hΓ
   cases hΔ
   rfl
@@ -49,7 +49,7 @@ namespace Substitution
 theorem cast_apply {w : W} {Γ Δ Γ' Δ' : List (S w)}
     (hΓ : Γ = Γ') (hΔ : Δ = Δ') (θ : σ.Substitution Γ Δ)
     {a : S w} (x : ScopedVar Γ a) :
-    cast hΓ hΔ θ (hΓ ▸ x) = (θ x).cast hΔ rfl := by
+    cast hΓ hΔ θ a (hΓ ▸ x) = (θ a x).cast hΔ rfl := by
   cases hΓ
   cases hΔ
   rfl
@@ -58,18 +58,18 @@ theorem cast_apply {w : W} {Γ Δ Γ' Δ' : List (S w)}
 @[expose] def map (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ Δ : List (S w)} (θ : σ.Substitution Γ Δ) :
     τ.Substitution (Γ.map (f μ)) (Δ.map (f μ)) :=
-  ScopedVar.mapLookup (f μ) (fun x => (θ x).map h μ)
+  ScopedSignature.Env.reindex (f μ) fun _ x => (θ _ x).map h μ
 
 @[simp] theorem map_apply (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ Δ : List (S w)} (θ : σ.Substitution Γ Δ) {a : S w} (x : ScopedVar Γ a) :
-    θ.map h μ (x.map (f μ)) = (θ x).map h μ :=
-  ScopedVar.mapLookup_map _ _ x
+    θ.map h μ (f μ a) (x.map (f μ)) = (θ a x).map h μ :=
+  ScopedSignature.Env.reindex_map _ _ x
 
 /-- Context normalization commutes with protecting one fresh value variable. -/
 theorem cast_lift {w : W} {Γ Δ Γ' Δ' : List (S w)}
     (hΓ : Γ = Γ') (hΔ : Δ = Δ') (θ : σ.Substitution Γ Δ) (a : S w) :
-    (cast (congrArg (a :: ·) hΓ) (congrArg (a :: ·) hΔ) (lift θ a) :
-      σ.Substitution _ _) = fun {_} x => lift (cast hΓ hΔ θ) a x := by
+    cast (congrArg (a :: ·) hΓ) (congrArg (a :: ·) hΔ) (lift θ a) =
+      lift (cast hΓ hΔ θ) a := by
   cases hΓ
   cases hΔ
   rfl
@@ -77,8 +77,7 @@ theorem cast_lift {w : W} {Γ Δ Γ' Δ' : List (S w)}
 /-- Parameter translation commutes with protecting one fresh value variable. -/
 theorem map_lift (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ Δ : List (S w)} (θ : σ.Substitution Γ Δ) (a : S w) :
-    (map h μ (lift θ a) : τ.Substitution _ _) =
-      fun {_} x => lift (map h μ θ) (f μ a) x := by
+    map h μ (lift θ a) = lift (map h μ θ) (f μ a) := by
   funext b x
   induction x using ScopedVar.map_inductionOn (f μ) with
   | h b x =>
@@ -95,14 +94,13 @@ theorem map_lift (h : Hom σ τ M f) {w z : W} (μ : M w z)
 /-- Parameter translation commutes with a whole block of fresh value variables. -/
 theorem map_liftMany (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ Δ : List (S w)} (θ : σ.Substitution Γ Δ) (Ξ : List (S w)) :
-    (cast List.map_append List.map_append (map h μ (liftMany θ Ξ)) :
-      τ.Substitution _ _) = fun {_} x => liftMany (map h μ θ) (Ξ.map (f μ)) x := by
+    cast List.map_append List.map_append (map h μ (liftMany θ Ξ)) =
+      liftMany (map h μ θ) (Ξ.map (f μ)) := by
   induction Ξ with
   | nil => rfl
   | cons a Ξ ih =>
-      change (cast (congrArg (f μ a :: ·) List.map_append)
-        (congrArg (f μ a :: ·) List.map_append) (map h μ (lift (liftMany θ Ξ) a)) :
-          τ.Substitution _ _) = _
+      change cast (congrArg (f μ a :: ·) List.map_append)
+        (congrArg (f μ a :: ·) List.map_append) (map h μ (lift (liftMany θ Ξ) a)) = _
       rw [map_lift, cast_lift
         (show (Ξ ++ Γ).map (f μ) = Ξ.map (f μ) ++ Γ.map (f μ) from List.map_append)
         (show (Ξ ++ Δ).map (f μ) = Ξ.map (f μ) ++ Δ.map (f μ) from List.map_append), ih]
@@ -112,8 +110,8 @@ theorem map_liftMany (h : Hom σ τ M f) {w z : W} (μ : M w z)
 theorem liftMany_heq {w : W} {Γ Δ Γ' Δ' Ξ Ξ' : List (S w)}
     (hΓ : Γ = Γ') (hΔ : Δ = Δ')
     {θ : σ.Substitution Γ Δ} {η : σ.Substitution Γ' Δ'}
-    (hθ : HEq (@θ) (@η)) (hΞ : Ξ = Ξ') :
-    HEq (liftMany θ Ξ : σ.Substitution _ _) (liftMany η Ξ' : σ.Substitution _ _) := by
+    (hθ : HEq θ η) (hΞ : Ξ = Ξ') :
+    HEq (liftMany θ Ξ) (liftMany η Ξ') := by
   cases hΓ
   cases hΔ
   cases hΞ
@@ -138,12 +136,11 @@ theorem Term.cast_subst (A : σ.ReindexAction) {w : W}
     (A : σ.ReindexAction) (B : τ.ReindexAction) : Prop :=
   ∀ {w z : W} (μ : M w z) {Γ Δ : List (S w)} (θ : σ.Substitution Γ Δ)
     {a : S w} (op : σ.Op w a) (p : τ.Arg (h.op μ op)),
-    (Substitution.cast (h.context μ op p) (h.context μ op p)
+    Substitution.cast (h.context μ op p) (h.context μ op p)
       (Substitution.map h (h.next μ op p) (Substitution.liftMany
-        (θ.reindex A op (h.arg μ op p)) (σ.binders op (h.arg μ op p)))) :
-          τ.Substitution _ _) =
-      (fun {_} x => Substitution.liftMany
-        (Substitution.reindex B (θ.map h μ) (h.op μ op) p) (τ.binders (h.op μ op) p) x)
+        (θ.reindex A op (h.arg μ op p)) (σ.binders op (h.arg μ op p)))) =
+      Substitution.liftMany
+        (Substitution.reindex B (θ.map h μ) (h.op μ op) p) (τ.binders (h.op μ op) p)
 
 /-- A translation commutes with the parameter action at each selected child. -/
 @[expose] def Hom.PreservesReindex (h : Hom σ τ M f)
@@ -164,35 +161,39 @@ theorem Hom.PreservesReindex.preservesSubstitution (h : Hom σ τ M f)
   have hs : g ∘ r = k ∘ f μ := funext (h.reindex μ op p)
   have hc (Γ : List (S w)) : (Γ.map r).map g = (Γ.map (f μ)).map k := by
     simp only [List.map_map, hs]
-  have hl : (Substitution.cast List.map_map rfl
-      (Substitution.map h (h.next μ op p) (θ.reindex A op (h.arg μ op p))) :
-        τ.Substitution _ _) = fun {_} x => ScopedVar.mapLookup (g ∘ r)
-      (fun x => (A op (h.arg μ op p) (θ x)).map h (h.next μ op p)) x := by
+  have hl : Substitution.cast List.map_map rfl
+      (Substitution.map h (h.next μ op p) (θ.reindex A op (h.arg μ op p))) =
+      ScopedSignature.Env.reindex (g ∘ r)
+        fun _ x => (A op (h.arg μ op p) (θ _ x)).map h (h.next μ op p) := by
     funext b x
     induction x using ScopedVar.map_inductionOn (g ∘ r) with
     | h b x =>
+        change Substitution.cast _ _ _ (g (r b)) _ = _
         rw [← ScopedVar.map_map r g x, Substitution.cast_apply, Substitution.map_apply,
-          Substitution.reindex_map, Term.cast_self, ScopedVar.map_map,
-          ScopedVar.mapLookup_map]
-  have hr : (Substitution.cast List.map_map rfl
-      (Substitution.reindex B (θ.map h μ) (h.op μ op) p) : τ.Substitution _ _) =
-      fun {_} x => ScopedVar.mapLookup (k ∘ f μ)
-        (fun x => B (h.op μ op) p ((θ x).map h μ)) x := by
+          Substitution.reindex_map, Term.cast_self, ScopedVar.map_map]
+        exact (ScopedSignature.Env.reindex_map (g ∘ r)
+          (fun _ x => (A op (h.arg μ op p) (θ _ x)).map h (h.next μ op p)) x).symm
+  have hr : Substitution.cast List.map_map rfl
+      (Substitution.reindex B (θ.map h μ) (h.op μ op) p) =
+      ScopedSignature.Env.reindex (k ∘ f μ)
+        fun _ x => B (h.op μ op) p ((θ _ x).map h μ) := by
     funext b x
     induction x using ScopedVar.map_inductionOn (k ∘ f μ) with
     | h b x =>
+        change Substitution.cast _ _ _ (k (f μ b)) _ = _
         rw [← ScopedVar.map_map (f μ) k x, Substitution.cast_apply,
           Substitution.reindex_map, Substitution.map_apply, Term.cast_self,
-          ScopedVar.map_map, ScopedVar.mapLookup_map]
+          ScopedVar.map_map]
+        exact (ScopedSignature.Env.reindex_map (k ∘ f μ)
+          (fun _ x => B (h.op μ op) p ((θ _ x).map h μ)) x).symm
   have hm : HEq
-      (Substitution.map h (h.next μ op p) (θ.reindex A op (h.arg μ op p)) :
-        τ.Substitution _ _)
-      (Substitution.reindex B (θ.map h μ) (h.op μ op) p : τ.Substitution _ _) := by
+      (Substitution.map h (h.next μ op p) (θ.reindex A op (h.arg μ op p)))
+      (Substitution.reindex B (θ.map h μ) (h.op μ op) p) := by
     apply (Substitution.cast_heq List.map_map rfl _).symm.trans
     apply (heq_of_eq hl).trans
-    apply (ScopedVar.mapLookup_heq hs
+    apply (ScopedSignature.Env.reindex_heq hs
       (congrArg (fun Δ => fun b => τ.Term (τ.world (h.op μ op) p) Δ b) (hc Δ))
-      (fun x => compatible μ op p (θ x))).trans
+      (fun _ x => compatible μ op p (θ _ x))).trans
     exact (heq_of_eq hr).symm.trans (Substitution.cast_heq List.map_map rfl _)
   apply eq_of_heq
   apply (Substitution.cast_heq _ _ _).trans

@@ -116,7 +116,8 @@ example {n m : Nat} (μ : Fin n → Fin m)
 /-- A separate package can recover transported environments from positional correspondence. -/
 example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
     {Γ : List S} (f : S → T) (hf : ∀ a, E (f a) = D a)
-    (η : IPFunctor.ScopedDomain.Env D Γ) (ζ : IPFunctor.ScopedDomain.Env E (Γ.map f))
-    (h : IPFunctor.ScopedDomain.Env.Pointwise η ζ) :
-    IPFunctor.ScopedDomain.Env.reindex D E f hf η = ζ :=
-  IPFunctor.ScopedDomain.Env.pointwise_reindex_eq hf h
+    (η : IPFunctor.ScopedSignature.Env (fun a => D a) Γ)
+    (ζ : IPFunctor.ScopedSignature.Env (fun b => E b) (Γ.map f))
+    (h : IPFunctor.ScopedSignature.Env.Pointwise η ζ) :
+    IPFunctor.ScopedSignature.Env.transport f hf η = ζ :=
+  IPFunctor.ScopedSignature.Env.pointwise_transport_eq hf h

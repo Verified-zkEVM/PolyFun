@@ -14,12 +14,15 @@ public import PolyFun.IPFunctor.Free.Fold
 A constructor specifies a result sort and, for each argument, the sorts it
 binds and the argument's result sort. Its trees use `IFreeM`: variables are
 leaves, and constructor children carry their extended typing judgments.
-Renaming and substitution lift under each argument's binders.
+
+An environment `Env V Γ` assigns a value to each binding position of `Γ`. Renamings
+and substitutions are the environments whose values are variables and terms. They
+lift under each argument's binders.
 -/
 
 public section
 
-universe u v w
+universe u v w z
 
 namespace IPFunctor
 
@@ -91,8 +94,55 @@ abbrev Judgment (S : Type u) := List S × S
 abbrev Term (σ : ScopedSignature.{u, v, w} S) (Γ : List S) (a : S) :=
   IFreeM σ.polynomial (fun j => ScopedVar j.1 j.2) (Γ, a)
 
-/-- A sort-preserving map between variable contexts. -/
-abbrev Renaming (Γ Δ : List S) := ∀ {a}, ScopedVar Γ a → ScopedVar Δ a
+/-! ## Environments -/
+
+/-- A value for every binding position of a typed context. The sort is an explicit
+argument, so an environment is an ordinary dependent function: Mathlib's pointwise
+order, bottom and continuity results apply to it unchanged. -/
+abbrev Env (V : S → Type z) (Γ : List S) := ∀ a, ScopedVar Γ a → V a
+
+namespace Env
+
+variable {V : S → Type z} {Γ : List S}
+
+/-- The unique environment of an empty context. -/
+@[expose] def empty : Env V [] := fun _ x => nomatch x
+
+/-- Add a value at the nearest binding position. -/
+@[expose] def cons {a : S} (x : V a) (η : Env V Γ) : Env V (a :: Γ)
+  | _, .zero => x
+  | _, .succ v => η _ v
+
+@[simp] theorem cons_zero {a : S} (x : V a) (η : Env V Γ) : cons x η a .zero = x := rfl
+
+@[simp] theorem cons_succ {a b : S} (x : V a) (η : Env V Γ) (v : ScopedVar Γ b) :
+    cons x η b (.succ v) = η b v := rfl
+
+/-- The environment of a context with one variable. -/
+@[expose] def single {a : S} (x : V a) : Env V [a] := cons x empty
+
+@[simp] theorem single_eq_cons {a : S} (x : V a) : single x = cons x empty := rfl
+
+/-- Extend an environment with a whole block of bindings, nearest first. -/
+@[expose] def append : {Ξ : List S} → Env V Ξ → Env V Γ → Env V (Ξ ++ Γ)
+  | [], _, η => η
+  | _ :: _, ξ, η => cons (ξ _ .zero) (append (fun b v => ξ b (.succ v)) η)
+
+/-- Assemble an environment from its values listed by position. -/
+@[expose] def ofFin : {Ξ : List S} → ((i : Fin Ξ.length) → V Ξ[i]) → Env V Ξ
+  | _ :: _, f, _, .zero => f 0
+  | _ :: _, f, _, .succ x => ofFin (fun i => f i.succ) _ x
+
+/-- Assembly separates the nearest position from the remaining positions. -/
+theorem ofFin_cons {a : S} (xs : (i : Fin (a :: Γ).length) → V (a :: Γ)[i]) :
+    ofFin xs = cons (xs 0) (ofFin (fun i => xs i.succ)) := by
+  funext b x
+  cases x <;> rfl
+
+end Env
+
+/-- A sort-preserving map between variable contexts: an environment of variables. -/
+abbrev Renaming (Γ Δ : List S) := Env (ScopedVar Δ) Γ
 
 namespace Renaming
 
@@ -100,7 +150,7 @@ namespace Renaming
 @[expose] def lift {Γ Δ : List S} (ρ : Renaming Γ Δ) (a : S) :
     Renaming (a :: Γ) (a :: Δ)
   | _, .zero => .zero
-  | _, .succ x => .succ (ρ x)
+  | _, .succ x => .succ (ρ _ x)
 
 /-- Lift a renaming under a list of binders. -/
 @[expose] def liftMany {Γ Δ : List S} (ρ : Renaming Γ Δ) :
@@ -109,11 +159,11 @@ namespace Renaming
   | a :: Ξ => lift (liftMany ρ Ξ) a
 
 @[simp] theorem liftMany_nil {Γ Δ : List S} (ρ : Renaming Γ Δ)
-    {a : S} (x : ScopedVar Γ a) : ρ.liftMany [] x = ρ x := rfl
+    {a : S} (x : ScopedVar Γ a) : ρ.liftMany [] a x = ρ a x := rfl
 
 @[simp] theorem liftMany_cons {Γ Δ : List S} (ρ : Renaming Γ Δ)
     (b : S) (Ξ : List S) {a : S} (x : ScopedVar (b :: Ξ ++ Γ) a) :
-    ρ.liftMany (b :: Ξ) x = lift (liftMany ρ Ξ) b x := rfl
+    ρ.liftMany (b :: Ξ) a x = lift (liftMany ρ Ξ) b a x := rfl
 
 end Renaming
 
@@ -144,12 +194,12 @@ variable {σ : ScopedSignature.{u, v, w} S} {Γ Δ Θ : List S} {a : S}
 @[expose] def rename {Γ Δ : List S} {a : S}
     (ρ : Renaming Γ Δ) (t : σ.Term Γ a) : σ.Term Δ a :=
   t.fold (D := fun j => ∀ {Δ}, Renaming j.1 Δ → σ.Term Δ j.2)
-    (fun _ x {_} ρ => .pure (ρ x))
+    (fun _ x {_} ρ => .pure (ρ _ x))
     (fun _ op next {_} ρ => .liftBind op
       (fun p => next p (Renaming.liftMany ρ (σ.binders op p)))) ρ
 
 @[simp] theorem rename_var (ρ : Renaming Γ Δ) (x : ScopedVar Γ a) :
-    (var (σ := σ) x).rename ρ = var (ρ x) := rfl
+    (var (σ := σ) x).rename ρ = var (ρ a x) := rfl
 
 @[simp] theorem rename_node (ρ : Renaming Γ Δ) (op : σ.Op a)
     (args : (p : σ.Arg op) → σ.Term (σ.binders op p ++ Γ) (σ.sort op p)) :
@@ -158,13 +208,13 @@ variable {σ : ScopedSignature.{u, v, w} S} {Γ Δ Θ : List S} {a : S}
 
 /-- Embed a term below one fresh binder. -/
 @[expose] def weaken (t : σ.Term Γ a) (b : S) : σ.Term (b :: Γ) a :=
-  t.rename ScopedVar.succ
+  t.rename fun _ => ScopedVar.succ
 
 end Term
 
-/-- A simultaneous substitution, preserving each variable's sort. -/
+/-- A simultaneous substitution, preserving each variable's sort: an environment of terms. -/
 abbrev Substitution (σ : ScopedSignature.{u, v, w} S) (Γ Δ : List S) :=
-  ∀ {a}, ScopedVar Γ a → σ.Term Δ a
+  Env (σ.Term Δ) Γ
 
 namespace Substitution
 
@@ -174,7 +224,7 @@ variable {σ : ScopedSignature.{u, v, w} S} {Γ Δ : List S}
 @[expose] def lift (θ : σ.Substitution Γ Δ) (a : S) :
     σ.Substitution (a :: Γ) (a :: Δ)
   | _, .zero => .pure .zero
-  | _, .succ x => (θ x).weaken a
+  | _, .succ x => (θ _ x).weaken a
 
 /-- Lift a substitution through all binders of one constructor argument. -/
 @[expose] def liftMany (θ : σ.Substitution Γ Δ) :
@@ -192,12 +242,12 @@ variable {σ : ScopedSignature.{u, v, w} S} {Γ Δ : List S} {a : S}
 @[expose] def subst {Γ Δ : List S} {a : S}
     (θ : σ.Substitution Γ Δ) (t : σ.Term Γ a) : σ.Term Δ a :=
   t.fold (D := fun j => ∀ {Δ}, σ.Substitution j.1 Δ → σ.Term Δ j.2)
-    (fun _ x {_} θ => θ x)
+    (fun _ x {_} θ => θ _ x)
     (fun _ op next {_} θ => .liftBind op
       (fun p => next p (Substitution.liftMany θ (σ.binders op p)))) θ
 
 @[simp] theorem subst_var (θ : σ.Substitution Γ Δ) (x : ScopedVar Γ a) :
-    (var (σ := σ) x).subst θ = θ x := rfl
+    (var (σ := σ) x).subst θ = θ a x := rfl
 
 @[simp] theorem subst_node (θ : σ.Substitution Γ Δ) (op : σ.Op a)
     (args : (p : σ.Arg op) → σ.Term (σ.binders op p ++ Γ) (σ.sort op p)) :

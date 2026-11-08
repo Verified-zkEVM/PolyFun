@@ -11,13 +11,15 @@ public import PolyFun.IPFunctor.Scoped.Renaming
 /-!
 # Context lookup through a change of sorts
 
-Reindexing a context need not be injective on sorts. Lookup follows the original
-binding position, so variables remain distinct when their instantiated types agree.
+`Env.reindex f` moves an environment of `Γ` to the context `Γ.map f`. Lookup follows
+the original binding position, so `f` need not be injective: variables remain
+distinct when their instantiated sorts agree. Mapping a renaming along a sort map is
+an instance.
 -/
 
 public section
 
-universe u v w x
+universe u v w x z
 
 namespace IPFunctor.ScopedVar
 
@@ -55,21 +57,6 @@ theorem map_map {U : Type w} (f : S → T) (g : T → U)
         succ ((x.map f).map g)) = succ (x.map (g ∘ f))
       rw [cast_succ (List.map_map (l := Γ)), ih]
 
-/-- Read a mapped context using an assignment to its original variable positions. -/
-@[expose] def mapLookup (f : S → T) {V : T → Type w} :
-    {Γ : List S} → (∀ {a}, ScopedVar Γ a → V (f a)) →
-      ∀ {b}, ScopedVar (Γ.map f) b → V b
-  | _ :: _, η, _, .zero => η .zero
-  | _ :: _, η, _, .succ x => mapLookup f (fun x => η (.succ x)) x
-
-/-- Looking up an explicitly mapped variable retrieves its original assignment. -/
-@[simp] theorem mapLookup_map (f : S → T) {V : T → Type w}
-    {Γ : List S} (η : ∀ {a}, ScopedVar Γ a → V (f a))
-    {a : S} (x : ScopedVar Γ a) : mapLookup f η (x.map f) = η x := by
-  induction x with
-  | zero => rfl
-  | succ x ih => exact ih _
-
 /-- Every variable in a mapped context comes from its original binding position. -/
 @[elab_as_elim] theorem map_inductionOn (f : S → T) {Γ : List S}
     {motive : ∀ b, ScopedVar (Γ.map f) b → Prop}
@@ -83,42 +70,68 @@ theorem map_map {U : Type w} (f : S → T) (g : T → U)
       | succ x =>
           exact ih (motive := fun b x => motive b (.succ x)) (fun a x => h a (.succ x)) x
 
+end IPFunctor.ScopedVar
+
+namespace IPFunctor.ScopedSignature.Env
+
+variable {S : Type u} {T : Type v}
+
+/-- Read a mapped context using an environment of its original binding positions. -/
+@[expose] def reindex (f : S → T) {V : T → Type w} :
+    {Γ : List S} → Env (fun a => V (f a)) Γ → Env V (Γ.map f)
+  | _ :: _, η, _, .zero => η _ .zero
+  | _ :: _, η, _, .succ x => reindex f (fun a x => η a (.succ x)) _ x
+
+/-- Looking up an explicitly mapped variable retrieves its original value. -/
+@[simp] theorem reindex_map (f : S → T) {V : T → Type w} {Γ : List S}
+    (η : Env (fun a => V (f a)) Γ) {a : S} (x : ScopedVar Γ a) :
+    reindex f η (f a) (x.map f) = η a x := by
+  induction x with
+  | zero => rfl
+  | succ x ih => exact ih _
+
 /-- Applying a sort-indexed function commutes with positional lookup. -/
-theorem mapLookup_postcomp (f : S → T) {V : T → Type w} {U : T → Type x}
-    {Γ : List S} (η : ∀ {a}, ScopedVar Γ a → V (f a))
+theorem reindex_postcomp (f : S → T) {V : T → Type w} {U : T → Type x}
+    {Γ : List S} (η : Env (fun a => V (f a)) Γ)
     (k : ∀ b, V b → U b) {b : T} (x : ScopedVar (Γ.map f) b) :
-    k b (mapLookup f η x) = mapLookup f (fun x => k _ (η x)) x := by
-  induction x using map_inductionOn f with
-  | h a x => simp only [mapLookup_map]
+    k b (reindex f η b x) = reindex f (fun a x => k (f a) (η a x)) b x := by
+  induction x using ScopedVar.map_inductionOn f with
+  | h a x => simp only [reindex_map]
 
 /-- Lookup through two sort maps is lookup through their composite. -/
-theorem mapLookup_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
-    {Γ : List S} (η : ∀ {a}, ScopedVar Γ a → V (g (f a)))
+theorem reindex_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
+    {Γ : List S} (η : Env (fun a => V (g (f a))) Γ)
     {b : U} (x : ScopedVar ((Γ.map f).map g) b) :
-    mapLookup g (fun x => mapLookup f (V := fun b => V (g b)) η x) x =
-      mapLookup (g ∘ f) η (List.map_map ▸ x) := by
-  induction x using map_inductionOn g with
+    reindex g (reindex f (V := fun b => V (g b)) η) b x =
+      reindex (g ∘ f) η b (List.map_map ▸ x) := by
+  induction x using ScopedVar.map_inductionOn g with
   | h a x =>
-      induction x using map_inductionOn f with
-      | h a x => simp only [mapLookup_map, map_map]
+      induction x using ScopedVar.map_inductionOn f with
+      | h a x =>
+          rw [reindex_map, reindex_map, ScopedVar.map_map]
+          exact (reindex_map (g ∘ f) η x).symm
 
-/-- Equal sort maps and pointwise assignments give the same positional lookup. -/
-theorem mapLookup_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
+/-- Equal sort maps and positionwise equal values give the same lookup. -/
+theorem reindex_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
     (hf : f = g) (hV : V = U)
-    {η : ∀ {a}, ScopedVar Γ a → V (f a)}
-    {θ : ∀ {a}, ScopedVar Γ a → U (g a)}
-    (h : ∀ {a} (x : ScopedVar Γ a), HEq (η x) (θ x)) :
-    HEq (mapLookup f η : ∀ {b}, ScopedVar (Γ.map f) b → V b)
-      (mapLookup g θ : ∀ {b}, ScopedVar (Γ.map g) b → U b) := by
+    {η : Env (fun a => V (f a)) Γ} {θ : Env (fun a => U (g a)) Γ}
+    (h : ∀ a (x : ScopedVar Γ a), HEq (η a x) (θ a x)) :
+    HEq (reindex f η) (reindex g θ) := by
   cases hf
   cases hV
-  have he : @η = @θ := by
+  have he : η = θ := by
     funext a x
-    exact eq_of_heq (h x)
+    exact eq_of_heq (h a x)
   cases he
   rfl
 
-end IPFunctor.ScopedVar
+/-- Context transport preserves lookup at the corresponding binding position. -/
+theorem cast_apply {V : S → Type z} {Γ Δ : List S} (h : Γ = Δ) (η : Env V Γ)
+    {a : S} (x : ScopedVar Γ a) : (h ▸ η) a (h ▸ x) = η a x := by
+  cases h
+  rfl
+
+end IPFunctor.ScopedSignature.Env
 
 namespace IPFunctor.ScopedSignature.Renaming
 
@@ -129,18 +142,18 @@ variable {S : Type u} {T : Type v} {Γ Δ Θ : List S}
     (ρ : Renaming Γ Δ) : Renaming Γ' Δ' := hΔ ▸ hΓ ▸ ρ
 
 @[simp] theorem cast_self (hΓ : Γ = Γ) (hΔ : Δ = Δ) (ρ : Renaming Γ Δ) :
-    (cast hΓ hΔ ρ : Renaming Γ Δ) = @ρ := rfl
+    cast hΓ hΔ ρ = ρ := rfl
 
 theorem cast_apply {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
     (ρ : Renaming Γ Δ) {a : S} (x : ScopedVar Γ a) :
-    cast hΓ hΔ ρ (hΓ ▸ x) = hΔ ▸ ρ x := by
+    cast hΓ hΔ ρ a (hΓ ▸ x) = hΔ ▸ ρ a x := by
   cases hΓ
   cases hΔ
   rfl
 
 /-- Context normalization only changes the type of a renaming. -/
 @[simp] theorem cast_heq {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
-    (ρ : Renaming Γ Δ) : HEq (cast hΓ hΔ ρ : Renaming Γ' Δ') (@ρ) := by
+    (ρ : Renaming Γ Δ) : HEq (cast hΓ hΔ ρ) ρ := by
   cases hΓ
   cases hΔ
   rfl
@@ -148,29 +161,28 @@ theorem cast_apply {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
 /-- Context normalization commutes with protecting a fresh binder. -/
 theorem cast_lift {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
     (ρ : Renaming Γ Δ) (a : S) :
-    (cast (congrArg (a :: ·) hΓ) (congrArg (a :: ·) hΔ) (lift ρ a) :
-      Renaming (a :: Γ') (a :: Δ')) =
-      (fun {_} x => lift (cast hΓ hΔ ρ) a x) := by
+    cast (congrArg (a :: ·) hΓ) (congrArg (a :: ·) hΔ) (lift ρ a) =
+      lift (cast hΓ hΔ ρ) a := by
   cases hΓ
   cases hΔ
   rfl
 
 /-- Reindex both contexts of a renaming, retaining their variable positions. -/
 @[expose] def map (f : S → T) (ρ : Renaming Γ Δ) : Renaming (Γ.map f) (Δ.map f) :=
-  ScopedVar.mapLookup f (fun x => (ρ x).map f)
+  Env.reindex f fun a x => (ρ a x).map f
 
 @[simp] theorem map_apply (f : S → T) (ρ : Renaming Γ Δ) {a : S}
-    (x : ScopedVar Γ a) : map f ρ (x.map f) = (ρ x).map f :=
-  ScopedVar.mapLookup_map f _ x
+    (x : ScopedVar Γ a) : map f ρ (f a) (x.map f) = (ρ a x).map f :=
+  Env.reindex_map f _ x
 
 /-- Equal sort functions induce the same positional renaming. -/
 theorem map_heq {f g : S → T} (h : f = g) (ρ : Renaming Γ Δ) :
-    HEq (map f ρ : Renaming _ _) (map g ρ : Renaming _ _) := by
+    HEq (map f ρ) (map g ρ) := by
   cases h
   rfl
 
 theorem map_lift (f : S → T) (ρ : Renaming Γ Δ) (a : S) :
-    (map f (lift ρ a) : Renaming _ _) = (fun {_} x => lift (map f ρ) (f a) x) := by
+    map f (lift ρ a) = lift (map f ρ) (f a) := by
   funext b x
   induction x using ScopedVar.map_inductionOn f with
   | h b x =>
@@ -179,13 +191,13 @@ theorem map_lift (f : S → T) (ρ : Renaming Γ Δ) (a : S) :
 
 /-- Mapping sorts commutes with lifting under a block of value binders. -/
 theorem map_liftMany (f : S → T) (ρ : Renaming Γ Δ) (Ξ : List S) :
-    (cast List.map_append List.map_append (map f (liftMany ρ Ξ)) : Renaming _ _) =
-      (fun {_} x => liftMany (map f ρ) (Ξ.map f) x) := by
+    cast List.map_append List.map_append (map f (liftMany ρ Ξ)) =
+      liftMany (map f ρ) (Ξ.map f) := by
   induction Ξ with
   | nil => rfl
   | cons a Ξ ih =>
-      change (cast (congrArg (f a :: ·) List.map_append)
-        (congrArg (f a :: ·) List.map_append) (map f (lift (liftMany ρ Ξ) a)) : Renaming _ _) = _
+      change cast (congrArg (f a :: ·) List.map_append)
+        (congrArg (f a :: ·) List.map_append) (map f (lift (liftMany ρ Ξ) a)) = _
       rw [map_lift, cast_lift
         (show (Ξ ++ Γ).map f = Ξ.map f ++ Γ.map f from List.map_append)
         (show (Ξ ++ Δ).map f = Ξ.map f ++ Δ.map f from List.map_append), ih]
@@ -193,18 +205,19 @@ theorem map_liftMany (f : S → T) (ρ : Renaming Γ Δ) (Ξ : List S) :
 
 /-- Mapping a renaming twice agrees with composing the sort maps. -/
 theorem map_map {U : Type w} (f : S → T) (g : T → U) (ρ : Renaming Γ Δ) :
-    (cast List.map_map List.map_map (map g (map f ρ)) : Renaming _ _) =
-      (fun {_} x => map (g ∘ f) ρ x) := by
+    cast List.map_map List.map_map (map g (map f ρ)) = map (g ∘ f) ρ := by
   funext b x
   induction x using ScopedVar.map_inductionOn (g ∘ f) with
   | h a x =>
+      change cast _ _ _ (g (f a)) _ = map (g ∘ f) ρ (g (f a)) _
       rw [← ScopedVar.map_map f g x, cast_apply, map_apply, map_apply,
-        ScopedVar.map_map f g (ρ x), ScopedVar.map_map f g x, map_apply]
+        ScopedVar.map_map f g (ρ a x), ScopedVar.map_map f g x]
+      exact (map_apply (g ∘ f) ρ x).symm
 
 /-- Lifting respects equality of the two contexts and the fresh binding block. -/
 theorem liftMany_heq {Γ' Δ' Ξ Ξ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
-    {ρ : Renaming Γ Δ} {τ : Renaming Γ' Δ'} (hρ : HEq (@ρ) (@τ)) (hΞ : Ξ = Ξ') :
-    HEq (liftMany ρ Ξ : Renaming _ _) (liftMany τ Ξ' : Renaming _ _) := by
+    {ρ : Renaming Γ Δ} {τ : Renaming Γ' Δ'} (hρ : HEq ρ τ) (hΞ : Ξ = Ξ') :
+    HEq (liftMany ρ Ξ) (liftMany τ Ξ') := by
   cases hΓ
   cases hΔ
   cases hΞ
@@ -212,18 +225,43 @@ theorem liftMany_heq {Γ' Δ' Ξ Ξ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
   rfl
 
 @[simp] theorem map_id (f : S → T) :
-    (map f (fun {a} (x : ScopedVar Γ a) => x) : Renaming (Γ.map f) (Γ.map f)) =
-      fun {_} x => x := by
+    map f (fun _ x => x : Renaming Γ Γ) = fun _ x => x := by
   funext b x
   induction x using ScopedVar.map_inductionOn f with
   | h a x => exact map_apply f _ x
 
 /-- Mapping a context commutes with composing its renamings. -/
 theorem map_comp (f : S → T) (ρ : Renaming Γ Δ) (τ : Renaming Δ Θ) :
-    (map f (fun x => τ (ρ x)) : Renaming (Γ.map f) (Θ.map f)) =
-      fun {_} x => map f τ (map f ρ x) := by
+    map f (Env.rename ρ τ) = Env.rename (map f ρ) (map f τ) := by
   funext b x
   induction x using ScopedVar.map_inductionOn f with
-  | h a x => simp only [map_apply]
+  | h a x => simp only [map_apply, Env.rename_apply]
 
 end IPFunctor.ScopedSignature.Renaming
+
+namespace IPFunctor.ScopedSignature.Env
+
+variable {S : Type u} {T : Type v} {Γ Δ : List S}
+
+/-- Changing sorts commutes with reading through a renaming, even for noninjective maps. -/
+theorem reindex_rename (f : S → T) {V : T → Type w} (ρ : Renaming Γ Δ)
+    (η : Env (fun a => V (f a)) Δ) :
+    reindex f (rename ρ η) = rename (Renaming.map f ρ) (reindex f η) := by
+  funext b x
+  induction x using ScopedVar.map_inductionOn f with
+  | h a x => simp only [reindex_map, rename_apply, Renaming.map_apply]
+
+end IPFunctor.ScopedSignature.Env
+
+/-! ## Deprecated aliases -/
+
+namespace IPFunctor.ScopedVar
+
+@[deprecated (since := "2026-11-07")] alias mapLookup := ScopedSignature.Env.reindex
+@[deprecated (since := "2026-11-07")] alias mapLookup_map := ScopedSignature.Env.reindex_map
+@[deprecated (since := "2026-11-07")] alias mapLookup_postcomp :=
+  ScopedSignature.Env.reindex_postcomp
+@[deprecated (since := "2026-11-07")] alias mapLookup_comp := ScopedSignature.Env.reindex_comp
+@[deprecated (since := "2026-11-07")] alias mapLookup_heq := ScopedSignature.Env.reindex_heq
+
+end IPFunctor.ScopedVar

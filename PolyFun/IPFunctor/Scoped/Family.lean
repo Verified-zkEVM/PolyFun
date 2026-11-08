@@ -89,14 +89,14 @@ variable {σ : ScopedFamily.{u, v, w, z} W S}
     (ρ : ScopedSignature.Renaming Γ Δ) (t : σ.Term w Γ a) : σ.Term w Δ a :=
   t.fold (D := fun j => ∀ Δ : List (S j.1),
       ScopedSignature.Renaming j.2.1 Δ → σ.Term j.1 Δ j.2.2)
-    (fun _ x _ ρ => .pure (ρ x))
+    (fun _ x _ ρ => .pure (ρ _ x))
     (fun _ op next _ ρ => .liftBind op (fun p => next p _
       (ScopedSignature.Renaming.liftMany
         (ScopedSignature.Renaming.map (σ.reindex op p) ρ) (σ.binders op p)))) Δ ρ
 
 @[simp] theorem rename_var {w : W} {Γ Δ : List (S w)} {a : S w}
     (ρ : ScopedSignature.Renaming Γ Δ) (x : ScopedVar Γ a) :
-    (var (σ := σ) x).rename ρ = var (ρ x) := rfl
+    (var (σ := σ) x).rename ρ = var (ρ a x) := rfl
 
 @[simp] theorem rename_node {w : W} {Γ Δ : List (S w)} {a : S w}
     (ρ : ScopedSignature.Renaming Γ Δ) (op : σ.Op w a)
@@ -108,7 +108,7 @@ variable {σ : ScopedFamily.{u, v, w, z} W S}
 
 /-- Identity renaming remains identity under parameter-context changes. -/
 @[simp] theorem rename_id {w : W} {Γ : List (S w)} {a : S w} (t : σ.Term w Γ a) :
-    t.rename (fun x => x) = t := by
+    t.rename (fun _ x => x) = t := by
   induction t using Term.inductionOn with
   | hvar w Γ a x => rfl
   | hnode w Γ a op args ih =>
@@ -116,8 +116,8 @@ variable {σ : ScopedFamily.{u, v, w, z} W S}
       congr 1
       funext p
       have h : (ScopedSignature.Renaming.liftMany
-          (Γ := Γ.map (σ.reindex op p)) (fun x => x) (σ.binders op p) :
-          ScopedSignature.Renaming _ _) = fun {_} x => x := by
+          (Γ := Γ.map (σ.reindex op p)) (fun _ x => x) (σ.binders op p) :
+          ScopedSignature.Renaming _ _) = fun _ x => x := by
         funext a x
         exact ScopedSignature.Renaming.liftMany_id _ x
       rw [h]
@@ -126,7 +126,7 @@ variable {σ : ScopedFamily.{u, v, w, z} W S}
 /-- Renaming composition commutes with every parameter and value binder. -/
 theorem rename_rename {w : W} {Γ Δ Θ : List (S w)} {a : S w} (t : σ.Term w Γ a)
     (ρ : ScopedSignature.Renaming Γ Δ) (τ : ScopedSignature.Renaming Δ Θ) :
-    (t.rename ρ).rename τ = t.rename (fun x => τ (ρ x)) := by
+    (t.rename ρ).rename τ = t.rename (ScopedSignature.Env.rename ρ τ) := by
   induction t using Term.inductionOn with
   | hvar w Γ a x => rfl
   | hnode w Γ a op args ih =>

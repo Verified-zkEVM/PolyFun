@@ -21,35 +21,36 @@ variable {S : Type u} {σ : ScopedSignature.{u, v, w} S} {Γ Δ Θ : List S}
 namespace Substitution
 
 @[simp] theorem liftMany_var (Ξ : List S) {a : S} (x : ScopedVar (Ξ ++ Γ) a) :
-    liftMany (σ := σ) (fun x => Term.var x) Ξ x = Term.var x := by
+    liftMany (σ := σ) (fun _ x => Term.var x) Ξ a x = Term.var x := by
   induction Ξ generalizing a with
   | nil => rfl
   | cons b Ξ ih =>
     cases x with
     | zero => rfl
     | succ x =>
-      change Term.weaken (liftMany (fun x => Term.var x) Ξ x) b = _
+      change Term.weaken (liftMany (fun _ x => Term.var x) Ξ a x) b = _
       rw [ih]
       rfl
 
 theorem lift_rename (θ : σ.Substitution Γ Δ) (ρ : Renaming Δ Θ) (b : S)
     {a : S} (x : ScopedVar (b :: Γ) a) :
-    lift (fun x => (θ x).rename ρ) b x = (lift θ b x).rename (Renaming.lift ρ b) := by
+    lift (fun a x => (θ a x).rename ρ) b a x = (lift θ b a x).rename (Renaming.lift ρ b) := by
   cases x with
   | zero => rfl
-  | succ x => simp only [lift, Term.weaken, Term.rename_rename, Renaming.lift]
+  | succ x =>
+    simp only [lift, Term.weaken, Term.rename_rename]
+    rfl
 
 theorem liftMany_rename (θ : σ.Substitution Γ Δ) (ρ : Renaming Δ Θ) (Ξ : List S)
     {a : S} (x : ScopedVar (Ξ ++ Γ) a) :
-    liftMany (fun x => (θ x).rename ρ) Ξ x =
-      (liftMany θ Ξ x).rename (Renaming.liftMany ρ Ξ) := by
+    liftMany (fun a x => (θ a x).rename ρ) Ξ a x =
+      (liftMany θ Ξ a x).rename (Renaming.liftMany ρ Ξ) := by
   induction Ξ generalizing a with
   | nil => rfl
   | cons b Ξ ih =>
-    change lift (liftMany (fun x => (θ x).rename ρ) Ξ) b x = _
-    have h : (fun {a} (x : ScopedVar (Ξ ++ Γ) a) =>
-        liftMany (fun x => (θ x).rename ρ) Ξ x) =
-        (fun {a} x => (liftMany θ Ξ x).rename (Renaming.liftMany ρ Ξ)) := by
+    change lift (liftMany (fun a x => (θ a x).rename ρ) Ξ) b a x = _
+    have h : (liftMany (fun a x => (θ a x).rename ρ) Ξ : σ.Substitution (Ξ ++ Γ) _) =
+        fun a x => (liftMany θ Ξ a x).rename (Renaming.liftMany ρ Ξ) := by
       funext a x
       exact ih x
     rw [h, lift_rename]
@@ -57,15 +58,15 @@ theorem liftMany_rename (θ : σ.Substitution Γ Δ) (ρ : Renaming Δ Θ) (Ξ :
 
 theorem liftMany_renaming (ρ : Renaming Γ Δ) (θ : σ.Substitution Δ Θ) (Ξ : List S)
     {a : S} (x : ScopedVar (Ξ ++ Γ) a) :
-    liftMany (fun x => θ (ρ x)) Ξ x =
-      liftMany θ Ξ (Renaming.liftMany ρ Ξ x) := by
+    liftMany (Env.rename ρ θ) Ξ a x =
+      liftMany θ Ξ a (Renaming.liftMany ρ Ξ a x) := by
   induction Ξ generalizing a with
   | nil => rfl
   | cons b Ξ ih =>
     cases x with
     | zero => rfl
     | succ x =>
-      change Term.weaken (liftMany (fun x => θ (ρ x)) Ξ x) b = _
+      change Term.weaken (liftMany (Env.rename ρ θ) Ξ a x) b = _
       rw [ih]
       rfl
 
@@ -74,16 +75,15 @@ end Substitution
 namespace Term
 
 /-- Substituting each variable by itself preserves syntax. -/
-@[simp] theorem subst_id {a : S} (t : σ.Term Γ a) : t.subst (fun x => var x) = t := by
+@[simp] theorem subst_id {a : S} (t : σ.Term Γ a) : t.subst (fun _ x => var x) = t := by
   induction t using Term.inductionOn with
   | hvar Γ a x => rfl
   | hnode Γ a op args ih =>
     rw [subst_node]
     congr 1
     funext p
-    have h : (fun {a} (x : ScopedVar (σ.binders op p ++ Γ) a) =>
-        Substitution.liftMany (fun x => var (σ := σ) x) (σ.binders op p) x) =
-        (fun {a} x => var x) := by
+    have h : (Substitution.liftMany (fun _ x => var (σ := σ) x) (σ.binders op p) :
+        σ.Substitution (σ.binders op p ++ Γ) _) = fun _ x => var x := by
       funext a x
       exact Substitution.liftMany_var _ x
     simp only [h]
@@ -92,7 +92,7 @@ namespace Term
 /-- Renaming after substitution renames all of the substitution images. -/
 theorem rename_subst {a : S} (t : σ.Term Γ a)
     (θ : σ.Substitution Γ Δ) (ρ : Renaming Δ Θ) :
-    (t.subst θ).rename ρ = t.subst (fun x => (θ x).rename ρ) := by
+    (t.subst θ).rename ρ = t.subst (fun a x => (θ a x).rename ρ) := by
   induction t using Term.inductionOn generalizing Δ Θ with
   | hvar Γ a x => rfl
   | hnode Γ a op args ih =>
@@ -107,7 +107,7 @@ theorem rename_subst {a : S} (t : σ.Term Γ a)
 /-- Substitution after renaming composes the variable assignments. -/
 theorem subst_rename {a : S} (t : σ.Term Γ a)
     (ρ : Renaming Γ Δ) (θ : σ.Substitution Δ Θ) :
-    (t.rename ρ).subst θ = t.subst (fun x => θ (ρ x)) := by
+    (t.rename ρ).subst θ = t.subst (Env.rename ρ θ) := by
   induction t using Term.inductionOn generalizing Δ Θ with
   | hvar Γ a x => rfl
   | hnode Γ a op args ih =>
@@ -125,32 +125,33 @@ namespace Substitution
 
 theorem lift_comp (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) (b : S)
     {a : S} (x : ScopedVar (b :: Γ) a) :
-    lift (fun x => (θ x).subst τ) b x = (lift θ b x).subst (lift τ b) := by
+    lift (fun a x => (θ a x).subst τ) b a x = (lift θ b a x).subst (lift τ b) := by
   cases x with
   | zero => rfl
-  | succ x => simp only [lift, Term.weaken, Term.rename_subst, Term.subst_rename]
+  | succ x =>
+    simp only [lift, Term.weaken, Term.rename_subst, Term.subst_rename]
+    rfl
 
 theorem liftMany_comp (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) (Ξ : List S)
     {a : S} (x : ScopedVar (Ξ ++ Γ) a) :
-    liftMany (fun x => (θ x).subst τ) Ξ x =
-      (liftMany θ Ξ x).subst (liftMany τ Ξ) := by
+    liftMany (fun a x => (θ a x).subst τ) Ξ a x =
+      (liftMany θ Ξ a x).subst (liftMany τ Ξ) := by
   induction Ξ generalizing a with
   | nil => rfl
   | cons b Ξ ih =>
-    change lift (liftMany (fun x => (θ x).subst τ) Ξ) b x = _
-    have h : (fun {a} (x : ScopedVar (Ξ ++ Γ) a) =>
-        liftMany (fun x => (θ x).subst τ) Ξ x) =
-        (fun {a} x => (liftMany θ Ξ x).subst (liftMany τ Ξ)) := by
+    change lift (liftMany (fun a x => (θ a x).subst τ) Ξ) b a x = _
+    have h : (liftMany (fun a x => (θ a x).subst τ) Ξ : σ.Substitution (Ξ ++ Γ) _) =
+        fun a x => (liftMany θ Ξ a x).subst (liftMany τ Ξ) := by
       funext a x
       exact ih x
     rw [h, lift_comp]
     rfl
 
 /-- Extend a substitution by an image for its newest variable. -/
-@[expose] def cons {a : S} (θ : σ.Substitution Γ Δ) (value : σ.Term Δ a) :
-    σ.Substitution (a :: Γ) Δ
-  | _, .zero => value
-  | _, .succ x => θ x
+@[deprecated Env.cons +typeChanged (since := "2026-11-07")]
+abbrev cons {a : S} (θ : σ.Substitution Γ Δ) (value : σ.Term Δ a) :
+    σ.Substitution (a :: Γ) Δ :=
+  Env.cons value θ
 
 end Substitution
 
@@ -159,7 +160,7 @@ namespace Term
 /-- Successive capture-avoiding substitutions compose. -/
 theorem subst_subst {a : S} (t : σ.Term Γ a)
     (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) :
-    (t.subst θ).subst τ = t.subst (fun x => (θ x).subst τ) := by
+    (t.subst θ).subst τ = t.subst (fun a x => (θ a x).subst τ) := by
   induction t using Term.inductionOn generalizing Δ Θ with
   | hvar Γ a x => rfl
   | hnode Γ a op args ih =>
@@ -173,21 +174,21 @@ theorem subst_subst {a : S} (t : σ.Term Γ a)
 
 /-- Substitute the innermost variable, retaining the surrounding context. -/
 @[expose] def substOne {a b : S} (body : σ.Term (a :: Γ) b) (value : σ.Term Γ a) :
-    σ.Term Γ b := body.subst (Substitution.cons (fun x => var x) value)
+    σ.Term Γ b := body.subst (Env.cons value fun _ x => var x)
 
 /-- Closing a body commutes with entering its newest binder. -/
 theorem substOne_subst_lift {a b : S} (body : σ.Term (a :: Γ) b)
     (θ : σ.Substitution Γ Δ) (value : σ.Term Δ a) :
     (body.subst (Substitution.lift θ a)).substOne value =
-      body.subst (Substitution.cons θ value) := by
+      body.subst (Env.cons value θ) := by
   rw [substOne, subst_subst]
   congr 1
   funext b x
   cases x with
   | zero => rfl
   | succ x =>
-    simp only [Substitution.lift, weaken, subst_rename, Substitution.cons]
-    exact subst_id (θ x)
+    simp only [Substitution.lift, weaken, subst_rename]
+    exact subst_id (θ _ x)
 
 end Term
 end IPFunctor.ScopedSignature

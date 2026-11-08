@@ -85,6 +85,6 @@ example :
 
 example {Γ Δ Θ : List Ty} {a : Ty} (e : Expr Γ a)
     (θ : signature.Substitution Γ Δ) (ψ : signature.Substitution Δ Θ) :
-    (e.subst θ).subst ψ = e.subst (fun x => (θ x).subst ψ) := Term.subst_subst e θ ψ
+    (e.subst θ).subst ψ = e.subst (fun a x => (θ a x).subst ψ) := Term.subst_subst e θ ψ
 
 end PolyFunTest.Scoped
