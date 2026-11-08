@@ -33,6 +33,14 @@ example {P : PFunctor} {α : Type} (ret : α → DomainResult Unit (DiscreteOrde
   rw [PFunctor.Resumption.denote_query]
   rfl
 
+/-- Returned values embed into results, and `map` changes only returned values, with no order
+on either type. -/
+example (x : Nat) (e : Unit) :
+    DomainResult.valueEmbedding (ε := Unit) x = DomainResult.value x ∧
+      DomainResult.map (· + 1) (DomainResult.value (ε := Unit) x) = DomainResult.value (x + 1) ∧
+      DomainResult.map (· + 1) (DomainResult.error (α := Nat) e) = DomainResult.error e ∧
+      DomainResult.map (α := Nat) (ε := Unit) (· + 1) ⊥ = ⊥ := by simp
+
 /-- An error is a defined outcome: it is neither bottom nor below a value. -/
 example (e : Unit) (x : DiscreteOrder Nat) :
     DomainResult.error (α := DiscreteOrder Nat) e ≠ ⊥ ∧

@@ -24,6 +24,10 @@ continuation. The other operations fix an evaluation order: `force` demands only
 an outer constructor, `bind₂` demands two results from left to right, and
 `applyContinuous` demands a function but suspends its argument. `elim` eliminates
 into any pointed domain, so a family of meanings needs no further suspension.
+
+`valueEmbedding` embeds returned values, and `map` changes them without any order, so a decoder
+into results over native values is a `Control.Semantics.CertifiedMeaning` into
+`valueEmbedding`.
 -/
 
 public section
@@ -69,6 +73,24 @@ variable {ε α β : Type*}
       cases d with
       | inl e => exact error e.value
       | inr x => exact value x
+
+/-- Returned values embed faithfully into results. -/
+@[expose] def valueEmbedding : α ↪ DomainResult ε α := ⟨value, fun _ _ => value_inj.mp⟩
+
+@[simp] theorem coe_valueEmbedding : ⇑(valueEmbedding : α ↪ DomainResult ε α) = value := rfl
+
+/-- Apply a function to a returned value, keeping bottom and every error. Neither type needs
+an order, so `map` also reads a result into a type of native values. -/
+@[expose] def map (f : α → β) : DomainResult ε α → DomainResult ε β :=
+  WithBot.map (Sum.map id f)
+
+@[simp] theorem map_bot (f : α → β) : map f (⊥ : DomainResult ε α) = ⊥ := rfl
+
+@[simp] theorem map_error (f : α → β) (e : ε) : map f (error e : DomainResult ε α) = error e :=
+  rfl
+
+@[simp] theorem map_value (f : α → β) (x : α) :
+    map f (value x : DomainResult ε α) = value (f x) := rfl
 
 variable [OmegaCompletePartialOrder α] [OmegaCompletePartialOrder β]
 

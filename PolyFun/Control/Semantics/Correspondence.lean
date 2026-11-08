@@ -16,16 +16,26 @@ An injective encoding identifies fully represented values inside an arbitrary
 semantic carrier. That carrier may also contain errors, divergence, or partial
 values. Correspondence on an explicit admissible set transfers total-correctness
 contracts without choosing a source language, evaluator, or computation monad.
+
+A language usually obtains a correspondence from three facts. Its fundamental lemma says that
+the meaning preserves a relation to a native evaluator. Its representation says that encoded
+inputs are related to native representatives and that a representative determines the encoded
+output. Totality says that the evaluator returns the representative of the implementation's
+result. `CorrespondsOn.of_liftFun` and `CertifiedMeaning.ofLiftFun` combine the three.
+
+A meaning whose results at encoded inputs are all encoded outputs needs no native evaluator.
+`CertifiedMeaning.ofDecode` certifies it, with the meaning read back by a left inverse of the
+output encoding as its implementation.
 -/
 
 public section
 
 namespace Control.Semantics
 
-universe uA uB uC uD uE uF
+universe uA uB uC uD uE uF uW uW'
 
 variable {A : Type uA} {B : Type uB} {C : Type uC}
-  {D : Type uD} {E : Type uE} {F : Type uF}
+  {D : Type uD} {E : Type uE} {F : Type uF} {W : Type uW} {W' : Type uW'}
 
 /-- Total correctness for every semantic representative of each admissible input.
 Relations permit partial values and irrelevant components to have many representations. -/
@@ -119,6 +129,26 @@ theorem eq_iff (h : CorrespondsOn input output valid meaning implementation)
     meaning (input x) = output y ↔ implementation x = y := by
   rw [h x hx, output.injective.eq_iff]
 
+/-- A meaning that preserves a relation to a native evaluator corresponds to an implementation
+on admissible inputs when:
+* each admissible input's encoding is related to a native representative (`represents`);
+* a native representative of an output determines its encoding (`determines`);
+* the evaluator returns the representative of the implementation's result (`total`).
+
+The relations put the semantic value first, as a language's fundamental lemma states them.
+`RelationalContract` puts the native value first instead, because it reads an input relation as
+the set of semantic representatives of each native value. -/
+theorem of_liftFun {Rin : D → W → Prop} {Rout : E → W' → Prop} {eval : W → W'}
+    {nativeIn : A → W} {nativeOut : B → W'} (fundamental : Relator.LiftFun Rin Rout meaning eval)
+    (represents : ∀ x, valid x → Rin (input x) (nativeIn x))
+    (determines : ∀ y e, Rout e (nativeOut y) → e = output y)
+    (total : ∀ x, valid x → eval (nativeIn x) = nativeOut (implementation x)) :
+    CorrespondsOn input output valid meaning implementation := by
+  intro x hx
+  apply determines
+  rw [← total x hx]
+  exact fundamental (represents x hx)
+
 end CorrespondsOn
 
 /-- An implementation with an all-input semantic correspondence certificate. -/
@@ -138,6 +168,59 @@ variable {input : A ↪ D} {output : B ↪ E}
 theorem correspondsOn (f : CertifiedMeaning input output) (valid : A → Prop) :
     CorrespondsOn input output valid f.meaning f.implementation := fun x _ => f.correct x
 
+/-- The certificate as an equation of functions on native inputs. -/
+theorem meaning_comp (f : CertifiedMeaning input output) :
+    f.meaning ∘ input = output ∘ f.implementation :=
+  funext f.correct
+
+/-- Certify a meaning from a relation to a native evaluator, as in
+`CorrespondsOn.of_liftFun`, with every input admissible. -/
+@[expose] def ofLiftFun {Rin : D → W → Prop} {Rout : E → W' → Prop} {eval : W → W'}
+    {nativeIn : A → W} {nativeOut : B → W'} (meaning : D → E) (implementation : A → B)
+    (fundamental : Relator.LiftFun Rin Rout meaning eval)
+    (represents : ∀ x, Rin (input x) (nativeIn x))
+    (determines : ∀ y e, Rout e (nativeOut y) → e = output y)
+    (total : ∀ x, eval (nativeIn x) = nativeOut (implementation x)) :
+    CertifiedMeaning input output where
+  meaning := meaning
+  implementation := implementation
+  correct x := CorrespondsOn.of_liftFun (valid := fun _ => True) fundamental
+    (fun x _ => represents x) determines (fun x _ => total x) x trivial
+
+/-- The certificate whose implementation is what `meaning` computes at an encoded input, read back
+by `decode`, a left inverse of `output`. The premise that every such result is an encoded output
+enters only the proof of correctness. -/
+@[expose] def ofDecode (meaning : D → E) (decode : E → B)
+    (decode_output : ∀ y, decode (output y) = y)
+    (represented : ∀ x, ∃ y, meaning (input x) = output y) : CertifiedMeaning input output where
+  meaning := meaning
+  implementation x := decode (meaning (input x))
+  correct x := by obtain ⟨y, hy⟩ := represented x; rw [hy, decode_output]
+
+@[simp] theorem ofDecode_meaning (meaning : D → E) (decode : E → B)
+    (decode_output : ∀ y, decode (output y) = y)
+    (represented : ∀ x, ∃ y, meaning (input x) = output y) :
+    (ofDecode meaning decode decode_output represented).meaning = meaning := rfl
+
+@[simp] theorem ofDecode_implementation (meaning : D → E) (decode : E → B)
+    (decode_output : ∀ y, decode (output y) = y)
+    (represented : ∀ x, ∃ y, meaning (input x) = output y) :
+    (ofDecode meaning decode decode_output represented).implementation =
+      fun x => decode (meaning (input x)) := rfl
+
+/-- Replace the implementation by a pointwise equal function. -/
+@[expose] def congr (f : CertifiedMeaning input output) {g : A → B}
+    (h : ∀ x, f.implementation x = g x) : CertifiedMeaning input output where
+  meaning := f.meaning
+  implementation := g
+  correct x := h x ▸ f.correct x
+
+@[simp] theorem congr_meaning (f : CertifiedMeaning input output) {g : A → B}
+    (h : ∀ x, f.implementation x = g x) : (f.congr h).meaning = f.meaning := rfl
+
+@[simp] theorem congr_implementation (f : CertifiedMeaning input output) {g : A → B}
+    (h : ∀ x, f.implementation x = g x) : (f.congr h).implementation = g := rfl
+
 /-- Compose total certificates through their common represented boundary. -/
 @[expose] def comp {final : C ↪ F} (g : CertifiedMeaning output final)
     (f : CertifiedMeaning input output) : CertifiedMeaning input final where
@@ -146,6 +229,15 @@ theorem correspondsOn (f : CertifiedMeaning input output) (valid : A → Prop) :
   correct x := by
     change g.meaning (f.meaning (input x)) = final (g.implementation (f.implementation x))
     rw [f.correct, g.correct]
+
+/-- The meaning of a composite certificate is the composite meaning. -/
+theorem comp_meaning {final : C ↪ F} (g : CertifiedMeaning output final)
+    (f : CertifiedMeaning input output) : (g.comp f).meaning = g.meaning ∘ f.meaning := rfl
+
+/-- The implementation of a composite certificate is the composite implementation. -/
+theorem comp_implementation {final : C ↪ F} (g : CertifiedMeaning output final)
+    (f : CertifiedMeaning input output) :
+    (g.comp f).implementation = g.implementation ∘ f.implementation := rfl
 
 /-- Transfer a native contract through an all-input certificate. -/
 theorem contract_iff (f : CertifiedMeaning input output)
