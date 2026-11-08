@@ -170,10 +170,14 @@ the rest of `ToCslib`, they import no PolyFun module.
   stated for outputs in `Type`.
 - **Instances**
   ([`Monad/Measure/Deterministic`](../../PolyFun/Control/Monad/Measure/Deterministic.lean),
+  [`Free/Measure/EvalDist`](../../PolyFun/PFunctor/Free/Measure/EvalDist.lean),
   [`Domain/Measure/EvalDist`](../../PolyFun/Control/Domain/Measure/EvalDist.lean)).
   `Id`, `Option` and `Except ε` have lawful semantics: a Dirac measure at a returned value, and zero
-  at a failure. `Id` is lossless. The instances name the universe of the results, as in
-  `Except.{u, v} ε`, so they apply at results in any universe. `DomainResult ε` is not a monad. A partial result reaches the semantics through `toOption` and the
+  at a failure. `Id` is lossless. `PFunctor.FreeM P` has the semantics of `PFunctor.FreeM.denote`.
+  It satisfies the pure law for any answer spaces, and is lawful and lossless over discrete
+  answers. The instances name the universe of the results, as in `FreeM.{w, uA, u} P`, so they
+  apply at results in any universe, independently of the universes of the operations and answers.
+  `DomainResult ε` is not a monad. A partial result reaches the semantics through `toOption` and the
   `Option` instance, under which it denotes the values of its Dirac measure
   (`DomainResult.evalDist_toOption`).
 
