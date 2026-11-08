@@ -377,6 +377,46 @@ while IFS= read -r file; do
   fi
 done < <(git ls-files -- 'PolyFunTest/ModuleAPI/*.lean')
 
+# Imported declarations reach the kernel only through `IPFunctor.Import.submit`, which turns off
+# asynchronous checking and `debug.skipKernelTC`, applies the per-declaration budget, and restores
+# the environment after a rejection so that no fallback axiom remains. In the import machinery and
+# its tests, only `Import/Submit.lean` adds declarations.
+import_add_pattern='(^|[^[:alnum:]_])(addDecl|addAndCompile|mkAuxLemma)([^[:alnum:]_]|$)'
+
+for add_form in \
+    'addDecl decl' \
+    '  atomically <| withOptions (guard b) <| addDecl decl (forceExpose := forceExpose)' \
+    '  return env.addDecl (guard b (← getOptions)) decl' \
+    '  discard <| mkAuxLemma [] type value' \
+    'addAndCompile d'; do
+  if ! grep -qE "$import_add_pattern" <<< "$add_form"; then
+    echo "ERROR: import addDecl matcher does not recognize: $add_form" >&2
+    status=1
+  fi
+done
+
+for other_form in \
+    '  submit (← reflDecl name lhs rhs) cfg.budget' \
+    'def addDeclaration := 0' \
+    'readdDeclared'; do
+  if grep -qE "$import_add_pattern" <<< "$other_form"; then
+    echo "ERROR: import addDecl matcher must not classify: $other_form" >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  case "$file" in
+    */Import/Submit.lean) continue ;;
+  esac
+  if grep -qE "$import_add_pattern" "$file"; then
+    echo "ERROR: $file adds declarations directly; the import machinery and its tests go through" >&2
+    echo "IPFunctor.Import.submit (PolyFun/IPFunctor/Scoped/Import/Submit.lean)." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun/IPFunctor/Scoped/Import/*.lean' \
+  'PolyFunTest/IPFunctor/Scoped/Import/*.lean')
+
 if (( status != 0 )); then
   exit "$status"
 fi

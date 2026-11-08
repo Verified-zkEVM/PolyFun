@@ -1,0 +1,8 @@
+[
+  {
+    "name": "deep",
+    "scheme": {"arrow": [{"arrow": ["nat", "nat"]}, {"arrow": ["nat", "nat"]}]},
+    "body": {"lam": {"arg": {"arrow": ["nat", "nat"]}, "body": {"lam": {"arg": "nat", "body":
+      {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"var": 0}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}}}}}
+  }
+]

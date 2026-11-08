@@ -86,6 +86,9 @@ public import PolyFun.IPFunctor.Scoped.FamilyMapCongr
 public import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
 public import PolyFun.IPFunctor.Scoped.FamilySize
 public import PolyFun.IPFunctor.Scoped.FamilySubstitution
+public import PolyFun.IPFunctor.Scoped.Import.Driver
+public import PolyFun.IPFunctor.Scoped.Import.Quote
+public import PolyFun.IPFunctor.Scoped.Import.Submit
 public import PolyFun.IPFunctor.Scoped.Interpretation
 public import PolyFun.IPFunctor.Scoped.Reindex
 public import PolyFun.IPFunctor.Scoped.Renaming
