@@ -52,7 +52,7 @@ The framework is organized around a few stable principles:
 | Layer | Directory | What it models |
 |-------|-----------|----------------|
 | Sequential core | `Basic/` | Type trees, paths, decorations, strategies, composition |
-| Two-party | `TwoParty/` | Sender/receiver roles, counterparts, public-coin replay |
+| Two-party | `TwoParty/Lens/` | Ownership lenses, uniform effect slots, composition, replay |
 | Multiparty | `Multiparty/` | Per-party local view modes (pick / observe / hidden / react) and observation kernels |
 | Concurrent | `Concurrent/` | Parallel composition, frontiers, processes, refinement |
 | Typed boundaries | `Interface.lean` | Request/reply interfaces and directed ports |
@@ -246,7 +246,99 @@ associativity is stated after `Chain.toTypeTree`, the stable operational
 interpretation; raw equality of intensional `Chain` presentations is not part
 of the API contract.
 
-## Two-party protocols (`TwoParty/`)
+## Lens-based two-party protocols (`TwoParty/Lens/`)
+
+Use `Interaction.TwoParty.Lens` for two-party interaction on an arbitrary
+polynomial source. Its signature is `l : PFunctor.Lens P rolePoly`, where
+`rolePoly.{u} : PFunctor.{u+1,u}` has positions `Role × Type u` and directions
+the selected move carrier. `owner l a` and `Move l a` read these two components;
+`l.toFunB a` sends a runtime move to a source branch. Source positions and
+branches have independent universes, so a position may contain a type larger
+than the move or monad universe.
+
+A protocol is `FreeM P PUnit`. Its transcript is `PathAlong l s`, retaining
+runtime moves even when `projectPathAlong l s` erases their payloads. An appended
+suffix is selected by `s₂ : Path s₁ → FreeM P PUnit`; after transcript `tr`, it
+is `s₂ (projectPathAlong l s₁ tr)`. For example, a message may select a different
+suffix tree while a challenge mapped to `PUnit` changes only strategy state or
+outputs. Ownership needs no decoration.
+
+Both `Focal l m s OutP` and `Counterpart l m s OutC` have one effect slot before
+each move and one at the leaf:
+
+| Boundary | Strategy payload |
+|---|---|
+| Leaf | `m Out` |
+| Owned node | `m ((x : Move l a) × Cont x)` |
+| Observed node | `m ((x : Move l a) → Cont x)` |
+
+Each continuation is another strategy and starts with its own slot. An observer
+reacts to a received move in that next slot. `run` derives execution from
+`InteractionOver.run` and returns `m ((tr : PathAlong l s) × OutP tr × OutC tr)`.
+At every boundary it runs the focal slot and then the counterpart slot before
+exchanging the move; terminal actions follow the same order. `runWith` also
+supports `Schedule.counterpartFirst`. Public laws include `run_done`,
+`run_node`, `run_sender`, `run_receiver`, and `run_mapOutput_mapOutput`.
+
+### Composition and iteration with ordered effects
+
+`Focal.compFlat p f` executes the focal prefix leaf action, constructs the
+suffix effectfully with `f`, and merges those actions into the suffix's first
+slot. `Counterpart.appendFlat c g` selects its suffix purely from the prefix
+transcript and output. Here `c : PureEnd l m .counterpart s₁ MidC` has effectful
+node slots and a pure terminal payload; `c.toStrategy` inserts a pure leaf
+slot for standalone prefix execution.
+
+`run_compFlat_appendFlat` proves composed execution equals prefix execution,
+then suffix construction, then suffix execution under `LawfulMonad` alone.
+Its pure counterpart end is a hypothesis encoded in the prefix type. It does
+not assert the same equation for an arbitrary effectful counterpart leaf.
+`Focal.comp` and `Counterpart.append` use `PathAlong.LiftAppend` for factored
+outputs; `run_comp_append` packs the two participant outputs separately.
+`Focal.splitPrefix` retains the actual seam-slot payload and private
+continuations of a whole strategy. `Focal.compFlat_splitPrefix` reconstructs
+that strategy, and `run_appendFlat_splitPrefix` gives its sequential run law
+against an appended counterpart.
+
+`Focal.iterate` and `Counterpart.iterate` thread each party's own state through
+`FreeM.replicate`. The counterpart round again has a pure terminal payload.
+`run_iterate_zero` returns the initial states; `run_iterate_succ` executes one
+round before the remaining rounds. Path replication has independent
+`replicateCons`/`replicateUncons` and `replicateJoin`/`replicateSplit` round trips.
+The helper
+[`Path/AppendAlong.lean`](../../PolyFun/PFunctor/Free/Path/AppendAlong.lean)
+provides append/packing constructor equations, product transports and
+`projectPathAlong_id`; it imports `Path.lean` without an import in the reverse
+direction.
+
+### Replay and ownership exchange
+
+`PublicCoinCounterpart.toCounterpart` executes exposed challenge samplers.
+`PublicCoinCounterpart.replay` follows the recorded challenge without invoking
+its sampler, including when that sampler would fail. Observation and leaf
+slots still execute. Conversion and replay have public leaf, sender, and
+receiver equations.
+
+`swapLens` exchanges ownership while preserving source branches and moves;
+`swapLens_swapLens` proves its involution. `Strategy.swap` exchanges the
+participants. `run_swap` exchanges their outputs against the original
+counterpart-first schedule, preserving the order of effects.
+
+The ordinary-import
+[`TwoPartyLens` client](../../PolyFunTest/ModuleAPI/TwoPartyLens.lean)
+checks independent universes and path transports.
+[`Examples`](../../PolyFunTest/Interaction/TwoParty/Lens/Examples.lean) checks
+erased challenges, dependent outputs, changing suffix shapes, and failing-sampler
+replay. [`CompositionExecution`](../../PolyFunTest/Interaction/TwoParty/Lens/CompositionExecution.lean)
+checks state traces at empty, send-to-challenge, and receive seams, iteration,
+swap, and both branches of a fully branching receiver protocol.
+
+## Retained two-party reference API (`TwoParty/*.lean`)
+
+The role-decorated API below is retained unchanged for reference and will be
+removed in a later migration. The lens API has no aliases to it.
+
+
 
 Label each node with `Role` (`.sender` or `.receiver`) via
 `RoleDecoration`. Both parties' strategies are fibers of one syntax over the
@@ -521,9 +613,12 @@ import PolyFun.Interaction.Basic.TypeTree
 import PolyFun.Interaction.Basic.Strategy
 import PolyFun.Interaction.Basic.Append      -- if composing
 
--- Two-party
-import PolyFun.Interaction.TwoParty.Strategy -- includes Role, Decoration
-import PolyFun.Interaction.TwoParty.Compose  -- if composing
+-- Lens-based two-party interaction
+import PolyFun.Interaction.TwoParty.Lens.Strategy
+import PolyFun.Interaction.TwoParty.Lens.Compose  -- if composing
+import PolyFun.Interaction.TwoParty.Lens.Iterate  -- if iterating
+import PolyFun.Interaction.TwoParty.Lens.PublicCoin  -- if replaying
+import PolyFun.Interaction.TwoParty.Lens.Swap  -- if exchanging participants
 
 -- Multiparty
 import PolyFun.Interaction.Multiparty.Core

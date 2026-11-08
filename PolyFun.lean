@@ -228,6 +228,13 @@ public import PolyFun.Interaction.Open.SecureEmulation
 public import PolyFun.Interaction.Open.SubTheory
 public import PolyFun.Interaction.TwoParty.Compose
 public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Lens.Compose
+public import PolyFun.Interaction.TwoParty.Lens.Iterate
+public import PolyFun.Interaction.TwoParty.Lens.PublicCoin
+public import PolyFun.Interaction.TwoParty.Lens.Signature
+public import PolyFun.Interaction.TwoParty.Lens.Strategy
+public import PolyFun.Interaction.TwoParty.Lens.Swap
+public import PolyFun.Interaction.TwoParty.Lens.Syntax
 public import PolyFun.Interaction.TwoParty.PublicCoin
 public import PolyFun.Interaction.TwoParty.Refine
 public import PolyFun.Interaction.TwoParty.Role
@@ -333,6 +340,7 @@ public import PolyFun.PFunctor.Free.Fold
 public import PolyFun.PFunctor.Free.HandlerMachine
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
+public import PolyFun.PFunctor.Free.Path.AppendAlong
 public import PolyFun.PFunctor.Free.Path.Bounded
 public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Free.Path.Execution
