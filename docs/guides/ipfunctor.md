@@ -792,3 +792,73 @@ assignment, under the premises of `Term.certifiedMeaning`. A total evaluator can
 implementation, so its totality premise holds by definition. The vectors tutorial encodes numbers
 and vectors of data faithfully and so certifies every term with one data input at every size
 assignment (`certifiedEvaluator`).
+
+## Importing typed syntax
+
+`Scoped/Import` lets a frontend for an external language add typed terms of a binding signature
+or a stacked family through the kernel, and have the kernel accept each one against its source.
+The frontend decodes its source into a mirror type, elaborates each declaration in meta code into
+a `Tree`, and names an erasure `erase : Term → Mirror`, an exposed fold. For each declaration `d`,
+`importDecls` adds:
+
+- `d`, the quoted term, as an exposed definition, whose type the kernel checks;
+- `d.accepted : erase d = src`, by `Eq.refl` (the default) or by evaluating a `Decidable`
+  instance, which the kernel decides;
+- the frontend's equation lemmas, each by `Eq.refl`, with right sides written without syntax.
+
+[`Import/Quote.lean`](../../PolyFun/IPFunctor/Scoped/Import/Quote.lean) turns a `Tree` into a
+term. A node carries a `Head` of the frontend's table, usually `Head.const` of a smart
+constructor. The quoter keeps scopes and writes variables, with every implicit argument
+explicit. A child that enters type binders replaces the parameters and weakens the ambient sorts,
+as `Stacked.enter` does. `Syntax.ofSignature` and `Syntax.ofStacked` cover both levels of a
+stacked family, so annotations and terms use one quoter. The elaborator never compares
+value-level types, so a mistake in a head table is a kernel type mismatch.
+
+[`Import/Submit.lean`](../../PolyFun/IPFunctor/Scoped/Import/Submit.lean) is the only place that
+adds declarations. In the import machinery and its tests, `check-modules.sh` rejects any other file
+that names `addDecl`, `addDeclCore`, `addDeclWithoutChecking`, `addAndCompile`, `mkAuxLemma`,
+`mkAuxTheorem`, `mkAuxDefinition` or `mkAuxDefinitionFor`. The match is textual, so a declaration
+added by another route, such as elaborating a command, is outside it.
+`submit` runs the kernel check synchronously, with `debug.skipKernelTC` off, within a positive
+`Budget` of heartbeats, at most the ambient `maxHeartbeats` when that is positive, and compiles a
+definition that should be compiled in the same synchronous step. When the kernel rejects a
+declaration, `addDecl` keeps its statement as an axiom, even when the error is caught or
+swallowed by `#guard_msgs`. `atomically`, the machinery's only handler, restores the environment
+and rethrows, also after a heartbeat or recursion-depth limit, which an ordinary `try` does not
+catch. A failed import therefore stops at the declaration, and the environment returns to its
+state before that declaration: a kernel rejection, a compilation error, a frontend error or a
+resource limit leaves none of the declaration's definitions, compiled code or fallback axioms,
+while the declarations before it stay. Messages logged before the failure remain.
+[`Import/Driver.lean`](../../PolyFun/IPFunctor/Scoped/Import/Driver.lean) runs a frontend in
+commit mode, or in check mode, which adds and compiles nothing and reports the kernel's verdict on
+each step. Rejection tests use check mode.
+
+**Trust.** The kernel checks that each imported term has the type the frontend declares and that
+each theorem is proved. It does not check that these statements say what the import should
+establish: the frontend chooses them, and they are trusted. The trusted part of a frontend is
+its declared type of each term, the two sides of each acceptance theorem and the statements of
+its equation lemmas; the decoder from the external file to the mirror; the mirror's `ToExpr`
+instances, which write the source as a term; and the exposed erasure. The source side of an
+acceptance theorem must come from the decoded file, not from the term. Only the `Tree` quoted into
+the term is untrusted: a mistake in it is a kernel type mismatch or a failed acceptance theorem.
+
+Never set `debug.skipKernelTC` where imported declarations are accepted. With it set,
+`addDecl` admits a declaration unchecked, and the declaration depends on no axiom, so neither
+`#print axioms` nor the axiom sweep can see it. `submit` overrides the option for its own checks.
+The kernel's heartbeats bound allocations, not time, so a budget is a deterministic regression
+guard rather than a time limit; report times with `Config.report`.
+
+Kernel acceptance unfolds only exposed bodies: the erasure, and for acceptance by `decide` the
+mirror's derived decidable equality. Meta code that builds mirror values needs `public meta
+import` of the mirror's module. Lake does not track the JSON files a frontend reads; declare them
+with an `input_file` or `input_dir` target in the library's `needs` when they change between
+builds.
+
+The [toy JSON frontend](../../PolyFunTest/IPFunctor/Scoped/Import/Toy.lean) imports the
+[vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean)'s language, inserting a coercion
+after each size instantiation. Its [fixtures](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean)
+cover acceptance by both proofs, an equation lemma, a wrong scheme and a mismatched source
+rejected in check mode, a budget the kernel exhausts, and two failures in commit mode, a kernel
+rejection and a declaration that the kernel accepts and the code generator cannot compile. Neither
+leaves a declaration or an axiom behind. The validation wrapper's axiom sweep includes both
+modules.
