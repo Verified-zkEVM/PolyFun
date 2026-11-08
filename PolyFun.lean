@@ -66,6 +66,7 @@ public import PolyFun.Control.Monad.Support.Structural
 public import PolyFun.Control.Monad.Support.WP
 public import PolyFun.Control.Monad.WriterT.WP
 public import PolyFun.Control.Semantics.Correspondence
+public import PolyFun.Control.Semantics.Measure
 public import PolyFun.Control.Trace
 public import PolyFun.Control.Transition
 public import PolyFun.IPFunctor.Basic
