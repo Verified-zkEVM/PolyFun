@@ -106,6 +106,14 @@ when its path is `<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does
   (`MeasurableEquiv.map_uniformOn`). With measurable singletons, a measurable map injective on `s`
   does the same (`map_uniformOn_of_injOn`), so a measurable bijection preserves the uniform measure
   on the whole space (`map_uniformOn_univ_of_bijective`, `uniformOn_univ_map_equiv`).
+- **Uniform measures and mass functions**
+  ([`UniformOn/PMF`](../../ToCslib/Probability/UniformOn/PMF.lean)).
+  The first PMF bridge. A mass function is the uniform measure on a finite set exactly when it
+  gives each point of the set mass `1 / #s` (`PMF.toMeasure_eq_uniformOn_iff`), and
+  `Measure.toPMF` of the uniform measure has these masses (`Measure.toPMF_uniformOn_apply`). The
+  bridge imports only `Mathlib.Probability.ProbabilityMassFunction.Basic`. Mathlib has no uniform
+  mass functions: `PMF.uniformOfFinset` and `PMF.uniformOfFintype` are deprecated aliases of the
+  measure `Measure.uniformOfFinset`.
 - **Partial results**
   ([`Domain/Measure/Measurable`](../../PolyFun/Control/Domain/Measure/Measurable.lean),
   [`Domain/Measure`](../../PolyFun/Control/Domain/Measure.lean)).
