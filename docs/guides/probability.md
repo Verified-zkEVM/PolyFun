@@ -114,14 +114,50 @@ the rest of `ToCslib`, they import no PolyFun module.
   `PFunctor.FreeM.denote` is the fold under it. Over discrete answers the fold preserves bind
   and map (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two independent runs denote
   the product measure (`denote_bind_bind_prod_mk_eq_prod`).
-- **The expectation algebra**
-  ([`Free/Measure/Expectation`](../../PolyFun/PFunctor/Free/Measure/Expectation.lean)).
-  `expectationAlgebra ν` collapses a program with values in `ℝ≥0∞` to the integral of those values
-  under its measure fold. It is an ordered monad algebra, so PolyFun's program-logic bridges make
-  it an exact weakest-precondition interpretation in which `wp x post` is the expected value of
-  `post` (`expectationAlgebra_μ_bind_pure`). Under subprobability answers it restricts to the
-  probability carrier `Set.Iic (1 : ℝ≥0∞)` (`probabilityAlgebra`). `open scoped
-  PFunctor.FreeM.Expectation` installs the algebra of `PFunctor.AnswerMeasure`.
+- **Expectations through the fold**
+  ([`Free/Measure/Lintegral`](../../PolyFun/PFunctor/Free/Measure/Lintegral.lean)).
+  `OpSpec.lintegral ν` specifies a call at `a` by the integral of its continuation under `ν a`. Its
+  fold `wpFold (OpSpec.lintegral ν) x post` is the expectation of `post`, taken one call at a time.
+  The fold needs no measurable space on the results and no measurability of `post`, and the
+  results may lie in any universe. For all answer measures, the integral of `post` against the
+  measure fold is at most the fold (`lintegral_measureFold_le_wpFold`). Over discrete answers, the
+  two are equal for a measurable `post` (`lintegral_measureFold_eq_wpFold`). The fold can be larger
+  because the measure fold sends a call whose continuation family is not almost everywhere
+  measurable to zero. Over discrete answers, the probability of a measurable event is the fold of
+  its indicator (`measureFold_apply_eq_wpFold`). The integration spec pulled back along a free
+  handler is the integration spec of the measures its implementations fold to
+  (`OpSpec.lintegral_pullback`).
+- **The expectation algebras**
+  ([`Free/Measure/Expectation`](../../PolyFun/PFunctor/Free/Measure/Expectation.lean),
+  [`Monad/Measure/Expectation`](../../PolyFun/Control/Monad/Measure/Expectation.lean)).
+  `expectationAlgebra ν` is the ordered monad algebra that the integration spec induces
+  (`OpSpec.toMAlgOrdered`). It is defined for all answer measures and answer universes. PolyFun's
+  program-logic bridges make it an exact weakest-precondition interpretation in which `wp x post`
+  is the fold of `post`. Over discrete answers, that fold is the expected value of `post`
+  (`expectationAlgebra_μ_bind_pure`). Under subprobability answers the algebra restricts to the
+  probability carrier `Set.Iic (1 : ℝ≥0∞)` (`probabilityAlgebra`). The carrier of an ordered monad
+  algebra lies in the universe of the values, so these algebras apply to values in `Type`.
+  `expectationAlgebraULift ν` is the algebra of the lifted spec `(OpSpec.lintegral ν).ulift` over
+  `ULift ℝ≥0∞`, for values in any universe. `ExpectationWP.algebra m` and
+  `ExpectationWP.algebraULift m` are the expectation algebras of any lawful measure semantics
+  `m`. On free programs over discrete answers, they are the algebras of the integration spec of
+  the answer measures (`ExpectationWP.algebra_freeM`, `ExpectationWP.algebraULift_freeM`). All of
+  these algebras are definitions. `open scoped PFunctor.FreeM.Expectation` installs the algebra of
+  `PFunctor.AnswerMeasure`.
+- **Expected charge**
+  ([`Free/Measure/ExpectedCharge`](../../PolyFun/PFunctor/Free/Measure/ExpectedCharge.lean)).
+  `OpSpec.expectedCharge ν c` reads a call at `a` as costing `c a`, followed by the expected value
+  of its continuation under `ν a`. Its fold with zero leaf costs is the expected charge, the
+  expected counterpart of the worst-case `cost c x`. Under subprobability answers it is at most the
+  worst case (`wpFold_expectedCharge_le_costWith`). Over discrete answers the leaf costs split off
+  (`wpFold_expectedCharge_eq_add`). Under probability answers over discrete answer types, the
+  expected charge is the integral of the charge of the completed path
+  (`lintegral_measureFold_withPathCharge`), and the expected query count is the expected unit
+  charge (`expectedQueryCount_eq_wpFold`). Expected cost transfers through a free handler as an
+  instance of `wpFold_liftM_le`. If each implementation has expected charge at most `c a`, the
+  simulated program's expected charge is at most the source program's under `c`, with each call
+  answered by the measure fold of its implementation (`wpFold_expectedCharge_liftM_le`; the exact
+  form is `wpFold_expectedCharge_liftM`).
 - **Kernel handlers**
   ([`Free/Measure/Kernel`](../../PolyFun/PFunctor/Free/Measure/Kernel.lean),
   [`Free/Measure/Kernel/Transport`](../../PolyFun/PFunctor/Free/Measure/Kernel/Transport.lean),
@@ -245,8 +281,9 @@ the rest of `ToCslib`, they import no PolyFun module.
   to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
-so VCVio can import them without renaming. The coupling predicates therefore live in VCVio's
-`ExpectationWP` namespace, apart from the abstract `MAlgRelOrdered.RelWP`.
+so VCVio can import them without renaming. The coupling predicates and the expectation algebra
+`ExpectationWP.algebra` therefore live in VCVio's `ExpectationWP` namespace, apart from the
+abstract `MAlgRelOrdered.RelWP`.
 
 ## Relation to VCVio and to interaction cost
 
@@ -262,4 +299,6 @@ scoped notation for the map through the monad's functor (`open scoped EvalDistSe
 map through the monad's functor up to syntactic equality.
 
 The interaction-cost modules are probability-free. An expected cost is a measure-valued reading
-of the same programs, so it belongs in a measure companion.
+of the same programs, so it belongs in a measure companion. It is the fold of
+`OpSpec.expectedCharge`, so the comparison and transfer principles of the core readings
+(`wpFold_le_wpFold_of_le`, `wpFold_liftM_le`) apply to it unchanged.
