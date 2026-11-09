@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import Mathlib.Data.Fin.Tuple.Basic
+public import ToCslib.Data.Fin.Cases
 
 /-!
 # Monadic sequencing of `Fin`-indexed families
@@ -15,6 +15,9 @@ public import Mathlib.Data.Fin.Tuple.Basic
 `Fin n → α`. It is the function-valued counterpart of Mathlib's `List.Vector.mOfFn`; the pinned
 core, Batteries and Mathlib define no monadic `Fin.ofFn`. The body is exposed so that its two
 equations, `Fin.mOfFn_zero` and `Fin.mOfFn_succ`, hold by `rfl` for every importer.
+
+The collected function is a chain of `Fin.cons`. This module imports the compiler simplifications
+of `ToCslib.Data.Fin.Cases`, so compiled code reads entry `i` of the chain in time linear in `i`.
 -/
 
 public section
