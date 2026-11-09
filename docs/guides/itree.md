@@ -247,6 +247,26 @@ most one result satisfies `P`, as for the outcome of a deterministic evaluation,
 `admissible_bot_or_liftRel` makes it admissible, so it holds of a least fixed point by fixed-point
 induction.
 
+A native evaluator computes with results whose values have no order. `DomainResult.map`,
+`bindPlain` and `ifValue` sequence such results, and `Fin.mOfFn` in their monad
+(`DomainResult.monad`) collects a `Fin`-indexed family from left to right; `bindPlain` passes an
+error through, and `ifValue` gives bottom instead. On ordered values, the continuous `bind` is
+`bindPlain` (`bind_eq_bindPlain`). An evaluator that may give up relates its result `r` to a
+meaning `d` by
+[`DomainResult.Approx P d r`](../../PolyFun/Control/Domain/ResultRel.lean): bottom approximates
+every result, an error only the same error, and a value a value related by `P`. Away from bottom it
+is `LiftRel` with equal errors (`approx_iff`), and `approx_bind` and `approx_bind₂` carry it through
+the continuous `bind` and `bind₂`.
+
+A decoder `dec` into results over native values *decodes above* an encoder `enc`
+([`DomainResult.DecodesAbove`](../../PolyFun/Control/Domain/Result.lean)) when the computations
+that decode to `x` are exactly those above `enc x`. Reading a discrete value back is such a decoder
+(`decodesAbove_map_value`), because over a discrete type a value has only itself above it
+(`value_le_iff_eq`). Decoding is then stable upward (`dec_eq_of_le`), and a monotone map acts on
+every computation that decodes to `x` as it acts on `enc x` (`dec_apply_eq_of_monotone`). A fact
+proved by computation at an encoding thus transfers to a computation that only decodes to a value,
+such as the accumulator of a fold. No order on the decoded type is needed.
+
 [`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
 pointed omega-CPO with a continuous algebra for each visible query. Silent
 steps use identity. `ITree.denote` interprets the exact resumption-with-tau
