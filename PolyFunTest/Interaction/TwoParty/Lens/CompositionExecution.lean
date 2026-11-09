@@ -241,4 +241,80 @@ example (challenge : Bool) :
   run_appendFlat_splitPrefix (OutC := fun _ => Nat) wholeProver
     (firstVerifier challenge) suffixVerifier
 
+/-! ## Owners of the suffix chosen by the receiver's move -/
+
+/-- Owners of the nodes visited by a transcript, in execution order. -/
+def owners : (s : FreeM rolePoly.{0} PUnit.{1}) → PathAlong L s → List Role
+  | .pure _, _ => []
+  | .liftBind a rest, tr =>
+    owner L a :: owners (rest (L.toFunB a (PathAlong.head L a rest tr)))
+      (PathAlong.tail L a rest tr)
+
+/-- Owners of the first node of a tree, if any. -/
+def rootOwner : FreeM rolePoly.{0} PUnit.{1} → Option Role
+  | .pure _ => none
+  | .liftBind a _ => some (owner L a)
+
+/-- Owners along an appended transcript are the prefix owners followed by the suffix owners. -/
+theorem owners_append :
+    (s₁ : FreeM rolePoly.{0} PUnit.{1}) → (s₂ : Path s₁ → FreeM rolePoly.{0} PUnit.{1}) →
+    (tr : PathAlong L s₁) → (tail : PathAlong L (s₂ (projectPathAlong L s₁ tr))) →
+    owners (s₁.append s₂) (PathAlong.append L s₁ s₂ tr tail) =
+      owners s₁ tr ++ owners (s₂ (projectPathAlong L s₁ tr)) tail
+  | .pure _, _, _, _ => rfl
+  | .liftBind a rest, s₂, tr, tail => by
+    simp only [FreeM.append_liftBind, owners, List.cons_append]
+    exact congrArg _ (owners_append (rest (L.toFunB a (PathAlong.head L a rest tr)))
+      (fun t => s₂ ⟨L.toFunB a (PathAlong.head L a rest tr), t⟩)
+      (PathAlong.tail L a rest tr) tail)
+
+/-- The two suffixes begin with a focal (sender) and a counterpart (receiver) move. -/
+example : rootOwner (suffixTree ⟨false, ⟨⟩⟩) = some .sender := rfl
+example : rootOwner (suffixTree ⟨true, ⟨⟩⟩) = some .receiver := rfl
+
+/-- The receiver's challenge selects the suffix, and the suffixes have different root owners. -/
+example : rootOwner (suffixTree ⟨false, ⟨⟩⟩) ≠ rootOwner (suffixTree ⟨true, ⟨⟩⟩) := by
+  intro h; cases h
+
+/-- Owner sequence of the transcript produced by the composite run, in the state monad. -/
+def runOwners (challenge : Bool) : List Role :=
+  (((fun r => owners (receive.append suffixTree) r.1) <$>
+    run (receive.append suffixTree) wholeProver
+      (Counterpart.appendFlat (Out := fun _ => Nat) (firstVerifier challenge)
+        suffixVerifier) : Trace (List Role)).run []).1
+
+/-- Running the composite equals running the prefix and then the suffix selected by the prefix
+transcript, and the owners of the resulting transcript are the prefix owners followed by the
+selected suffix owners. -/
+theorem runOwners_eq (challenge : Bool) :
+    runOwners challenge = ((do
+      let ⟨tr, next, oc⟩ ← run receive (Focal.splitPrefix wholeProver)
+        (firstVerifier challenge).toStrategy
+      let ⟨tail, _, _⟩ ← run (suffixTree (projectPathAlong L receive tr)) next
+        (suffixVerifier tr oc)
+      pure (owners receive tr ++ owners (suffixTree (projectPathAlong L receive tr)) tail) :
+        Trace (List Role)).run []).1 := by
+  unfold runOwners
+  rw [run_appendFlat_splitPrefix (OutC := fun _ => Nat) wholeProver
+    (firstVerifier challenge) suffixVerifier]
+  simp only [map_bind, owners_append, map_pure]
+
+/-- The `false` suffix starts with the sender: receiver, sender, receiver. -/
+theorem runOwners_false : runOwners false = [.receiver, .sender, .receiver] := by
+  rw [runOwners_eq]
+  simp only [receive, run_node]
+  rfl
+
+/-- The `true` suffix starts with a receiver preamble: receiver, receiver, sender, receiver. -/
+theorem runOwners_true : runOwners true = [.receiver, .receiver, .sender, .receiver] := by
+  rw [runOwners_eq]
+  simp only [receive, run_node]
+  rfl
+
+/-- The owner sequence of the produced transcript depends on the receiver's move. -/
+example : runOwners false ≠ runOwners true := by
+  rw [runOwners_false, runOwners_true]
+  intro h
+  cases h
+
 end Interaction.TwoParty.Lens.CompositionExecutionTest
