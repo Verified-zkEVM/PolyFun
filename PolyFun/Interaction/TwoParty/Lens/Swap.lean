@@ -6,8 +6,7 @@ Authors: Quang Dao
 
 module
 
--- Prove constructor equations for the existing, opaque role exchange.
-import all PolyFun.Interaction.TwoParty.Role
+public import PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.TwoParty.Lens.Strategy
 
 /-!
@@ -70,15 +69,11 @@ variable {P : PFunctor.{uA, uB}}
   change rolePoly.swapLens.comp (rolePoly.swapLens.comp l) = l
   rw [← PFunctor.Lens.comp_assoc, rolePoly.swapLens_involutive, PFunctor.Lens.id_comp]
 
--- Export casts justified by public equations, without exposing the role implementation.
-attribute [local irreducible] Role.swap
-
 /-- Exchange local participant payloads when ownership is swapped. -/
 @[expose] def Choice.swap {X : Type u} {A : X → Type u}
     (agent : Participant.{u}) (role : Role) :
     Choice agent role X A → Choice agent.swap (Role.swap role) X A := by
-  cases agent <;> cases role <;>
-    simp only [role_swap_sender, role_swap_receiver, Participant.swap] <;> exact id
+  cases agent <;> cases role <;> exact id
 
 variable {l : PFunctor.Lens P rolePoly.{u}} {m : Type u → Type u}
 
@@ -94,9 +89,6 @@ variable {l : PFunctor.Lens P rolePoly.{u}} {m : Type u → Type u}
 /-- Swapped ownership is the exchanged source owner. -/
 @[simp] theorem owner_swapLens (l : PFunctor.Lens P rolePoly.{u}) (a : P.A) :
     owner (swapLens l) a = Role.swap (owner l a) := rfl
-
--- The remaining proofs can reduce the implementation behind those equations.
-attribute [local semireducible] Role.swap
 
 /-- Local participant exchange reverses the boundary schedule. -/
 theorem step_swap_map [Monad m] [LawfulMonad m]

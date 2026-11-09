@@ -29,6 +29,7 @@ inductive Role where
 namespace Role
 
 /-- Exchange sender and receiver (duality on the role type). -/
+@[expose]
 def swap : Role → Role
   | .sender => .receiver
   | .receiver => .sender
