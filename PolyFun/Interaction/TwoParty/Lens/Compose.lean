@@ -14,7 +14,8 @@ public import PolyFun.PFunctor.Free.Path.AppendAlong
 
 The suffix tree depends on the projected shape path. Suffix strategies may use the full
 transcript and private prefix outputs. A focal suffix constructor executes in the prefix leaf
-slot and is merged into the suffix's first slot. Counterpart append uses a pure prefix end.
+slot and is merged into the suffix's first slot. Counterpart append supports pure prefix ends
+and effectful prefix ends whose seam actions satisfy an explicit commutation condition.
 -/
 
 public section
@@ -87,6 +88,113 @@ theorem Focal.compFlat_pure [Monad m]
       Counterpart l m (s₂ (projectPathAlong l s₁ tr))
         (fun tail => Out (PathAlong.append l s₁ s₂ tr tail))) :
     Counterpart l m (s₁.append s₂) Out := PureEnd.graft c f
+
+/-- Append an effectful counterpart prefix, merging its leaf action into the suffix slot. -/
+@[expose] def Counterpart.appendFlatM [Monad m]
+    {s₁ : FreeM P PUnit.{u + 1}} {s₂ : Path s₁ → FreeM P PUnit.{u + 1}}
+    {Mid : PathAlong l s₁ → Type u} {Out : PathAlong l (s₁.append s₂) → Type u}
+    (c : Counterpart l m s₁ Mid)
+    (g : (tr : PathAlong l s₁) → Mid tr →
+      Counterpart l m (s₂ (projectPathAlong l s₁ tr))
+        (fun tail => Out (PathAlong.append l s₁ s₂ tr tail))) :
+    Counterpart l m (s₁.append s₂) Out :=
+  PureEnd.graft c (fun tr act => Strategy.joinSlot (g tr <$> act))
+
+/-- At each counterpart prefix leaf, its action commutes with focal suffix construction
+and the first suffix slot, under arbitrary continuations. Node slots retain their effects;
+the subtype certificates require the property only of their returned continuations. -/
+@[expose] def SeamCommutes [Monad m] :
+    {s₁ : FreeM P PUnit.{u + 1}} → {s₂ : Path s₁ → FreeM P PUnit.{u + 1}} →
+    {MidP MidC : PathAlong l s₁ → Type u} →
+    {OutP : PathAlong l (s₁.append s₂) → Type u} →
+    Counterpart l m s₁ MidC →
+    ((tr : PathAlong l s₁) → MidP tr →
+      m (Focal l m (s₂ (projectPathAlong l s₁ tr))
+        (fun tail => OutP (PathAlong.append l s₁ s₂ tr tail)))) → Prop
+  | .pure _, _, _, _, _, c, f =>
+    ∀ mid, ActionsCommute (f ⟨⟩ mid >>= Strategy.splitSlot) c
+  | .liftBind a rest, s₂, MidP, MidC, OutP, c, f =>
+    ∃ checked : m (Choice .counterpart (owner l a) (Move l a) (fun x =>
+      {next : Counterpart l m (rest (l.toFunB a x)) (fun tr => MidC ⟨x, tr⟩) //
+        SeamCommutes (s₂ := fun tr => s₂ ⟨l.toFunB a x, tr⟩)
+          (MidP := fun tr => MidP ⟨x, tr⟩) (OutP := fun tr => OutP ⟨x, tr⟩)
+          next (fun tr => f ⟨x, tr⟩)})),
+      c = Choice.map .counterpart (owner l a) (fun _ => Subtype.val) <$> checked
+
+/-- Effectful counterpart composition agrees with sequential execution when each seam
+leaf commutes with focal suffix construction and its first slot. -/
+theorem run_compFlat_appendFlatM [Monad m] [LawfulMonad m]
+    {s₁ : FreeM P PUnit.{u + 1}} {s₂ : Path s₁ → FreeM P PUnit.{u + 1}}
+    {MidP MidC : PathAlong l s₁ → Type u}
+    {OutP OutC : PathAlong l (s₁.append s₂) → Type u}
+    (p : Focal l m s₁ MidP)
+    (f : (tr : PathAlong l s₁) → MidP tr →
+      m (Focal l m (s₂ (projectPathAlong l s₁ tr))
+        (fun tail => OutP (PathAlong.append l s₁ s₂ tr tail))))
+    (c : Counterpart l m s₁ MidC)
+    (g : (tr : PathAlong l s₁) → MidC tr →
+      Counterpart l m (s₂ (projectPathAlong l s₁ tr))
+        (fun tail => OutC (PathAlong.append l s₁ s₂ tr tail)))
+    (h : SeamCommutes c f) :
+    run (s₁.append s₂) (Focal.compFlat p f) (Counterpart.appendFlatM c g) = (do
+      let ⟨tr, op, oc⟩ ← run s₁ p c
+      let next ← f tr op
+      let ⟨tail, outP, outC⟩ ← run (s₂ (projectPathAlong l s₁ tr)) next (g tr oc)
+      pure ⟨PathAlong.append l s₁ s₂ tr tail, outP, outC⟩) := by
+  induction s₁ using FreeM.rec with
+  | pure a =>
+    cases a
+    simp only [Focal.compFlat, Counterpart.appendFlatM, PureEnd.graft,
+      run_joinSlot, FreeM.pure_eq_pure, run_done, bind_assoc,
+      LawfulMonad.pure_bind, PathAlong.append_pure]
+    congr 1
+    funext mid
+    simp only [run_splitSlot_joinSlot]
+    simp only [bind_map_left]
+    have comm := h mid ((tr : PathAlong l ((FreeM.pure (P := P) PUnit.unit).append s₂)) ×
+      OutP tr × OutC tr) (fun next oc => do
+      let ⟨tail, op, outC⟩ ← run (s₂ (projectPathAlong l (.pure PUnit.unit) ⟨⟩)) next (g ⟨⟩ oc)
+      pure ⟨PathAlong.append l (.pure PUnit.unit) s₂ ⟨⟩ tail, op, outC⟩)
+    simp only [FreeM.pure_eq_pure, bind_assoc, run_splitSlot, PathAlong.append_pure,
+      Sigma.eta, Prod.eta, bind_pure] at comm
+    convert comm using 1 <;> first | rfl | simp only [Sigma.eta, Prod.eta, bind_pure]
+  | liftBind a rest ih =>
+    obtain ⟨checked, rfl⟩ := h
+    simp only [Focal.compFlat, Counterpart.appendFlatM, PureEnd.graft,
+      FreeM.append_liftBind, run_node, step_map_left, step_map_right, step_bind]
+    congr 1
+    funext x pn cn
+    have ih' := ih (l.toFunB a x)
+      (s₂ := fun tr => s₂ ⟨l.toFunB a x, tr⟩)
+      (OutP := fun tr => OutP ⟨x, tr⟩) (OutC := fun tr => OutC ⟨x, tr⟩)
+      pn (fun tr => f ⟨x, tr⟩) cn.val (fun tr => g ⟨x, tr⟩) cn.property
+    simp only [Focal.compFlat, Counterpart.appendFlatM] at ih'
+    rw [ih']
+    simp only [bind_assoc, LawfulMonad.pure_bind, PathAlong.append_liftBind]
+    rfl
+
+/-- A pure counterpart prefix end discharges the seam commutation condition. -/
+theorem SeamCommutes.toStrategy [Monad m] [LawfulMonad m]
+    {s₁ : FreeM P PUnit.{u + 1}} {s₂ : Path s₁ → FreeM P PUnit.{u + 1}}
+    {MidP MidC : PathAlong l s₁ → Type u}
+    {OutP : PathAlong l (s₁.append s₂) → Type u}
+    (c : PureEnd l m .counterpart s₁ MidC)
+    (f : (tr : PathAlong l s₁) → MidP tr →
+      m (Focal l m (s₂ (projectPathAlong l s₁ tr))
+        (fun tail => OutP (PathAlong.append l s₁ s₂ tr tail)))) :
+    SeamCommutes c.toStrategy f := by
+  induction s₁ using FreeM.rec with
+  | pure a =>
+    intro mid
+    exact ActionsCommute.pure_right _ _
+  | liftBind a rest ih =>
+    refine ⟨Choice.map .counterpart (owner l a) (fun x next =>
+      ⟨next.toStrategy, ih (l.toFunB a x)
+        (s₂ := fun tr => s₂ ⟨l.toFunB a x, tr⟩)
+        (MidP := fun tr => MidP ⟨x, tr⟩) (OutP := fun tr => OutP ⟨x, tr⟩)
+        next (fun tr => f ⟨x, tr⟩)⟩) <$> c, ?_⟩
+    simp only [PureEnd.toStrategy, PureEnd.mapOutput, Functor.map_map,
+      ← Function.comp_def, Choice.map_comp]
 
 /-- Compose focal strategies with a factored output family. -/
 @[expose] def Focal.comp [Monad m]

@@ -104,6 +104,18 @@ theorem paired_counterpart_receiver (m : Type u → Type u) (a : P.A)
   | .sender => fun p c k => order.seq p c (fun v f => k v.1 v.2 (f v.1))
   | .receiver => fun p c k => order.seq p c (fun f v => k v.1 (f v.1) v.2)
 
+/-- Expose the focal slot before a counterpart construction and its first slot. -/
+theorem step_splitSlot_joinSlot {m : Type u → Type u} [Monad m] [LawfulMonad m]
+    {X : Type u} {A B : X → Type u} {R : Type u} (role : Role)
+    (p : m (Choice .focal role X A)) (c : m (m (Choice .counterpart role X B)))
+    (k : ∀ x, A x → B x → m R) :
+    step role .focalFirst p (c >>= id) k = (do
+      let next ← pure <$> p
+      let other ← c
+      step role .focalFirst next other k) := by
+  cases role <;> simp only [step, Schedule.seq, bind_map_left, bind_assoc,
+    LawfulMonad.pure_bind, id_eq]
+
 /-- Exchange a move after both participants have executed their boundary slots. -/
 @[expose] def interaction (m : Type u → Type u) [Monad m] (order : Schedule) :
     InteractionOver l Participant.{u} (fun _ => PUnit.{1}) (paired l m) m where

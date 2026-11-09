@@ -38,10 +38,10 @@ abbrev PublicCoinCounterpart (m : Type u → Type u) (s : FreeM P PUnit.{u + 1})
   StrategyOver (publicCoinSyntax l m) PUnit.unit s (contexts s) (fun tr => m (Out tr))
 
 namespace PublicCoinCounterpart
-variable {l} {m : Type u → Type u} [Monad m]
+variable {l} {m : Type u → Type u}
 
 /-- Interpret the exposed sampler as the counterpart's challenge slot. -/
-@[expose] def toCounterpart : {s : FreeM P PUnit.{u + 1}} →
+@[expose] def toCounterpart [Monad m] : {s : FreeM P PUnit.{u + 1}} →
     {Out : PathAlong l s → Type u} → PublicCoinCounterpart l m s Out → Counterpart l m s Out
   | .pure _, _, p => p
   | .liftBind a rest, Out, p =>
@@ -64,7 +64,7 @@ variable {l} {m : Type u → Type u} [Monad m]
             (fun tr => Out ⟨x, tr⟩)))
 
 /-- Replay observation and leaf slots, using recorded challenges without resampling. -/
-@[expose] def replay : {s : FreeM P PUnit.{u + 1}} →
+@[expose] def replay [Monad m] : {s : FreeM P PUnit.{u + 1}} →
     {Out : PathAlong l s → Type u} → PublicCoinCounterpart l m s Out →
     (tr : PathAlong l s) → m (Out tr)
   | .pure _, _, p, _ => p
@@ -82,7 +82,7 @@ variable {l} {m : Type u → Type u} [Monad m]
       replay (p'.2 x) tr
 
 /-- Map terminal outputs while preserving samplers and observation slots. -/
-@[expose] def mapOutput : {s : FreeM P PUnit.{u + 1}} →
+@[expose] def mapOutput [Functor m] : {s : FreeM P PUnit.{u + 1}} →
     {A B : PathAlong l s → Type u} → (∀ tr, A tr → B tr) →
     PublicCoinCounterpart l m s A → PublicCoinCounterpart l m s B
   | .pure _, _, _, f, p => f ⟨⟩ <$> p
@@ -104,6 +104,8 @@ variable {l} {m : Type u → Type u} [Monad m]
         ((p'.1, fun x => mapOutput (fun tr => f ⟨x, tr⟩) (p'.2 x)) :
           m (Move l a) × ((x : Move l a) → PublicCoinCounterpart l m
             (rest (l.toFunB a x)) (fun tr => B ⟨x, tr⟩)))
+
+variable [Monad m]
 
 /-- Replay executes the terminal action. -/
 @[simp] theorem replay_done {Out : PathAlong l (.pure PUnit.unit) → Type u}

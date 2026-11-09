@@ -6,6 +6,8 @@ Authors: Quang Dao
 
 module
 
+-- Prove constructor equations for the existing, opaque role exchange.
+import all PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.TwoParty.Lens.Strategy
 
 /-!
@@ -22,13 +24,17 @@ namespace Interaction.TwoParty.Lens
 open PFunctor
 open FreeM (PathAlong)
 
-/-- Exchange ownership of a move. -/
-@[expose, implicit_reducible] def swapRole : Role → Role
-  | .sender => .receiver
-  | .receiver => .sender
+/-- The existing role exchange sends a sender to a receiver. -/
+@[simp] theorem role_swap_sender : Role.swap .sender = .receiver := by
+  simp only [Role.swap]
 
-@[simp] theorem swapRole_swapRole (r : Role) : swapRole (swapRole r) = r := by
-  cases r <;> rfl
+/-- The existing role exchange sends a receiver to a sender. -/
+@[simp] theorem role_swap_receiver : Role.swap .receiver = .sender := by
+  simp only [Role.swap]
+
+/-- Exchanging ownership twice preserves the role. -/
+@[simp] theorem role_swap_swap (r : Role) : r.swap.swap = r := by
+  cases r <;> simp only [role_swap_sender, role_swap_receiver]
 
 /-- Exchange the two participants. -/
 @[expose, implicit_reducible] def Participant.swap : Participant.{u} → Participant.{u}
@@ -40,7 +46,7 @@ open FreeM (PathAlong)
 
 /-- Swap the ownership component without changing the move carrier. -/
 @[expose] def rolePoly.swapLens : PFunctor.Lens rolePoly.{u} rolePoly.{u} where
-  toFunA r := (swapRole r.1, r.2)
+  toFunA r := (Role.swap r.1, r.2)
   toFunB _ x := x
 
 /-- Swapping the ownership polynomial twice is the identity lens. -/
@@ -55,7 +61,7 @@ variable {P : PFunctor.{uA, uB}}
 /-- Swap ownership in an arbitrary source lens. -/
 @[expose, implicit_reducible] def swapLens (l : PFunctor.Lens P rolePoly.{u}) :
     PFunctor.Lens P rolePoly.{u} where
-  toFunA a := (swapRole (owner l a), Move l a)
+  toFunA a := (Role.swap (owner l a), Move l a)
   toFunB := l.toFunB
 
 /-- Ownership swapping is an involution on source lenses. -/
@@ -64,11 +70,15 @@ variable {P : PFunctor.{uA, uB}}
   change rolePoly.swapLens.comp (rolePoly.swapLens.comp l) = l
   rw [← PFunctor.Lens.comp_assoc, rolePoly.swapLens_involutive, PFunctor.Lens.id_comp]
 
+-- Export casts justified by public equations, without exposing the role implementation.
+attribute [local irreducible] Role.swap
+
 /-- Exchange local participant payloads when ownership is swapped. -/
 @[expose] def Choice.swap {X : Type u} {A : X → Type u}
     (agent : Participant.{u}) (role : Role) :
-    Choice agent role X A → Choice agent.swap (swapRole role) X A := by
-  cases agent <;> cases role <;> exact id
+    Choice agent role X A → Choice agent.swap (Role.swap role) X A := by
+  cases agent <;> cases role <;>
+    simp only [role_swap_sender, role_swap_receiver, Participant.swap] <;> exact id
 
 variable {l : PFunctor.Lens P rolePoly.{u}} {m : Type u → Type u}
 
@@ -83,7 +93,10 @@ variable {l : PFunctor.Lens P rolePoly.{u}} {m : Type u → Type u}
 
 /-- Swapped ownership is the exchanged source owner. -/
 @[simp] theorem owner_swapLens (l : PFunctor.Lens P rolePoly.{u}) (a : P.A) :
-    owner (swapLens l) a = swapRole (owner l a) := rfl
+    owner (swapLens l) a = Role.swap (owner l a) := rfl
+
+-- The remaining proofs can reduce the implementation behind those equations.
+attribute [local semireducible] Role.swap
 
 /-- Local participant exchange reverses the boundary schedule. -/
 theorem step_swap_map [Monad m] [LawfulMonad m]
@@ -92,12 +105,13 @@ theorem step_swap_map [Monad m] [LawfulMonad m]
     (c : m (Choice .counterpart role X B))
     (f : ∀ x, A x → A' x) (g : ∀ x, B x → B' x)
     (k : ∀ x, B' x → A' x → m R) :
-    step (swapRole role) .focalFirst
+    step (Role.swap role) .focalFirst
       ((fun v => Choice.swap .counterpart role (Choice.map .counterpart role g v)) <$> c)
       ((fun v => Choice.swap .focal role (Choice.map .focal role f v)) <$> p) k =
     step role .counterpartFirst p c (fun x a b => k x (g x b) (f x a)) := by
   cases role <;> simp only [step, Schedule.seq, Choice.map, Choice.swap,
-    swapRole, bind_map_left, id_eq]
+    Role.swap, bind_map_left]
+  all_goals rfl
 
 /-- Exchanging participants exchanges outputs against the counterpart-first schedule. -/
 theorem run_swap [Monad m] [LawfulMonad m] (s : FreeM P PUnit.{u + 1})

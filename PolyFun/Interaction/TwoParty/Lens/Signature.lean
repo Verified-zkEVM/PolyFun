@@ -27,9 +27,6 @@ open PFunctor
 /-- Polynomial of roles and move carriers in `Type u`. -/
 @[expose, implicit_reducible] def rolePoly : PFunctor.{u+1, u} := ⟨Role × Type u, fun r => r.2⟩
 
-/-- The universe polynomial, with a carrier as position and its elements as directions. -/
-@[expose] def universePoly : PFunctor.{u+1, u} := ⟨Type u, id⟩
-
 /-- Assign roles to the positions of a polynomial without erasing its directions. -/
 @[expose] def ofRoles {P : PFunctor.{uA, u}} (roles : P.A → Role) :
     PFunctor.Lens P rolePoly where
