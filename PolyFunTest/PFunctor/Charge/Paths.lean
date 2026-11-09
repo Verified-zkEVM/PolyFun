@@ -142,6 +142,15 @@ example {α β : Type} (x : FreeM Coin α) (f : α → FreeM Coin β) (p : Path 
         Path.charge (fun _ => 1) x p + Path.charge (fun _ => 1) _ q :=
   ⟨Path.splitBind_joinBind x f p q, Path.charge_joinBind x f p q⟩
 
+/-- The charge of the path a selector picks through a bind is the charge of its path through the
+first program plus that through the continuation at its output. -/
+example {α β : Type} (choose : (a : Coin.A) → Coin.B a) (x : FreeM Coin α) (f : α → FreeM Coin β) :
+    Path.charge (fun _ => (1 : ℕ)) (x.bind f) (Path.ofHandler choose (x.bind f)) =
+      Path.charge (fun _ => 1) x (Path.ofHandler choose x) +
+        Path.charge (fun _ => 1) _
+          (Path.ofHandler choose (f (output x (Path.ofHandler choose x)))) := by
+  rw [Path.ofHandler_bind, Path.charge_joinBind]
+
 /-! ## Sums, coordinates and the charge of the path taken -/
 
 /-- The charge under a sum of charges is the sum of the charges. -/
