@@ -23,18 +23,6 @@ namespace Interaction.TwoParty.Lens
 open PFunctor
 open FreeM (PathAlong)
 
-/-- The existing role exchange sends a sender to a receiver. -/
-@[simp] theorem role_swap_sender : Role.swap .sender = .receiver := by
-  simp only [Role.swap]
-
-/-- The existing role exchange sends a receiver to a sender. -/
-@[simp] theorem role_swap_receiver : Role.swap .receiver = .sender := by
-  simp only [Role.swap]
-
-/-- Exchanging ownership twice preserves the role. -/
-@[simp] theorem role_swap_swap (r : Role) : r.swap.swap = r := by
-  cases r <;> simp only [role_swap_sender, role_swap_receiver]
-
 /-- Exchange the two participants. -/
 @[expose, implicit_reducible] def Participant.swap : Participant.{u} → Participant.{u}
   | .focal => .counterpart

@@ -34,6 +34,14 @@ def swap : Role → Role
   | .sender => .receiver
   | .receiver => .sender
 
+@[simp] theorem swap_sender : swap .sender = .receiver := rfl
+
+@[simp] theorem swap_receiver : swap .receiver = .sender := rfl
+
+/-- Exchanging sender and receiver twice is the identity. -/
+@[simp, grind =]
+theorem swap_swap (r : Role) : r.swap.swap = r := by cases r <;> rfl
+
 /-- Focal party's action type: when acting, the focal party may use effects to
 choose the next move itself; when observing, it responds to any received move. -/
 @[expose]

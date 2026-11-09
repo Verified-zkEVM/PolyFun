@@ -174,6 +174,6 @@ example {m : Type → Type} [Functor m] (p : PublicCoinCounterpart ownership m p
     (fun _ => Nat)) : PublicCoinCounterpart ownership m protocol (fun _ => Bool) :=
   PublicCoinCounterpart.mapOutput (fun _ n => n == 7) p
 
-example : TwoParty.Role.swap .sender = .receiver := role_swap_sender
+example : TwoParty.Role.swap .sender = .receiver := TwoParty.Role.swap_sender
 
 end LensDocumentation
