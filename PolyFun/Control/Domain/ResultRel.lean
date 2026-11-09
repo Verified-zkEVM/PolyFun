@@ -20,6 +20,11 @@ A relation that says nothing about bottom on one side is a disjunction with `d =
 semantic computation `d` and the outcome of a deterministic evaluation, such a relation is closed
 under suprema of chains (`admissible_bot_or_liftRel`). It can therefore be proved for a least
 fixed point by fixed-point induction.
+
+`DomainResult.Approx P d r` is the relation for an evaluator that may give up: bottom on the right
+approximates every result, and otherwise `r` is related to `d` by `LiftRel` with equal errors
+(`approx_iff`). `approx_bind` and `approx_bind₂` carry it through the continuous `bind` and
+`bind₂` on the left and `bindPlain` on the right.
 -/
 
 public section
@@ -160,5 +165,95 @@ theorem admissible_bot_or_liftRel [OmegaCompletePartialOrder α] {P : DomainResu
     | value x => exact propext (or_iff_right (value_ne_bot x))
   rw [heq]
   exact h
+
+/-! ## Approximation by a result that may give up -/
+
+/-- `r` approximates `d` through `P`: bottom approximates every result, an error only the same
+error, and a returned value only a returned value related to it by `P`. Unlike `LiftRel`, it asks
+nothing when `r` is bottom (`approx_iff`), so an evaluator that gives up approximates every
+meaning. -/
+@[expose] def Approx {X α : Type*} (P : X → α → Prop) : DomainResult ε X → DomainResult ε α → Prop
+  | _, none => True
+  | d, some (.inl e) => d = some (.inl e)
+  | d, some (.inr w) => ∃ x, d = value x ∧ P x w
+
+section Approx
+
+variable {X : Type*} {P : X → α → Prop}
+
+theorem approx_bot (P : X → α → Prop) (d : DomainResult ε X) : Approx P d ⊥ := trivial
+
+theorem approx_error {d : DomainResult ε X} {e : ε} :
+    Approx P d (error e : DomainResult ε α) ↔ d = error e := Iff.rfl
+
+theorem approx_value {d : DomainResult ε X} {w : α} :
+    Approx P d (value w) ↔ ∃ x, d = value x ∧ P x w := Iff.rfl
+
+theorem approx_value_value {x : X} {w : α} :
+    Approx P (value x : DomainResult ε X) (value w) ↔ P x w :=
+  ⟨fun ⟨_, hx, h⟩ => value_inj.mp hx ▸ h, fun h => ⟨x, rfl, h⟩⟩
+
+/-- Approximation is the lifted relation with equal errors, or bottom on the right. -/
+theorem approx_iff {d : DomainResult ε X} {r : DomainResult ε α} :
+    Approx P d r ↔ r = ⊥ ∨ LiftRel (· = ·) P d r := by
+  induction r using inductionOn with
+  | bot => exact ⟨fun _ => .inl rfl, fun _ => trivial⟩
+  | error e =>
+    rw [approx_error, or_iff_right (error_ne_bot e)]
+    induction d using inductionOn with
+    | bot => exact ⟨fun h => absurd h.symm (error_ne_bot e), False.elim⟩
+    | error e' => rw [error_inj, liftRel_error_error]
+    | value x => exact ⟨fun h => absurd h (value_ne_error x e), False.elim⟩
+  | value w =>
+    rw [or_iff_right (value_ne_bot w)]
+    induction d using inductionOn with
+    | bot => exact ⟨fun ⟨_, h, _⟩ => absurd h.symm (value_ne_bot _), False.elim⟩
+    | error e => exact ⟨fun ⟨_, h, _⟩ => absurd h (value_ne_error _ _).symm, False.elim⟩
+    | value x => rw [approx_value_value, liftRel_value_value]
+
+/-- Demanding approximated results and continuing with approximated continuations gives
+approximated results. -/
+theorem approx_bind {Y β : Type*} [OmegaCompletePartialOrder X] [OmegaCompletePartialOrder Y]
+    {Q : Y → β → Prop} {F : X →𝒄 DomainResult ε Y} {d : DomainResult ε X} {r : DomainResult ε α}
+    {g : α → DomainResult ε β} (hd : Approx P d r) (hF : ∀ x w, P x w → Approx Q (F x) (g w)) :
+    Approx Q (bind F d) (bindPlain r g) := by
+  match r, hd with
+  | none, _ => trivial
+  | some (.inl e), hd =>
+    change d = some (.inl e) at hd
+    subst hd
+    rfl
+  | some (.inr w), ⟨x, hd, hx⟩ =>
+    subst hd
+    exact hF x w hx
+
+/-- Demanding two approximated results, left first, and combining approximated values gives
+approximated results. -/
+theorem approx_bind₂ {Y Z β γ : Type*} [OmegaCompletePartialOrder X]
+    [OmegaCompletePartialOrder Y] [OmegaCompletePartialOrder Z] {Q : Y → β → Prop}
+    {S : Z → γ → Prop} {F : X →𝒄 (Y →𝒄 DomainResult ε Z)} {x : DomainResult ε X}
+    {y : DomainResult ε Y} {x' : DomainResult ε α} {y' : DomainResult ε β}
+    {g : α → β → DomainResult ε γ} (hx : Approx P x x') (hy : Approx Q y y')
+    (hF : ∀ a b u v, P a u → Q b v → Approx S (F a b) (g u v)) :
+    Approx S (bind₂ F x y) (bindPlain x' fun u => bindPlain y' fun v => g u v) := by
+  match x', hx with
+  | none, _ => trivial
+  | some (.inl e), hx =>
+    change x = some (.inl e) at hx
+    subst hx
+    rfl
+  | some (.inr u), ⟨a, ha, hau⟩ =>
+    subst ha
+    match y', hy with
+    | none, _ => trivial
+    | some (.inl e), hy =>
+      change y = some (.inl e) at hy
+      subst hy
+      rfl
+    | some (.inr v), ⟨b, hb, hbv⟩ =>
+      subst hb
+      exact hF a b u v hau hbv
+
+end Approx
 
 end DomainResult
