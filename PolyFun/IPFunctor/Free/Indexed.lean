@@ -55,7 +55,7 @@ reducible-transparency `whnf` does not unfold the head — keeping `IPFunctor.Fr
 the dispatch handle. Default-transparency unfolding to `IFreeM P (fun u => PSigma _ α) s`
 still goes through for the equation-lemma `rfl` proofs in this file. -/
 def FreeM₂ (P : Endo.{uI, uA, uB} I) (s t : I) (α : Type v) :
-    Type (max uI uA uB (v + 1)) :=
+    Type (max uI uA uB v) :=
   IFreeM P (fun u => PSigma (fun _ : u = t => α)) s
 
 namespace FreeM₂
