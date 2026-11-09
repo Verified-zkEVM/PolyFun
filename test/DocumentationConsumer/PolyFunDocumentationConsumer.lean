@@ -18,6 +18,9 @@ import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
 import Examples.Tutorials.ScopedFamily
 import PolyFun.IPFunctor.Scoped.DomainRelation
+import PolyFun.Interaction.TwoParty.Lens.Compose
+import PolyFun.Interaction.TwoParty.Lens.PublicCoin
+import PolyFun.Interaction.TwoParty.Lens.Swap
 import PolyFun.Interaction.Interface
 import PolyFun.Interaction.Execution.ReactiveProcess
 import PolyFun.Interaction.Execution.RequestNetwork
@@ -120,3 +123,57 @@ example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
     (h : IPFunctor.ScopedDomain.Env.Pointwise η ζ) :
     IPFunctor.ScopedDomain.Env.reindex D E f hf η = ζ :=
   IPFunctor.ScopedDomain.Env.pointwise_reindex_eq hf h
+
+namespace LensDocumentation
+open PFunctor
+open FreeM (Path PathAlong projectPathAlong)
+open TwoParty.Lens
+
+-- Types may be source positions without raising the execution monad's universe.
+abbrev ownership : PFunctor.Lens PFunctor.univ.{0} rolePoly :=
+  ofRoles (fun _ => .sender)
+abbrev done : FreeM PFunctor.univ.{0} PUnit.{1} := .pure ⟨⟩
+abbrev protocol : FreeM PFunctor.univ.{0} PUnit.{1} := .liftBind Bool (fun _ => done)
+abbrev suffix : Path protocol → FreeM PFunctor.univ.{0} PUnit.{1} := fun _ => protocol
+
+abbrev focal : Focal ownership Id protocol (fun _ => Nat) := by
+  change (b : Bool) × Nat
+  exact ⟨true, 7⟩
+abbrev counterpart : PureEnd ownership Id .counterpart protocol (fun _ => Unit) := fun _ => ()
+
+example : run protocol focal counterpart.toStrategy = ⟨⟨true, ⟨⟩⟩, 7, ()⟩ := by
+  simp only [run_node, done, FreeM.pure_eq_pure, run_done]
+  rfl
+
+example : run (protocol.append suffix)
+    (Focal.compFlat (Out := fun _ => Nat) focal (fun _ _ => pure focal))
+    (Counterpart.appendFlat (Out := fun _ => Unit) counterpart
+      (fun _ _ => counterpart.toStrategy)) = (do
+      let ⟨tr, _, _⟩ ← run protocol focal counterpart.toStrategy
+      let next ← (pure focal : Id (Focal ownership Id
+        (suffix (projectPathAlong ownership protocol tr)) (fun _ => Nat)))
+      let ⟨tail, outP, outC⟩ ← run (suffix (projectPathAlong ownership protocol tr)) next
+        counterpart.toStrategy
+      pure ⟨PathAlong.append ownership protocol suffix tr tail, outP, outC⟩) :=
+  run_compFlat_appendFlat (l := ownership) (m := Id) (s₁ := protocol) (s₂ := suffix)
+    (MidP := fun _ => Nat) (MidC := fun _ => Unit)
+    (OutP := fun _ => Nat) (OutC := fun _ => Unit)
+    focal (fun _ _ => pure focal) counterpart
+    (fun _ _ => counterpart.toStrategy)
+
+example (tr : PathAlong ownership protocol)
+    (tail : PathAlong ownership (suffix (projectPathAlong ownership protocol tr))) :
+    projectPathAlong ownership (protocol.append suffix)
+        (PathAlong.append ownership protocol suffix tr tail) =
+      Path.append protocol suffix (projectPathAlong ownership protocol tr)
+        (projectPathAlong ownership (suffix (projectPathAlong ownership protocol tr)) tail) :=
+  PathAlong.projectPathAlong_append ownership protocol suffix tr tail
+
+-- The output map consumes only a functor, even across the package boundary.
+example {m : Type → Type} [Functor m] (p : PublicCoinCounterpart ownership m protocol
+    (fun _ => Nat)) : PublicCoinCounterpart ownership m protocol (fun _ => Bool) :=
+  PublicCoinCounterpart.mapOutput (fun _ n => n == 7) p
+
+example : TwoParty.Role.swap .sender = .receiver := TwoParty.Role.swap_sender
+
+end LensDocumentation
