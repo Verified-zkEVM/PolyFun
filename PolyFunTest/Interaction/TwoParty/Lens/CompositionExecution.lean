@@ -301,12 +301,14 @@ theorem runOwners_eq (challenge : Bool) :
 
 /-- The `false` suffix starts with the sender: receiver, sender, receiver. -/
 theorem runOwners_false : runOwners false = [.receiver, .sender, .receiver] := by
-  simp only [runOwners, receive, FreeM.append_liftBind, run_node]
+  rw [runOwners_eq]
+  simp only [receive, run_node]
   rfl
 
 /-- The `true` suffix starts with a receiver preamble: receiver, receiver, sender, receiver. -/
 theorem runOwners_true : runOwners true = [.receiver, .receiver, .sender, .receiver] := by
-  simp only [runOwners, receive, FreeM.append_liftBind, run_node]
+  rw [runOwners_eq]
+  simp only [receive, run_node]
   rfl
 
 /-- The owner sequence of the produced transcript depends on the receiver's move. -/
