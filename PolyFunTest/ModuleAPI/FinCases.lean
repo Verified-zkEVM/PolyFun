@@ -12,7 +12,7 @@ import ToCslib.Data.Fin.Cases
 # Direct finite case API
 
 Dependent result types and both boundary cases remain definitionally usable.
-Compiled large-vector checks live in the downstream execution consumer.
+`PolyFunTest/ToCslib/FinCases.lean` reads nested chains in compiled code.
 -/
 
 example {n : Nat} {α : Fin (n + 1) → Type} (x : α 0) (xs : ∀ i : Fin n, α i.succ) :
