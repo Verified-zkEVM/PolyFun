@@ -139,6 +139,8 @@ The calculus:
 - `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the
   continuation at its output, and `Path.joinBind` is its inverse (`splitBind_joinBind`,
   `joinBind_splitBind`). The charge adds (`charge_splitBind`, `charge_joinBind`).
+  The path a fixed answer selector picks through `x >>= f` joins the paths it picks through `x`
+  and through the continuation at that path's output (`Path.ofHandler_bind`).
 - Paths pull back along lenses and leaf maps (`charge_pullMapLens`, `charge_pullMap`); along a
   lens whose charges agree up to an additive map, the charge is that map applied
   (`charge_mapLens_eq_map`).
