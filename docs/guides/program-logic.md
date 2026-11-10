@@ -40,6 +40,7 @@ The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing 
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
 | `PolyFun/PFunctor/Free/WP/Charge.lean` | The `ℕ∞` charge fold (`OpSpec.charge` and `handlerCost` live in `Free/Cost/Value.lean`): budgets as charge bounds (`isRollBound_iff_wpFold_charge`), simulation overhead (`wpFold_charge_liftM_le`); ranked simulation triples over any roll budget or charge bound (`triple_liftM_of_isRollBound`, `triple_liftM_of_isChargeBound`, with `triple_liftM_ranked` and `triple_liftM_ranked_total` for natural-number budgets) and the invariant rule `triple_liftM_invariant` |
 | `PolyFun/PFunctor/Free/WP/Budget.lean` | Charge bounds for `vcgen`: the budget reading `budgetWPMonad` with `isChargeBound_iff_triple` and the call rule `Spec.lift_budget`; instrumented calls as state updates (`Handler.withCharge_eq_modify`) and the completed-path reading of their triples (`Handler.triple_liftM_id_withCharge_iff`) |
+| `PolyFun/PFunctor/Free/WP/StatefulFrame.lean` | Frame rules for `Handler.Stateful.sum`: `triple_sum_inl_frame` / `triple_sum_inr_frame` (a triple under one summand extends to the sum with a predicate on the other state component conjoined), the transport lemma `wp_run_frame_of_apply_map_eq`, and core `Std.WP.WP.Frames` instances `frames_sum_inl` / `frames_sum_inr` through the operators `frameFst` / `frameSnd` |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler`, `Spec.lift_upper` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`, the mixin that makes a core `WPMonad` exact, with its dual reading `ExactWPMonad.dual`, the equational `simp` set on core's `wp` (`wp_pure` to `wp_sum_elim`), and the exactness instances for core's interpretations and transformer lifts (see [Exact interpretations](#exact-interpretations)) |
@@ -407,6 +408,26 @@ Core names in this guide are those of the pinned toolchain. Check them again whe
 over a Mathlib lattice is written down, and everything proved about the interpretation is stated
 on core's `wp`. VCVio presents its expectation reading this way, as an
 `MAlgOrdered (OracleComp spec) ℝ≥0∞`.
+
+## Frame rules for sums of stateful handlers
+
+`PolyFun/PFunctor/Free/WP/StatefulFrame.lean` proves that a program run on one summand of
+`Handler.Stateful.sum f g` leaves the other state component alone, in the form of Hoare
+triples over any core `WPMonad`. `triple_sum_inl_frame` turns `⦃A⦄ x.liftM f ⦃B⦄` into a
+triple for the relabelled program under `sum f g`, with precondition `A s ∧ F t` and
+postcondition `B a s' ∧ F t'` for any predicate `F` on the second component;
+`triple_sum_inr_frame` is the mirror image. Both use only the lower laws of `WPMonad`, so
+they hold without an exact or conjunctive interpretation. The engine is
+`wp_run_frame_of_apply_map_eq`, which transports predicates along a family of state maps
+that commutes with every request.
+
+`frames_sum_inl` and `frames_sum_inr` state the same facts as core `Std.WP.WP.Frames` laws.
+Core's frame laws need an operator on full-state assertions, so `frameFst` and `frameSnd`
+first hide the spectator component of an assertion existentially and then conjoin the frame
+on the current spectator. On assertions that do not mention the spectator component they
+are plain conjunction (`frameFst_fst`, `frameSnd_snd`). On assertions that do mention it
+they are weaker than the original assertion, and the frame closure of a weakest
+precondition built from them need not equal that weakest precondition.
 
 ## Charges and budgets
 
