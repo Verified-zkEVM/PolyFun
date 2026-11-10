@@ -425,9 +425,11 @@ that commutes with every request.
 Core's frame laws need an operator on full-state assertions, so `frameFst` and `frameSnd`
 first hide the spectator component of an assertion existentially and then conjoin the frame
 on the current spectator. On assertions that do not mention the spectator component they
-are plain conjunction (`frameFst_fst`, `frameSnd_snd`). On assertions that do mention it
-they are weaker than the original assertion, and the frame closure of a weakest
-precondition built from them need not equal that weakest precondition.
+are plain conjunction (`frameFst_fst`, `frameSnd_snd`). On spectator-dependent assertions,
+existential projection forgets the old spectator constraint, while the frame constrains the
+current spectator; the resulting assertion need not imply or be implied by the original. The
+frame closure of a weakest precondition built from them need not equal that weakest
+precondition.
 
 ## Charges and budgets
 
