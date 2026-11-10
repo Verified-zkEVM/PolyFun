@@ -7,13 +7,15 @@ module
 
 public import PolyFun.PFunctor.Free.WP
 public import PolyFun.PFunctor.Free.WP.Upstream
+public import PolyFun.PFunctor.Free.WP.Charge
 
 /-!
 # Free-monad weakest-precondition canaries
 
 These examples distinguish demonic and angelic operation specifications, pin
 answer-dependent continuations, and exercise syntactic-to-semantic transport
-through a nontrivial handler.
+through a nontrivial handler. They also compare specs, compute a charge through
+its induced algebra, and lift a `Prop` reading past universe 0.
 -/
 
 @[expose] public section
@@ -66,6 +68,69 @@ example :
   rw [OpSpec.toWPMonad_wp]
   change true && true = true
   rfl
+
+/-! ## Comparing specs and their algebras -/
+
+/-- The demonic spec is below the deterministic one, which is below the angelic one, so their
+folds are ordered for every postcondition. -/
+example (post : Bool → Prop) :
+    wpFold (OpSpec.demonic coinP) flipTwo post → wpFold chooseTrueSpec flipTwo post :=
+  wpFold_le_wpFold_of_le chooseTrueSpec_mono (fun _ _ h => h true) flipTwo post
+
+example (post : Bool → Prop) :
+    wpFold chooseTrueSpec flipTwo post → wpFold (OpSpec.angelic coinP) flipTwo post :=
+  wpFold_le_wpFold_of_le' chooseTrueSpec_mono (fun _ _ h => ⟨true, h⟩) flipTwo post
+
+/-- The comparison is strict on this program: the deterministic fold holds where the demonic
+one fails. -/
+example : wpFold chooseTrueSpec flipTwo (fun out => out = true) ∧
+    ¬ wpFold (OpSpec.demonic coinP) flipTwo (fun out => out = true) :=
+  ⟨rfl, fun h => Bool.noConfusion (h false false)⟩
+
+/-- The unit charge, read through its induced algebra, counts the two calls of `flipTwo`. -/
+example :
+    letI := (OpSpec.charge fun _ : coinP.A => (1 : ℕ∞)).toMAlgOrdered (OpSpec.charge_mono _)
+    MAlgOrdered.μ (flipTwo >>= fun _ => pure (0 : ℕ∞)) = 2 := by
+  rw [toMAlgOrdered_μ_bind_pure]
+  simp [flipTwo, wpFold_bind]
+  rfl
+
+/-- A pointwise larger charge folds to a larger cost. -/
+example : wpFold (OpSpec.charge fun _ : coinP.A => (1 : ℕ∞)) flipTwo (fun _ => 0) ≤
+    wpFold (OpSpec.charge fun _ : coinP.A => (2 : ℕ∞)) flipTwo (fun _ => 0) :=
+  wpFold_le_wpFold_of_le (OpSpec.charge_mono _)
+    (fun _ _ => add_le_add one_le_two le_rfl) flipTwo _
+
+/-- `wpFold` is CSLib's fold. -/
+example (post : Bool → Prop) :
+    wpFold (OpSpec.demonic coinP) flipTwo post =
+      FreeM.foldFreeM post (OpSpec.demonic coinP) flipTwo :=
+  wpFold_eq_foldFreeM _ _ _
+
+/-! ## Lifting the carrier -/
+
+/-- The demonic reading over `ULift.{1} Prop`. -/
+abbrev demonicULift : OpSpec coinP (ULift.{1} Prop) :=
+  (OpSpec.demonic coinP).ulift
+
+/-- The lifted demonic reading induces an algebra on programs with results in `Type 1`, which
+`toMAlgOrdered` cannot build from the `Prop` reading itself. Its value is the demonic fold. -/
+example :
+    letI := demonicULift.toMAlgOrdered OpSpec.demonic_mono.ulift
+    (MAlgOrdered.μ (FreeM.map ULift.up.{1} flipTwo >>= fun a =>
+      pure (ULift.up (a.down = true)))).down ↔ ∀ a b : Bool, (a && b) = true := by
+  rw [toMAlgOrdered_μ_bind_pure, wpFold_ulift]
+  exact Iff.rfl
+
+/-- Lifting a postcondition and folding the lifted spec lifts the fold. -/
+example (Φ : OpSpec coinP Prop) (x : FreeM coinP Bool) (post : Bool → Prop) :
+    wpFold Φ.ulift x (fun a => ULift.up.{2} (post a)) = ⟨wpFold Φ x post⟩ :=
+  wpFold_ulift Φ x _
+
+/-- Reading a lifted fold back is the original fold. -/
+example (Φ : OpSpec coinP Prop) (x : FreeM coinP Bool) (post : Bool → ULift.{2} Prop) :
+    (wpFold Φ.ulift x post).down = wpFold Φ x fun a => (post a).down := by
+  simp
 
 /-! ## Handler semantics -/
 
