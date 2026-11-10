@@ -257,10 +257,8 @@ theorem costWith_mono (x : FreeM P α) {k k' : α → ω} (hk : k ≤ k') :
 /-- The worst-case cost is monotone in the charge. -/
 @[gcongr]
 theorem costWith_mono_charge (hc : c ≤ c') (x : FreeM P α) (k : α → ω) :
-    costWith c x k ≤ costWith c' x k := by
-  induction x using FreeM.rec with
-  | pure a => exact le_rfl
-  | liftBind a r ih => exact add_le_add (hc a) (iSup_mono ih)
+    costWith c x k ≤ costWith c' x k :=
+  wpFold_le_wpFold_of_le (OpSpec.charge_mono c') (fun a _ => add_le_add (hc a) le_rfl) x k
 
 /-- The worst-case cost is monotone in the charge. -/
 @[gcongr]
