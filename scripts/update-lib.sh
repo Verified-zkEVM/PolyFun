@@ -7,6 +7,7 @@
 #   ./scripts/update-lib.sh ComplexityBackends    # regenerates ComplexityBackends.lean
 #   ./scripts/update-lib.sh PolyFunIO             # regenerates PolyFunIO.lean
 #   ./scripts/update-lib.sh Examples.Parliament   # regenerates Examples/Parliament.lean
+#   ./scripts/update-lib.sh PolyFunFrontier       # regenerates PolyFunFrontier/PolyFunFrontier.lean
 #
 # This script only considers tracked files. New <Lib>/**/*.lean files
 # must be staged first.
@@ -17,13 +18,18 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
 lib="${1:-PolyFun}"
+# The nested PolyFunFrontier package keeps its library one directory down; module names are
+# relative to the package root.
+package_dir="."
 case "$lib" in
   PolyFun|ToCslib|ComplexityBackends|PolyFunIO|Examples.Parliament) ;;
+  PolyFunFrontier) package_dir="PolyFunFrontier" ;;
   *)
-    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, PolyFunIO, or Examples.Parliament)." >&2
+    echo "ERROR: unknown library '$lib' (expected PolyFun, ToCslib, ComplexityBackends, PolyFunIO, Examples.Parliament, or PolyFunFrontier)." >&2
     exit 1
     ;;
 esac
+cd "$package_dir"
 
 source_root="${lib//.//}"
 

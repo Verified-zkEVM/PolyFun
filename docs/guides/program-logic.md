@@ -37,7 +37,7 @@ The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing 
 | `PolyFun/Control/Monad/Support/Charged.lean` | `MonadAttach.chargedFoldlM`: a `List.foldlM` that also accumulates a state-dependent charge per event; induction over its possible results (`chargedFoldlM_induction`) and the potential method (`chargedFoldlM_le`), with a matching lower bound and constant-charge count |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/ITree/Support.lean` | `ITree.CanReturn` (a finite run returns the value) with its equations for `pure`, silent steps, queries, `bind` and `diverge`; `ITree.attach` by corecursion; `MonadAttach` and `ExactMonadAttach` for `ITree F` |
-| `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`); folding after substitution (`OpSpec.pullback`, `wpFold_liftM`, `OpSpec.pullback_pullback`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); coherence of the demonic/angelic folds with the support judgments |
+| `PolyFun/PFunctor/Free/WP.lean` | `OpSpec P l` per-operation specs; syntactic `FreeM.wpFold` (with `demonic`/`angelic`), which is CSLib's `FreeM.foldFreeM` (`wpFold_eq_foldFreeM`); comparison of specs (`wpFold_le_wpFold_of_le`); folding after substitution (`OpSpec.pullback`, `wpFold_liftM`, `OpSpec.pullback_pullback`); `OpSpec.toMAlgOrdered` (`toMAlgOrdered_μ_bind_pure`); the carrier lifted along `ULift` (`OpSpec.ulift`, `wpFold_ulift`); coherence of the demonic/angelic folds with the support judgments |
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
 | `PolyFun/PFunctor/Free/WP/Charge.lean` | The `ℕ∞` charge fold (`OpSpec.charge` and `handlerCost` live in `Free/Cost/Value.lean`): budgets as charge bounds (`isRollBound_iff_wpFold_charge`), simulation overhead (`wpFold_charge_liftM_le`); ranked simulation triples over any roll budget or charge bound (`triple_liftM_of_isRollBound`, `triple_liftM_of_isChargeBound`, with `triple_liftM_ranked` and `triple_liftM_ranked_total` for natural-number budgets) and the invariant rule `triple_liftM_invariant` |
 | `PolyFun/PFunctor/Free/WP/Budget.lean` | Charge bounds for `vcgen`: the budget reading `budgetWPMonad` with `isChargeBound_iff_triple` and the call rule `Spec.lift_budget`; instrumented calls as state updates (`Handler.withCharge_eq_modify`) and the completed-path reading of their triples (`Handler.triple_liftM_id_withCharge_iff`) |
@@ -429,6 +429,13 @@ Core names in this guide are those of the pinned toolchain. Check them again whe
 over a Mathlib lattice is written down, and everything proved about the interpretation is stated
 on core's `wp`. VCVio presents its expectation reading this way, as an
 `MAlgOrdered (OracleComp spec) ℝ≥0∞`.
+
+The carrier of `MAlgOrdered m l` lies in the universe of the values of `m`. A reading over `Prop`
+or `ℝ≥0∞` therefore gives an algebra only for programs with values in `Type`. The fold `wpFold`
+has no such constraint. On free programs, `OpSpec.ulift` reads a spec over `ULift l`, and
+`wpFold_ulift` computes its fold from the fold of the original spec. A monotone spec over a
+lattice in `Type` therefore induces `Φ.ulift.toMAlgOrdered hΦ.ulift`, an algebra on programs with
+values in any universe. `PolyFunTest/PFunctor/FreeWP.lean` lifts the demonic reading this way.
 
 ## Charges and budgets
 
