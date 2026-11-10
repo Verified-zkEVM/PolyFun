@@ -121,6 +121,9 @@ public import PolyFun.ITree.Sim.Facts
 public import PolyFun.ITree.Trace
 public import PolyFun.ITree.Transition
 public import PolyFun.ITree.Unfold
+public import PolyFun.ITree.WP.Basic
+public import PolyFun.ITree.WP.Bind
+public import PolyFun.ITree.WP.Bisim
 public import PolyFun.Interaction.Basic.Append
 public import PolyFun.Interaction.Basic.BundledMonad
 public import PolyFun.Interaction.Basic.Chain
