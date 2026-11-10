@@ -363,9 +363,9 @@ prose.
 The definition tier, `Std.WP` (`WP`, `WPMonad`, `Triple`, and the `@[spec]` lemmas) together
 with core's `Std.Do` framework, which `mvcgen` uses, may be imported only by the program-logic
 kernel — `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-`PolyFun/ITree/Do.lean` — and by `PolyFunTest/Do/`. The tactic tier, `Std.Tactic.Do` (`vcgen`,
-the deprecated `mvcgen`, and the `@[spec]` attribute syntax), stays in `PolyFun/Control/Do/`,
-`PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. `ToCslib/` and `ComplexityBackends/`
+`PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean` — and by `PolyFunTest/Do/`. The
+tactic tier, `Std.Tactic.Do` (`vcgen`, the deprecated `mvcgen`, and the `@[spec]` attribute
+syntax), stays in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. `ToCslib/` and `ComplexityBackends/`
 import neither tier directly.
 
 Core's API here is evolving: `vcgen` is experimental and warns on every call unless

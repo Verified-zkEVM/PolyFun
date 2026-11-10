@@ -75,6 +75,7 @@ public import PolyFun.IPFunctor.Scoped.Basic
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
 public import PolyFun.IPFunctor.Scoped.DomainRelation
+public import PolyFun.IPFunctor.Scoped.EnvRelation
 public import PolyFun.IPFunctor.Scoped.Family
 public import PolyFun.IPFunctor.Scoped.FamilyMap
 public import PolyFun.IPFunctor.Scoped.FamilyMapCongr
@@ -118,9 +119,16 @@ public import PolyFun.ITree.ResumptionWithTau
 public import PolyFun.ITree.Sim.CrossSignature
 public import PolyFun.ITree.Sim.Defs
 public import PolyFun.ITree.Sim.Facts
+public import PolyFun.ITree.Support
 public import PolyFun.ITree.Trace
 public import PolyFun.ITree.Transition
 public import PolyFun.ITree.Unfold
+public import PolyFun.ITree.WP.Basic
+public import PolyFun.ITree.WP.Bind
+public import PolyFun.ITree.WP.Bisim
+public import PolyFun.ITree.WP.Models
+public import PolyFun.ITree.WP.Support
+public import PolyFun.ITree.WP.Upstream
 public import PolyFun.Interaction.Basic.Append
 public import PolyFun.Interaction.Basic.BundledMonad
 public import PolyFun.Interaction.Basic.Chain
@@ -361,6 +369,7 @@ public import PolyFun.PFunctor.Free.WP.StatefulFrame
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Certified
+public import PolyFun.PFunctor.Handler.CertifiedUnder
 public import PolyFun.PFunctor.Handler.CertifiedVec
 public import PolyFun.PFunctor.Handler.Charge
 public import PolyFun.PFunctor.Handler.Free
@@ -376,6 +385,8 @@ public import PolyFun.PFunctor.Handler.Stateful.Link
 public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
+public import PolyFun.PFunctor.Lens.Bang
+public import PolyFun.PFunctor.Lens.BangW
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence

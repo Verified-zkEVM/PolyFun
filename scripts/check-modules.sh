@@ -14,7 +14,7 @@ lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
     'Examples/*.lean' 'PolyFunParliamentMain.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
-    'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
+    'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean' 'PolyFunFrontier/*.lean'
 }
 
 while IFS= read -r file; do
@@ -37,7 +37,8 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 # * Definitions (`Std.WP`, core's `Std.Do`, and the pre-4.35 `Std.Internal.Do`: `WP`,
 #   `WPMonad`, `Triple`, spec lemmas) may be imported by the program-logic kernel —
 #   `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-#   `PolyFun/ITree/Do.lean` — and by the `PolyFunTest/Do/` tests.
+#   `PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean` — and by the `PolyFunTest/Do/`
+#   tests.
 # * Tactics (`Std.Tactic.Do` and, from Lean 4.36, `Std.WP.Tactic`: `vcgen` and the `@[spec]`
 #   attribute syntax) stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
 #   `PolyFunTest/Do/`.
@@ -49,7 +50,7 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 # construction or a scoped instance, never a global `WP` instance.
 std_do_def_allowed() {
   case "$1" in
-    PolyFun/Control/Monad/*|PolyFun/Control/Do/*|PolyFun/PFunctor/Free/*|PolyFun/ITree/Do.lean|PolyFunTest/Do/*)
+    PolyFun/Control/Monad/*|PolyFun/Control/Do/*|PolyFun/PFunctor/Free/*|PolyFun/ITree/Do.lean|PolyFun/ITree/WP/Upstream.lean|PolyFunTest/Do/*)
       return 0 ;;
     *) return 1 ;;
   esac
@@ -121,7 +122,8 @@ while IFS= read -r file; do
   if grep -qE "$std_do_def_pattern" "$file" && ! std_do_def_allowed "$file"; then
     echo "ERROR: $file imports core Std.WP / Std.Do outside the quarantine." >&2
     echo "Only the program-logic kernel (PolyFun/Control/Monad/, PolyFun/Control/Do/," >&2
-    echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean) and PolyFunTest/Do/ may depend on" >&2
+    echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean, PolyFun/ITree/WP/Upstream.lean) and" >&2
+    echo "PolyFunTest/Do/ may depend on" >&2
     echo "it. See AGENTS.md Std.WP quarantine." >&2
     status=1
   fi
@@ -163,6 +165,42 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean')
+
+# The cslib-frontier square (PolyFunFrontier/README.md): PolyFun requires Mathlib and CSLib only,
+# and cslib-frontier enters through the nested `PolyFunFrontier/` package alone. No module outside
+# it imports `CslibFrontier` or `PolyFunFrontier`, and the root package never requires
+# cslib-frontier, so `import PolyFun` and PolyFun's dependents never resolve it.
+frontier_pattern="${import_prefix}(CslibFrontier|PolyFunFrontier)([[:space:]]|\.|$)"
+for frontier_import in \
+    'import CslibFrontier' \
+    'public import CslibFrontier.Computability.DecisionTree.Parity' \
+    'import all PolyFunFrontier.PFunctor.Free.DecisionTree' \
+    'public meta import PolyFunFrontier'; do
+  if ! grep -qE "$frontier_pattern" <<< "$frontier_import"; then
+    echo "ERROR: the cslib-frontier fence does not match '$frontier_import'." >&2
+    status=1
+  fi
+done
+for other_import in 'import CslibFrontierExtras' 'import Cslib.Foundations.Data.PFunctor.Free' \
+    '-- import CslibFrontier'; do
+  if grep -qE "$frontier_pattern" <<< "$other_import"; then
+    echo "ERROR: the cslib-frontier fence wrongly matches '$other_import'." >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  case "$file" in PolyFunFrontier/*) continue ;; esac
+  if grep -qE "$frontier_pattern" "$file"; then
+    echo "ERROR: $file imports cslib-frontier or PolyFunFrontier outside PolyFunFrontier/." >&2
+    status=1
+  fi
+done < <(git ls-files -- '*.lean')
+
+if grep -qiE 'cslib-frontier|CslibFrontier' lakefile.toml lake-manifest.json; then
+  echo "ERROR: the root package names cslib-frontier; only PolyFunFrontier/ may require it." >&2
+  status=1
+fi
 
 # `import all` boundaries (docs/development/module-api.md, "Who may open whose bodies"): bodies are
 # opened only inside the library that owns them. Tests may open a complexity backend; nothing opens a

@@ -6,9 +6,11 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Category
+public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Coherence
 public import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
 public import Mathlib.CategoryTheory.Monoidal.Braided.Basic
+public import Mathlib.CategoryTheory.Monoidal.Closed.Basic
 
 /-!
 # Monoidal structures on the category of lenses
@@ -22,7 +24,8 @@ structure gets its own carrier, a one-field structure over `PFunctor` as in
   (`CartesianMonoidalCategory`, Prop 3.56), built from the limit cones `prodFan` and
   `isTerminalOne`.
 * `TensorCat` carries the parallel product `⊗` with unit `y`, a symmetric monoidal category
-  (Prop 3.73).
+  (Prop 3.73). On polynomials whose positions and directions share a universe it is monoidal
+  closed, with the internal hom `PFunctor.ihom` (Ex 4.78).
 * `CompCat.{u, v}` carries the composition product `◃` with unit `y` on polynomials in the
   universe pair `{max u v, v}`, a monoidal category (§6.3). This universe pair is closed under
   `◃` and contains the counit target `y.{max uA uB, uB}` of a `PFunctor.Comonoid`.
@@ -168,6 +171,33 @@ instance instSymmetricCategory : SymmetricCategory TensorCat.{uA, uB} where
   hexagon_forward _ _ _ := rfl
   hexagon_reverse _ _ _ := rfl
   symmetry _ _ := rfl
+
+section Closed
+
+open MonoidalCategory
+
+/-- Currying on the right in `TensorCat`: `(P ⊗ Q ⟶ R) ≃ (P ⟶ [Q, R])`. -/
+def curryRight (P Q R : TensorCat.{u, u}) :
+    (P ⊗ Q ⟶ R) ≃ (P ⟶ of (PFunctor.ihom Q.toPFunctor R.toPFunctor)) :=
+  Lens.curryEquiv
+
+/-- The hom-set bijection of the tensor–hom adjunction for `tensorLeft P`:
+`(P ⊗ Q ⟶ R) ≃ (Q ⟶ [P, R])`. -/
+def curryLeft (P Q R : TensorCat.{u, u}) :
+    (P ⊗ Q ⟶ R) ≃ (Q ⟶ of (PFunctor.ihom P.toPFunctor R.toPFunctor)) :=
+  ((β_ P Q).homCongr (CategoryTheory.Iso.refl R)).trans (curryRight Q P R)
+
+/-- The parallel product is monoidal closed, with `PFunctor.ihom` as internal hom (Niu–Spivak
+Ex 4.78). The internal hom has the lenses `q ⇆ r` as positions, so its position universe is
+`max uA uB`; the instance is stated for polynomials whose positions and directions share the
+universe `u`. -/
+instance instMonoidalClosed : MonoidalClosed TensorCat.{u, u} where
+  closed P :=
+    { rightAdj := Adjunction.rightAdjointOfEquiv (G_obj := fun R =>
+          of (PFunctor.ihom P.toPFunctor R.toPFunctor)) (curryLeft P) (fun _ _ _ _ _ => rfl)
+      adj := Adjunction.adjunctionOfEquivRight _ _ }
+
+end Closed
 
 end TensorCat
 

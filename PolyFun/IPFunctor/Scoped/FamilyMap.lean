@@ -103,24 +103,22 @@ theorem context (h : Hom σ τ M f) {w z : W} (μ : M w z)
 theorem context_renaming (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ Δ : List (S w)} (ρ : ScopedSignature.Renaming Γ Δ)
     {a : S w} (o : σ.Op w a) (p : τ.Arg (h.op μ o)) :
-    (ScopedSignature.Renaming.cast (h.context μ o p) (h.context μ o p)
+    ScopedSignature.Renaming.cast (h.context μ o p) (h.context μ o p)
       (ScopedSignature.Renaming.map (f (h.next μ o p))
         (ScopedSignature.Renaming.liftMany
           (ScopedSignature.Renaming.map (σ.reindex o (h.arg μ o p)) ρ)
-          (σ.binders o (h.arg μ o p)))) : ScopedSignature.Renaming _ _) =
-      (fun {_} x => ScopedSignature.Renaming.liftMany
+          (σ.binders o (h.arg μ o p)))) =
+      ScopedSignature.Renaming.liftMany
         (ScopedSignature.Renaming.map (τ.reindex (h.op μ o) p)
-          (ScopedSignature.Renaming.map (f μ) ρ)) (τ.binders (h.op μ o) p) x) := by
+          (ScopedSignature.Renaming.map (f μ) ρ)) (τ.binders (h.op μ o) p) := by
   let r := σ.reindex o (h.arg μ o p)
   let g := f (h.next μ o p)
   let k := τ.reindex (h.op μ o) p
   have hs : g ∘ r = k ∘ f μ := funext (h.reindex μ o p)
   have hc (Γ : List (S w)) : (Γ.map r).map g = (Γ.map (f μ)).map k := by
     simp only [List.map_map, hs]
-  have hm : HEq (ScopedSignature.Renaming.map g (ScopedSignature.Renaming.map r ρ) :
-      ScopedSignature.Renaming _ _)
-      (ScopedSignature.Renaming.map k (ScopedSignature.Renaming.map (f μ) ρ) :
-        ScopedSignature.Renaming _ _) := by
+  have hm : HEq (ScopedSignature.Renaming.map g (ScopedSignature.Renaming.map r ρ))
+      (ScopedSignature.Renaming.map k (ScopedSignature.Renaming.map (f μ) ρ)) := by
     have h1 := ScopedSignature.Renaming.map_map r g ρ
     have h2 := ScopedSignature.Renaming.map_map (f μ) k ρ
     exact (ScopedSignature.Renaming.cast_heq _ _ _).symm.trans

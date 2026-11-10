@@ -297,3 +297,20 @@ Weak equivalence does not identify clocks: a return leaf and one silent step
 followed by that leaf are weakly equivalent, but their exact explicit-tau
 resumption truncations differ at zero fuel. The ordinary-import continuous
 interpretation canary checks both statements together.
+
+## Weakest preconditions
+
+[`ITree/WP`](../../PolyFun/ITree/WP/Basic.lean) reads a per-operation spec `OpSpec F l` over a
+complete lattice on interaction trees. `ITree.wpTotal` is the least solution of the one-step
+equations and `ITree.wpPartial` the greatest, so a silent loop reads `⊥` for total correctness and
+`⊤` for partial correctness. Silent steps are transparent to both. Both readings:
+- satisfy exact `bind` laws;
+- are invariant under weak bisimulation;
+- have loop rules for `ITree.iter`: an invariant rule for partial correctness, and a variant rule
+  and an upper bound for total correctness.
+
+They need only a monotone spec, not a continuous algebra; a demonic spec over infinitely many
+answers is monotone but not continuous. For a continuous algebra, `ITree.denote` is the total
+reading (`ITree.denote_eq_wpTotal`), and on a finite program both readings are `FreeM.wpFold`.
+[`ITree/Support`](../../PolyFun/ITree/Support.lean) gives interaction trees `MonadAttach`, under
+which demonic partial correctness is `AllOutputs`.
