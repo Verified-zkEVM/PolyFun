@@ -1,0 +1,54 @@
+name = "PolyFunFrontier"
+defaultTargets = ["PolyFunFrontier"]
+testDriver = "PolyFunFrontierTest"
+
+# PolyFunFrontier is PolyFun's side of the cslib-frontier square: it holds the parts of PolyFun
+# that need cslib-frontier, at the paths and namespaces they would have in PolyFun. PolyFun itself
+# requires only Mathlib and CSLib at stable tags and never imports this package; see README.md.
+
+[leanOptions]
+pp.unicode.fun = true
+autoImplicit = false
+relaxedAutoImplicit = false
+weak.linter.mathlibStandardSet = true
+weak.linter.style.longFile = 1500
+
+[moreServerOptions]
+linter.mathlibStandardSet = true
+linter.style.longFile = 1500
+
+# PolyFun from the enclosing repository, so a PolyFun change and its frontier side build together.
+[[require]]
+name = "PolyFun"
+path = ".."
+
+# cslib-frontier publishes no tags, so it is pinned by full commit. `scripts/check-pins.py` checks
+# that `lean-toolchain` and the CSLib and Mathlib pins below equal the ones this commit records,
+# and `scripts/bump.sh` moves all four together.
+[[require]]
+name = "cslib-frontier"
+git = "https://github.com/cslib-community/cslib-frontier"
+rev = "f1b10c2fcaa297d1df3849febd723c301ffd9297"
+
+# Declared last, so these pins win over PolyFun's `v4.35.0` tags: Lake resolves the root's
+# requirements first, in reverse declaration order.
+[[require]]
+name = "cslib"
+git = "https://github.com/leanprover/cslib"
+rev = "254e30e6d4299c51323aaeaf5f51a4763b375d4a"
+
+[[require]]
+name = "mathlib"
+git = "https://github.com/leanprover-community/mathlib4"
+rev = "69552756cd8a2d2d48763cf7279fd814d6a1224d"
+
+# Warnings are errors in this package's own modules only. PolyFun's modules compile here on
+# cslib-frontier's newer toolchain, where a deprecation in them is not this package's failure.
+[[lean_lib]]
+name = "PolyFunFrontier"
+leanOptions = {warningAsError = true}
+
+[[lean_lib]]
+name = "PolyFunFrontierTest"
+globs = ["PolyFunFrontierTest.+"]
+leanOptions = {warningAsError = true}

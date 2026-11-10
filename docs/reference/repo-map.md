@@ -14,6 +14,7 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFunIO` | Optional typed console forms and checked filesystem operations, outside the backend-neutral `PolyFun` umbrella | `lake build PolyFunIO`; `import PolyFunIO` |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
+| `PolyFunFrontier` (nested package) | The parts of PolyFun that need cslib-frontier, at the paths they would have in PolyFun; see [its README](../../PolyFunFrontier/README.md) | `cd PolyFunFrontier && lake build PolyFunFrontier`; never imported by the libraries above |
 
 `PolyFun.lean`, `ToCslib.lean`, and `ComplexityBackends.lean` are generated import
 indexes. The optional backends and examples are outside the `PolyFun` umbrella.
@@ -136,6 +137,12 @@ per-step cost adequacy); a new backend is a sibling subdirectory, never a
 module inside `PolyFun/`.
 `ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
 backend; `scripts/check-modules.sh` enforces both.
+
+`PolyFunFrontier/` is a separate Lake package on cslib-frontier's toolchain and pins. It requires
+PolyFun by path and cslib-frontier by commit. It holds what needs cslib-frontier, and a module moves
+into `PolyFun/` once the cslib-frontier modules it uses reach CSLib. Nothing outside it imports
+`CslibFrontier` or `PolyFunFrontier`, and the root package never requires cslib-frontier
+(`scripts/check-modules.sh`), so PolyFun's dependents never resolve it.
 
 PolyFun and `ToCslib` import the CSLib module that owns each reused
 declaration instead of declaring a local copy: `PolyFun.PFunctor.Basic`

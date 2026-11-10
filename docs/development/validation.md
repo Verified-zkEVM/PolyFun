@@ -130,6 +130,11 @@ the source and its result proofs.
   leaves the tests and environment lint to CI. The CI lint job runs the linters
   with one root per process; [lint policy](linting.md#commands-and-coverage)
   explains why.
+- [Frontier](../../.github/workflows/frontier.yml): builds the nested `PolyFunFrontier`
+  package on cslib-frontier's toolchain, checks its pins against cslib-frontier's
+  (`PolyFunFrontier/scripts/check-pins.py`) and runs the axiom sweep over it. It runs when
+  `PolyFunFrontier/` or PolyFun's library changes, as a separate workflow, so a cslib-frontier
+  change never blocks PolyFun's own checks.
 - [Writing](../../.github/workflows/writing.yml): tests for the writing checker,
   and [writing suggestions](write-technical-prose.md#use-the-checker) for the
   changed prose and the PR description. The suggestions are warnings and do not
@@ -157,6 +162,10 @@ check the pin out (`git -C .lake/packages/<pkg> checkout --detach <rev>`) before
 rebuilding. Never build the consumers on two toolchains against one cache.
 Compatibility tests for existing deprecated APIs should assert their expected
 diagnostics with strict `#guard_msgs` rather than suppressing warnings.
+
+`PolyFunFrontier/` does not follow these pins: it uses cslib-frontier's toolchain and CSLib and
+Mathlib commits, which `PolyFunFrontier/scripts/bump.sh` moves together. Build it in its own
+worktree, since its build of PolyFun lands in the root's `.lake/build` on the other toolchain.
 
 Pin a release candidate like a stable version, with its `-rcN` tag wherever
 the version appears. When a change to `lean-toolchain` reaches `main`,
