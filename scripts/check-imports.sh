@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Check whether each generated umbrella module (PolyFun.lean, ToCslib.lean,
-# ComplexityBackends.lean, PolyFunIO.lean, Examples/Parliament.lean,
+# ComplexityBackends.lean, Examples/Parliament.lean,
 # PolyFunFrontier/PolyFunFrontier.lean) matches the tracked <Lib>/**/*.lean file set.
 
 set -euo pipefail
@@ -11,7 +11,7 @@ cd "$REPO_ROOT"
 
 status=0
 
-for lib in PolyFun ToCslib ComplexityBackends PolyFunIO Examples.Parliament PolyFunFrontier; do
+for lib in PolyFun ToCslib ComplexityBackends Examples.Parliament PolyFunFrontier; do
   source_root="${lib//.//}"
   if [[ "$lib" == PolyFunFrontier ]]; then
     source_root="PolyFunFrontier/PolyFunFrontier"

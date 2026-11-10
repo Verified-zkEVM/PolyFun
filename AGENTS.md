@@ -159,9 +159,9 @@ Read each suggestion in context. Leave clear, correct text alone.
 
 ## Generated files and scripts
 
-`PolyFun.lean`, `ToCslib.lean`, `ComplexityBackends.lean` and `PolyFunIO.lean` are
+`PolyFun.lean`, `ToCslib.lean` and `ComplexityBackends.lean` are
 generated. Never hand-edit them. Stage new, deleted and renamed source files before
-you run `./scripts/update-lib.sh`. Pass `ToCslib`, `ComplexityBackends` or `PolyFunIO`
+you run `./scripts/update-lib.sh`. Pass `ToCslib` or `ComplexityBackends`
 to regenerate another umbrella. See
 [generated files](docs/development/generated-files.md).
 

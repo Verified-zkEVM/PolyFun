@@ -18,7 +18,7 @@ and recovers an ambiguous failure by reading the file actually present.
 
 public section
 
-namespace PolyFunIO.Storage
+namespace Examples.IO.Storage
 
 open System
 
@@ -47,4 +47,4 @@ def withLock {α : Type} (path : FilePath) (action : IO α) : IO α :=
     unless ← handle.tryLock do throw (IO.userError "another writer holds this directory")
     try action finally handle.unlock
 
-end PolyFunIO.Storage
+end Examples.IO.Storage

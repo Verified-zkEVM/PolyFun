@@ -20,7 +20,7 @@ the terminal backend. Reading a line preserves its contents, apart from its line
 
 @[expose] public section
 
-namespace PolyFunIO
+namespace Examples.IO
 
 /-- Line-oriented terminal operations. A read includes the prompt to flush before blocking. -/
 inductive ConsoleOp where
@@ -138,4 +138,4 @@ def consoleIOHandler (stdin stdout : IO.FS.Stream) : PFunctor.Handler IO Console
 def Form.runIO {α : Type} (form : Form α) : IO (Except InputError α) := do
   form.interpret (consoleIOHandler (← IO.getStdin) (← IO.getStdout))
 
-end PolyFunIO
+end Examples.IO

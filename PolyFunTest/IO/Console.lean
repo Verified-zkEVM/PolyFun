@@ -6,8 +6,8 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunIO.Console
-meta import PolyFunIO.Console
+public import Examples.IO.Console
+meta import Examples.IO.Console
 
 /-!
 # Scripted console forms
@@ -21,7 +21,7 @@ public section
 
 namespace PolyFunTest.IO
 
-open PolyFunIO
+open Examples.IO
 
 /-- Run a form against scripted input lines, returning its outcome and the emitted output. -/
 def runScripted {α : Type} (form : Form α) (input : List String) :

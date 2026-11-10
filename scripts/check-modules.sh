@@ -13,7 +13,7 @@ status=0
 lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
-    'Examples/*.lean' 'PolyFunParliamentMain.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
+    'Examples/*.lean' 'PolyFunParliamentMain.lean' \
     'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean' 'PolyFunFrontier/*.lean'
 }
 
@@ -148,7 +148,7 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
-  'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean')
+  'ComplexityBackends.lean' 'ComplexityBackends/*.lean')
 
 # Layering (docs/reference/repo-map.md): `ToCslib` is upstream staging and never imports PolyFun or
 # a complexity backend; the generic `PolyFun` library never imports a concrete complexity backend.

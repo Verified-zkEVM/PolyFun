@@ -16,7 +16,8 @@ lintDriverArgs = [
   "Examples.Tutorials.ScopedPrograms", "Examples.Tutorials.ScopedExecution",
   "Examples.Tutorials.ScopedFamily",
   "Examples.Tutorials.LazyLanguages",
-  "Examples.Parliament", "PolyFunParliamentMain", "PolyFunIO"
+  "Examples.IO.Console", "Examples.IO.Storage",
+  "Examples.Parliament", "PolyFunParliamentMain"
 ]
 testDriver = "PolyFunTest"
 
@@ -57,16 +58,14 @@ name = "ToCslib"
 [[lean_lib]]
 name = "ComplexityBackends"
 
-# Optional executable IO adapters; the mathematical PolyFun umbrella does not import these.
-[[lean_lib]]
-name = "PolyFunIO"
-
 # Optional human-facing tutorials and executable case studies. This target name can coexist with VCVio's
 # `Examples` target. No generic `Examples` umbrella or core import is introduced.
 [[lean_lib]]
 name = "PolyFunExamples"
 roots = ["Examples.Parliament"]
-globs = ["Examples.Parliament", "Examples.Parliament.+", "Examples.Tutorials.+"]
+globs = [
+  "Examples.Parliament", "Examples.Parliament.+", "Examples.Tutorials.+", "Examples.IO.+",
+]
 
 # Test / worked-example library. Built by `lake test`, kept out of the
 # `lake lint` scope. Glob-based, so no umbrella
