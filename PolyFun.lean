@@ -75,6 +75,7 @@ public import PolyFun.IPFunctor.Scoped.Basic
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
 public import PolyFun.IPFunctor.Scoped.DomainRelation
+public import PolyFun.IPFunctor.Scoped.EnvRelation
 public import PolyFun.IPFunctor.Scoped.Family
 public import PolyFun.IPFunctor.Scoped.FamilyMap
 public import PolyFun.IPFunctor.Scoped.FamilyMapCongr

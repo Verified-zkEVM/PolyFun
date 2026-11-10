@@ -73,7 +73,7 @@ theorem runFree_loopProgram (body : Nat → Nat → Program) (seed n : Nat) :
 /-- Interpret supported syntax strictly, keeping environments and binders typed. -/
 @[expose] def compile {Γ : List Ty} {e : Expr Γ .nat} (h : FirstOrder e)
     (ρ : Env Ty.Value Γ) : Program := pulse (match h with
-  | .var x => .pure (ρ x)
+  | .var x => .pure (ρ _ x)
   | .literal n => .pure n
   | .add x y => do
       let a ← compile x ρ

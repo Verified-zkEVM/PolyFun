@@ -131,7 +131,7 @@ theorem eliminateLets_correct {Γ : List Ty} {a : Ty} (e : Expr Γ a) (ρ : Env 
     (D := fun j => Expr j.1 j.2)
     (E := fun j : Judgment Ty => Env Ty.Value j.1 → Ty.Value j.2)
     (fun _ t η => t.denote algebra η)
-    (fun _ x => Term.var x) (fun _ x η => η x)
+    (fun _ x => Term.var x) (fun _ x η => η _ x)
     eliminateLetNode
     (fun _ op next η => algebra op (fun p ξ => next p (Env.append ξ η)))
     (fun _ _ => rfl)

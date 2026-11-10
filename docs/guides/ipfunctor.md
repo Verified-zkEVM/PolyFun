@@ -503,13 +503,17 @@ positions, and the sorts bound in each argument. Its `Term` is an `IFreeM`:
 variables are typed leaves, and constructor nodes contain their children.
 This makes the polynomial structure the syntax representation itself.
 
-`Term.rename` and `Term.subst` lift their maps through each argument's binder
-list. The identity, composition, and single-variable substitution laws live in
-`Scoped.Renaming` and `Scoped.Substitution`. `Scoped.Interpretation` folds into
-functions of environments and proves `denote_rename`, `denote_subst`, and
-`denote_substOne` once for every constructor algebra. Algebras receive argument
-meanings as functions of new bound values, so entering a binder does not
-execute its body.
+An environment `Env V Γ := ∀ a, ScopedVar Γ a → V a` gives a value for each
+binding position, and its sort argument is explicit. A `Renaming Γ Δ` is an
+environment of variables, and a `Substitution Γ Δ` is an environment of terms.
+Therefore `Env.cons`, `Env.append` and `Env.rename` act on all three, and
+`Env.rename ρ τ` composes renamings. `Term.rename` and `Term.subst` lift their
+environments through each argument's binder list. The identity, composition, and
+single-variable substitution laws live in `Scoped.Renaming` and
+`Scoped.Substitution`. `Scoped.Interpretation` folds into functions of environments
+and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
+constructor algebra. Algebras receive argument meanings as functions of new bound
+values, so entering a binder does not execute its body.
 
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
@@ -528,7 +532,8 @@ The [scoped-program tutorial](../../Examples/Tutorials/ScopedPrograms.lean)
 contains arithmetic, functions, lexical lets, and a bounded loop whose body is
 stored once. Its let-elimination proof uses generic fold fusion and substitution
 correctness. [Ordinary-import checks](../../PolyFunTest/ModuleAPI/Scoped.lean)
-exercise capture avoidance and noninjective sort translation.
+exercise capture avoidance, noninjective sort translation, and the environment laws
+shared by renamings and substitutions.
 
 ## Binders that change parameter contexts
 
@@ -560,9 +565,11 @@ for its own constructor algebra. `Term.cast` normalizes contexts and result sort
 Its self-transport simplifier accepts arbitrary equality proofs, while
 `Term.cast_heq` compares terms across potentially different contexts and sorts.
 
-[`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) reindexes
-variables by their original positions. No injectivity assumption is required:
-two parameters can instantiate to the same type without merging their bindings.
+[`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) defines
+`Env.reindex f`, which moves an environment of `Γ` to `Γ.map f` by its original
+binding positions. No injectivity assumption is required: two parameters can
+instantiate to the same type without merging their bindings. `Renaming.map`,
+`Substitution.map` and `Substitution.reindex` are instances of `Env.reindex`.
 Value renaming has identity and composition laws. The
 [`family substitution API`](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean)
 requires a language action for reindexing substitution images when entering a
@@ -589,18 +596,30 @@ provides both proved round trips to the existing `ScopedSignature` API.
 every constructor has finitely many children. The count excludes head payloads
 and measures neither execution cost nor the size of a semantic value.
 
-[`ScopedDomain.Env`](../../PolyFun/IPFunctor/Scoped/Domain.lean) interprets local
-contexts in bundled [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean)
-carriers. Extension, append, and `Env.map` are continuous maps. `Env.map` applies a
-family of continuous maps along a sort map, and `Env.reindex` is its instance for an
-equation of domains. `Env.fixGroup` ties a finite heterogeneous group with one least
-fixed point; its unfolding and leastness laws apply to the whole environment.
-Environment renaming commutes with extension, append, and `Env.map`. Consecutive maps
-compose at each original binding position. `fixGroup_rename` handles ambient value
-renaming, and `fixGroup_fusion` transports recursion through a strict continuous map
-that commutes with whole-group unfolding. `Env.Forall₂` relates two environments by
-binding position for any family of relations, and `fixGroup_forall₂` carries a relation
-that is admissible at corresponding sorts through a recursive group. Language specific
+[`Scoped.Domain`](../../PolyFun/IPFunctor/Scoped/Domain.lean) orders environments
+pointwise when every value type is an omega-complete partial order, such as a family
+of `DomainResult` computations. Extension, append, renaming and `Env.map` are
+continuous maps. `ωScottContinuous_cons` and `ωScottContinuous_single` let
+`fun_prop` prove continuity through extension. `Env.bindOne` turns the meaning of an
+argument that binds one variable into a continuous function of that variable.
+`Env.map` applies a family of continuous maps along a sort map. `Env.transport` is
+its instance for an equation of bundled
+[`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) carriers. With bottom
+at every sort, `Env.fixGroup` ties a finite heterogeneous group with one least fixed
+point; its unfolding and leastness laws apply to the whole environment. Environment
+renaming commutes with extension, append, and `Env.map`. Consecutive maps compose at
+each original binding position. `fixGroup_rename` handles ambient value renaming,
+and `fixGroup_fusion` transports recursion through a strict continuous map that
+commutes with whole-group unfolding.
+
+[`Scoped.EnvRelation`](../../PolyFun/IPFunctor/Scoped/EnvRelation.lean) defines
+`Env.Forall₂`, which relates two environments by binding position for any family of
+relations and assumes no order on the values. It is preserved by extension, append
+and assembly, and by positional reindexing on either side (`Forall₂.reindex_left` and
+`Forall₂.reindex_right`). `Env.Pointwise` is its instance for heterogeneous equality.
+[`Scoped.DomainRelation`](../../PolyFun/IPFunctor/Scoped/DomainRelation.lean) derives
+preservation by `Env.map` from the reindexing laws. Its `fixGroup_forall₂` carries a relation that is
+admissible at corresponding sorts through a recursive group. Language-specific
 errors and quantifier stages remain outside this generic layer.
 
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
