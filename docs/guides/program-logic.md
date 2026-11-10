@@ -45,6 +45,8 @@ The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing 
 | `PolyFun/ITree/WP/Bind.lean` | Exact `bind` laws for both readings, `map`, loop rules for `ITree.iter` (a partial-correctness invariant rule, a total upper bound, a total variant rule), relabelling along a lens (`wpTotal_mapSpec`), and soundness of `ITree.simulate` for per-operation specs |
 | `PolyFun/ITree/WP/Bisim.lean` | Both readings are invariant under `TauSteps` and weak bisimulation, in a relational form for trees with different return types |
 | `PolyFun/ITree/WP/Support.lean` | Demonic partial correctness is `AllOutputs` (`wpPartial_demonic_iff_allOutputs`), and angelic total correctness is `SomeOutput` (`wpTotal_angelic_iff_someOutput`) |
+| `PolyFun/ITree/WP/Models.lean` | One spec across models: on a finite program both readings are `FreeM.wpFold` (`wpTotal_toITree`, `wpPartial_toITree`); a continuous algebra's `ITree.denote` is its total reading (`denote_eq_wpTotal`, via `ContinuousAlgebra.toOpSpec`), and so is a resumption's denotation |
+| `PolyFun/ITree/WP/Upstream.lean` | The readings as exact core interpretations, `ITree.wpMonadTotal`/`wpMonadPartial` (through `MAlgOrdered`), with `_wp` value lemmas; the demonic support reading is the partial demonic interpretation and the angelic one the total angelic interpretation |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
 | `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler`, `Spec.lift_upper` that let `vcgen` decompose free programs with uninterpreted operations |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`, the mixin that makes a core `WPMonad` exact, with its dual reading `ExactWPMonad.dual`, the equational `simp` set on core's `wp` (`wp_pure` to `wp_sum_elim`), and the exactness instances for core's interpretations and transformer lifts (see [Exact interpretations](#exact-interpretations)) |
@@ -277,6 +279,10 @@ continuations.
 - **Support.** Interaction trees carry `MonadAttach`: a possible output is a value some finite run
   returns. Demonic partial correctness is the always judgment, and angelic total correctness is
   the sometimes judgment.
+- **Across models.** On a finite program both readings are `FreeM.wpFold`, and a continuous
+  algebra's `ITree.denote` is its total reading. As core interpretations they are
+  `ITree.wpMonadTotal` and `ITree.wpMonadPartial`, exact, and like every reading here not global
+  instances.
 - **Monotonicity.** The definitions need no hypothesis on `Φ`; their equations, the `bind` laws and
   `wpTotal_le_wpPartial` need `Φ.Monotone`. `PolyFunTest/ITree/WPExamples.lean` shows a
   non-monotone spec whose total reading exceeds its partial one.
@@ -288,8 +294,8 @@ both for every import modifier:
 
 - **Definitions**: `Std.WP` (`WP`, `WPMonad`, `Triple`, the `@[spec]` lemmas) and core's
   `Std.Do` framework, which `mvcgen` uses, may be imported by the program-logic kernel
-  (`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`, and
-  `PolyFun/ITree/Do.lean`) and by `PolyFunTest/Do/`.
+  (`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+  `PolyFun/ITree/Do.lean`, and `PolyFun/ITree/WP/Upstream.lean`) and by `PolyFunTest/Do/`.
 - **Tactics**: `Std.Tactic.Do` (`vcgen`, the deprecated `mvcgen`, and the `@[spec]` attribute
   syntax) stays in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
   `PolyFunTest/Do/`.

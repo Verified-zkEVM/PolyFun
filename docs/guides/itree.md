@@ -309,5 +309,8 @@ equations and `ITree.wpPartial` the greatest, so a silent loop reads `⊥` for t
 - have loop rules for `ITree.iter`: an invariant rule for partial correctness, and a variant rule
   and an upper bound for total correctness.
 
-Unlike `ITree.denote`, they need only a monotone spec, not a continuous algebra. A
-demonic spec over infinitely many answers is monotone but not continuous.
+They need only a monotone spec, not a continuous algebra; a demonic spec over infinitely many
+answers is monotone but not continuous. For a continuous algebra, `ITree.denote` is the total
+reading (`ITree.denote_eq_wpTotal`), and on a finite program both readings are `FreeM.wpFold`.
+[`ITree/Support`](../../PolyFun/ITree/Support.lean) gives interaction trees `MonadAttach`, under
+which demonic partial correctness is `AllOutputs`.
