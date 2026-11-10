@@ -37,7 +37,8 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 # * Definitions (`Std.WP`, core's `Std.Do`, and the pre-4.35 `Std.Internal.Do`: `WP`,
 #   `WPMonad`, `Triple`, spec lemmas) may be imported by the program-logic kernel —
 #   `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-#   `PolyFun/ITree/Do.lean` — and by the `PolyFunTest/Do/` tests.
+#   `PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean` — and by the `PolyFunTest/Do/`
+#   tests.
 # * Tactics (`Std.Tactic.Do` and, from Lean 4.36, `Std.WP.Tactic`: `vcgen` and the `@[spec]`
 #   attribute syntax) stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
 #   `PolyFunTest/Do/`.
@@ -49,7 +50,7 @@ done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 # construction or a scoped instance, never a global `WP` instance.
 std_do_def_allowed() {
   case "$1" in
-    PolyFun/Control/Monad/*|PolyFun/Control/Do/*|PolyFun/PFunctor/Free/*|PolyFun/ITree/Do.lean|PolyFunTest/Do/*)
+    PolyFun/Control/Monad/*|PolyFun/Control/Do/*|PolyFun/PFunctor/Free/*|PolyFun/ITree/Do.lean|PolyFun/ITree/WP/Upstream.lean|PolyFunTest/Do/*)
       return 0 ;;
     *) return 1 ;;
   esac
@@ -121,7 +122,8 @@ while IFS= read -r file; do
   if grep -qE "$std_do_def_pattern" "$file" && ! std_do_def_allowed "$file"; then
     echo "ERROR: $file imports core Std.WP / Std.Do outside the quarantine." >&2
     echo "Only the program-logic kernel (PolyFun/Control/Monad/, PolyFun/Control/Do/," >&2
-    echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean) and PolyFunTest/Do/ may depend on" >&2
+    echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean, PolyFun/ITree/WP/Upstream.lean) and" >&2
+    echo "PolyFunTest/Do/ may depend on" >&2
     echo "it. See AGENTS.md Std.WP quarantine." >&2
     status=1
   fi

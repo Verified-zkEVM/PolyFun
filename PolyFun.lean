@@ -126,7 +126,9 @@ public import PolyFun.ITree.Unfold
 public import PolyFun.ITree.WP.Basic
 public import PolyFun.ITree.WP.Bind
 public import PolyFun.ITree.WP.Bisim
+public import PolyFun.ITree.WP.Models
 public import PolyFun.ITree.WP.Support
+public import PolyFun.ITree.WP.Upstream
 public import PolyFun.Interaction.Basic.Append
 public import PolyFun.Interaction.Basic.BundledMonad
 public import PolyFun.Interaction.Basic.Chain

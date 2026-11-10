@@ -118,13 +118,13 @@ namespace exceptions for its module-system limitations. See
 
 ## Std.WP quarantine
 
-Definitions from `Std.WP`, and from core's `Std.Do` framework, which `mvcgen` uses, may be
-directly imported only by `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`,
-`PolyFun/PFunctor/Free/`, `PolyFun/ITree/Do.lean`, and `PolyFunTest/Do/`. Tactics from
+Definitions from `Std.WP`, and from core's `Std.Do` framework, which `mvcgen` uses, may be directly
+imported only by `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
+`PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean`, and `PolyFunTest/Do/`. Tactics from
 `Std.Tactic.Do` stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
-`PolyFunTest/Do/`. Export constructions or scoped instances, never global WP
-instances. `ToCslib` directly imports neither tier. It may import `Std.Do.WP` transitively
-through CSLib's `IsMonadHom`. See [program logic](docs/guides/program-logic.md).
+`PolyFunTest/Do/`. Export constructions or scoped instances, never global WP instances. `ToCslib`
+directly imports neither tier. It may import `Std.Do.WP` transitively through CSLib's `IsMonadHom`.
+See [program logic](docs/guides/program-logic.md).
 
 ## Attribution and documentation
 
