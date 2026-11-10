@@ -607,8 +607,8 @@ closure to one explicit `Lens.IsDynAdmissible` certificate.
 ## Instantiating With An External Complexity Class
 
 Complexity classes in the wild are presented on one concrete function type —
-`Complexity.FP : Set (List Bool → List Bool)` in complexitylib,
-`Cslib.Turing.PolyTimeComputable` on `List Symbol → List Symbol` in cslib — with
+`Cslib.Turing.PolyTimeComputable` on `List Symbol → List Symbol` in cslib, and
+`Turing.MultiTapeTM.ComputableInPolyTime` between fixed word encodings in cslib-frontier — with
 no encoding-generic predicate. `StepClass.ofWordClass` is the bridge:
 
 ```lean
@@ -627,11 +627,10 @@ admissible decoder.
 Products and sums are *not* automatic. They need a pairing codec and a tagging
 scheme whose operations the word class admits, supplied as `WordPairing` and
 `WordTagging` and consumed by `ofWordClass.hasProd` / `ofWordClass.hasSum`.
-complexitylib's development branch exposes the class-level product closure that
-`WordPairing` needs (`pairFst_mem_FP`, `pairSnd_mem_FP` and `mem_FP_pair` in
-`Complexitylib/Classes/P/Pairing.lean`); PolyFun does not depend on complexitylib,
-so no such instance is built here. cslib's `PolyTimeComputable` has `id` and
-`comp` but no pairing or projection machines at all. The `CslibSingleTape` backend supplies encoded machine families and finite-table
+cslib's `PolyTimeComputable` has `id` and `comp` but no pairing or projection
+machines at all. cslib-frontier's multi-tape machines do come with pairing codecs. PolyFun does not depend
+on cslib-frontier, so instances over them belong in the nested
+[`PolyFunFrontier`](../../PolyFunFrontier/README.md) package. The `CslibSingleTape` backend supplies encoded machine families and finite-table
 constructors and uses those concrete certificates directly; it does not claim a
 complete `ofWordClass` structural instance.
 
