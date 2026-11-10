@@ -28,7 +28,7 @@ VOCABULARY = ROOT / "docs" / "development" / "writing-vocabulary.md"
 EXCLUDED_PREFIXES = (".lake/", "scripts/PolyFunAxiomSweepTestFixtures/",
                      "Examples/Parliament/Fixtures/")
 # Generated umbrella modules contain only imports.
-EXCLUDED_FILES = {"PolyFun.lean", "ToCslib.lean", "ComplexityBackends.lean", "PolyFunIO.lean",
+EXCLUDED_FILES = {"PolyFun.lean", "ToCslib.lean", "ComplexityBackends.lean",
                   "Examples/Parliament.lean"}
 
 PROCEDURAL_LIMIT = 20
