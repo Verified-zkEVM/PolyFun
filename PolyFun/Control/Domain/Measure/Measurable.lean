@@ -179,6 +179,12 @@ theorem measurable_value : Measurable (value : α → DomainResult ε α) :=
 theorem measurableEmbedding_value : MeasurableEmbedding (value : α → DomainResult ε α) :=
   Option.measurableEmbedding_some.comp measurableEmbedding_inr
 
+/-- The embedding of returned values, the output encoding of a decoded certificate, is
+measurable. -/
+@[fun_prop]
+theorem measurable_valueEmbedding : Measurable ⇑(valueEmbedding : α ↪ DomainResult ε α) :=
+  measurable_value
+
 @[simp]
 theorem measurableSet_value_image {s : Set α} :
     MeasurableSet (value '' s : Set (DomainResult ε α)) ↔ MeasurableSet s :=
