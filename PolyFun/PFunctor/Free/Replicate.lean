@@ -109,3 +109,132 @@ end Decoration
 end Displayed
 end FreeM
 end PFunctor
+
+namespace PFunctor.FreeM
+universe uA₂ uB₂
+variable {P : PFunctor.{u, v}} {Q : PFunctor.{uA₂, uB₂}} {α : Type w}
+
+/-- Prepend one path to a length-`n` replicated tail. -/
+abbrev PathAlong.replicateCons (l : Lens P Q) (a : α) (spec : FreeM P α) (n : Nat) :
+    PathAlong l spec → PathAlong l (FreeM.replicate a spec n) →
+    PathAlong l (FreeM.replicate a spec (n + 1)) :=
+  PFunctor.FreeM.PathAlong.append l spec (fun _ => FreeM.replicate a spec n)
+
+/-- Split the head round from a length-`(n+1)` replicated path. -/
+abbrev PathAlong.replicateUncons (l : Lens P Q) (a : α) (spec : FreeM P α) (n : Nat) :
+    PathAlong l (FreeM.replicate a spec (n + 1)) →
+    PathAlong l spec × PathAlong l (FreeM.replicate a spec n) :=
+  fun tr =>
+    let ⟨hd, tl⟩ := PFunctor.FreeM.PathAlong.split l spec (fun _ => FreeM.replicate a spec n) tr
+    (hd, tl)
+
+/-- Combine `n` paths of `spec` into one of `FreeM.replicate a spec n`. -/
+def PathAlong.replicateJoin (l : Lens P Q) (a : α) (spec : FreeM P α) :
+    (n : Nat) → (Fin n → PathAlong l spec) → PathAlong l (FreeM.replicate a spec n)
+  | 0, _ => ⟨⟩
+  | n + 1, trs =>
+      PFunctor.FreeM.PathAlong.append l spec (fun _ => FreeM.replicate a spec n)
+        (trs 0) (PathAlong.replicateJoin l a spec n (fun i => trs i.succ))
+
+/-- Split `FreeM.replicate a spec n` into `n` per-round paths. -/
+def PathAlong.replicateSplit (l : Lens P Q) (a : α) (spec : FreeM P α) :
+    (n : Nat) → PathAlong l (FreeM.replicate a spec n) → (Fin n → PathAlong l spec)
+  | 0, _ => fun i => i.elim0
+  | n + 1, tr => fun i =>
+      let ⟨hd, tl⟩ := PFunctor.FreeM.PathAlong.split l spec (fun _ => FreeM.replicate a spec n) tr
+      match i with
+        | ⟨0, _⟩ => hd
+        | ⟨i + 1, h⟩ => PathAlong.replicateSplit l a spec n tl ⟨i, Nat.lt_of_succ_lt_succ h⟩
+
+@[simp, grind =]
+theorem PathAlong.replicateSplit_replicateJoin (l : Lens P Q) (a : α) (spec : FreeM P α) :
+    (n : Nat) → (trs : Fin n → PathAlong l spec) → (i : Fin n) →
+    PathAlong.replicateSplit l a spec n (PathAlong.replicateJoin l a spec n trs) i = trs i
+  | 0, _, i => i.elim0
+  | n + 1, trs, ⟨0, _⟩ => by
+      simp [replicateSplit, replicateJoin, PFunctor.FreeM.PathAlong.split_append]
+  | n + 1, trs, ⟨i + 1, h⟩ => by
+      simp only [replicateSplit, replicateJoin, PFunctor.FreeM.PathAlong.split_append]
+      exact replicateSplit_replicateJoin l a spec n (fun i => trs i.succ)
+        ⟨i, Nat.lt_of_succ_lt_succ h⟩
+
+theorem PathAlong.replicateSplit_join_zero (l : Lens P Q) (a : α) (spec : FreeM P α) (n : Nat)
+    (hd : PathAlong l spec) (tl : PathAlong l (FreeM.replicate a spec n)) :
+    PathAlong.replicateSplit l a spec (n + 1)
+        (PFunctor.FreeM.PathAlong.append l spec (fun _ => FreeM.replicate a spec n) hd tl)
+        ⟨0, n.succ_pos⟩ =
+      hd := by
+  simp [replicateSplit, PFunctor.FreeM.PathAlong.split_append]
+
+theorem PathAlong.replicateSplit_join_succ (l : Lens P Q) (a : α) (spec : FreeM P α) (n : Nat)
+    (hd : PathAlong l spec) (tl : PathAlong l (FreeM.replicate a spec n)) (i : Fin n) :
+    PathAlong.replicateSplit l a spec (n + 1)
+        (PFunctor.FreeM.PathAlong.append l spec (fun _ => FreeM.replicate a spec n) hd tl) i.succ =
+      PathAlong.replicateSplit l a spec n tl i := by
+  simp [replicateSplit, PFunctor.FreeM.PathAlong.split_append, Fin.succ]
+
+@[simp, grind =]
+theorem PathAlong.replicateJoin_replicateSplit (l : Lens P Q) (a : α) (spec : FreeM P α) (n : Nat)
+    (tr : PathAlong l (FreeM.replicate a spec n)) :
+    PathAlong.replicateJoin l a spec n (PathAlong.replicateSplit l a spec n tr) = tr := by
+  induction n with
+  | zero => cases tr; rfl
+  | succ n ih =>
+    let hd := (PFunctor.FreeM.PathAlong.split l spec (fun _ => FreeM.replicate a spec n) tr).1
+    let tl := (PFunctor.FreeM.PathAlong.split l spec (fun _ => FreeM.replicate a spec n) tr).2
+    have htr :
+        tr = PFunctor.FreeM.PathAlong.append l spec (fun _ => FreeM.replicate a spec n) hd tl :=
+      (PFunctor.FreeM.PathAlong.append_split l spec (fun _ => FreeM.replicate a spec n) tr).symm
+    rw [htr, replicateJoin]
+    congr 1
+    · simpa using replicateSplit_join_zero l a spec n hd tl
+    · have hfns :
+          (fun i => PathAlong.replicateSplit l a spec (n + 1)
+              (PathAlong.append l spec (fun _ => FreeM.replicate a spec n) hd tl) i.succ) =
+            PathAlong.replicateSplit l a spec n tl := by
+        funext i
+        exact replicateSplit_join_succ l a spec n hd tl i
+      rw [hfns, ih]
+
+
+/-- Splitting a cons recovers both rounds. -/
+theorem PathAlong.replicateUncons_replicateCons (l : Lens P Q) (a : α)
+    (s : FreeM P α) (n : Nat) (hd : PathAlong l s)
+    (tl : PathAlong l (FreeM.replicate a s n)) :
+    PathAlong.replicateUncons l a s n (PathAlong.replicateCons l a s n hd tl) = (hd, tl) := by
+  simp [PathAlong.replicateUncons, PathAlong.replicateCons, PathAlong.split_append]
+
+/-- Joining the head and tail recovers a replicated transcript. -/
+@[simp] theorem PathAlong.replicateCons_replicateUncons (l : Lens P Q) (a : α)
+    (s : FreeM P α) (n : Nat) (tr : PathAlong l (FreeM.replicate a s (n + 1))) :
+    PathAlong.replicateCons l a s n (PathAlong.replicateUncons l a s n tr).1
+      (PathAlong.replicateUncons l a s n tr).2 = tr :=
+  PathAlong.append_split l s (fun _ => FreeM.replicate a s n) tr
+
+/-- The empty vector produces the empty transcript. -/
+@[simp] theorem PathAlong.replicateJoin_zero (l : Lens P Q) (a : α)
+    (s : FreeM P α) (trs : Fin 0 → PathAlong l s) :
+    PathAlong.replicateJoin l a s 0 trs = PUnit.unit := rfl
+
+/-- Join prepends the first round and recursively joins the remaining rounds. -/
+theorem PathAlong.replicateJoin_succ (l : Lens P Q) (a : α)
+    (s : FreeM P α) (n : Nat) (trs : Fin (n + 1) → PathAlong l s) :
+    PathAlong.replicateJoin l a s (n + 1) trs =
+      PathAlong.replicateCons l a s n (trs 0)
+        (PathAlong.replicateJoin l a s n (fun i => trs i.succ)) := rfl
+
+/-- A zero-round split has no coordinates. -/
+@[simp] theorem PathAlong.replicateSplit_zero (l : Lens P Q) (a : α)
+    (s : FreeM P α) (tr : PathAlong l (FreeM.replicate a s 0)) :
+    PathAlong.replicateSplit l a s 0 tr = Fin.elim0 := rfl
+
+/-- Splitting another round separates its head coordinate from the tail coordinates. -/
+theorem PathAlong.replicateSplit_succ (l : Lens P Q) (a : α)
+    (s : FreeM P α) (n : Nat) (tr : PathAlong l (FreeM.replicate a s (n + 1))) :
+    PathAlong.replicateSplit l a s (n + 1) tr =
+      Fin.cases (PathAlong.replicateUncons l a s n tr).1
+        (PathAlong.replicateSplit l a s n (PathAlong.replicateUncons l a s n tr).2) := by
+  funext i
+  cases i using Fin.cases <;> rfl
+
+end PFunctor.FreeM

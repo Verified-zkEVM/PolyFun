@@ -38,9 +38,6 @@ attribute [local implicit_reducible] PFunctor.FreeM.bind PFunctor.FreeM.map
 open TwoParty
 
 @[simp, grind =]
-theorem Role.swap_swap (r : Role) : r.swap.swap = r := by cases r <;> rfl
-
-@[simp, grind =]
 theorem RoleDecoration.swap_swap : (spec : TypeTree) → (roles : RoleDecoration spec) →
     roles.swap.swap = roles := by
   intro spec roles

@@ -29,7 +29,8 @@ signed weights, for which a prefix may overspend a budget that every completed p
 
 * `splitBind` splits a path through `x.bind f` into a path through `x` and a path through the
   continuation at its output, `joinBind` is its inverse (`splitBind_joinBind`,
-  `joinBind_splitBind`), and the charge adds (`charge_splitBind`, `charge_joinBind`);
+  `joinBind_splitBind`), and the charge adds (`charge_splitBind`, `charge_joinBind`). A fixed
+  selector's path through a bind joins its paths through the parts (`ofHandler_bind`);
 * paths pull back along lenses and leaf maps with the pulled-back charge (`charge_pullMapLens`,
   `charge_pullMap`), and along a lens whose charges agree up to an additive map the charge is
   that map applied (`charge_mapLens_eq_map`);
@@ -235,6 +236,18 @@ theorem charge_joinBind [AddMonoid ω] {β : Type v'} (x : FreeM P α) (f : α �
     change c a + charge c _ (joinBind (r b) f p q) = (c a + charge c (r b) p) + _
     rw [ih b p q, add_assoc]
     rfl
+
+/-- The path a fixed selector picks through a bind joins the paths it picks through the first
+program and through the continuation at that path's output. -/
+theorem ofHandler_bind {β : Type v'} (choose : (a : P.A) → P.B a) (x : FreeM P α)
+    (f : α → FreeM P β) :
+    ofHandler choose (FreeM.bind x f) =
+      joinBind x f (ofHandler choose x) (ofHandler choose (f (output x (ofHandler choose x)))) := by
+  induction x using FreeM.rec with
+  | pure a => rfl
+  | liftBind a r ih =>
+    exact congrArg (fun p ↦ (⟨choose a, p⟩ : Path (FreeM.liftBind a fun b ↦ (r b).bind f)))
+      (ih (choose a))
 
 @[simp]
 theorem splitBind_joinBind {β : Type v'} : (x : FreeM P α) → (f : α → FreeM P β) → (p : Path x) →

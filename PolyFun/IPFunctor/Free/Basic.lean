@@ -42,7 +42,7 @@ reducible-transparency `whnf` does not unfold the head — keeping `IPFunctor.Fr
 the dispatch handle. The body is `IFreeM P (fun _ => α) s`, and at default transparency the
 two are definitionally equal, which is what the equation-lemma `rfl` proofs in this file rely
 on. -/
-def FreeM (P : Endo.{uI, uA, uB} I) (s : I) (α : Type v) : Type (max uI uA uB (v + 1)) :=
+def FreeM (P : Endo.{uI, uA, uB} I) (s : I) (α : Type v) : Type (max uI uA uB v) :=
   IFreeM P (fun _ => α) s
 
 namespace FreeM

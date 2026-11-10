@@ -20,6 +20,9 @@ dot notation on `IFreeM`, `FreeM` and `FreeM₂`.
 
 Coproducts reduce on their injections, copairing restricts along them, and trees transported
 along an injection keep their constructors and their roll bounds.
+
+A tree lies in the universe of its leaves when the index, shapes and responses are no larger, so
+trees nest inside the leaves of trees in one universe.
 -/
 
 @[expose] public section
@@ -171,5 +174,19 @@ example {I : Type uI} {P : Endo.{uI, uA, uB} I} {X : I → Type v}
       PFunctor.FreeM.map (fun value => (⟨value.1, f value.1 value.2⟩ : Σ s, Y s))
         (IFreeM.toSigmaFreeM P x) :=
   IFreeM.toSigmaFreeM_imap f x
+
+/-- Trees stay in the universe of their leaves. -/
+example {I : Type v} (P : Endo.{v, v, v} I) (X : I → Type v) (s : I) : Type v :=
+  IFreeM P X s
+
+/-- The constant-family and fixed-endpoint free monads stay in the universe of their results. -/
+example {I : Type v} (P : Endo.{v, v, v} I) (s t : I) (α : Type v) : Type v × Type v :=
+  (IPFunctor.FreeM P s α, FreeM₂ P s t α)
+
+/-- Trees nested inside the leaves of trees, as a strategy nests its continuations in its effect
+slots, close in one universe. -/
+def nestedTrees {I : Type v} (P : Endo.{v, v, v} I) (X : I → Type v) : ℕ → I → Type v
+  | 0 => IFreeM P X
+  | n + 1 => IFreeM P (nestedTrees P X n)
 
 end PolyFunTest.ModuleAPI.IndexedFree

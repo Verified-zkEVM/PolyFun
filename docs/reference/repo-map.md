@@ -47,6 +47,7 @@ Example and test imports never flow back into production.
 | Running trees as machines, with silent-step handlers | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
+| Lens-based two-party interaction | [Signature](../../PolyFun/Interaction/TwoParty/Lens/Signature.lean), [strategies](../../PolyFun/Interaction/TwoParty/Lens/Strategy.lean), [composition](../../PolyFun/Interaction/TwoParty/Lens/Compose.lean) | [Lens interaction](../guides/interaction.md#lens-based-two-party-protocols-twopartylens) |
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
 | General interfaces and directed boundaries | [Interface](../../PolyFun/Interaction/Interface.lean) | [Execution](../guides/execution.md) |
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
@@ -101,6 +102,8 @@ flowchart TD
   RC --> IO[Lean IO driver]
   P --> I[ITrees and indexed polynomials]
   F --> S[Interaction shapes and strategies]
+  S --> L[Lens two-party interaction]
+  F --> L
   S --> C[Concurrent processes]
   P --> B[Interaction.Interface]
   B --> O[Open theory and syntax]
@@ -144,6 +147,19 @@ elaborates together with `import PolyFun`, `import ToCslib` and
 `import ComplexityBackends`;
 [`CslibCoImport.lean`](../../PolyFunTest/ModuleAPI/CslibCoImport.lean) imports
 each owning module together with the modules that build on it.
+
+`Interaction/TwoParty/Lens/` builds on `Basic`'s generic syntax, strategies, and
+runner and the `PFunctor.FreeM` path/append/replicate layer. `Signature` and
+`Syntax` supply ownership and uniform slots; `Strategy` derives execution;
+`Compose`, `Iterate`, `PublicCoin`, and `Swap` supply its operations and laws.
+The only old two-party dependency is the `Role` vocabulary. The old
+`TwoParty/*.lean` API remains unchanged for reference and later removal;
+there are no aliases between the APIs. Multiparty, concurrent, and open-system
+modules do not depend on the new lens API.
+
+`PFunctor/Free/Path/AppendAlong.lean` imports `Path.lean` and adds generic
+product transports, constructor equations, and identity projection. `Path.lean`
+does not import this helper. Runtime replication laws extend `Free/Replicate.lean`.
 
 `Interaction.Interface` exposes `Interaction.Interface` and
 `Interaction.PortBoundary`. Runtime declarations use `Interaction.Execution`;
