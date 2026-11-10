@@ -53,6 +53,7 @@ boundary. Imports flow downward and must remain acyclic.
 | `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
 | `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |
 | `PolyFunTest/` | Regression tests, which may import tutorials. No production library imports them |
+| `PolyFunFrontier/` | Nested Lake package for the parts of PolyFun that need cslib-frontier, on cslib-frontier's toolchain and pins ([README](PolyFunFrontier/README.md)). Nothing else imports it |
 
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
 and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.

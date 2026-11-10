@@ -14,7 +14,7 @@ lean_sources() {
   git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean' 'ToCslib.lean' 'ToCslib/*.lean' \
     'ComplexityBackends.lean' 'ComplexityBackends/*.lean' 'PolyFunTest/*.lean' \
     'Examples/*.lean' 'PolyFunParliamentMain.lean' 'PolyFunIO.lean' 'PolyFunIO/*.lean' \
-    'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean'
+    'test/DocumentationConsumer/*.lean' 'test/ParliamentConsumer/*.lean' 'PolyFunFrontier/*.lean'
 }
 
 while IFS= read -r file; do
@@ -165,6 +165,42 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFun.lean' 'PolyFun/*.lean')
+
+# The cslib-frontier square (PolyFunFrontier/README.md): PolyFun requires Mathlib and CSLib only,
+# and cslib-frontier enters through the nested `PolyFunFrontier/` package alone. No module outside
+# it imports `CslibFrontier` or `PolyFunFrontier`, and the root package never requires
+# cslib-frontier, so `import PolyFun` and PolyFun's dependents never resolve it.
+frontier_pattern="${import_prefix}(CslibFrontier|PolyFunFrontier)([[:space:]]|\.|$)"
+for frontier_import in \
+    'import CslibFrontier' \
+    'public import CslibFrontier.Computability.DecisionTree.Parity' \
+    'import all PolyFunFrontier.PFunctor.Free.DecisionTree' \
+    'public meta import PolyFunFrontier'; do
+  if ! grep -qE "$frontier_pattern" <<< "$frontier_import"; then
+    echo "ERROR: the cslib-frontier fence does not match '$frontier_import'." >&2
+    status=1
+  fi
+done
+for other_import in 'import CslibFrontierExtras' 'import Cslib.Foundations.Data.PFunctor.Free' \
+    '-- import CslibFrontier'; do
+  if grep -qE "$frontier_pattern" <<< "$other_import"; then
+    echo "ERROR: the cslib-frontier fence wrongly matches '$other_import'." >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  case "$file" in PolyFunFrontier/*) continue ;; esac
+  if grep -qE "$frontier_pattern" "$file"; then
+    echo "ERROR: $file imports cslib-frontier or PolyFunFrontier outside PolyFunFrontier/." >&2
+    status=1
+  fi
+done < <(git ls-files -- '*.lean')
+
+if grep -qiE 'cslib-frontier|CslibFrontier' lakefile.toml lake-manifest.json; then
+  echo "ERROR: the root package names cslib-frontier; only PolyFunFrontier/ may require it." >&2
+  status=1
+fi
 
 # `import all` boundaries (docs/development/module-api.md, "Who may open whose bodies"): bodies are
 # opened only inside the library that owns them. Tests may open a complexity backend; nothing opens a
