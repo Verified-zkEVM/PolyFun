@@ -73,12 +73,12 @@ scoped instance (priority := high) instForInLoop {F : PFunctor.{uA, uB}} :
 
 /-! ## Reasoning about the loop
 
-`ITree.iter` is lawful only up to weak bisimulation, and `ITree` carries no
-possible-output predicate for a postcondition to range over, so the loop rule is
-stated as a bisimulation congruence rather than as a weakest-precondition
-instance. What it supplies is the usual licence to *assume* an invariant inside
-the body: a body may be replaced by one that is only correct on the states the
-loop can actually reach.
+`ITree.iter` is lawful only up to weak bisimulation, so the rule below is stated
+as a bisimulation congruence. What it supplies is the usual licence to *assume* an
+invariant inside the body: a body may be replaced by one that is only correct on
+the states the loop can actually reach. Weakest-precondition rules for the same
+loops are in `PolyFun.ITree.WP.Bind` (`ITree.le_wpPartial_iter`,
+`ITree.le_wpTotal_iter`), over the possible outputs of `PolyFun.ITree.Support`.
 
 The invariant travels inside the relation rather than as a separate hypothesis.
 Relating a `ForInStep` to itself *together with* `I` on its `yield` payload is
