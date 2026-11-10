@@ -17,6 +17,8 @@ along the embeddings between them:
 * **Free programs.** On a finite program both interaction-tree readings are the fold `wpFold`
   (`ITree.wpTotal_toITree`, `ITree.wpPartial_toITree`). A finite tree has no infinite run, so the
   least and greatest solutions of the one-step equations coincide on it.
+* **Larger carriers.** Reading a spec lifted along `ULift` is lifting the reading
+  (`ITree.wpTotal_ulift`, `ITree.wpPartial_ulift`), as for the fold.
 * **Continuous algebras.** For a continuous algebra, `ITree.denote` is the total reading of the
   algebra seen as a spec (`ITree.denote_eq_wpTotal`). Both are least solutions of the same
   equations. A resumption's denotation is then the total reading of its interaction tree
@@ -65,6 +67,53 @@ theorem wpPartial_toITree (x : FreeM F α) (post : α → l) :
     exact congrArg (Φ a) (funext ih)
 
 end Free
+
+/-! ## Lifting the carrier -/
+
+section ULift
+
+universe w'
+
+variable {Φ : OpSpec F l} (hΦ : Φ.Monotone)
+include hΦ
+
+/-- Reading a lifted spec is lifting the reading, with the postcondition read through
+`ULift.down`. A reading valued in a small universe, such as `Prop`, so reaches the result universe
+that `MAlgOrdered` needs. -/
+theorem wpTotal_ulift (t : ITree F α) (post : α → ULift.{w'} l) :
+    wpTotal Φ.ulift t post = ⟨wpTotal Φ t fun a => (post a).down⟩ := by
+  apply le_antisymm
+  · refine wpTotal_le_of_wpStepFun_le
+      (X := fun t => (⟨wpTotal Φ t fun a => (post a).down⟩ : ULift.{w'} l))
+      (le_of_eq (wpStepFun_eq_self _ _ (fun r => ?_) (fun t => ?_) (fun a k => ?_))) t
+    · rw [wpTotal_pure hΦ]
+    · rw [wpTotal_step hΦ]
+    · rw [wpTotal_query hΦ]
+      rfl
+  · exact wpTotal_le_of_wpStepFun_le (X := fun t => (wpTotal Φ.ulift t post).down)
+      (le_of_eq (wpStepFun_eq_self _ _
+        (fun r => by rw [wpTotal_pure hΦ.ulift])
+        (fun t => by rw [wpTotal_step hΦ.ulift])
+        (fun a k => by rw [wpTotal_query hΦ.ulift]; rfl))) t
+
+/-- Reading a lifted spec partially is lifting the partial reading. -/
+theorem wpPartial_ulift (t : ITree F α) (post : α → ULift.{w'} l) :
+    wpPartial Φ.ulift t post = ⟨wpPartial Φ t fun a => (post a).down⟩ := by
+  apply le_antisymm
+  · exact le_wpPartial_of_le_wpStepFun (X := fun t => (wpPartial Φ.ulift t post).down)
+      (le_of_eq (wpStepFun_eq_self _ _
+        (fun r => by rw [wpPartial_pure hΦ.ulift])
+        (fun t => by rw [wpPartial_step hΦ.ulift])
+        (fun a k => by rw [wpPartial_query hΦ.ulift]; rfl)).symm) t
+  · refine le_wpPartial_of_le_wpStepFun
+      (X := fun t => (⟨wpPartial Φ t fun a => (post a).down⟩ : ULift.{w'} l))
+      (le_of_eq (wpStepFun_eq_self _ _ (fun r => ?_) (fun t => ?_) (fun a k => ?_)).symm) t
+    · rw [wpPartial_pure hΦ]
+    · rw [wpPartial_step hΦ]
+    · rw [wpPartial_query hΦ]
+      rfl
+
+end ULift
 
 end ITree
 

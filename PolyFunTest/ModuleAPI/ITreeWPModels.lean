@@ -47,4 +47,9 @@ example (t : ITree F α) (post : α → Prop) :
       ITree.wpTotal (PFunctor.OpSpec.angelic F) t post :=
   ITree.toWPMonadAngelic_wp_eq_wpTotal t post ()
 
+example {l : Type w} [CompleteLattice l] {Φ : PFunctor.OpSpec F l} (hΦ : Φ.Monotone)
+    (t : ITree F α) (post : α → ULift.{uα} l) :
+    ITree.wpTotal Φ.ulift t post = ⟨ITree.wpTotal Φ t fun a => (post a).down⟩ :=
+  ITree.wpTotal_ulift hΦ t post
+
 end PolyFunTest.ModuleAPI.ITreeWPModels

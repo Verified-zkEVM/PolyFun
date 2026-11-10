@@ -13,7 +13,9 @@ Each example pins one agreement between models:
 * on a finite program, both interaction-tree readings are the fold `wpFold`, which reads every
   answer of a query;
 * a continuous algebra's denotation is its total reading, and both send silent divergence to `⊥`;
-* a resumption's denotation is the total reading of its interaction tree.
+* a resumption's denotation is the total reading of its interaction tree, and on a finite program
+  the denotation, the readings, the fold and CSLib's `foldFreeM` agree;
+* a `Prop` spec lifted along `ULift` reads as the lifted reading.
 -/
 
 @[expose] public section
@@ -70,5 +72,22 @@ example (post : Nat → Prop) :
 example (post : Nat → Prop) (r : Resumption CoinE Nat) :
     Resumption.denote post constAlg r = ITree.wpTotal constAlg.toOpSpec r.toITree post :=
   Resumption.denote_eq_wpTotal constAlg post r
+
+/-- The models agree in a triangle: on a finite program, the continuous denotation of its tree is
+the total reading, which is the fold, which is CSLib's `foldFreeM`. That is also what the
+resumption route gives (`Resumption.denote_toResumption`). -/
+example (post : Nat → Prop) :
+    ITree.denote post constAlg (FreeM.toITree flipNat) =
+      Resumption.denote post constAlg (FreeM.toResumption flipNat) := by
+  rw [ITree.denote_eq_wpTotal, ITree.wpTotal_toITree constAlg.toOpSpec_monotone,
+    FreeM.wpFold_eq_foldFreeM, Resumption.denote_toResumption]
+  rfl
+
+/-- A `Prop` spec lifted to a larger universe reads as the lifted `Prop` reading: silent
+divergence still fails total correctness. -/
+example : ITree.wpTotal (OpSpec.demonic CoinE).ulift (ITree.diverge : ITree CoinE Nat)
+    (fun _ => ⟨True⟩) = (⟨False⟩ : ULift.{1} Prop) := by
+  rw [ITree.wpTotal_ulift OpSpec.demonic_mono, ITree.wpTotal_diverge]
+  rfl
 
 end PolyFunTest.ITreeWPModelsExamples
