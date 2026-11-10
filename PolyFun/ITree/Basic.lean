@@ -453,6 +453,18 @@ theorem eq_query_of_dest {t : ITree F α} {a : F.A}
   apply eq_of_shape'_eq
   rw [h, shape'_query]
 
+/-- Case analysis on the head of a tree, for `Prop`-valued motives: a pure leaf, a silent step, or
+a visible query. Use it as `induction t using ITree.shape_cases`; it is not registered as the
+default eliminator, since `ITree` is a structure whose own `cases` stays available. -/
+@[elab_as_elim]
+theorem shape_cases {motive : ITree F α → Prop} (t : ITree F α)
+    (pure : ∀ r, motive (pure r)) (step : ∀ t', motive (step t'))
+    (query : ∀ a k, motive (query a k)) : motive t := by
+  rcases h : shape' t with ⟨r | _ | a, c⟩
+  · rw [eq_pure_of_dest h]; exact pure r
+  · rw [eq_step_of_dest h]; exact step _
+  · rw [eq_query_of_dest h]; exact query a c
+
 /-! ### Monadic bind via `ITree.corec`
 
 The Rocq `bind` (`Core/ITreeDefinition.v:157-168`) is a `cofix` over `subst`.

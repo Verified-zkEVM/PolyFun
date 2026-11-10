@@ -46,6 +46,12 @@ theorem toITree_liftBind (position : E.A)
   rw [FreeM.toResumption_liftBind,
     Resumption.toITree_query]
 
+@[simp] theorem toITree_lift (position : E.A) :
+    toITree (FreeM.lift position) = ITree.lift position := by
+  rw [FreeM.lift, toITree_liftBind]
+  simp only [toITree_pure]
+  rfl
+
 @[simp] theorem toITree_bind (program : FreeM E α)
     (next : α → FreeM E β) :
     toITree (FreeM.bind program next) =
