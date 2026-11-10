@@ -357,6 +357,7 @@ public import PolyFun.PFunctor.Free.WP
 public import PolyFun.PFunctor.Free.WP.Budget
 public import PolyFun.PFunctor.Free.WP.Charge
 public import PolyFun.PFunctor.Free.WP.Cost
+public import PolyFun.PFunctor.Free.WP.StatefulFrame
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Certified
