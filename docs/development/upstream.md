@@ -41,7 +41,11 @@ Their pins are recorded in the manifest; their README files live under
   `W.toFreeM` (`Free.W`). `ToCslib/Data/PFunctor/Free/` adds
   constructor-spelled equations and loop transport without redeclaring any of
   them, and PolyFun-specific decorations, paths, machines, and handlers remain
-  in `PolyFun/PFunctor/`.
+  in `PolyFun/PFunctor/`. The syntactic weakest precondition `FreeM.wpFold Φ x`
+  (`PolyFun/PFunctor/Free/WP.lean`) is the fold `foldFreeM` with the
+  postcondition taken last, so that `wpFold Φ x` is the predicate transformer of
+  `x`. `wpFold_eq_foldFreeM` states the agreement, so CSLib's fold laws apply to
+  it.
 - **Co-import:** neither PolyFun nor `ToCslib` redeclares a CSLib name, so
   `import Cslib` elaborates together with `import PolyFun`, `import ToCslib`
   and `import ComplexityBackends`. The ordinary-import canary
@@ -119,7 +123,9 @@ Mathlib's `iSup_bool_eq`.
 suprema (`AddSupDistrib`), with the `ℕ∞` and pointwise instances, and the constant supremum
 `iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves both separately for
 `ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`, `ENat.iSup_zero`, `ENNReal.iSup_zero`); the
-general forms belong in Mathlib's order library, with those as instances.
+general forms belong in Mathlib's order library, with those as instances. Mathlib's
+`IsAddQuantale` is the version for every set, the empty one included, which fails in `ℕ∞`; the
+upstream form is the nonempty one.
 `ToCslib/Data/ENNReal/AddSupDistrib.lean` adds the `ℝ≥0∞` instance in a module of its own, so that
 PolyFun's core does not import the reals.
 

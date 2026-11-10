@@ -229,6 +229,13 @@ public import PolyFun.Interaction.Open.SecureEmulation
 public import PolyFun.Interaction.Open.SubTheory
 public import PolyFun.Interaction.TwoParty.Compose
 public import PolyFun.Interaction.TwoParty.Decoration
+public import PolyFun.Interaction.TwoParty.Lens.Compose
+public import PolyFun.Interaction.TwoParty.Lens.Iterate
+public import PolyFun.Interaction.TwoParty.Lens.PublicCoin
+public import PolyFun.Interaction.TwoParty.Lens.Signature
+public import PolyFun.Interaction.TwoParty.Lens.Strategy
+public import PolyFun.Interaction.TwoParty.Lens.Swap
+public import PolyFun.Interaction.TwoParty.Lens.Syntax
 public import PolyFun.Interaction.TwoParty.PublicCoin
 public import PolyFun.Interaction.TwoParty.Refine
 public import PolyFun.Interaction.TwoParty.Role
@@ -334,9 +341,11 @@ public import PolyFun.PFunctor.Free.Fold
 public import PolyFun.PFunctor.Free.HandlerMachine
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
+public import PolyFun.PFunctor.Free.Path.AppendAlong
 public import PolyFun.PFunctor.Free.Path.Bounded
 public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Free.Path.Execution
+public import PolyFun.PFunctor.Free.Path.MapMoves
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Quotient
 public import PolyFun.PFunctor.Free.Replicate
@@ -352,6 +361,7 @@ public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Certified
+public import PolyFun.PFunctor.Handler.CertifiedUnder
 public import PolyFun.PFunctor.Handler.CertifiedVec
 public import PolyFun.PFunctor.Handler.Charge
 public import PolyFun.PFunctor.Handler.Free
@@ -367,6 +377,8 @@ public import PolyFun.PFunctor.Handler.Stateful.Link
 public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
+public import PolyFun.PFunctor.Lens.Bang
+public import PolyFun.PFunctor.Lens.BangW
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence

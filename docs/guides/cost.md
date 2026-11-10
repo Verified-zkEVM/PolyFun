@@ -139,6 +139,8 @@ The calculus:
 - `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the
   continuation at its output, and `Path.joinBind` is its inverse (`splitBind_joinBind`,
   `joinBind_splitBind`). The charge adds (`charge_splitBind`, `charge_joinBind`).
+  The path a fixed answer selector picks through `x >>= f` joins the paths it picks through `x`
+  and through the continuation at that path's output (`Path.ofHandler_bind`).
 - Paths pull back along lenses and leaf maps (`charge_pullMapLens`, `charge_pullMap`); along a
   lens whose charges agree up to an additive map, the charge is that map applied
   (`charge_mapLens_eq_map`).
@@ -291,7 +293,10 @@ on reachable states needs a state type that excludes the unreachable ones.
 The upper-bound readings share one transfer principle: if each implementation is observed below the
 spec of its call, the simulated program is observed below the program (`wpFold_liftM_le`).
 `costWith_liftM_le` is an instance. The budget reading is its dual, which is why its transfer
-lemmas are proved directly.
+lemmas are proved directly. Readings of one program compare the same way: a spec below a monotone
+spec at every call folds below it (`wpFold_le_wpFold_of_le`). A larger charge therefore gives a
+larger cost (`costWith_mono_charge`), and the fold of any spec below `OpSpec.charge c` at every
+call is at most `costWith c`.
 
 ## Layers and certified implementations
 
@@ -321,6 +326,12 @@ handler whose call at `a` uses at most `∑ i, c a i • d i` is certified by it
 (`Certified.ofDemand`), a program with use vector `u` then runs with use vector `∑ i, u i • d i`
 (`Handler.isChargeBound_liftM_demand`), and demands compose
 (`demandHom_demandHom`, `Handler.isChargeBound_liftM_demand_comp`).
+
+`Handler.CertifiedUnder P Q c allowsP d allowsQ` is the form over allowed answers
+(`PolyFun/PFunctor/Handler/CertifiedUnder.lean`): each implementation stays within its exchanged
+price along `allowsQ`, and every result it can return along `allowsQ` is allowed by `allowsP`. It
+has `transfer` and `comp`, and with the demand exchange it gives
+`Handler.isChargeBoundUnder_liftM_demand`.
 
 Stateful packages have certificates in a single cost type
 (`PolyFun/PFunctor/Handler/Stateful/Charge.lean`): `Stateful.WithinCharge` bounds each call from

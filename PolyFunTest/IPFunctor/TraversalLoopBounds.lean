@@ -174,7 +174,7 @@ example (j n : ℕ)
 /-! ## Loops through a monad structure on a wrapper -/
 
 /-- Programs that return to the sole state, behind a definitional wrapper. -/
-def Prog (α : Type) : Type 1 := FreeM₂ Cmd () () α
+def Prog (α : Type) : Type := FreeM₂ Cmd () () α
 
 /-- A monad structure on the wrapper, with `map` through `bind`. -/
 instance : Monad Prog where

@@ -41,8 +41,9 @@ variable {I : Type uI}
 
 /-- The state-indexed free monad over an endomorphic `IPFunctor`. The return family
 `X : I → Type v` is state-indexed, so each leaf carries a value of type `X s` at its own
-leaf state `s`. -/
-inductive IFreeM (P : Endo.{uI, uA, uB} I) (X : I → Type v) : I → Type (max uI uA uB (v + 1))
+leaf state `s`. The tree lies in the largest universe of its index, shapes, responses and
+leaves, so a tree can be a leaf of another tree in the same universe. -/
+inductive IFreeM (P : Endo.{uI, uA, uB} I) (X : I → Type v) : I → Type (max uI uA uB v)
   /-- A pure leaf at state `s` carrying a value of type `X s`. -/
   | pure {s : I} (x : X s) : IFreeM P X s
   /-- Roll a shape at state `s` into a continuation, with each branch landing at the

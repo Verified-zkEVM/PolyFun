@@ -18,10 +18,14 @@ in two coupled layers:
 * **Syntactic wp.** An `OpSpec P l` assigns each operation `a : P.A` a predicate
   transformer `(P.B a → l) → l` over an ordered carrier `l`, saying what one call
   to `a` guarantees. `FreeM.wpFold Φ` folds these per-operation specs over a free
-  tree, leaving the operations uninterpreted. Every monotone spec induces an
+  tree, leaving the operations uninterpreted. It is CSLib's fold `FreeM.foldFreeM` with the
+  postcondition handling values (`wpFold_eq_foldFreeM`). A spec below a monotone spec at every
+  call folds below it (`wpFold_le_wpFold_of_le`). Every monotone spec induces an
   ordered monad algebra `OpSpec.toMAlgOrdered`, whose image of a program with a mapped output
   is the fold (`toMAlgOrdered_μ_bind_pure`); `PolyFun.PFunctor.Free.WP.Upstream` installs it as
-  the exact core interpretation `OpSpec.toWPMonad`.
+  the exact core interpretation `OpSpec.toWPMonad`. The algebra's carrier shares the universe of
+  the program's values. `OpSpec.ulift` reads a spec over `ULift l` (`wpFold_ulift`), so a reading
+  valued in a small universe induces an algebra at every result universe.
 
 * **Semantic wp.** The weakest precondition of the program *interpreted* through a handler
   `s : Handler m P` is core's `wp` of `x.liftM s`; `PolyFun.PFunctor.Free.WP.Upstream` states the
@@ -44,7 +48,7 @@ syntactic wp theory agree.
 
 @[expose] public section
 
-universe uA uB uA₂ uB₂ uX uY v w
+universe uA uB uA₂ uB₂ uX uY v w w'
 
 namespace PFunctor
 
@@ -105,6 +109,24 @@ theorem angelicUnder_mono (allows : (a : P.A) → P.B a → Prop) :
     (angelicUnder allows).Monotone :=
   fun _ _ _ h => fun ⟨b, hb, hk⟩ => ⟨b, hb, h b hk⟩
 
+/-! ### Lifting the carrier -/
+
+/-- A spec over `l`, read over `ULift l`: a call reads its continuation through `ULift.down` and
+lifts the result. A reading valued in a small universe, such as `Prop` or `ℝ≥0∞`, reaches carriers
+in a larger universe this way (`FreeM.wpFold_ulift`). -/
+def ulift (Φ : OpSpec P l) : OpSpec P (ULift.{w'} l) :=
+  fun a k => ⟨Φ a fun b => (k b).down⟩
+
+@[simp]
+theorem ulift_apply (Φ : OpSpec P l) (a : P.A) (k : P.B a → ULift.{w'} l) :
+    Φ.ulift a k = ⟨Φ a fun b => (k b).down⟩ :=
+  rfl
+
+/-- Lifting the carrier keeps a spec monotone. -/
+theorem Monotone.ulift [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Monotone) :
+    (Φ.ulift : OpSpec P (ULift.{w'} l)).Monotone :=
+  fun a _ _ hk => hΦ a hk
+
 end OpSpec
 
 namespace FreeM
@@ -118,6 +140,15 @@ precondition of `x` for postcondition `post`, with operations uninterpreted. -/
 def wpFold (Φ : OpSpec P l) : FreeM P α → (α → l) → l
   | .pure x, post => post x
   | .liftBind a r, post => Φ a fun b => (r b).wpFold Φ post
+
+/-- `wpFold` is CSLib's fold `FreeM.foldFreeM`, with the postcondition handling values and the
+spec handling operations. The fold's universal property and substitution laws
+(`foldFreeM_unique`, `foldFreeM_bind`) therefore apply to `wpFold`. -/
+theorem wpFold_eq_foldFreeM (Φ : OpSpec P l) (x : FreeM P α) (post : α → l) :
+    wpFold Φ x post = foldFreeM post Φ x := by
+  induction x with
+  | pure x => rfl
+  | lift_bind a r ih => exact congrArg (Φ a) (funext ih)
 
 @[simp, freeM_unfold]
 theorem wpFold_pure (Φ : OpSpec P l) (x : α) (post : α → l) :
@@ -216,6 +247,33 @@ theorem wpFold_mono [Preorder l] {Φ : OpSpec P l} (hΦ : Φ.Monotone) (x : Free
   induction x with
   | pure x => exact h x
   | lift_bind a r ih => exact hΦ a fun b => ih b
+
+/-- **Comparing specs.** A spec below a monotone spec at every call folds below it, for every
+program and postcondition. -/
+theorem wpFold_le_wpFold_of_le [Preorder l] {Φ Ψ : OpSpec P l} (hΨ : Ψ.Monotone)
+    (h : ∀ a k, Φ a k ≤ Ψ a k) (x : FreeM P α) (post : α → l) :
+    wpFold Φ x post ≤ wpFold Ψ x post := by
+  induction x with
+  | pure x => exact le_rfl
+  | lift_bind a r ih => exact (h a _).trans (hΨ a ih)
+
+/-- **Comparing specs**, with the smaller spec monotone instead of the larger. -/
+theorem wpFold_le_wpFold_of_le' [Preorder l] {Φ Ψ : OpSpec P l} (hΦ : Φ.Monotone)
+    (h : ∀ a k, Φ a k ≤ Ψ a k) (x : FreeM P α) (post : α → l) :
+    wpFold Φ x post ≤ wpFold Ψ x post := by
+  induction x with
+  | pure x => exact le_rfl
+  | lift_bind a r ih => exact (hΦ a ih).trans (h a _)
+
+/-- Folding a lifted spec is lifting the fold of the original spec, with the postcondition read
+through `ULift.down`. -/
+@[simp]
+theorem wpFold_ulift (Φ : OpSpec P l) (x : FreeM P α) (post : α → ULift.{w'} l) :
+    wpFold Φ.ulift x post = ⟨wpFold Φ x fun a => (post a).down⟩ := by
+  induction x with
+  | pure x => rfl
+  | lift_bind a r ih =>
+    exact congrArg (fun k => ULift.up (Φ a k)) (funext fun b => congrArg ULift.down (ih b))
 
 /-- Folding a spec over a program relabelled along a lens is folding the spec read through the
 lens: a call at `a` is read by `Φ` at `f.toFunA a`, with each continuation read through

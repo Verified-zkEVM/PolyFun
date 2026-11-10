@@ -14,6 +14,7 @@ it provides, rather than importing the whole project while developing a module.
 | `PolyFunIO` | Optional typed console forms and checked filesystem operations, outside the backend-neutral `PolyFun` umbrella | `lake build PolyFunIO`; `import PolyFunIO` |
 | `PolyFunExamples` | Checked tutorials and the Parliament application under `Examples/` | `lake build PolyFunExamples`; `import Examples.Tutorials.Requests` |
 | `PolyFunTest` | Regression tests, adversarial cases, and ordinary-import consumers | `lake test` |
+| `PolyFunFrontier` (nested package) | The parts of PolyFun that need cslib-frontier, at the paths they would have in PolyFun; see [its README](../../PolyFunFrontier/README.md) | `cd PolyFunFrontier && lake build PolyFunFrontier`; never imported by the libraries above |
 
 `PolyFun.lean`, `ToCslib.lean`, and `ComplexityBackends.lean` are generated import
 indexes. The optional backends and examples are outside the `PolyFun` umbrella.
@@ -47,6 +48,7 @@ Example and test imports never flow back into production.
 | Running trees as machines, with silent-step handlers | [Machine](../../PolyFun/ITree/Machine.lean) | [Interaction trees](../guides/itree.md#running-a-tree-as-a-machine) |
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
+| Lens-based two-party interaction | [Signature](../../PolyFun/Interaction/TwoParty/Lens/Signature.lean), [strategies](../../PolyFun/Interaction/TwoParty/Lens/Strategy.lean), [composition](../../PolyFun/Interaction/TwoParty/Lens/Compose.lean) | [Lens interaction](../guides/interaction.md#lens-based-two-party-protocols-twopartylens) |
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
 | General interfaces and directed boundaries | [Interface](../../PolyFun/Interaction/Interface.lean) | [Execution](../guides/execution.md) |
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
@@ -54,7 +56,7 @@ Example and test imports never flow back into production.
 | Activation budgets and work conservation | [Budget](../../PolyFun/Interaction/Execution/ReactiveNetwork/Budget.lean), [conservation](../../PolyFun/Interaction/Execution/ReactiveNetwork/Conserving.lean), [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean), [process certificates](../../PolyFun/Interaction/Execution/ReactiveProcess/Conserving.lean), [import ledgers](../../PolyFun/Interaction/Execution/ReactiveNetwork/Import.lean), [input-relative bounds](../../PolyFun/Interaction/Execution/ReactiveNetwork/InputRelative.lean) | [Open systems](../guides/open-systems.md#reactive-execution-and-exact-behavior), [program logic](../guides/program-logic.md#charges-and-budgets) |
 | Open composition, contextual emulation, and observations | [OpenTheory](../../PolyFun/Interaction/Open/OpenTheory.lean), [OpenProcess](../../PolyFun/Interaction/Open/OpenProcess.lean) | [Open systems](../guides/open-systems.md) |
 | Support and weakest preconditions | [Ordered algebras](../../PolyFun/Control/Monad/Algebra.lean), [support](../../PolyFun/Control/Monad/Support.lean), [exact interpretations](../../PolyFun/Control/Monad/ExactWP.lean) | [Program logic](../guides/program-logic.md#exact-interpretations) |
-| Worst-case cost and query budgets | [Interface charges](../../PolyFun/PFunctor/Charge.lean), [charge bounds](../../PolyFun/PFunctor/Free/Cost.lean), [restricted answers](../../PolyFun/PFunctor/Free/Restrict.lean), [worst-case costs](../../PolyFun/PFunctor/Free/Cost/Value.lean), [loops](../../PolyFun/PFunctor/Free/Cost/Loops.lean), [reachable results](../../PolyFun/PFunctor/Free/Cost/Support.lean), [`cost_bound`](../../PolyFun/PFunctor/Free/Cost/Tactic.lean), [path charges](../../PolyFun/PFunctor/Free/Path/Charge.lean), [handlers](../../PolyFun/PFunctor/Handler/Charge.lean), [certified handlers](../../PolyFun/PFunctor/Handler/Certified.lean), [vector charges and demands](../../PolyFun/PFunctor/Handler/CertifiedVec.lean), [stateful certificates](../../PolyFun/PFunctor/Handler/Stateful/Charge.lean), [measured programs](../../PolyFun/PFunctor/Free/Cost/Measured.lean), [charge folds](../../PolyFun/PFunctor/Free/WP/Charge.lean), [`vcgen` readings of charges](../../PolyFun/PFunctor/Free/WP/Budget.lean), [roll bounds](../../PolyFun/PFunctor/Bound.lean); [resumptions](../../PolyFun/PFunctor/Resumption/Charge.lean), [dynamical computations](../../PolyFun/PFunctor/Dynamical/DynComputation/Charge.lean), [interaction trees](../../PolyFun/ITree/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean); state-dependent [indexed charge bounds](../../PolyFun/IPFunctor/Free/Bound.lean) and [their erasure](../../PolyFun/IPFunctor/Free/Bound/Charge.lean) | [Interaction cost](../guides/cost.md), [program logic](../guides/program-logic.md#charges-and-budgets) |
+| Worst-case cost and query budgets | [Interface charges](../../PolyFun/PFunctor/Charge.lean), [charge bounds](../../PolyFun/PFunctor/Free/Cost.lean), [restricted answers](../../PolyFun/PFunctor/Free/Restrict.lean), [worst-case costs](../../PolyFun/PFunctor/Free/Cost/Value.lean), [loops](../../PolyFun/PFunctor/Free/Cost/Loops.lean), [reachable results](../../PolyFun/PFunctor/Free/Cost/Support.lean), [`cost_bound`](../../PolyFun/PFunctor/Free/Cost/Tactic.lean), [path charges](../../PolyFun/PFunctor/Free/Path/Charge.lean), [handlers](../../PolyFun/PFunctor/Handler/Charge.lean), [certified handlers](../../PolyFun/PFunctor/Handler/Certified.lean), [vector charges and demands](../../PolyFun/PFunctor/Handler/CertifiedVec.lean), [certificates over allowed answers](../../PolyFun/PFunctor/Handler/CertifiedUnder.lean), [stateful certificates](../../PolyFun/PFunctor/Handler/Stateful/Charge.lean), [measured programs](../../PolyFun/PFunctor/Free/Cost/Measured.lean), [charge folds](../../PolyFun/PFunctor/Free/WP/Charge.lean), [`vcgen` readings of charges](../../PolyFun/PFunctor/Free/WP/Budget.lean), [roll bounds](../../PolyFun/PFunctor/Bound.lean); [resumptions](../../PolyFun/PFunctor/Resumption/Charge.lean), [dynamical computations](../../PolyFun/PFunctor/Dynamical/DynComputation/Charge.lean), [interaction trees](../../PolyFun/ITree/Charge.lean); support-level [charged folds](../../PolyFun/Control/Monad/Support/Charged.lean); state-dependent [indexed charge bounds](../../PolyFun/IPFunctor/Free/Bound.lean) and [their erasure](../../PolyFun/IPFunctor/Free/Bound/Charge.lean) | [Interaction cost](../guides/cost.md), [program logic](../guides/program-logic.md#charges-and-budgets) |
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 | Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
 | Stateful handler substitution | [Handler costs](../../PolyFun/Realizability/Quantitative/Handler.lean), [product machine](../../PolyFun/PFunctor/Dynamical/DynComputation/WrapState.lean) | [Realizability](../guides/realizability.md#stateful-handler-substitution) |
@@ -101,6 +103,8 @@ flowchart TD
   RC --> IO[Lean IO driver]
   P --> I[ITrees and indexed polynomials]
   F --> S[Interaction shapes and strategies]
+  S --> L[Lens two-party interaction]
+  F --> L
   S --> C[Concurrent processes]
   P --> B[Interaction.Interface]
   B --> O[Open theory and syntax]
@@ -134,6 +138,12 @@ module inside `PolyFun/`.
 `ToCslib` never imports PolyFun or a backend, and PolyFun never imports a
 backend; `scripts/check-modules.sh` enforces both.
 
+`PolyFunFrontier/` is a separate Lake package on cslib-frontier's toolchain and pins. It requires
+PolyFun by path and cslib-frontier by commit. It holds what needs cslib-frontier, and a module moves
+into `PolyFun/` once the cslib-frontier modules it uses reach CSLib. Nothing outside it imports
+`CslibFrontier` or `PolyFunFrontier`, and the root package never requires cslib-frontier
+(`scripts/check-modules.sh`), so PolyFun's dependents never resolve it.
+
 PolyFun and `ToCslib` import the CSLib module that owns each reused
 declaration instead of declaring a local copy: `PolyFun.PFunctor.Basic`
 re-exports `Cslib.Foundations.Data.PFunctor.Basic`,
@@ -144,6 +154,19 @@ elaborates together with `import PolyFun`, `import ToCslib` and
 `import ComplexityBackends`;
 [`CslibCoImport.lean`](../../PolyFunTest/ModuleAPI/CslibCoImport.lean) imports
 each owning module together with the modules that build on it.
+
+`Interaction/TwoParty/Lens/` builds on `Basic`'s generic syntax, strategies, and
+runner and the `PFunctor.FreeM` path/append/replicate layer. `Signature` and
+`Syntax` supply ownership and uniform slots; `Strategy` derives execution;
+`Compose`, `Iterate`, `PublicCoin`, and `Swap` supply its operations and laws.
+The only old two-party dependency is the `Role` vocabulary. The old
+`TwoParty/*.lean` API remains unchanged for reference and later removal;
+there are no aliases between the APIs. Multiparty, concurrent, and open-system
+modules do not depend on the new lens API.
+
+`PFunctor/Free/Path/AppendAlong.lean` imports `Path.lean` and adds generic
+product transports, constructor equations, and identity projection. `Path.lean`
+does not import this helper. Runtime replication laws extend `Free/Replicate.lean`.
 
 `Interaction.Interface` exposes `Interaction.Interface` and
 `Interaction.PortBoundary`. Runtime declarations use `Interaction.Execution`;
