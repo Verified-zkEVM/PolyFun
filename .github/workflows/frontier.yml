@@ -1,0 +1,94 @@
+name: Frontier
+
+# Builds PolyFunFrontier, the nested package that adds cslib-frontier (PolyFunFrontier/README.md).
+# It runs on cslib-frontier's toolchain and pins, which are newer than PolyFun's stable tags, so it
+# is a separate workflow: a cslib-frontier change that breaks it never blocks PolyFun's own checks.
+# Make `Frontier` a required check only for pull requests that touch PolyFunFrontier/.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "PolyFunFrontier/**"
+      - "PolyFun/**"
+      - "ToCslib/**"
+      - "lakefile.toml"
+      - "lake-manifest.json"
+      - "lean-toolchain"
+      - "scripts/PolyFunAxiomSweep.lean"
+      - "scripts/axiom_baseline.json"
+      - ".github/workflows/frontier.yml"
+  pull_request:
+    paths:
+      - "PolyFunFrontier/**"
+      - "PolyFun/**"
+      - "ToCslib/**"
+      - "lakefile.toml"
+      - "lake-manifest.json"
+      - "lean-toolchain"
+      - "scripts/PolyFunAxiomSweep.lean"
+      - "scripts/axiom_baseline.json"
+      - ".github/workflows/frontier.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  frontier:
+    name: Frontier
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: PolyFunFrontier
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      # Dependencies only (Mathlib's oleans and the CSLib and cslib-frontier builds), keyed by the
+      # nested package's pins. Its own build and PolyFun's are small and rebuilt each run.
+      - name: Restore dependency cache
+        id: deps-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            PolyFunFrontier/.lake/packages
+            !PolyFunFrontier/.lake/packages/**/*.setup.json
+          key: frontier-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('PolyFunFrontier/lean-toolchain', 'PolyFunFrontier/lake-manifest.json') }}
+
+      - name: Set up Lean environment
+        uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64 # v1.7.0
+        with:
+          lake-package-directory: PolyFunFrontier
+          auto-config: false
+          build: false
+          test: false
+          lint: false
+          use-github-cache: false
+          use-mathlib-cache: false
+
+      - name: Fetch Mathlib's cache
+        run: lake exe cache get
+
+      - name: Check the pins against cslib-frontier
+        run: python3 scripts/check-pins.py
+
+      - name: Build
+        run: lake build PolyFunFrontier PolyFunFrontierTest
+
+      - name: Enforce zero axiom and sorry debt
+        run: >-
+          lake exe polyfun-axiomsweep --root PolyFunFrontier
+          --baseline ../scripts/axiom_baseline.json --check
+
+      - name: Save dependency cache
+        if: success() && github.ref == 'refs/heads/main' && steps.deps-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
+        with:
+          path: |
+            PolyFunFrontier/.lake/packages
+            !PolyFunFrontier/.lake/packages/**/*.setup.json
+          key: frontier-deps-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('PolyFunFrontier/lean-toolchain', 'PolyFunFrontier/lake-manifest.json') }}

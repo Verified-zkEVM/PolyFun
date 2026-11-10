@@ -375,6 +375,7 @@ public import PolyFun.PFunctor.Handler.Stateful.Link
 public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
+public import PolyFun.PFunctor.Lens.Bang
 public import PolyFun.PFunctor.Lens.BangW
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian

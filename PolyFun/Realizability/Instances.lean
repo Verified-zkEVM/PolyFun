@@ -52,12 +52,11 @@ four mixins as instances, so a client never names them.
 cannot see the surrounding context and a tag cannot be moved past a pairing using
 `elim` alone.
 
-What this costs a real client: `Complexity.FP` (complexitylib) and
-`Cslib.Turing.PolyTimeComputable` (cslib) both supply the identity and composition
-closure. complexitylib's development branch also exposes the class-level product
-closure a `WordPairing` needs (`pairFst_mem_FP`, `pairSnd_mem_FP`, `mem_FP_pair` in
-`Complexitylib/Classes/P/Pairing.lean`), but PolyFun does not depend on complexitylib;
-cslib has no pairing or projection machines at all. cslib's `PolyTimeComputable` is
+What this costs a real client: `Cslib.Turing.PolyTimeComputable` (cslib) supplies the
+identity and composition closure, but cslib has no pairing or projection machines at all.
+cslib-frontier's multi-tape polynomial time has its own pairing codecs; PolyFun does not depend on
+cslib-frontier, and instances over it belong in the nested `PolyFunFrontier` package.
+cslib's `PolyTimeComputable` is
 `Type`-valued, and its `comp` replaces the second machine's time bound by a monotone one
 itself (`PolyTimeComputable.withMonotoneBound`), so `Mem f := Nonempty (PolyTimeComputable f)`
 is closed under `PolyTimeComputable.id` and `PolyTimeComputable.comp` with no further
