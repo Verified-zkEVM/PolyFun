@@ -218,7 +218,7 @@ theorem erase_identity : erase identity = .lam (.var 0) := rfl
 
 /-- The generic value-renaming law applies below the type binder. -/
 theorem rename_identity {n : Nat} {Γ : List (ValueSort n)} {s : ValueSort n} (t : Term n Γ s) :
-    t.rename (fun x => x) = t := IPFunctor.ScopedFamily.Term.rename_id t
+    t.rename (fun _ x => x) = t := IPFunctor.ScopedFamily.Term.rename_id t
 
 /-- Parameter maps preserve variable positions even when they identify type parameters. -/
 theorem map_variable {n m : Nat} (ρ : Fin n → Fin m) {Γ : List (ValueSort n)}
@@ -244,7 +244,7 @@ The lambda's parameter is nearest; the free value remains one position farther a
 
 /-- Adding another ambient binding does not capture the free variable beneath the lambda. -/
 theorem erase_rename_ambientValue :
-    erase (ambientValue.rename (ScopedVar.succ (b := ValueSort.mono (n := 1) .bit))) =
+    erase (ambientValue.rename fun _ => ScopedVar.succ (b := ValueSort.mono (n := 1) .bit)) =
       .lam (.var 2) := by
   simp only [erase, ambientValue, IPFunctor.ScopedFamily.Term.rename, IFreeM.fold_liftBind,
     IFreeM.fold_pure, eraseOp]
@@ -404,14 +404,14 @@ theorem parameters_subst {n m : Nat} (μ : Fin n → Fin m)
 /-- Reindexing a substitution maps each image and normalizes both contexts. -/
 theorem substitution_reindex_eq_map {n : Nat} {a : ValueSort n} (o : Op n a) (p : Fin o.arity)
     {Γ Δ : List (ValueSort n)} (θ : signature.Substitution Γ Δ) :
-    (θ.reindex reindexAction o p : signature.Substitution _ _) =
-      (IPFunctor.ScopedFamily.Substitution.cast
+    θ.reindex reindexAction o p =
+      IPFunctor.ScopedFamily.Substitution.cast
         (congrArg (List.map · Γ) (Op.binderMap_sort o p))
         (congrArg (List.map · Δ) (Op.binderMap_sort o p))
-        (θ.map parameterHom (Op.binderMap o p)) : signature.Substitution _ _) := by
+        (θ.map parameterHom (Op.binderMap o p)) := by
   apply eq_of_heq
   apply HEq.trans ?_ (IPFunctor.ScopedFamily.Substitution.cast_heq _ _ _).symm
-  apply ScopedVar.mapLookup_heq (Op.binderMap_sort o p).symm
+  apply ScopedSignature.Env.reindex_heq (Op.binderMap_sort o p).symm
   · exact funext fun s => congrArg (fun Δ => Term (o.world p) Δ s)
       (congrArg (List.map · Δ) (Op.binderMap_sort o p).symm)
   · intro _ _

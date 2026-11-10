@@ -75,6 +75,7 @@ public import PolyFun.IPFunctor.Scoped.Basic
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
 public import PolyFun.IPFunctor.Scoped.DomainRelation
+public import PolyFun.IPFunctor.Scoped.EnvRelation
 public import PolyFun.IPFunctor.Scoped.Family
 public import PolyFun.IPFunctor.Scoped.FamilyMap
 public import PolyFun.IPFunctor.Scoped.FamilyMapCongr
@@ -365,6 +366,7 @@ public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Handler.Certified
+public import PolyFun.PFunctor.Handler.CertifiedUnder
 public import PolyFun.PFunctor.Handler.CertifiedVec
 public import PolyFun.PFunctor.Handler.Charge
 public import PolyFun.PFunctor.Handler.Free
@@ -381,6 +383,7 @@ public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Bang
+public import PolyFun.PFunctor.Lens.BangW
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence

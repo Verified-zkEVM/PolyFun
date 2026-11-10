@@ -21,12 +21,12 @@ example {I : Type} {P : Endo I} {X : I → Type} {i j : I}
 
 example {S : Type} {Γ Δ : List S} (hΓ : Γ = Γ) (hΔ : Δ = Δ)
     (ρ : ScopedSignature.Renaming Γ Δ) :
-    (ScopedSignature.Renaming.cast hΓ hΔ ρ : ScopedSignature.Renaming Γ Δ) = @ρ := by
+    ScopedSignature.Renaming.cast hΓ hΔ ρ = ρ := by
   simp
 
 example {S : Type} {Γ Γ' Δ Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
     (ρ : ScopedSignature.Renaming Γ Δ) :
-    HEq (ScopedSignature.Renaming.cast hΓ hΔ ρ : ScopedSignature.Renaming Γ' Δ') (@ρ) := by
+    HEq (ScopedSignature.Renaming.cast hΓ hΔ ρ) ρ := by
   simp
 
 example {W : Type} {S : W → Type} {σ τ υ : ScopedFamily W S}
@@ -62,20 +62,20 @@ example {S : Type} {σ : ScopedSignature S} {Γ : List S} {a : S} (t : σ.Term �
 example {W : Type} {S : W → Type} {σ : ScopedFamily W S} (A : σ.ReindexAction)
     {w : W} {Γ Δ Θ : List (S w)} {a : S w} (t : σ.Term w Γ a)
     (ρ : ScopedSignature.Renaming Γ Δ) (θ : σ.Substitution Δ Θ) :
-    (t.rename ρ).subst A θ = t.subst A (fun x => θ (ρ x)) :=
+    (t.rename ρ).subst A θ = t.subst A (ScopedSignature.Env.rename ρ θ) :=
   ScopedFamily.Term.subst_rename A ρ θ t
 
 example {W : Type} {S : W → Type} {σ : ScopedFamily W S} (A : σ.ReindexAction)
     (hA : A.Lawful σ) {w : W} {Γ Δ Θ : List (S w)} {a : S w}
     (t : σ.Term w Γ a) (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) :
-    (t.subst A θ).subst A τ = t.subst A (fun x => (θ x).subst A τ) :=
+    (t.subst A θ).subst A τ = t.subst A (fun a x => (θ a x).subst A τ) :=
   ScopedFamily.Term.subst_subst A hA t θ τ
 
 example {W : Type} {S : W → Type} {σ : ScopedFamily W S} (A : σ.ReindexAction)
     (hA : A.Lawful σ) {w : W} {Γ Δ : List (S w)} {a b : S w}
     (body : σ.Term w (a :: Γ) b) (θ : σ.Substitution Γ Δ) (value : σ.Term w Δ a) :
     (body.subst A (ScopedFamily.Substitution.lift θ a)).substOne A value =
-      body.subst A (ScopedFamily.Substitution.cons θ value) :=
+      body.subst A (ScopedSignature.Env.cons value θ) :=
   ScopedFamily.Term.substOne_subst_lift A hA body θ value
 
 example {W : Type} {S : W → Type} {σ : ScopedFamily W S} {w : W}
@@ -85,7 +85,7 @@ example {W : Type} {S : W → Type} {σ : ScopedFamily W S} {w : W}
 example {W : Type} {S : W → Type} {σ : ScopedFamily W S} {w : W}
     {Γ Δ Γ' Δ' : List (S w)} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
     (θ : σ.Substitution Γ Δ) :
-    HEq (θ.cast hΓ hΔ : σ.Substitution Γ' Δ') (@θ) := by simp
+    HEq (θ.cast hΓ hΔ) θ := by simp
 
 example {W : Type} {S : W → Type} {σ τ : ScopedFamily W S}
     {M : W → W → Type} {f : ∀ {w z}, M w z → S w → S z}
@@ -98,11 +98,9 @@ example {W : Type} {S : W → Type} {σ τ : ScopedFamily W S}
 /-- A noninjective type map retains both positional assignments. -/
 example :
     let f : Bool → Unit := fun _ => ()
-    let θ : ∀ {a}, ScopedVar [true, false] a → Nat := fun {_} x => x.index + 7
-    (ScopedVar.mapLookup f (Γ := [true, false]) (V := fun _ => Nat) θ
-        (ScopedVar.zero : ScopedVar [(), ()] ()),
-      ScopedVar.mapLookup f (Γ := [true, false]) (V := fun _ => Nat) θ
-        (ScopedVar.succ .zero : ScopedVar [(), ()] ())) = (7, 8) := rfl
+    let θ : ScopedSignature.Env (fun _ => Nat) [true, false] := fun _ x => x.index + 7
+    (ScopedSignature.Env.reindex f (V := fun _ => Nat) θ () .zero,
+      ScopedSignature.Env.reindex f (V := fun _ => Nat) θ () (.succ .zero)) = (7, 8) := rfl
 
 /-- Identifying two free type parameters does not identify their value bindings. -/
 example :
@@ -116,8 +114,8 @@ example :
   rfl
 
 example : Examples.ScopedFamily.erase
-    (Examples.ScopedFamily.ambientValue.rename (ScopedVar.succ
-      (b := Examples.ScopedFamily.ValueSort.mono .bit))) = .lam (.var 2) :=
+    (Examples.ScopedFamily.ambientValue.rename fun _ => ScopedVar.succ
+      (b := Examples.ScopedFamily.ValueSort.mono .bit)) = .lam (.var 2) :=
   Examples.ScopedFamily.erase_rename_ambientValue
 
 universe uScope uSort uOp uArg
@@ -200,14 +198,14 @@ def belowValue (t : Term 2 [.mono (.param 1)] (.mono (.arrow (.param 1) (.param 
 def image (t : Term 1 [.mono (.param 0)] (.mono (.arrow (.param 0) (.param 0))))
     (p₀ p₁ : Fin 1) :
     Term 2 [.mono (.param 1), .mono (.param 1)] (.mono (.arrow (.param 1) (.param 1))) :=
-  (belowValue (belowType t p₀) p₁).rename ScopedVar.succ
+  (belowValue (belowType t p₀) p₁).rename fun _ => ScopedVar.succ
 
 theorem belowType_value (p : Fin 1) : belowType value p = shifted := rfl
 
 theorem belowValue_shifted (p : Fin 1) : belowValue shifted p = shifted := rfl
 
 theorem rename_shifted :
-    shifted.rename (ScopedVar.succ (b := ValueSort.mono (.param 1))) = lifted := rfl
+    shifted.rename (fun _ => ScopedVar.succ (b := ValueSort.mono (.param 1))) = lifted := rfl
 
 theorem image_value (p₀ p₁ : Fin 1) : image value p₀ p₁ = lifted := by
   rw [image, belowType_value, belowValue_shifted, rename_shifted]
@@ -239,17 +237,17 @@ example :
 example {n : Nat} {Γ Δ Θ : List (ValueSort n)} {s : ValueSort n} (t : Term n Γ s)
     (θ : signature.Substitution Γ Δ) (τ : signature.Substitution Δ Θ) :
     (t.subst reindexAction θ).subst reindexAction τ =
-      t.subst reindexAction (fun x => (θ x).subst reindexAction τ) :=
+      t.subst reindexAction (fun a x => (θ a x).subst reindexAction τ) :=
   IPFunctor.ScopedFamily.Term.subst_subst reindexAction reindexAction_lawful t θ τ
 
 /-- The lawful action discharges the assumption of the closing law on the concrete terms. -/
 example :
     (source.subst reindexAction
         (IPFunctor.ScopedFamily.Substitution.lift
-          (fun x => IPFunctor.ScopedFamily.Term.var x) _)).substOne reindexAction value =
+          (fun _ x => IPFunctor.ScopedFamily.Term.var x) _)).substOne reindexAction value =
       source.subst reindexAction
-        (IPFunctor.ScopedFamily.Substitution.cons
-          (fun x => IPFunctor.ScopedFamily.Term.var x) value) :=
+        (IPFunctor.ScopedSignature.Env.cons value
+          fun _ x => IPFunctor.ScopedFamily.Term.var x) :=
   IPFunctor.ScopedFamily.Term.substOne_subst_lift reindexAction reindexAction_lawful
     source _ value
 

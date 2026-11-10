@@ -119,10 +119,11 @@ example {n m : Nat} (μ : Fin n → Fin m)
 /-- A separate package can recover transported environments from positional correspondence. -/
 example {S T : Type*} {D : S → PointedDomain} {E : T → PointedDomain}
     {Γ : List S} (f : S → T) (hf : ∀ a, E (f a) = D a)
-    (η : IPFunctor.ScopedDomain.Env D Γ) (ζ : IPFunctor.ScopedDomain.Env E (Γ.map f))
-    (h : IPFunctor.ScopedDomain.Env.Pointwise η ζ) :
-    IPFunctor.ScopedDomain.Env.reindex D E f hf η = ζ :=
-  IPFunctor.ScopedDomain.Env.pointwise_reindex_eq hf h
+    (η : IPFunctor.ScopedSignature.Env (fun a => D a) Γ)
+    (ζ : IPFunctor.ScopedSignature.Env (fun b => E b) (Γ.map f))
+    (h : IPFunctor.ScopedSignature.Env.Pointwise η ζ) :
+    IPFunctor.ScopedSignature.Env.transport E f hf η = ζ :=
+  IPFunctor.ScopedSignature.Env.pointwise_transport_eq hf h
 
 namespace LensDocumentation
 open PFunctor
@@ -177,3 +178,14 @@ example {m : Type → Type} [Functor m] (p : PublicCoinCounterpart ownership m p
 example : TwoParty.Role.swap .sender = .receiver := TwoParty.Role.swap_sender
 
 end LensDocumentation
+
+/-- Renamings are environments of variables, so reading through two renamings reads through
+their composite. -/
+example {Γ Δ Θ : List Examples.ScopedPrograms.Ty} {a : Examples.ScopedPrograms.Ty}
+    (e : Examples.ScopedPrograms.Expr Γ a) (ρ : IPFunctor.ScopedSignature.Renaming Γ Δ)
+    (τ : IPFunctor.ScopedSignature.Renaming Δ Θ)
+    (η : IPFunctor.ScopedSignature.Env Examples.ScopedPrograms.Ty.Value Θ) :
+    ((e.rename ρ).rename τ).denote Examples.ScopedPrograms.algebra η =
+      e.denote Examples.ScopedPrograms.algebra
+        (IPFunctor.ScopedSignature.Env.rename (IPFunctor.ScopedSignature.Env.rename ρ τ) η) := by
+  rw [IPFunctor.ScopedSignature.Term.rename_rename, IPFunctor.ScopedSignature.Term.denote_rename]
