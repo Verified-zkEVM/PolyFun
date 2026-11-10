@@ -327,6 +327,12 @@ handler whose call at `a` uses at most `∑ i, c a i • d i` is certified by it
 (`Handler.isChargeBound_liftM_demand`), and demands compose
 (`demandHom_demandHom`, `Handler.isChargeBound_liftM_demand_comp`).
 
+`Handler.CertifiedUnder P Q c allowsP d allowsQ` is the form over allowed answers
+(`PolyFun/PFunctor/Handler/CertifiedUnder.lean`): each implementation stays within its exchanged
+price along `allowsQ`, and every result it can return along `allowsQ` is allowed by `allowsP`. It
+has `transfer` and `comp`, and with the demand exchange it gives
+`Handler.isChargeBoundUnder_liftM_demand`.
+
 Stateful packages have certificates in a single cost type
 (`PolyFun/PFunctor/Handler/Stateful/Charge.lean`): `Stateful.WithinCharge` bounds each call from
 every state. A stateless certificate lifts to it
