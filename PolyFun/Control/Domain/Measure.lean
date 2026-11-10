@@ -24,7 +24,9 @@ subprobability measure, the defect of `success ν` is the defect of `ν` plus `f
 (`defect_success`). For a probability measure, the defect of `success ν` is therefore exactly
 `failureMass ν` (`defect_success_eq_failureMass`). Pushing `ν` forward along `toOption` and
 discarding `none` gives `success ν` (`dropNone_map_toOption`), and for a probability measure that
-pushforward is the failure completion of `success ν` (`map_toOption_eq_withFailure`).
+pushforward is the failure completion of `success ν` (`map_toOption_eq_withFailure`). The failure
+mass of a pushforward `μ.map g` is the mass of the points at which `g` returns no value
+(`failureMass_map`).
 -/
 
 @[expose] public section
@@ -187,5 +189,16 @@ values. -/
 theorem map_toOption_eq_withFailure [IsProbabilityMeasure ν] :
     ν.map toOption = (success ν).withFailure := by
   rw [← dropNone_map_toOption, Measure.withFailure_dropNone]
+
+/-! ## Pushforwards -/
+
+/-- The failure mass of a pushforward is the mass of the points at which the map returns no
+value: bottom or an error. -/
+theorem failureMass_map {β : Type*} [MeasurableSpace β] {g : β → DomainResult ε α}
+    {μ : Measure β} (hg : AEMeasurable g μ) :
+    failureMass (μ.map g) = μ {x | (g x).toOption = none} := by
+  rw [failureMass, Measure.map_apply_of_aemeasurable hg measurableSet_range_value.compl,
+    ← toOption_preimage_none]
+  rfl
 
 end DomainResult

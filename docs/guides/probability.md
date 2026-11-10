@@ -127,7 +127,8 @@ when its path is `<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does
   measure, the defect of `success ν` is the defect of `ν` plus `failureMass ν` (`defect_success`),
   so for a probability measure it is `failureMass ν` (`defect_success_eq_failureMass`). The
   pushforward of a probability measure along `toOption` is the failure completion of `success ν`
-  (`map_toOption_eq_withFailure`).
+  (`map_toOption_eq_withFailure`). The failure mass of a pushforward `μ.map g` is the mass of the
+  points at which `g` returns no value (`failureMass_map`).
 - **The measure fold**
   ([`PFunctor/Measure`](../../PolyFun/PFunctor/Measure.lean),
   [`Free/Measure`](../../PolyFun/PFunctor/Free/Measure.lean)).
@@ -336,7 +337,14 @@ when its path is `<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does
   computation `mx`, the meaning's pushforward of its output measure is the encoding of the output
   measure of `f.implementation <$> mx` (`CertifiedMeaning.evalDist_map_meaning`,
   `CorrespondsOn.evalDist_map_meaning_ae`). The statements need measurability of the output
-  encoding and of the implementation only.
+  encoding and of the implementation only. A decoded certificate, whose output encoding is
+  `DomainResult.valueEmbedding`, pushes a measure on native inputs to a measure whose values are
+  the implementation's pushforward and whose failure mass is zero
+  (`CertifiedMeaning.success_map_meaning`, `CertifiedMeaning.failureMass_map_meaning`, and the
+  correspondence forms `CorrespondsOn.success_map_meaning_ae` and
+  `CorrespondsOn.failureMass_map_meaning_ae`). These forms need the implementation to be
+  measurable only almost everywhere. The `ScopedDomains` tutorial's decoded `addTwo` and `pred`
+  are their consumers in `PolyFunTest/Probability/ScopedDomains.lean`.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
 so VCVio can import them without renaming. The coupling predicates and the expectation algebra
