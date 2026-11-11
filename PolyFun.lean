@@ -387,6 +387,7 @@ public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Bang
 public import PolyFun.PFunctor.Lens.BangW
+public import PolyFun.PFunctor.Lens.BangWSeely
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence
