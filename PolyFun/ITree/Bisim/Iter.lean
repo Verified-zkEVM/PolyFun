@@ -89,8 +89,7 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
             apply eq_of_shape'_eq
             change shape' v' = shape' (pure (Sum.inl j))
             exact hv'.trans (shape'_pure (Sum.inl j)).symm
-          subst hu_eq
-          subst hv_eq
+          subst hu_eq hv_eq
           refine ⟨step (iter body₁ i), step (iter body₂ j), ?_, ?_, ?_⟩
           · simpa only [bind_pure_left] using hu.bind
               (fun | .inl i => step (iter body₁ i) | .inr r => pure r)
@@ -107,8 +106,7 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
             apply eq_of_shape'_eq
             change shape' v' = shape' (pure (Sum.inr s))
             exact hv'.trans (shape'_pure (Sum.inr s)).symm
-          subst hu_eq
-          subst hv_eq
+          subst hu_eq hv_eq
           refine ⟨pure r, pure s, ?_, ?_,
             MatchRel.pure r s hrs (shape'_pure r) (shape'_pure s)⟩
           · simpa only [bind_pure_left] using hu.bind

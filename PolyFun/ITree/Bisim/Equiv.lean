@@ -560,8 +560,7 @@ theorem pure_not_diverge (r : α) :
   have hleft_eq : left = pure (F := F) r :=
     TauSteps.rigid_of_pure r (shape'_pure r) hleft
   have hright_eq : right = diverge := TauSteps.diverge_target_eq hright
-  subst left
-  subst right
+  subst left right
   cases matched with
   | pure _ _ hdiverge =>
       rw [shape'_diverge] at hdiverge
