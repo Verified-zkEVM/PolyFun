@@ -31,7 +31,8 @@ its own encoding, probability, resource, and adequacy obligations.
 | `OracleSpec I` | A response family indexed by requests; `toPFunctor` bundles it as a polynomial interface |
 | `OracleComp spec α` | `PFunctor.FreeM spec.toPFunctor α` |
 | `QueryImpl spec m` | Definitionally `PFunctor.Handler m spec.toPFunctor` |
-| `QueryImpl.add` and the `simulateQ_add_*` routing lemmas | `PFunctor.Handler.sum` with `liftM_sum_lift_inl`, `liftM_sum_mapLens_inl`, and their right-hand and `sumLift` variants |
+| `SubSpec` (`⊂ₒ`), `liftComp` and `QueryImpl.comapLens` | A lens between the two interfaces, `FreeM.mapLens` (bundled as `FreeM.mapLensHom`) and `Handler.comapLens`, related by `FreeM.liftM_mapLens` |
+| `QueryImpl.add` and the `simulateQ_add_*` routing lemmas | `PFunctor.Handler.sum` with `sum_comapLens_inl`, `liftM_sum_lift_inl`, `liftM_sum_mapLens_inl`, and their right-hand and `sumLift` variants |
 | `mapStateTBase`, `parallelStateT`, `piStateT`, `flattenStateT`, `extendState`, `fixSndStateT` and their `simulateQ … .run` laws | `PFunctor.Handler.Stateful.mapBase`, `sum`, `sigma`, `flatten`, `extend`, `fixSnd` with `run_mapBase`, `run_flatten`, `run_extend_map_fst`, and `run_map_eq_of_apply_map_eq` |
 | `QueryImpl.Stateful.link`, `parSum` and their run lemmas | `PFunctor.Handler.Stateful.link` and `sumMap`, with `run_link`, `link_assoc`, the unit laws, and the interchange laws `sumMap_link_sum` and `sumMap_link_sumMap`; `Handler.liftM_ofLens` identifies interpretation through a lens handler with `FreeM.mapLens`, the relabelling `sumMap` uses |
 | `ExportRoute`, `LawfulExportRoute` and `ExportRouteEquiv` | A cartesian lens into a sum (`PFunctor.Lens.cartesianSumEquiv`, built by `Lens.ofDirectionEquiv`); no aliasing is injectivity on positions, which makes it a monomorphism (`LensCat.mono_iff_injective_of_isCartesian`); an equivalence route is a lens equivalence `≃ₗ` |
