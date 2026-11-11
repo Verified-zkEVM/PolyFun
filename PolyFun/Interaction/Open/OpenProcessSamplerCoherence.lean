@@ -410,7 +410,21 @@ theorem rightBranchPathEquiv_apply_false (t₁ : TypeTree.{w}) {t₂ t₂' : Typ
 
 section SampledPaths
 
-variable {m : Type w → Type w'} [Monad m] [LawfulMonad m]
+variable {m : Type w → Type w'} [Monad m]
+
+/-- Interleaved samples with the same branch samplers and `R`-related
+scheduler draws are `R`-related. -/
+theorem samplePath_interleave_congr_scheduler (R : MonadRelFamily m)
+    {spec₁ spec₂ : TypeTree.{w}} {σ σ' : m (ULift.{w, 0} Bool)}
+    (h : R.rel σ' σ)
+    (samp₁ : TypeTree.Sampler m spec₁) (samp₂ : TypeTree.Sampler m spec₂) :
+    R.rel
+      (TypeTree.samplePath _ (TypeTree.Sampler.interleave σ' samp₁ samp₂))
+      (TypeTree.samplePath _ (TypeTree.Sampler.interleave σ samp₁ samp₂)) := by
+  simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
+  exact R.bind_congr _ h
+
+variable [LawfulMonad m]
 
 /-- Flipping the scheduler coin of an interleaved sample is sampling the
 branch-swapped interleave under the flipped scheduler draw. -/
@@ -426,19 +440,6 @@ theorem samplePath_interleave_flip {spec₁ spec₂ : TypeTree.{w}}
   refine bind_congr fun b => ?_
   obtain ⟨bb⟩ := b
   cases bb <;> simp only [map_pure] <;> rfl
-
-omit [LawfulMonad m] in
-/-- Interleaved samples with the same branch samplers and `R`-related
-scheduler draws are `R`-related. -/
-theorem samplePath_interleave_congr_scheduler (R : MonadRelFamily m)
-    {spec₁ spec₂ : TypeTree.{w}} {σ σ' : m (ULift.{w, 0} Bool)}
-    (h : R.rel σ' σ)
-    (samp₁ : TypeTree.Sampler m spec₁) (samp₂ : TypeTree.Sampler m spec₂) :
-    R.rel
-      (TypeTree.samplePath _ (TypeTree.Sampler.interleave σ' samp₁ samp₂))
-      (TypeTree.samplePath _ (TypeTree.Sampler.interleave σ samp₁ samp₂)) := by
-  simp only [TypeTree.Sampler.interleave, TypeTree.samplePath]
-  exact R.bind_congr _ h
 
 variable {t₁ t₂ tk : TypeTree.{w}}
   (samp₁ : TypeTree.Sampler m t₁) (samp₂ : TypeTree.Sampler m t₂) (sampk : TypeTree.Sampler m tk)
