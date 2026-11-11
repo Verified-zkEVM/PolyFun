@@ -79,7 +79,7 @@ inductive Activation (Client : Type) where
   | deliver
   deriving DecidableEq
 
-variable [DecidableEq Client] [DecidableEq p.A]
+variable [DecidableEq Client]
 
 /-- Emit one request and suspend its client. Waiting and returned clients emit nothing. -/
 @[expose] def emit (id : Client) (state : State Client p α S) : State Client p α S :=
@@ -91,7 +91,6 @@ variable [DecidableEq Client] [DecidableEq p.A]
         nextTicket := state.nextTicket + 1 }
   | _ => state
 
-omit [DecidableEq p.A] in
 /-- A returned client emits nothing. -/
 theorem emit_ready_pure {id : Client} {state : State Client p α S} {value : α}
     (h : state.clients id = .ready (pure value)) : emit id state = state := by
@@ -99,7 +98,6 @@ theorem emit_ready_pure {id : Client} {state : State Client p α S} {value : α}
   rw [h]
   rfl
 
-omit [DecidableEq p.A] in
 /-- A ready client at an operation node emits that request. Stated on the simp normal form
 `FreeM.lift a >>= next` of the node, as it appears after constructor normalisation. -/
 theorem emit_ready_lift_bind {id : Client} {state : State Client p α S} {a : p.A}
@@ -112,6 +110,14 @@ theorem emit_ready_lift_bind {id : Client} {state : State Client p α S} {a : p.
   unfold emit
   rw [h]
   rfl
+
+/-- A suspended client cannot enqueue a second request. -/
+theorem emit_waiting (id : Client) (state : State Client p α S)
+    (ticket : ℕ) (a : p.A) (next : p.B a → FreeM p α)
+    (h : state.clients id = .waiting ticket a next) : emit id state = state := by
+  simp [emit, h]
+
+variable [DecidableEq p.A]
 
 /-- Resume a waiting client only when both ticket and dependent query tag match. -/
 @[expose] def accept (ticket : ℕ) (reply : Interface.RoutedPacket p Client)
@@ -169,13 +175,6 @@ theorem run_append (impl : Handler (StateT S m) p)
       congr 1
       funext next
       exact ih next
-
-omit [DecidableEq p.A] in
-/-- A suspended client cannot enqueue a second request. -/
-theorem emit_waiting (id : Client) (state : State Client p α S)
-    (ticket : ℕ) (a : p.A) (next : p.B a → FreeM p α)
-    (h : state.clients id = .waiting ticket a next) : emit id state = state := by
-  simp [emit, h]
 
 /-- A stale ticket cannot resume a waiting client or enter its delivered transcript. -/
 theorem accept_wrong_ticket (ticket expected : ℕ)
