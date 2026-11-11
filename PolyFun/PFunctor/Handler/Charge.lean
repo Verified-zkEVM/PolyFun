@@ -300,27 +300,26 @@ end Instrumentation
 
 section Cost
 
-variable {ω : Type w} [AddMonoid ω] [CompleteLattice ω] [CanonicallyOrderedAdd ω]
+variable {ω : Type w} [AddMonoid ω] [CompleteLattice ω]
 
 @[simp]
-theorem handlerCost_id (d : Q.A → ω) : FreeM.handlerCost d (Handler.id Q) = d :=
+theorem handlerCost_id [CanonicallyOrderedAdd ω] (d : Q.A → ω) :
+    FreeM.handlerCost d (Handler.id Q) = d :=
   funext fun a => FreeM.cost_lift a
 
 @[simp]
-theorem handlerCost_ofLens (l : Lens P Q) (d : Q.A → ω) :
+theorem handlerCost_ofLens [CanonicallyOrderedAdd ω] (l : Lens P Q) (d : Q.A → ω) :
     FreeM.handlerCost d (ofLens l) = d ∘ l.toFunA :=
   funext fun a => by
     change d (l.toFunA a) + ⨆ _ : Q.B (l.toFunA a), (0 : ω) = d (l.toFunA a)
     rw [iSup_zero_eq_zero, add_zero]
 
-omit [CanonicallyOrderedAdd ω] in
 @[simp]
 theorem handlerCost_sum {Q : PFunctor.{uA₂, uB}} (f : Handler (FreeM R) P)
     (g : Handler (FreeM R) Q) (d : R.A → ω) :
     FreeM.handlerCost d (sum f g) = Sum.elim (FreeM.handlerCost d f) (FreeM.handlerCost d g) :=
   funext fun | .inl _ => rfl | .inr _ => rfl
 
-omit [CanonicallyOrderedAdd ω] in
 /-- A composite handler costs at most its first stage, charged by the cost of the second. -/
 theorem handlerCost_comp_le [AddLeftMono ω] [AddRightMono ω] {Q : PFunctor.{uA₂, uB}}
     (second : Handler (FreeM R) Q)
