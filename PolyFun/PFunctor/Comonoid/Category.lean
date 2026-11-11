@@ -379,10 +379,7 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
       -- intermediate type needs unfolding beyond implicit transparency to pick
       -- the `Trans` instance. The cast is discharged by rewriting instead.
       rw [cast_comp_direction]
-      · dsimp only [innerRight]
-        congr 1
-        rw [cast_cast]
-        exact cast_eq _ _
+      · grind
       · change leftTargets d = rightTargets d
         exact targetEq d
     calc

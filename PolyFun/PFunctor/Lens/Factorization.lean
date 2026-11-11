@@ -414,11 +414,7 @@ theorem subsingleton_diagonalFiller
           ⟨diagonal₁, left₁, right₁⟩
         have h₂ := verticalCartesianDiagonal_unique v f c g hv hc comm
           ⟨diagonal₂, left₂, right₂⟩
-        change diagonal₁ = _ at h₁
-        change diagonal₂ = _ at h₂
-        cases h₁
-        cases h₂
-        rfl
+        grind
 
 @[deprecated (since := "2026-10-19")] alias subsingleton_verticalCartesianFillers :=
   subsingleton_diagonalFiller
