@@ -674,3 +674,74 @@ and the separate documentation consumer exercise the same theorems through
 ordinary imports. The public API checks also substitute a lambda below both binder
 kinds, compare the exact term, and apply `subst_subst` and `substOne_subst_lift`
 with `reindexAction_lawful`.
+
+## Two-level binding families
+
+[`ScopedSignature.Stacked τ k₀ H`](../../PolyFun/IPFunctor/Scoped/Stacked.lean) describes a
+value-level language whose parameter contexts are the contexts of a type-level signature `τ`.
+Its sorts are type-level terms of one kind `k₀`. A head is a shape from `H` together with
+annotations: type-level terms, one per slot, each under its own type binders. A checked head
+`Stacked.Op Θ s` stores its annotations and the proof that they compute the result sort `s`. It
+also stores the side condition `WF`, which can carry the evidence of a coercion between two
+types. The language gives the value binders, child sorts and result sort of each shape as
+functions of the annotations, with one substitution equation for each.
+
+From these equations, `toFamily`, `paramHom` (type-parameter substitution as a
+`ScopedFamily.Hom`), `reindexAction` and `reindexAction_lawful` are derived once. So
+`Stacked.subst_subst`, `Stacked.map_subst` and `Stacked.substOne_subst_lift` hold for every
+stacked family. A child that binds no type parameter keeps its parent's value context
+(`Stacked.enter [] = .keep`). A child below type binders weakens each ambient sort by
+`Substitution.weakenMany`, which agrees with `Term.weaken` below one binder. `Stacked.node`
+builds a node whose result sort is computed from its head, so the check is definitional.
+
+Two-child type formers do not commute with substitution definitionally: their children are
+selected by a match on the child index. Where a substituted type meets a type written
+independently, as after an instantiation, a language uses a coercion head. Its side condition
+`WF` carries the evidence that the two types agree in the sense the language chooses.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) builds size-indexed vectors
+this way. Applications take terms in the ambient context with no coercion. A coercion's side
+condition compares the shapes of the two evaluated types, with their lengths erased, at every
+assignment. Its evidence is therefore `rfl` for any two vector types with one entry shape, such
+as `[m + n]nat` and `[n + m]nat`, but also `[1]nat` and `[1000]nat`; no size arithmetic is
+checked.
+
+[`Scoped.StackedInterpretation`](../../PolyFun/IPFunctor/Scoped/StackedInterpretation.lean)
+interprets a stacked family through evaluated heads. A `Stacked.Model` gives the type-level
+interpretation `tyAlg`, value-level typing rules on evaluated annotations (`bindersV`, `sortV`,
+`resultV`) and a value-level side condition `WFV`, with one coherence equation per rule in the
+type-level meanings. The names follow the signature level: `Model.Interp V` is an ordinary
+interpretation and `Model.denote` its fold, while `Model.DomainInterp D` is a continuous one,
+over an unbundled family of omega-complete partial orders, and `Model.denoteDomain` its fold.
+Both see a head only through its evaluated annotations and receive each child as a function
+of the child's type arguments and fresh value binders. Two theorems need no proof for any
+individual head:
+
+- `Model.denoteDomain_map` and `denoteDomain_map_closed`: substituting type parameters in the
+  syntax and then taking the meaning agrees with taking the meaning at the evaluated
+  assignment;
+- `Model.denoteDomain_related`: if a continuous and an ordinary interpretation are related by
+  `DomainInterp.Related R` at every evaluated head, then every term has related meanings at
+  every type assignment, in environments related by `Env.LiftRel`.
+
+A coercion's carrier equation is stated in `WFV`, and the coercion's interpretation casts
+there with `ContinuousHom.ofEq`; the relation of `denoteDomain_related` needs no other
+invariance. `denote_stackedNode` and `denoteDomain_stackedNode` state one step of a meaning.
+A large meaning is better computed by rewriting with them than by one `rfl` through several
+instantiations.
+
+The stacked meanings have no value-level renaming or substitution laws, which
+`Term.denoteDomain` has at the signature level, and the ordinary fold `Model.denote` has no
+counterpart of `denoteDomain_map`.
+
+Spell value contexts in theorems about meanings as `τ.Term Θ k₀`, the spelling the generic
+lemmas use. The vectors tutorial's `repSeven_three` states `denoteDomain_map_closed` for
+`repSeven`, an application of a coerced instantiation. Defined with its value context written
+through the tutorial's abbreviation, as `[] : List (TyTerm [.size] .scheme)`, the same
+statement exceeds the default heartbeats: the elaborator unfolds both meanings instead of first
+identifying the two spellings of the context. With the generic spelling it checks at once.
+Smaller terms check with either spelling, because the cost is that of evaluating the meanings.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a lazy call-by-name
+meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
+`denoteDomain_map_closed`.

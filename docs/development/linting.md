@@ -15,6 +15,7 @@ lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.IO.Console Examples.IO.Storage \
   Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
   Examples.Tutorials.ScopedDomains \
+  Examples.Tutorials.ScopedVectors \
   Examples.Parliament PolyFunParliamentMain
 ```
 

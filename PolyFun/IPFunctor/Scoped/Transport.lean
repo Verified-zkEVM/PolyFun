@@ -157,6 +157,19 @@ theorem cast_apply {V : S → Type z} {Γ Δ : List S} (h : Γ = Δ) (η : Env V
   cases h
   rfl
 
+/-- Move an environment along an equation of contexts. -/
+@[expose] def castCtx {V : S → Type z} {Γ Γ' : List S} (h : Γ = Γ') (η : Env V Γ) :
+    Env V Γ' := h ▸ η
+
+@[simp] theorem castCtx_rfl {V : S → Type z} {Γ : List S} (η : Env V Γ) :
+    castCtx rfl η = η := rfl
+
+/-- Transport along an equation of contexts keeps the environment. -/
+theorem castCtx_heq {V : S → Type z} {Γ Γ' : List S} (h : Γ = Γ') (η : Env V Γ) :
+    HEq (castCtx h η) η := by
+  subst h
+  rfl
+
 end IPFunctor.ScopedSignature.Env
 
 namespace IPFunctor.ScopedSignature.Renaming

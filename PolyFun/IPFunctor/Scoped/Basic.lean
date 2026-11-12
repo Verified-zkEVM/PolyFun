@@ -65,6 +65,20 @@ theorem ScopedVar.sigma_eq_of_index_eq {S : Type u} {Γ : List S} {a b : S}
       cases he
       rfl
 
+/-- Move a variable past a block of fresh bindings. -/
+@[expose] def ScopedVar.weakenMany {S : Type u} {Γ : List S} {a : S} :
+    (Ξ : List S) → ScopedVar Γ a → ScopedVar (Ξ ++ Γ) a
+  | [], x => x
+  | _ :: Ξ, x => .succ (weakenMany Ξ x)
+
+@[simp] theorem ScopedVar.index_weakenMany {S : Type u} {Γ : List S} {a : S} (Ξ : List S)
+    (x : ScopedVar Γ a) : (x.weakenMany Ξ).index = x.index + Ξ.length := by
+  induction Ξ with
+  | nil => rfl
+  | cons b Ξ ih =>
+    change (x.weakenMany Ξ).index + 1 = _
+    rw [ih, List.length_cons, Nat.add_assoc]
+
 /-- Constructor shapes with explicit binding information for every argument. -/
 structure ScopedSignature (S : Type u) where
   /-- Constructors producing the given sort. -/
@@ -132,6 +146,13 @@ theorem eq_empty (η : Env V []) : η = empty := by
 @[expose] def append : {Ξ : List S} → Env V Ξ → Env V Γ → Env V (Ξ ++ Γ)
   | [], _, η => η
   | _ :: _, ξ, η => cons (ξ _ .zero) (append (fun b v => ξ b (.succ v)) η)
+
+/-- A block of fresh bindings does not hide the older positions. -/
+@[simp] theorem append_weakenMany {Ξ : List S} (ξ : Env V Ξ) (η : Env V Γ) {a : S}
+    (x : ScopedVar Γ a) : append ξ η a (x.weakenMany Ξ) = η a x := by
+  induction Ξ with
+  | nil => rfl
+  | cons b Ξ ih => exact ih (fun c y => ξ c (.succ y))
 
 /-- Assemble an environment from its values listed by position. -/
 @[expose] def ofFin : {Ξ : List S} → ((i : Fin Ξ.length) → V Ξ[i]) → Env V Ξ
