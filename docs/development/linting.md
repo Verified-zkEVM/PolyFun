@@ -86,6 +86,16 @@ removals in an isolated worktree, rebuild, and rerun the relevant upstream
 checks. Record retained reasons and any public API impact. Inspect both
 `@[nolint]` annotations and JSON exceptions: either can hide a finding.
 
+Declarations added by the [import machinery](../guides/ipfunctor.md#importing-typed-syntax)
+can carry generated `@[nolint]` marks. A frontend names, for each declaration it generates, the
+linters that skip it (`Elaborated.nolint`, `Elaborated.equationNolint`, `Extra.nolint` and
+`ExtraTheorem.nolint`), and the driver adds the mark in the step that adds the declaration. Such
+a mark has no source line to search for or to justify beside, so its justification lives in the
+frontend: a frontend may mark only findings that hold by construction, such as a name the source
+language dictates, and never a hand-written declaration. To audit the marks, read the frontend's
+`nolint` fields and list the marks of the imported declarations, as the `#nolint` command of
+[`ToyImport.lean`](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean) does.
+
 Do not run `lake lint -- --update` against the committed allowlist as an
 unreviewed cleanup step. The recorded Batteries pin writes all current
 failures and rewrites the shared file independently for each root. This can
