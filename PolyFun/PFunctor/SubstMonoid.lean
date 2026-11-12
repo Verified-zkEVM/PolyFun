@@ -7,7 +7,6 @@ module
 
 public import PolyFun.PFunctor.Lens.Basic
 public import Mathlib.CategoryTheory.Category.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Monoids for polynomial substitution

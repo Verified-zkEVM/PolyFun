@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Dynamical.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Labels, tickets, and verification predicates for dynamical systems

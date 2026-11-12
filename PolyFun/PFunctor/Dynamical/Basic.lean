@@ -7,7 +7,6 @@ module
 
 public import PolyFun.Control.Coalgebra
 public import PolyFun.PFunctor.Lens.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Dynamical systems as dependent lenses

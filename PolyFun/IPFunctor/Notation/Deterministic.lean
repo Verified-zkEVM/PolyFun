@@ -7,7 +7,6 @@ module
 
 public import PolyFun.IPFunctor.Notation
 public import Lean.Elab.Do
-meta import Lean.Parser.Do
 
 /-!
 # `do`-notation for `IPFunctor.FreeM` with deterministic transitions
