@@ -515,6 +515,33 @@ and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
 constructor algebra. Algebras receive argument meanings as functions of new bound
 values, so entering a binder does not execute its body.
 
+[`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
+interprets a binding signature continuously. A `DomainInterpretation σ V` receives each
+argument as a continuous function of only the variables that argument binds, over an
+unbundled family of omega-complete partial orders `V`. `Term.denoteDomain` folds it into
+continuous functions of the environment. It satisfies `denoteDomain_rename`,
+`denoteDomain_subst` and `denoteDomain_substOne` for every such algebra. Because arguments
+arrive as continuous functions, a constructor can also take a least fixed point of one.
+`Term.denoteDomain_related` is the fundamental lemma. Let a continuous algebra and an
+ordinary `Interpretation` relate their results whenever their arguments are related, by a
+relation `R : ∀ a, V a → W a → Prop`. Then every term has related meanings in environments
+related by `Env.LiftRel R`. The
+[lazy-language tutorial](../../Examples/Tutorials/ScopedDomains.lean) relates a lazy meaning
+with recursion to a call-by-value evaluator this way.
+
+A constructor that returns a function should return `Env.abstraction` of its body's meaning, in
+an `ofFun` clause, as the tutorial's `lam` does. `Env.abstraction f` is `Env.bindOne f` with its
+proof of continuity stated at its own function. The form matters when the kernel checks an
+equation between nested abstractions, such as one whose right side writes each continuous map
+`ofFun G (id (α := ωScottContinuous G) k)`. In measurements of Lean's kernel, whose comparison
+order no specification fixes, it compares two maps `ofFun F h` by the types of their proofs and
+then by their functions. When each proof is stated at its function, the second comparison repeats
+the first and the kernel reuses it, so the check takes time linear in the nesting depth. A
+composite with `Env.bindOne` unfolds to a structure instead, and the time grows exponentially with
+the depth. [`KernelBudget`](../../PolyFunTest/IPFunctor/Scoped/KernelBudget.lean) checks eight
+nested abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They
+need between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
+
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
@@ -544,6 +571,15 @@ context, and the result sort. Terms remain `IFreeM` trees. This supports type
 or numeric quantifiers without representing syntax as a callback that builds a
 different term for each instantiation.
 
+The field `ambient` says how a child sees the ambient value context. A child that stays in
+its parent's parameter context can `keep` that context. Its ambient context is then `Γ`
+itself, definitionally, so ambient variables keep their sorts and a denotation passes its
+environment unchanged. A child that changes parameter context moves each ambient sort along
+a `map`. `ScopedFamily.reindex σ op p` is the resulting sort map. At a child,
+`Ambient.context`, `Ambient.var`, `Ambient.env` and `Ambient.mapRenaming` replace `List.map`,
+`ScopedVar.map`, `Env.reindex` and `Renaming.map`. Each of their laws reduces to the
+`List.map` law at `map`.
+
 [`ScopedFamily.Hom`](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean) describes a
 parameter transformation by constructor-local equations. It checks how the
 parameter map lifts at every child, including compatibility with old variable
@@ -553,7 +589,7 @@ into an [`IPFunctor.Traversal`](../../PolyFun/IPFunctor/Free/Traversal.lean).
 `Term.map_rename` proves that mapping parameters commutes with value renaming.
 `Hom.comp` composes the constructor translations and their lifted parameter
 maps. `Term.map_map` identifies successive maps with this composite after
-normalizing the ambient context's two `List.map` applications.
+normalizing the mapped context's two `List.map` applications.
 `Hom.identity` transports between equal parameter contexts; `Term.map_identity`
 normalizes an identity map in one context, and `Term.map_identity_heq` handles
 distinct but provably equal parameter contexts.
@@ -568,8 +604,9 @@ Its self-transport simplifier accepts arbitrary equality proofs, while
 [`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) defines
 `Env.reindex f`, which moves an environment of `Γ` to `Γ.map f` by its original
 binding positions. No injectivity assumption is required: two parameters can
-instantiate to the same type without merging their bindings. `Renaming.map`,
-`Substitution.map` and `Substitution.reindex` are instances of `Env.reindex`.
+instantiate to the same type without merging their bindings. `Renaming.map` and
+`Substitution.map` are instances of `Env.reindex`, and `Substitution.reindex` is an instance
+of `Ambient.env`.
 Value renaming has identity and composition laws. The
 [`family substitution API`](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean)
 requires a language action for reindexing substitution images when entering a
@@ -591,7 +628,8 @@ This does not assume injectivity of sort maps or preservation of an interpretati
 simplifier also covers contexts that are only propositionally equal.
 
 The [constant-family adapter](../../PolyFun/IPFunctor/Scoped/ConstantFamily.lean)
-provides both proved round trips to the existing `ScopedSignature` API.
+provides both proved round trips to the existing `ScopedSignature` API. Every child keeps
+its ambient context, so the two polynomials agree definitionally.
 [`FamilySize`](../../PolyFun/IPFunctor/Scoped/FamilySize.lean) counts nodes when
 every constructor has finitely many children. The count excludes head payloads
 and measures neither execution cost nor the size of a semantic value.
@@ -602,6 +640,8 @@ of `DomainResult` computations. Extension, append, renaming and `Env.map` are
 continuous maps. `ωScottContinuous_cons` and `ωScottContinuous_single` let
 `fun_prop` prove continuity through extension. `Env.bindOne` turns the meaning of an
 argument that binds one variable into a continuous function of that variable.
+`Env.abstraction` is the same map, written so that the kernel compares nested abstractions in
+linear time.
 `Env.map` applies a family of continuous maps along a sort map. `Env.transport` is
 its instance for an equation of bundled
 [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) carriers. With bottom
@@ -614,7 +654,8 @@ commutes with whole-group unfolding.
 
 [`Scoped.EnvRelation`](../../PolyFun/IPFunctor/Scoped/EnvRelation.lean) defines
 `Env.Forall₂`, which relates two environments by binding position for any family of
-relations and assumes no order on the values. It is preserved by extension, append
+relations and assumes no order on the values. `Env.LiftRel` is the form for two environments
+of one context and a relation indexed by one sort. It is preserved by extension, append
 and assembly, and by positional reindexing on either side (`Forall₂.reindex_left` and
 `Forall₂.reindex_right`). `Env.Pointwise` is its instance for heterogeneous equality.
 [`Scoped.DomainRelation`](../../PolyFun/IPFunctor/Scoped/DomainRelation.lean) derives
@@ -625,9 +666,9 @@ errors and quantifier stages remain outside this generic layer.
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
-remaining free below a type binder and a value binder. Its `reindexAction` builds
-a lawful parameter action from parameter renaming, in steps that another language
-can repeat. It has no Cryptol or cryptography
+remaining free below a type binder and a value binder. Its `reindexAction` is the
+identity at children that keep their context and parameter renaming below a type
+binder, and it satisfies the whole substitution algebra. It has no Cryptol or cryptography
 dependency. [Public API checks](../../PolyFunTest/ModuleAPI/ScopedFamily.lean)
 and the separate documentation consumer exercise the same theorems through
 ordinary imports. The public API checks also substitute a lambda below both binder
