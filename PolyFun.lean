@@ -10,6 +10,7 @@ public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Domain.Pointed
 public import PolyFun.Control.Domain.PrefixRecursion
 public import PolyFun.Control.Domain.Result
+public import PolyFun.Control.Domain.ResultRel
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.MonadControl
 public import PolyFun.Control.Lawful.MonadFunctor
@@ -71,7 +72,9 @@ public import PolyFun.IPFunctor.Notation
 public import PolyFun.IPFunctor.Notation.Common
 public import PolyFun.IPFunctor.Notation.Deterministic
 public import PolyFun.IPFunctor.Notation.Indexed
+public import PolyFun.IPFunctor.Scoped.Adequacy
 public import PolyFun.IPFunctor.Scoped.Basic
+public import PolyFun.IPFunctor.Scoped.Certificate
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
 public import PolyFun.IPFunctor.Scoped.DomainInterpretation
@@ -253,6 +256,7 @@ public import PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Logic.HEq
+public import PolyFun.Logic.KernelRfl
 public import PolyFun.PFunctor.Adjunctions
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Bound

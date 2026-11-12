@@ -542,6 +542,47 @@ the depth. [`KernelBudget`](../../PolyFunTest/IPFunctor/Scoped/KernelBudget.lean
 nested abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They
 need between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
 
+Names in the scoped layer follow one rule. A plain name is an ordinary interpretation and its
+fold: `Interpretation` and `Term.denote`, and for stacked families `Model.Interp`, `Model.alg`
+and `Model.denote`. `Domain` marks the continuous counterpart, semantics in omega-complete
+partial orders: `DomainInterpretation`, `Term.denoteDomain`, `substitutionEnvDomain`,
+`Model.DomainInterp`, `Model.domainAlg` and `Model.denoteDomain`. The suffix `Continuous` marks
+instead the bundled `→𝒄` form of an existing function, such as `Env.renameContinuous`.
+`DomainInterpretation` is the binding-signature analogue of `PFunctor.Resumption.ContinuousAlgebra`,
+whose fold over resumptions is called `denote`.
+
+Here an algebra is always a signature algebra, which interprets each constructor given its
+arguments' meanings. `Interpretation` and `DomainInterpretation` are algebras of a binding
+signature, and the tutorials' `algebra` definitions are instances of them. `Model.alg` and
+`Model.domainAlg` are the `IPFunctor.FoldAlgebra`s that a stacked model's interpretation induces
+on the syntax polynomial, the input of `IFreeM.fold`. The ordered monad algebras of the program
+logic, such as `MAlgOrdered`, are a different notion: they interpret the computations of a monad.
+
+[`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
+lemma into a `Control.Semantics.CertifiedMeaning`. `Term.certifiedMeaning` certifies a term
+with one free variable, its input, against a native implementation. It needs two more facts.
+The representation relates each encoded input to a native representative (`represents`), and a
+representative determines its encoded output (`determines`). Totality says that the evaluator
+returns the representative of the implementation's result (`total`). When the evaluator returns
+it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn` there.
+`Term.liftFun_denoteDomain` states the fundamental lemma as `Relator.LiftFun`, the premise of
+`CertifiedMeaning.ofLiftFun`, so a language with function sorts can certify a closed function
+term through its relation at function sorts. The lazy-language tutorial certifies a program
+against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`.
+
+[`Scoped.Adequacy`](../../PolyFun/IPFunctor/Scoped/Adequacy.lean) relates a continuous meaning to
+closed syntax, the generic part of an adequacy proof. A relation
+`R : ∀ a, V a → σ.Term [] a → Prop` can describe an operational semantics, for example "the term
+evaluates to a value term related to the semantic value". Suppose that each constructor's result
+is related to the closed node whenever each argument's meaning is related to the argument closed
+by related terms (`DomainInterpretation.RelatedSyntax`). Then
+`Term.denoteDomain_relatedSyntax` relates every term's meaning in an environment to the term
+closed by a related substitution, and each closed term is related to its own meaning. Each
+argument is closed with `Term.instantiate`, which below one binder is `substOne`
+(`instantiate_single`). The lazy-language tutorial proves computational adequacy for a
+call-by-name evaluator this way. A closed numeric term means `n` exactly when it evaluates to the
+numeral `n`, and a closed term means bottom exactly when it does not evaluate.
+
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
@@ -745,3 +786,9 @@ Smaller terms check with either spelling, because the cost is that of evaluating
 The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a lazy call-by-name
 meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
 `denoteDomain_map_closed`.
+
+`Stacked.Model.certifiedMeaning` certifies a term with one free value variable at a type
+assignment, under the premises of `Term.certifiedMeaning`. A total evaluator can be its own
+implementation, so its totality premise holds by definition. The vectors tutorial encodes numbers
+and vectors of data faithfully and so certifies every term with one data input at every size
+assignment (`certifiedEvaluator`).

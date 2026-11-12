@@ -15,8 +15,8 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |
 | [Scoped execution](Tutorials/ScopedExecution.lean) | Strict arithmetic/let/loop execution, all-input semantic correspondence and machine adapters |
 | [Polymorphic scoped families](Tutorials/ScopedFamily.lean) | Finite syntax with changing type-parameter scopes, parameter renaming, and erasure preservation by generic traversal |
-| [A lazy language with recursion](Tutorials/ScopedDomains.lean) | Continuous meanings of a binding signature, recursion as a least fixed point, and a fundamental lemma relating the lazy meaning to a call-by-value evaluator |
-| [Size-indexed vectors](Tutorials/ScopedVectors.lean) | A two-level binding family over a type-level signature: checked heads, kept contexts, coercions between types of one shape with evidence `rfl`, the derived substitution laws, and length-erased meanings related to a total evaluator |
+| [A lazy language with recursion](Tutorials/ScopedDomains.lean) | Continuous meanings of a binding signature, recursion as a least fixed point, a fundamental lemma relating the lazy meaning to a call-by-value evaluator, certified programs with a decoder into native results, and adequacy for a call-by-name evaluator |
+| [Size-indexed vectors](Tutorials/ScopedVectors.lean) | A two-level binding family over a type-level signature: checked heads, kept contexts, coercions between types of one shape with evidence `rfl`, the derived substitution laws, length-erased meanings related to a total evaluator, and certified evaluation on data at every size assignment |
 | [Interaction trees](Tutorials/InteractionTrees.lean) | A counter over state events and ticks, run by the state corecursor and through handlers |
 | [Parallel reports](Tutorials/ParallelReports.lean) | Independent sources and explicit joint-request interpretation order |
 | [Versioned requests](Tutorials/VersionedRequests.lean) | Routed clients, retained traffic, and stale-write rejection |
