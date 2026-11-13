@@ -282,6 +282,16 @@ on reachable states needs a state type that excludes the unreachable ones.
 - A run through a deterministic handler returns the output and the charge of the one path that
   handler picks (`run_liftM_withCharge_id`): the instrumentation measures that path, not the
   program's worst case.
+- The meters agree (`PolyFun/PFunctor/Handler/Meter.lean`). From a running total `t`, the state
+  meter ends at `t` plus the writer's log (`run_liftM_withCharge`). A passive counter beside a
+  stateful handler's state, added with `Stateful.extend`, ends at its starting value plus the log
+  (`Stateful.run_extend_eq_withChargeW`). Charges are added on the right, so the laws hold for
+  noncommutative charges.
+- Charging commutes with monad morphisms. Post-composing the handler by `φ` commutes with each
+  meter (`mapHom_liftM_withChargeW`, `run_liftM_mapTarget_withCharge`). Mapping a log along an
+  additive hom `f` is charging by `f ∘ c` (`mapOutputHom_liftM_withChargeW`). The two writer
+  morphisms behind these laws, `WriterT.mapOutputHom` and `WriterT.toStateTHom`, are in
+  `PolyFun/Control/Monad/Hom/Writer.lean`.
 - An expected-cost reading needs a probability semantics, which this guide does not cover. It
   transfers through a handler only from a per-call bound that holds for every call argument and
   every handler state. A bound that holds only on average can fail once later calls depend on

@@ -385,6 +385,7 @@ public import PolyFun.PFunctor.Handler.Charge
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Instrumentation.Free
+public import PolyFun.PFunctor.Handler.Meter
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
 public import PolyFun.PFunctor.Handler.Settled
