@@ -8,12 +8,14 @@ module
 
 public import PolyFun.Control.Monad.Measure.EvalDistEq
 public import PolyFun.PFunctor.Free.Measure.EvalDist
+public import PolyFun.Control.Monad.Measure.WithFailure
+public import PolyFunTest.Probability.MeasurabilityBoundary
 
 /-!
 # Measure semantics of free programs
 
 Regression tests for the `EvalDistSemantics` instance of `PFunctor.FreeM P`, over a fair coin and
-across universes.
+across universes, and for a program whose missing mass is not failure.
 
 The instances name the universe of the results, so they apply at results in any universe,
 independently of the universes of the operations and answers. The tests instantiate them at
@@ -99,5 +101,29 @@ example {α : Type 2} (program : FreeM P α) : prFail program = 0 :=
   prFail_eq_zero_of_lossless program
 
 end Universes
+
+/-! ## Missing mass that is not failure -/
+
+section MissingMass
+
+open PolyFunTest.Probability.MeasurabilityBoundary
+
+/-- `reveal` neither fails nor diverges, so its failure probability is zero. Its output measure is
+zero, because its continuation is not measurable, so the failure completion puts all its mass on
+`none`. -/
+example : prFail reveal = 0 ∧ evalDistWithFailure reveal {none} = 1 := by
+  have herase : FreeM.denote ((fun _ ↦ PUnit.unit.{1}) <$> reveal) = Measure.dirac PUnit.unit := by
+    change FreeM.denote (FreeM.liftBind (P := coarseSpec) () fun _ ↦ pure PUnit.unit) = _
+    rw [FreeM.denote_liftBind (P := coarseSpec) _ _ measurable_const.aemeasurable]
+    simp only [FreeM.denote_pure, Measure.bind_const,
+      (AnswerMeasure.isProbabilityMeasure (P := coarseSpec) ()).measure_univ, one_smul]
+  constructor
+  · change (FreeM.denote ((fun _ ↦ PUnit.unit.{1}) <$> reveal)).defect = 0
+    simp [herase, Measure.defect]
+  · rw [evalDistWithFailure_none]
+    change 1 - FreeM.denote reveal Set.univ = 1
+    simp [denote_reveal]
+
+end MissingMass
 
 end PolyFunTest.Probability.FreeEvalDist

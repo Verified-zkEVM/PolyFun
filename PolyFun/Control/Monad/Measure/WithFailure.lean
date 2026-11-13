@@ -12,9 +12,15 @@ public import ToCslib.MeasureTheory.Measure.Option
 /-! # Evaluation with an explicit failure result
 
 `evalDistWithFailure` names the semantic completion of a computation's successful-output
-measure. `none` is execution failure/nontermination mass; `some x` is a returned value, including
-any explicit protocol rejection or fault already encoded by `x`. This is a measure operation,
-not an executable recovery procedure or a decoder that silently identifies these outcomes.
+measure. `none` carries the mass missing from that measure; `some x` is a returned value,
+including any explicit protocol rejection or fault already encoded by `x`. This is a measure
+operation, not an executable recovery procedure or a decoder that silently identifies these
+outcomes.
+
+Under lawful semantics the mass on `none` is the probability of failure or nontermination,
+`prFail` (`evalDistWithFailure_none_eq_prFail`). Without the bind law it can be larger. The
+measure fold of free programs also loses mass at a call whose continuation is not almost
+everywhere measurable, so a program that neither fails nor diverges can put mass on `none`.
 
 This is a thin measure-only interface to `Measure.withFailure`: its laws need only the measure
 semantics of the monad.
@@ -28,7 +34,7 @@ universe u v
 variable {m : Type u → Type v} [EvalDistSemantics m]
     {α : Type u} [MeasurableSpace α]
 
-/-- Evaluate a distribution with `none` for failure to return and `some` for returned values. -/
+/-- Evaluate a computation with its missing mass on `none` and its returned values under `some`. -/
 noncomputable def evalDistWithFailure (program : m α) : Measure (Option α) :=
   (evalDist program).withFailure
 
@@ -38,7 +44,7 @@ theorem evalDistWithFailure_isProbabilityMeasure (program : m α) :
     IsProbabilityMeasure (evalDistWithFailure program) :=
   inferInstanceAs (IsProbabilityMeasure (evalDist program).withFailure)
 
-/-- Execution failure/nontermination is precisely the missing successful-output mass. -/
+/-- `none` carries exactly the missing successful-output mass. -/
 theorem evalDistWithFailure_none (program : m α) :
     evalDistWithFailure program {none} = 1 - evalDist program Set.univ :=
   Measure.withFailure_apply_none _
