@@ -43,7 +43,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   congr 1
   funext b
   exact b.elim
@@ -58,7 +58,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 @[simp] theorem interpExcept_throw (e : ε)
@@ -71,7 +71,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   congr 1
   funext b
   exact b.elim
@@ -87,7 +87,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpExcept, shape'_corec_eq _ _ hstep]
   unfold ITree.query
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 /-- Exception interpretation is the canonical exception-transformer monad
