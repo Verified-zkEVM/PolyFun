@@ -48,6 +48,17 @@ satisfying an invariant that every possible step preserves, read through
 `MonadAttach.support`, then it commutes with every run from such a state
 (`IsProjection.run_eq`).
 
+A partial handler `p : Handler Option P`, such as a cache read as an answer
+function, *settles* a program `x` at `v` when `x.liftM p = some v`
+([`Handler/Settled.lean`](../../PolyFun/PFunctor/Handler/Settled.lean)). A handler
+that returns `p`'s answers purely runs a settled program as `pure v`, so a larger
+partial handler settles it at the same value (`liftM_eq_some_of_le`). A stateful
+handler that returns `p`'s answers at a state `s` without changing it runs the
+program from `s` as `pure (v, s)` (`run_liftM_eq_pure_of_liftM_eq_some`), so the
+run frames that state. Charging `p` in a writer logs the charge of the one path
+the program follows, the path of any total choice of answers that extends `p`
+(`run_liftM_withChargeW_eq_of_liftM_eq_some`).
+
 `Handler.comp second first`
 ([`Handler/Free.lean`](../../PolyFun/PFunctor/Handler/Free.lean)) implements
 each request of `P` as a free program over `Q` and runs that program through

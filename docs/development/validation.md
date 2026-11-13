@@ -27,17 +27,22 @@ proofs, examples, import boundaries, or validation infrastructure.
 | Check | Scope |
 |---|---|
 | Default build | `PolyFun`, `ToCslib`, `ComplexityBackends`, `PolyFunExamples`, and `+PolyFunParliamentMain`, with `--wfail` |
-| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend, and `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing) |
+| Module policy | Module mode, explicit Interaction API, no production imports of examples/tests/executables, `Std.WP` quarantine, library layering (`ToCslib` imports neither `PolyFun` nor a backend, and `PolyFun` imports no backend), `import all` boundaries (tests may open backends, backends never open `PolyFun` or `ToCslib`, module canaries open nothing, no file opens an external library) |
 | Generated imports | Generated umbrellas match the tracked source tree |
 | Documentation | Checker regressions, agent symlink, local paths and heading anchors, module docstrings, README excerpt synchronization |
 | `--lint` | Batteries environment linters and Mathlib text-style checks over production and example libraries plus the executable entry point |
 | `--test` | `PolyFunTest` with warnings and printed output fatal (`--wfail --iofail`), `lake test`, native CLI/filesystem tests, and both separate consumers |
-| `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots |
+| `--axioms` | Axiom-sweep fixture matrix and zero-debt check over production, tutorial, case-study, and executable module roots, and over the import machinery's fixture modules, whose declarations an importer adds |
 
 The committed axiom baseline is a zero-debt policy, not an allowlist. Both
 arrays stay empty. `--update-baseline` refuses to record taint and is only
 useful after removing all debt. Do not introduce `sorry`, `admit`, or
 non-standard axioms to finished work.
+
+The sweep cannot see a declaration that was added with `debug.skipKernelTC` set:
+the kernel never checked it, and it depends on no axiom. Never set that option.
+The import machinery overrides it for every declaration it adds
+([importing typed syntax](../guides/ipfunctor.md#importing-typed-syntax)).
 
 The report written with `lake exe polyfun-axiomsweep --out FILE` also carries
 `sorryGraph`. It lists every declaration in the `sorryAx` closure, internal
