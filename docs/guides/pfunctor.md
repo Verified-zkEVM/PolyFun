@@ -57,12 +57,17 @@ ordinary sigma API.
 Handlers combine along the same constructions: `Handler.sigma` answers an
 indexed sum member by member, and `Handler.sum` (in
 [`Handler/Sum.lean`](../../PolyFun/PFunctor/Handler/Sum.lean)) routes a binary
-sum `P + Q` to one of two handlers. Interpreting a program relabelled into the
-sum along `Lens.inl` uses only the left handler (`liftM_sum_mapLens_inl`), a
-consequence of `FreeM.liftM_mapLens`: interpreting a relabelled program pulls
-the handler back along the lens. Lenses between monomials, the shape of
-input/output transformers and of proof-system context lenses, are built with
-`Lens.ofMonomial`, `monomialMapFst`, and `monomialMapSnd` in
+sum `P + Q` to one of two handlers. A handler is pulled back along a lens by
+`Handler.comapLens`: a request is answered at its translation, and the answer is
+translated back. `FreeM.liftM_mapLens` says that interpreting a program
+relabelled along a lens is interpreting the original program through the
+pulled-back handler, and `FreeM.liftMHom_comp_mapLensHom` bundles it with the
+monad morphism `FreeM.mapLensHom`. A sum handler pulled back along `Lens.inl` is
+its left component (`sum_comapLens_inl`), so interpreting a program relabelled
+into the sum along `Lens.inl` uses only the left handler
+(`liftM_sum_mapLens_inl`, which needs only `Monad`). Lenses between monomials,
+the shape of input/output transformers and of proof-system context lenses, are
+built with `Lens.ofMonomial`, `monomialMapFst`, and `monomialMapSnd` in
 [`Lens/Monomial.lean`](../../PolyFun/PFunctor/Lens/Monomial.lean).
 
 ## Representables, Yoneda, and natural transformations

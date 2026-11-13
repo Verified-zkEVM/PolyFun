@@ -8,6 +8,7 @@ module
 public import Cslib.Foundations.Data.PFunctor.Free.W
 public import PolyFun.Control.Monad.Hom
 public import PolyFun.PFunctor.Basic
+public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Lens.Basic
 public import ToCslib.Data.PFunctor.Free.Basic
 
@@ -16,10 +17,10 @@ public import ToCslib.Data.PFunctor.Free.Basic
 
 PolyFun's layer over cslib's free monad `PFunctor.FreeM`: the W-type presentation of programs
 with return values, root predicates, transport along lenses, and the bundled monad-homomorphism
-form of `FreeM.liftM` with its universal property and naturality. This module re-exports cslib's
-fold `FreeM.foldFreeM` and its laws, cslib's W-type equivalence `FreeM.equivWOfIsEmpty` for an
-empty leaf type, and the constructor-spelled node equations staged in
-`ToCslib.Data.PFunctor.Free.Basic`.
+forms of `FreeM.mapLens` and `FreeM.liftM`, with the fold's universal property and naturality.
+This module re-exports cslib's fold `FreeM.foldFreeM` and its laws, cslib's W-type equivalence
+`FreeM.equivWOfIsEmpty` for an empty leaf type, and the constructor-spelled node equations staged
+in `ToCslib.Data.PFunctor.Free.Basic`.
 -/
 
 @[expose] public section
@@ -189,6 +190,25 @@ theorem mapLens_map (l : Lens P Q) (f : α → β) (x : FreeM P α) :
   | pure _ => rfl
   | lift_bind a rest ih => exact congrArg (FreeM.liftBind (l.toFunA a)) (funext fun d => ih _)
 
+/-- `FreeM.mapLens` as a monad homomorphism. -/
+protected def mapLensHom (l : Lens P Q) : FreeM P →ᵐ FreeM Q where
+  toFun _ x := x.mapLens l
+  toFun_pure' := mapLens_pure l
+  toFun_bind' := mapLens_bind' l
+
+@[simp] theorem mapLensHom_apply (l : Lens P Q) (x : FreeM P α) :
+    FreeM.mapLensHom l x = x.mapLens l :=
+  rfl
+
+@[simp] theorem mapLensHom_id :
+    FreeM.mapLensHom (Lens.id P) = MonadHom.id (FreeM.{v, uA, uB} P) :=
+  MonadHom.ext' fun _ x => mapLens_id x
+
+theorem mapLensHom_comp (l₂ : Lens Q R) (l₁ : Lens P Q) :
+    (FreeM.mapLensHom (l₂ ∘ₗ l₁) : FreeM.{v, uA, uB} P →ᵐ FreeM.{v, uA₃, uB₃} R) =
+      FreeM.mapLensHom l₂ ∘ᵐ FreeM.mapLensHom l₁ :=
+  MonadHom.ext' fun _ x => (mapLens_mapLens l₂ l₁ x).symm
+
 end mapLens
 
 section liftM
@@ -257,15 +277,22 @@ theorem liftMHom_comp (φ : m →ᵐ n) :
 /-- Interpreting a relabelled program pulls the handler back along the lens: the handler
 answers at the relabelled position and the lens's backward map translates the direction. -/
 theorem liftM_mapLens {Q : PFunctor.{uA₂, uB}} (l : Lens P Q) (h : (a : Q.A) → m (Q.B a)) :
-    ∀ x : FreeM P α, (x.mapLens l).liftM h = x.liftM fun a => l.toFunB a <$> h (l.toFunA a)
+    ∀ x : FreeM P α, (x.mapLens l).liftM h = x.liftM (Handler.comapLens h l)
   | .pure _ => rfl
   | .liftBind a rest => by
     rw [FreeM.mapLens_liftBind]
     change (h (l.toFunA a) >>= fun d => ((rest (l.toFunB a d)).mapLens l).liftM h) =
       (l.toFunB a <$> h (l.toFunA a)) >>= fun d =>
-        (rest d).liftM fun a => l.toFunB a <$> h (l.toFunA a)
+        (rest d).liftM (Handler.comapLens h l)
     rw [bind_map_left]
     exact bind_congr fun d => liftM_mapLens l h (rest (l.toFunB a d))
+
+/-- Bundled form of `liftM_mapLens`: folding after relabelling along a lens is folding with the
+handler pulled back along the lens. -/
+theorem liftMHom_comp_mapLensHom {Q : PFunctor.{uA₂, uB}} (l : Lens P Q)
+    (h : (a : Q.A) → m (Q.B a)) :
+    FreeM.liftMHom h ∘ᵐ FreeM.mapLensHom l = FreeM.liftMHom (Handler.comapLens h l) :=
+  MonadHom.ext' fun _ x => liftM_mapLens l h x
 
 end liftM
 
