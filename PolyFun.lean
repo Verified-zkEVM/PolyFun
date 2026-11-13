@@ -43,6 +43,7 @@ public import PolyFun.Control.Monad.Measure.Deterministic
 public import PolyFun.Control.Monad.Measure.EvalDistEq
 public import PolyFun.Control.Monad.Measure.Event
 public import PolyFun.Control.Monad.Measure.ExceptT
+public import PolyFun.Control.Monad.Measure.Expectation
 public import PolyFun.Control.Monad.Measure.Failure
 public import PolyFun.Control.Monad.Measure.Lossless
 public import PolyFun.Control.Monad.Measure.OptionT
@@ -377,9 +378,11 @@ public import PolyFun.PFunctor.Free.HandlerMachine
 public import PolyFun.PFunctor.Free.Measure
 public import PolyFun.PFunctor.Free.Measure.EvalDist
 public import PolyFun.PFunctor.Free.Measure.Expectation
+public import PolyFun.PFunctor.Free.Measure.ExpectedCharge
 public import PolyFun.PFunctor.Free.Measure.Kernel
 public import PolyFun.PFunctor.Free.Measure.Kernel.Handler
 public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
+public import PolyFun.PFunctor.Free.Measure.Lintegral
 public import PolyFun.PFunctor.Free.Measure.Path
 public import PolyFun.PFunctor.Free.Measure.Support
 public import PolyFun.PFunctor.Free.Parallel
