@@ -28,7 +28,7 @@ variable {m : Type u → Type v} {α β : Type u}
 
 section Indexed
 
-variable [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+variable [MonadAttach m]
 
 /-! ### Stateful monads
 
@@ -37,23 +37,19 @@ the initial state or environment, and those supports are canonical. They are *no
 `ExactMonadAttach`: possible outputs do not compose along `bind`, because its flattened
 premises may be witnessed at different initial indices. Reason per run instead. -/
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
-theorem mem_support_stateT_iff {σ : Type u} {x : StateT σ m α} {a : α} :
+theorem mem_support_stateT_iff [Monad m] {σ : Type u} {x : StateT σ m α} {a : α} :
     a ∈ support x ↔ ∃ s s', (a, s') ∈ support (x.run s) :=
   Iff.rfl
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
-theorem mem_support_readerT_iff {ρ : Type u} {x : ReaderT ρ m α} {a : α} :
+theorem mem_support_readerT_iff [Monad m] {ρ : Type u} {x : ReaderT ρ m α} {a : α} :
     a ∈ support x ↔ ∃ r, a ∈ support (x.run r) :=
   Iff.rfl
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
-theorem mem_support_of_run_stateT {σ : Type u} {x : StateT σ m α} {a : α} {s s' : σ}
+theorem mem_support_of_run_stateT [Monad m] {σ : Type u} {x : StateT σ m α} {a : α} {s s' : σ}
     (h : (a, s') ∈ support (x.run s)) : a ∈ support x :=
   ⟨s, s', h⟩
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
-theorem mem_support_of_run_readerT {ρ : Type u} {x : ReaderT ρ m α} {a : α} {r : ρ}
+theorem mem_support_of_run_readerT [Monad m] {ρ : Type u} {x : ReaderT ρ m α} {a : α} {r : ρ}
     (h : a ∈ support (x.run r)) : a ∈ support x :=
   ⟨r, h⟩
 
@@ -79,27 +75,29 @@ def StateT.supportFrom {σ : Type u} (s : σ) (x : StateT σ m α) : Set (α × 
 def ReaderT.supportAt {ρ : Type u} (r : ρ) (x : ReaderT ρ m α) : Set α :=
   support (x.run r)
 
-omit [Monad m] [LawfulMonad m] [ExactMonadAttach m] in
 theorem StateT.mem_supportFrom_iff {σ : Type u} {s : σ} {x : StateT σ m α} {p : α × σ} :
     p ∈ StateT.supportFrom s x ↔ p ∈ support (x.run s) :=
   Iff.rfl
 
-omit [Monad m] [LawfulMonad m] [ExactMonadAttach m] in
 theorem ReaderT.mem_supportAt_iff {ρ : Type u} {r : ρ} {x : ReaderT ρ m α} {a : α} :
     a ∈ ReaderT.supportAt r x ↔ a ∈ support (x.run r) :=
   Iff.rfl
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- The flattened support is the union of the indexed ones. Recovers
 `mem_support_stateT_iff` and pins that indexing loses nothing. -/
-theorem StateT.mem_support_iff_exists_supportFrom {σ : Type u} {x : StateT σ m α} {a : α} :
+theorem StateT.mem_support_iff_exists_supportFrom [Monad m] {σ : Type u}
+    {x : StateT σ m α} {a : α} :
     a ∈ support x ↔ ∃ s s', (a, s') ∈ StateT.supportFrom s x :=
   Iff.rfl
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
-theorem ReaderT.mem_support_iff_exists_supportAt {ρ : Type u} {x : ReaderT ρ m α} {a : α} :
+theorem ReaderT.mem_support_iff_exists_supportAt [Monad m] {ρ : Type u}
+    {x : ReaderT ρ m α} {a : α} :
     a ∈ support x ↔ ∃ r, a ∈ ReaderT.supportAt r x :=
   Iff.rfl
+
+section
+
+variable [Monad m] [LawfulMonad m] [ExactMonadAttach m]
 
 @[simp, grind =]
 theorem StateT.supportFrom_pure {σ : Type u} (s : σ) (a : α) :
@@ -146,6 +144,8 @@ theorem ReaderT.supportAt_map {ρ : Type u} (r : ρ) (g : α → β) (x : Reader
   rw [ReaderT.supportAt, ReaderT.run_map, support_map]
   rfl
 
+end
+
 /-! #### Indexed judgments
 
 The modal pair, indexed. These are the primary indexed notions and `supportFrom` is
@@ -175,12 +175,15 @@ scoped notation:50 x:51 " ⊨ₛ[" s "] " p:51 => MonadAttach.StateT.SomeOutputF
 @[inherit_doc StateT.NoOutputFrom]
 scoped notation:50 x:51 " ⊭[" s "] " p:51 => MonadAttach.StateT.NoOutputFrom s p x
 
-omit [Monad m] [LawfulMonad m] [ExactMonadAttach m] in
 /-- `supportFrom` is the equality instance of the indexed angelic judgment — the indexed
 counterpart of `support_eq_setOf_someOutput`. -/
 theorem StateT.supportFrom_eq_setOf_someOutputFrom {σ : Type u} (s : σ) (x : StateT σ m α) :
     StateT.supportFrom s x = {q | StateT.SomeOutputFrom s (fun a s' => (a, s') = q) x} :=
   Set.ext fun q => ⟨fun hq => ⟨q, hq, rfl⟩, fun ⟨_, hb, hbq⟩ => hbq ▸ hb⟩
+
+section
+
+variable [Monad m] [LawfulMonad m] [ExactMonadAttach m]
 
 @[simp]
 theorem StateT.allOutputsFrom_pure {σ : Type u} (s : σ) (p : α → σ → Prop) (a : α) :
@@ -216,37 +219,34 @@ theorem StateT.someOutputFrom_bind {σ : Type u} (s : σ) (p : β → σ → Pro
   simp only [StateT.SomeOutputFrom, StateT.supportFrom_bind, Set.mem_iUnion, exists_prop]
   tauto
 
-omit [Monad m] [LawfulMonad m] [ExactMonadAttach m] in
+end
+
 theorem StateT.not_someOutputFrom_iff_noOutputFrom {σ : Type u} (s : σ) (p : α → σ → Prop)
     (x : StateT σ m α) :
     ¬ StateT.SomeOutputFrom s p x ↔ StateT.NoOutputFrom s p x := by
   simp [StateT.SomeOutputFrom, StateT.NoOutputFrom, StateT.AllOutputsFrom]
 
-omit [Monad m] [LawfulMonad m] [ExactMonadAttach m] in
 theorem StateT.allOutputsFrom_mono {σ : Type u} {s : σ} {p q : α → σ → Prop}
     (h : ∀ a s', p a s' → q a s') {x : StateT σ m α}
     (hx : StateT.AllOutputsFrom s p x) : StateT.AllOutputsFrom s q x :=
   fun r hr => h r.1 r.2 (hx r hr)
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- Indexed demonic implies flattened demonic: if a value-only `p` holds of every outcome
 from every initial state, it holds of every possible output. -/
-theorem StateT.allOutputs_of_allOutputsFrom {σ : Type u} {p : α → Prop} {x : StateT σ m α}
+theorem StateT.allOutputs_of_allOutputsFrom [Monad m] {σ : Type u} {p : α → Prop} {x : StateT σ m α}
     (h : ∀ s, StateT.AllOutputsFrom s (fun a _ => p a) x) : AllOutputs p x :=
   fun _ ⟨s, s', hs⟩ => h s (_, s') hs
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- A flattened value-only guarantee holds at every initial state. Flattening loses the
 ability to mention the final state, but it loses nothing for postconditions on values
 alone. -/
-theorem StateT.allOutputsFrom_of_allOutputs {σ : Type u} {p : α → Prop} {x : StateT σ m α}
+theorem StateT.allOutputsFrom_of_allOutputs [Monad m] {σ : Type u} {p : α → Prop} {x : StateT σ m α}
     (h : AllOutputs p x) (s : σ) : StateT.AllOutputsFrom s (fun a _ => p a) x :=
   fun q hq => h q.1 ⟨s, q.2, hq⟩
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- For value-only postconditions, flattened demonic support is exactly the universal
 closure of the indexed judgment. -/
-theorem StateT.allOutputs_iff_forall_allOutputsFrom {σ : Type u} {p : α → Prop}
+theorem StateT.allOutputs_iff_forall_allOutputsFrom [Monad m] {σ : Type u} {p : α → Prop}
     {x : StateT σ m α} :
     AllOutputs p x ↔ ∀ s, StateT.AllOutputsFrom s (fun a _ => p a) x :=
   ⟨fun h s => StateT.allOutputsFrom_of_allOutputs h s, StateT.allOutputs_of_allOutputsFrom⟩

@@ -44,14 +44,15 @@ def WithinCharge [Add ω] [LE ω] [Zero ω] (h : Stateful (FreeM M) S E) (d : M.
     (c : E.A → ω) : Prop :=
   ∀ a s, ((h a).run s).IsChargeBound d (c a)
 
-variable [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
+variable [AddMonoid ω] [Preorder ω]
 
-omit [AddLeftMono ω] [AddRightMono ω] in
 /-- A certificate pushes forward along a monotone additive map of cost types. -/
 theorem WithinCharge.map {ω' : Type*} [AddZeroClass ω'] [Preorder ω']
     {h : Stateful (FreeM M) S E} {d : M.A → ω} {c : E.A → ω} (hh : h.WithinCharge d c)
     (φ : ω →+o ω') : h.WithinCharge (φ ∘ d) (φ ∘ c) := fun a s => by
   simpa using (hh a s).map φ
+
+variable [AddLeftMono ω] [AddRightMono ω]
 
 /-- **Certificates compose along `link`.** If the outer package answers each call within `c a`
 under `d`, and the inner package answers each of those calls within `d` under `e`, the linked

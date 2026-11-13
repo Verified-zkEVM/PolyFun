@@ -704,12 +704,10 @@ relabels traces. -/
 
 section Congruence
 
-variable [Monad m] [LawfulMonad m] (R : MonadRelFamily m) [R.IsBindCongr]
-
 open OpenNodeContext
 
-omit [LawfulMonad m] [R.IsBindCongr] in
-theorem openTheory_map_congr_sampler_equiv {Δ₁ Δ₂ : PortBoundary}
+theorem openTheory_map_congr_sampler_equiv [Monad m] (R : MonadRelFamily m)
+    {Δ₁ Δ₂ : PortBoundary}
     (φ : PortBoundary.Hom Δ₁ Δ₂) {W W' : OpenProcess.{u, v, w, w'} m Party Δ₁}
     (h : OpenProcessSamplerEquiv R W W') :
     OpenProcessSamplerEquiv R
@@ -718,6 +716,8 @@ theorem openTheory_map_congr_sampler_equiv {Δ₁ Δ₂ : PortBoundary}
   simp only [openTheory]
   rw [OpenProcess.mapBoundary_eq_mapHom, OpenProcess.mapBoundary_eq_mapHom]
   exact OpenProcess.mapHom_congr_samplerEquiv R (preservesActivation_map φ) (emitsAlong_map φ) h
+
+variable [Monad m] [LawfulMonad m] (R : MonadRelFamily m) [R.IsBindCongr]
 
 theorem openTheory_par_congr_left_sampler_equiv {Δ₁ Δ₂ : PortBoundary}
     {W₁ W₁' : OpenProcess.{u, v, w, w'} m Party Δ₁} (W₂ : OpenProcess.{u, v, w, w'} m Party Δ₂)

@@ -49,12 +49,12 @@ namespace Cslib.Turing.SingleTapeTM
 
 open Relation
 
-variable {Symbol : Type} [Inhabited Symbol] [Fintype Symbol]
+variable {Symbol : Type}
 
 /-! ## The machines -/
 
 /-- Erase the input moving right, then halt: computes the constant `[]`. -/
-def clearComputer : SingleTapeTM Symbol where
+def clearComputer [Inhabited Symbol] [Fintype Symbol] : SingleTapeTM Symbol where
   State := Unit
   q₀ := ()
   tr _ h := match h with
@@ -64,7 +64,8 @@ def clearComputer : SingleTapeTM Symbol where
 /-- Erase the input moving right, then write `o :: os` backwards moving left: computes
 the constant `o :: os`. State `.inl ()` is the clearing phase; state `.inr i` writes
 symbol `i` of the output next. -/
-def constComputer (o : Symbol) (os : List Symbol) : SingleTapeTM Symbol where
+def constComputer [Inhabited Symbol] [Fintype Symbol] (o : Symbol) (os : List Symbol) :
+    SingleTapeTM Symbol where
   State := Unit ⊕ Fin (o :: os).length
   q₀ := .inl ()
   tr q h := match q with
@@ -76,13 +77,16 @@ def constComputer (o : Symbol) (os : List Symbol) : SingleTapeTM Symbol where
 
 /-! ## Clearing-phase verification -/
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 private lemma bitape_head_tail_eq_mk₁ (t : List Symbol) :
     (⟨(StackTape.mapSome t).head, ∅, (StackTape.mapSome t).tail⟩ : BiTape Symbol) =
       .mk₁ t := by
   cases t with
   | nil => rfl
   | cons a as => rfl
+
+section
+
+variable [Inhabited Symbol] [Fintype Symbol]
 
 private lemma clearComputer_clear_steps (l : List Symbol) :
     RelatesInSteps (clearComputer (Symbol := Symbol)).TransitionRelation
@@ -189,6 +193,8 @@ theorem size_constPolyTimeComputable_le (out : List Bool) :
     simp only [Fintype.card_sum, Fintype.card_unit, Fintype.card_fin, List.length_cons]
     omega
 
+end
+
 /-! ## The finite-table machine
 
 A machine computing `fun l => if l ∈ S then T l else []` for a *finite* set `S` of
@@ -197,32 +203,27 @@ valid inputs: read the input into machine state through the prefix tree of `S`
 backwards moving left exactly as `constComputer` does. Inputs that stop matching any
 prefix of `S` fall into an absorbing junk state and clear to a blank tape. -/
 
-section Table
-
-variable [DecidableEq Symbol]
-
-omit [Inhabited Symbol] [Fintype Symbol] [DecidableEq Symbol] in
 private lemma bitape_mk₁_eq_of_length_pos {t : List Symbol} (h : 0 < t.length) :
     (BiTape.mk₁ t : BiTape Symbol) = ⟨some t[0], ∅, .mapSome (t.drop 1)⟩ := by
   cases t with
   | nil => simp at h
   | cons a as => rfl
 
-omit [Inhabited Symbol] [Fintype Symbol] in
+section Table
+
+variable [DecidableEq Symbol]
+
 /-- All prefixes of members of `S`: the reading states of `tableComputer`. -/
 def prefixClosure (S : Finset (List Symbol)) : Finset (List Symbol) :=
   S.biUnion fun s => s.inits.toFinset
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 theorem mem_prefixClosure {S : Finset (List Symbol)} {l : List Symbol} :
     l ∈ prefixClosure S ↔ ∃ s ∈ S, l <+: s := by
   simp [prefixClosure, List.mem_inits]
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 theorem subset_prefixClosure (S : Finset (List Symbol)) : S ⊆ prefixClosure S :=
   fun s hs => mem_prefixClosure.mpr ⟨s, hs, List.prefix_refl s⟩
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 /-- Path independence of falling out of the prefix tree: once the consumed prefix
 matches no member of `S`, no extension does either. -/
 theorem append_not_mem_prefixClosure {S : Finset (List Symbol)} {l : List Symbol}
@@ -231,14 +232,12 @@ theorem append_not_mem_prefixClosure {S : Finset (List Symbol)} {l : List Symbol
   obtain ⟨s, hs, hpre⟩ := mem_prefixClosure.mp hmem
   exact h (mem_prefixClosure.mpr ⟨s, hs, (List.prefix_append l [b]).trans hpre⟩)
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 /-- States of the finite-table machine: reading (tracking the consumed prefix through
 the prefix tree of `S`), junk (clearing an unmatched input), or writing symbol `i` of
 the table output of `s`. -/
 abbrev TableState (S : Finset (List Symbol)) (T : List Symbol → List Symbol) : Type :=
   ({l // l ∈ prefixClosure S} ⊕ Unit) ⊕ (Σ s : {s // s ∈ S}, Fin (T s.1).length)
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The state after consuming the prefix `l`: still reading if `l` can extend to a
 member of `S`, junk otherwise. Totality in `l` makes the reading-step lemma uniform
 (via `append_not_mem_prefixClosure`). -/
@@ -246,7 +245,6 @@ def readState (S : Finset (List Symbol)) (T : List Symbol → List Symbol)
     (l : List Symbol) : TableState S T :=
   if h : l ∈ prefixClosure S then .inl (.inl ⟨l, h⟩) else .inl (.inr ())
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The state entered on reaching the blank at the end of the input with consumed
 prefix `l`: write the table output backwards if `l ∈ S` and the output is nonempty,
 otherwise halt (the tape is already the blank output). -/
@@ -257,6 +255,12 @@ def enterState (S : Finset (List Symbol)) (T : List Symbol → List Symbol)
     else some (.inr ⟨⟨l, hS⟩,
       ⟨(T l).length - 1, by change (T l).length - 1 < (T l).length; omega⟩⟩)
   else none
+
+end Table
+
+section
+
+variable [Inhabited Symbol] [Fintype Symbol] [DecidableEq Symbol]
 
 /-- The finite-table machine: clear the input moving right while tracking the consumed
 prefix through the prefix tree of `S`; on the blank, look up the table and write the
@@ -393,6 +397,8 @@ noncomputable def tablePolyTimeComputable (S : Finset (List Symbol))
       Polynomial.eval_C]
     omega
 
+end
+
 /-! ### Description size of the table machine
 
 The table machine's *time* is linear, but its *state count* — the reading prefix tree
@@ -401,22 +407,19 @@ table outputs. This is the advice a table smuggles: a family of tables over
 exponentially large domains has exponential description size, which is why witness
 families must carry an explicit size bound (`EncPolyTime.size`). -/
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The prefix tree of a finite set of strings has at most `∑ (length + 1)` nodes. -/
-theorem card_prefixClosure_le (S : Finset (List Symbol)) :
+theorem card_prefixClosure_le [DecidableEq Symbol] (S : Finset (List Symbol)) :
     (prefixClosure S).card ≤ ∑ s ∈ S, (s.length + 1) :=
   Finset.card_biUnion_le.trans (Finset.sum_le_sum fun s _ =>
     (List.toFinset_card_le _).trans (by simp))
 
-omit [Inhabited Symbol] [Fintype Symbol] in
 /-- The state count of the finite-table machine: prefix-tree nodes, the junk state, and
 one writing state per output symbol. -/
-theorem card_tableState (S : Finset (List Symbol)) (T : List Symbol → List Symbol) :
+theorem card_tableState [DecidableEq Symbol] (S : Finset (List Symbol))
+    (T : List Symbol → List Symbol) :
     Fintype.card (TableState S T) =
       ((prefixClosure S).card + 1) + ∑ s ∈ S, (T s).length := by
   simp [TableState, Fintype.card_sigma, Finset.sum_attach S fun s => (T s).length]
-
-end Table
 
 end Cslib.Turing.SingleTapeTM
 

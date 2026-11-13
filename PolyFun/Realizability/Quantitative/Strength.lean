@@ -59,14 +59,10 @@ universe u v w
 
 namespace PFunctor.DynSystem.DynComputation
 
-variable {p : PFunctor.{u, u}} {C : StepClass.{u, v}} [P : C.HasProd]
-  [S : C.HasSum] [O : C.HasOption] [DecidableEq p.A]
-  {Q : QuantitativeStepClass.{u, v, w} C} {A B : Type u}
-  {bd : Boundary C p A B}
+variable {p : PFunctor.{u, u}}
 
-omit [C.HasProd] [C.HasSum] [C.HasOption] [DecidableEq p.A] in
 /-- Retaining the input preserves relation-restricted resolution exactly. -/
-theorem resolvesInUnder_withInput_iff (M : DynComputation.{u} p A B)
+theorem resolvesInUnder_withInput_iff {A B : Type u} (M : DynComputation.{u} p A B)
     (allows : ∀ position, p.B position → Prop) (k : ℕ) (state : M.State × A) :
     M.withInput.ResolvesInUnder allows k state ↔ M.ResolvesInUnder allows k state.1 := by
   induction k generalizing state with
@@ -86,7 +82,45 @@ theorem resolvesInUnder_withInput_iff (M : DynComputation.{u} p A B)
           M.resolvesInUnder_query_succ_iff allows k _ position next hview]
         exact forall_congr' fun direction ↦ imp_congr_right fun _ ↦ ih _
 
+private theorem resumption_bind_map {X Y Z : Type u} (f : X → Y) (x : Resumption p X)
+    (k : Y → Resumption p Z) :
+    Resumption.bind (Resumption.map f x) k = Resumption.bind x (fun value ↦ k (f value)) := by
+  rw [Resumption.map, Resumption.bind_assoc]
+  simp
+
+variable {C : StepClass.{u, v}} [P : C.HasProd]
+  [S : C.HasSum] [O : C.HasOption] [DecidableEq p.A]
+  {Q : QuantitativeStepClass.{u, v, w} C} {A B : Type u}
+  {bd : Boundary C p A B}
+
 namespace QuantitativeRealization
+
+/-- The input-retaining state is encoded within `R`'s state, the input and the pair overhead. -/
+theorem size_state_withInput_le [QP : Q.HasProd] [PC : Q.HasProdCost]
+    (R : QuantitativeRealization Q bd) (state : R.machine.State) (input : A) :
+    Q.size (P.prod R.state bd.input) (state, input) ≤
+      Q.size R.state state + Q.size bd.input input + PC.sizeOverhead :=
+  PC.size_prod_le R.state bd.input state input
+
+/-- The input-retaining readout is encoded within `R`'s readout, the input and the pair and tag
+overheads. -/
+theorem size_head_withInput_le [QP : Q.HasProd] [QS : Q.HasSum] [PC : Q.HasProdCost]
+    [SC : Q.HasSumCost] (R : QuantitativeRealization Q bd) (state : R.machine.State) (input : A) :
+    Q.size (S.sum (P.prod bd.out bd.input) bd.pos) (R.machine.withInput.head (state, input)) ≤
+      Q.size bd.head (R.machine.head state) + Q.size bd.input input + PC.sizeOverhead +
+        SC.sizeOverhead := by
+  rw [head_withInput]
+  change _ ≤ Q.size (S.sum bd.out bd.pos) (R.machine.head state) + _ + _ + _
+  rcases R.machine.head state with value | position
+  · have h1 := SC.size_inl_le (P.prod bd.out bd.input) bd.pos (value, input)
+    have h2 := PC.size_prod_le bd.out bd.input value input
+    have h3 := SC.le_size_inl bd.out bd.pos value
+    simp only [Sum.map_inl]
+    omega
+  · have h1 := SC.size_inr_le (P.prod bd.out bd.input) bd.pos position
+    have h3 := SC.le_size_inr bd.out bd.pos position
+    simp only [Sum.map_inr, id]
+    omega
 
 section WithInput
 
@@ -312,16 +346,16 @@ theorem RunsWithinUnder.withInput {R : QuantitativeRealization Q bd}
 
 section Laws
 
-variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost]
-  [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
+variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost]
 
-omit [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
 /-- Input-retaining initialization costs `R`'s plus identity and pairing at the input's size. -/
 theorem cost_initCode_withInput_le (R : QuantitativeRealization Q bd) (input : A) :
     Q.cost R.withInput.initCode input ≤
       Q.cost R.initCode input + CC.overhead (Q.size bd.input input) +
         PC.overhead (Q.size bd.input input) :=
   QuantitativeStepClass.cost_withInput_le Q R.initCode input
+
+variable [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
 
 /-- An input-retaining readout costs `R`'s plus at most `carryReadoutCount` structural
 primitives. -/
@@ -350,38 +384,6 @@ theorem cost_updateCode_withInput_le (R : QuantitativeRealization Q bd)
     ((state, input), index) ≤ _
   rw [QuantitativeStepClass.Realizer.cost_castFunction]
   exact QuantitativeStepClass.cost_carryUpdate_le Q bd.input R.updateCode state input index h
-
-omit [Q.HasComposition] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
-  [CC : Q.HasCompositionCost] [SC : Q.HasSumCost] [OC : Q.HasOptionCost]
-  [DC : Q.IsDistributiveCost] in
-/-- The input-retaining state is encoded within `R`'s state, the input and the pair overhead. -/
-theorem size_state_withInput_le (R : QuantitativeRealization Q bd) (state : R.machine.State)
-    (input : A) :
-    Q.size (P.prod R.state bd.input) (state, input) ≤
-      Q.size R.state state + Q.size bd.input input + PC.sizeOverhead :=
-  PC.size_prod_le R.state bd.input state input
-
-omit [Q.HasComposition] [QO : Q.HasOption] [QD : Q.IsDistributive]
-  [CC : Q.HasCompositionCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
-/-- The input-retaining readout is encoded within `R`'s readout, the input and the pair and tag
-overheads. -/
-theorem size_head_withInput_le (R : QuantitativeRealization Q bd) (state : R.machine.State)
-    (input : A) :
-    Q.size (S.sum (P.prod bd.out bd.input) bd.pos) (R.machine.withInput.head (state, input)) ≤
-      Q.size bd.head (R.machine.head state) + Q.size bd.input input + PC.sizeOverhead +
-        SC.sizeOverhead := by
-  rw [head_withInput]
-  change _ ≤ Q.size (S.sum bd.out bd.pos) (R.machine.head state) + _ + _ + _
-  rcases R.machine.head state with value | position
-  · have h1 := SC.size_inl_le (P.prod bd.out bd.input) bd.pos (value, input)
-    have h2 := PC.size_prod_le bd.out bd.input value input
-    have h3 := SC.le_size_inl bd.out bd.pos value
-    simp only [Sum.map_inl]
-    omega
-  · have h1 := SC.size_inr_le (P.prod bd.out bd.input) bd.pos position
-    have h3 := SC.le_size_inr bd.out bd.pos position
-    simp only [Sum.map_inr, id]
-    omega
 
 /-- The carry charged by the cost laws, as a function of a source bound and the input size:
 identity and pairing at initialization, `carryReadoutCount` primitives per readout and
@@ -473,13 +475,6 @@ def seqCompWithInput (R₁ : QuantitativeRealization Q bd)
     QuantitativeRealization Q (bd.withOut outRep) :=
   R₁.withInput.seqComp R₂
 
-omit [DecidableEq p.A] in
-private theorem resumption_bind_map {X Y Z : Type u} (f : X → Y) (x : Resumption p X)
-    (k : Y → Resumption p Z) :
-    Resumption.bind (Resumption.map f x) k = Resumption.bind x (fun value ↦ k (f value)) := by
-  rw [Resumption.map, Resumption.bind_assoc]
-  simp
-
 /-- The strong bind denotes resumption bind with a continuation that reads the input. -/
 theorem denote_seqCompWithInput (R₁ : QuantitativeRealization Q bd)
     (R₂ : QuantitativeRealization Q (bd.strongMid outRep)) (input : A) :
@@ -539,7 +534,6 @@ theorem RunsWithinUnder.seqCompWithInput {R₁ : QuantitativeRealization Q bd}
         handoff.bound input + certificate.overhead input :=
   (first.withInput carry).seqComp second handoff certificate
 
-omit [DecidableEq p.A] in
 /-- The query budget of the bounded strong bind is the first phase's budget plus the handoff
 envelope's plus the structural certificate's overhead: the strength carry adds no queries. Whether
 the wiring adds queries depends on `SeqCompCostCertificate.overhead`, which does not constrain its

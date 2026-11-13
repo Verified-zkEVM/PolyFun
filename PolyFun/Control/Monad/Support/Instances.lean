@@ -276,23 +276,23 @@ two composable outputs compose with their accumulators multiplied. -/
 
 section WriterT
 
-variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [MonadAttach m]
-variable {ω : Type u} [Monoid ω]
+variable {m : Type u → Type v} [Monad m] [MonadAttach m]
+variable {ω : Type u}
 
 instance instMonadAttachWriterT : MonadAttach (WriterT ω m) where
   CanReturn x a := ∃ w, CanReturn x.run (a, w)
   attach x := WriterT.mk <|
     (fun p => (⟨p.1.1, ⟨p.1.2, p.2⟩⟩, p.1.2)) <$> MonadAttach.attach x.run
 
-omit [LawfulMonad m] [Monoid ω] in
 theorem mem_support_writerT_iff {x : WriterT ω m α} {a : α} :
     a ∈ support x ↔ ∃ w, (a, w) ∈ support x.run :=
   Iff.rfl
 
-omit [LawfulMonad m] [Monoid ω] in
 theorem mem_support_of_run_writerT {x : WriterT ω m α} {a : α} {w : ω}
     (h : (a, w) ∈ support x.run) : a ∈ support x :=
   ⟨w, h⟩
+
+variable [LawfulMonad m] [Monoid ω]
 
 instance instWeaklyLawfulMonadAttachWriterT [WeaklyLawfulMonadAttach m] :
     WeaklyLawfulMonadAttach (WriterT ω m) where

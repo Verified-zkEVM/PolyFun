@@ -263,11 +263,11 @@ inductive Split (target : P.A) (program : FreeM P α) (n : Nat) : Type (max uA u
 
 namespace Split
 
-variable [DecidableEq P.A] {target : P.A} {program : FreeM P α} {n : Nat}
+variable {target : P.A} {program : FreeM P α} {n : Nat}
 
 /-- Structural invariant of a split result. A missing occurrence can only be
 returned after executing a path containing at most `n` target events. -/
-def Valid (result : Split target program n) : Prop :=
+def Valid [DecidableEq P.A] (result : Split target program n) : Prop :=
   match result with
   | .missing path => occurrences target (Path.trace program path) ≤ n
   | .found _ => True
@@ -277,11 +277,9 @@ def complete : Split target program n → FreeM P (Path program)
   | .missing path => pure path
   | .found occurrence => occurrence.completePath
 
-omit [DecidableEq P.A] in
 @[simp] theorem complete_missing (path : Path program) :
     complete (.missing path : Split target program n) = pure path := rfl
 
-omit [DecidableEq P.A] in
 @[simp] theorem complete_found (occurrence : Occurrence target program n) :
     complete (.found occurrence) = occurrence.completePath := rfl
 
@@ -300,11 +298,9 @@ def completeFork : Split target program n →
               second := ⟨secondAnswer, secondSuffix⟩ })
               (withPath (occurrence.resume secondAnswer))
 
-omit [DecidableEq P.A] in
 @[simp] theorem completeFork_missing (path : Path program) :
     completeFork (.missing path : Split target program n) = pure none := rfl
 
-omit [DecidableEq P.A] in
 /-- On a found occurrence, `completeFork` is two independent executions of
 the occurrence completion program. -/
 theorem completeFork_found (occurrence : Occurrence target program n) :
@@ -326,7 +322,6 @@ theorem completeFork_found (occurrence : Occurrence target program n) :
   rw [← FreeM.comp_map]
   rfl
 
-omit [DecidableEq P.A] in
 /-- Observing a found fork is the corresponding observation of its two
 independent occurrence completions. -/
 theorem map_completeFork_found (occurrence : Occurrence target program n)
@@ -357,7 +352,7 @@ def prependOther {a : P.A} {next : P.B a → FreeM P α} (hne : a ≠ target)
   | .missing path => .missing ⟨answer, path⟩
   | .found occurrence => .found (.stepOther hne answer occurrence)
 
-theorem valid_prependSame {next : P.B target → FreeM P α}
+theorem valid_prependSame [DecidableEq P.A] {next : P.B target → FreeM P α}
     (answer : P.B target) {n : Nat} (result : Split target (next answer) n)
     (hresult : result.Valid) : (prependSame answer result).Valid := by
   cases result with
@@ -367,7 +362,7 @@ theorem valid_prependSame {next : P.B target → FreeM P α}
       simpa using Nat.succ_le_succ hresult
   | found occurrence => trivial
 
-theorem valid_prependOther {a : P.A} {next : P.B a → FreeM P α}
+theorem valid_prependOther [DecidableEq P.A] {a : P.A} {next : P.B a → FreeM P α}
     (hne : a ≠ target) (answer : P.B a) {n : Nat}
     (result : Split target (next answer) n) (hresult : result.Valid) :
     (prependOther hne answer result).Valid := by
@@ -378,7 +373,6 @@ theorem valid_prependOther {a : P.A} {next : P.B a → FreeM P α}
       simpa [hne] using hresult
   | found occurrence => trivial
 
-omit [DecidableEq P.A] in
 theorem completeFork_prependSame {next : P.B target → FreeM P α} (answer : P.B target) {n : Nat}
     (result : Split target (next answer) n) :
     completeFork (prependSame answer result) =
@@ -400,7 +394,6 @@ theorem completeFork_prependSame {next : P.B target → FreeM P α} (answer : P.
       funext secondSuffix
       rfl
 
-omit [DecidableEq P.A] in
 theorem completeFork_prependOther {a : P.A} {next : P.B a → FreeM P α} (hne : a ≠ target)
     (answer : P.B a) {n : Nat} (result : Split target (next answer) n) :
     completeFork (prependOther hne answer result) =
@@ -422,7 +415,6 @@ theorem completeFork_prependOther {a : P.A} {next : P.B a → FreeM P α} (hne :
       funext secondSuffix
       rfl
 
-omit [DecidableEq P.A] in
 theorem complete_prependSame {next : P.B target → FreeM P α} (answer : P.B target)
     {n : Nat} (result : Split target (next answer) n) :
     complete (prependSame answer result) =
@@ -442,7 +434,6 @@ theorem complete_prependSame {next : P.B target → FreeM P α} (answer : P.B ta
       funext suffix
       rfl
 
-omit [DecidableEq P.A] in
 theorem complete_prependOther {a : P.A} {next : P.B a → FreeM P α}
     (hne : a ≠ target) (answer : P.B a) {n : Nat}
     (result : Split target (next answer) n) :

@@ -465,64 +465,9 @@ end MapResult
 
 /-! ## Sequential composition -/
 
-section SeqComp
+section SeqCompSource
 
-variable [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive]
-  {D : Type u} {outRep : C.Str D}
-
-namespace QuantitativeRealization.ExecutionTrace
-
-/-- Embed a first-phase trace in the left summand of a sequentially composed realization.
-
-`toSeqCompRight` is the second-phase counterpart on `Sum.inr`, and `conforms_toSeqCompLeft`
-carries a query contract across this embedding. -/
-def toSeqCompLeft (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start finish : R₁.machine.State}
-    (trace : R₁.ExecutionTrace start finish) :
-    (R₁.seqComp R₂).ExecutionTrace (Sum.inl start) (Sum.inl finish) :=
-  match trace with
-  | .nil state => .nil (R := R₁.seqComp R₂) (Sum.inl state)
-  | .query view_eq direction tail =>
-      .query (R₁.machine.seqComp_view_inl_of_query R₂.machine view_eq) direction
-        (toSeqCompLeft R₁ R₂ tail)
-
-/-- Embed a second-phase trace in the right summand of a sequentially composed realization.
-
-`toSeqCompLeft` is the first-phase counterpart on `Sum.inl`, and `conforms_toSeqCompRight`
-carries a query contract across this embedding. -/
-def toSeqCompRight (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start finish : R₂.machine.State}
-    (trace : R₂.ExecutionTrace start finish) :
-    (R₁.seqComp R₂).ExecutionTrace (Sum.inr start) (Sum.inr finish) :=
-  match trace with
-  | .nil state => .nil (R := R₁.seqComp R₂) (Sum.inr state)
-  | .query (next := next) view_eq direction tail =>
-      .query (next := fun answer ↦ Sum.inr (next answer))
-        (by
-          change (R₁.machine.seqComp R₂.machine).view (Sum.inr start) = _
-          rw [R₁.machine.seqComp_view_inr, view_eq]
-          rfl) direction
-        (toSeqCompRight R₁ R₂ tail)
-
-/-- Embedding a first-phase trace in the left summand preserves conformance, so a query contract
-verified for `R₁` transfers verbatim to the embedded trace; the companion `conforms_toSeqCompRight`
-states the same for the second-phase embedding. -/
-@[simp] theorem conforms_toSeqCompLeft (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
-    {start finish : R₁.machine.State} (trace : R₁.ExecutionTrace start finish) :
-    (trace.toSeqCompLeft R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
-  induction trace <;> simp [toSeqCompLeft, Conforms, *]
-
-/-- Embedding a second-phase trace on the `Sum.inr` side of a sequential composition leaves its
-query contract unchanged: the composite issues exactly the queries of `trace`, so `allows` neither
-gains nor discharges an obligation. `conforms_toSeqCompLeft` is the first-phase analogue. -/
-@[simp] theorem conforms_toSeqCompRight (R₁ : QuantitativeRealization Q bd)
-    (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
-    {start finish : R₂.machine.State} (trace : R₂.ExecutionTrace start finish) :
-    (trace.toSeqCompRight R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
-  induction trace <;> simp [toSeqCompRight, Conforms, *]
-
-end QuantitativeRealization.ExecutionTrace
+variable {D : Type u} {outRep : C.Str D}
 
 /-- Source traces underlying a prefix of a sequentially composed machine.
 
@@ -590,7 +535,6 @@ def prependLeft {state : R₁.machine.State} {position : p.A} {next : p.B positi
   | .right leftTrace returned rightTrace =>
       .right (.query view_eq direction leftTrace) returned rightTrace
 
-omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- Prepending a first-phase query lengthens a phase decomposition by exactly one step.
 
 The extra query is absorbed by the first-phase trace in every constructor, so a `right`
@@ -616,7 +560,6 @@ def Conforms (allows : ∀ position, p.B position → Prop) :
   | _, .handoff trace _ => trace.Conforms allows
   | _, .right leftTrace _ rightTrace => leftTrace.Conforms allows ∧ rightTrace.Conforms allows
 
-omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- A prepended first-phase query conforms to an answer contract exactly when the new answer is
 allowed and the shorter decomposition already conforms.
 
@@ -647,7 +590,6 @@ def cost (input : A) : {finish : R₁.machine.State ⊕ R₂.machine.State} →
   | _, .right (value := value) leftTrace _ rightTrace =>
       R₁.executionCost input leftTrace + R₂.executionCost value rightTrace
 
-omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
 /-- The query component of a phase source's cost is its exact syntactic length.
 
 Backend work, encoded sizes and handoff overhead are invisible to `queries`, so the identity
@@ -738,7 +680,127 @@ def Conforms {R₁ : QuantitativeRealization Q bd}
 
 end SeqCompAnyTraceSource
 
+/-- A uniform envelope for the second-phase bounds of every conformingly reachable handoff.
+
+The quantification over actual first-phase traces is deliberate: clients can derive this field
+from the first realization's returned-size theorem and a size-indexed second-phase bound, without
+claiming that unreachable values have small encodings. -/
+structure SeqCompHandoffBound (R₁ : QuantitativeRealization Q bd)
+    (allows : ∀ position, p.B position → Prop) (secondBound : B → ExecutionCost) where
+  /-- Input-indexed uniform resource envelope for a reached second phase. -/
+  bound : A → ExecutionCost
+  /-- Every value returned along a conforming first-phase prefix fits the envelope. -/
+  returned_le : ∀ input {finish : R₁.machine.State}
+    (trace : R₁.ExecutionTrace (R₁.machine.init input) finish),
+    trace.Conforms allows → ∀ {value : B},
+      R₁.machine.view finish = Sum.inl value → secondBound value ≤ bound input
+
+/-- The exact phase-local cost of a composite prefix is bounded by the first-phase bound plus
+the reachable second-phase envelope. -/
+theorem SeqCompTraceSource.cost_le
+    {R₁ : QuantitativeRealization Q bd}
+    {R₂ : QuantitativeRealization Q (bd.mid outRep)}
+    {allows : ∀ position, p.B position → Prop}
+    {firstBound : A → ExecutionCost} {secondBound : B → ExecutionCost}
+    (first : R₁.RunsWithinUnder allows firstBound)
+    (second : R₂.RunsWithinUnder allows secondBound)
+    (handoff : SeqCompHandoffBound R₁ allows secondBound) (input : A)
+    {finish : R₁.machine.State ⊕ R₂.machine.State}
+    (source : SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish)
+    (hsource : source.Conforms allows) :
+    source.cost input ≤ firstBound input + handoff.bound input := by
+  cases source with
+  | left leftTrace leftView =>
+      change leftTrace.Conforms allows at hsource
+      exact (first.cost_le input leftTrace hsource).trans
+        (ExecutionCost.le_add_right (firstBound input) (handoff.bound input))
+  | handoff leftTrace returned =>
+      rename_i leftFinish value
+      change leftTrace.Conforms allows at hsource
+      apply ExecutionCost.add_le_add (first.cost_le input leftTrace hsource)
+      exact (second.cost_le value (.nil (R₂.machine.init value)) trivial).trans
+        (handoff.returned_le input leftTrace hsource returned)
+  | right leftTrace returned rightTrace =>
+      rename_i leftFinish value rightFinish
+      change leftTrace.Conforms allows ∧ rightTrace.Conforms allows at hsource
+      apply ExecutionCost.add_le_add (first.cost_le input leftTrace hsource.1)
+      exact (second.cost_le value rightTrace hsource.2).trans
+        (handoff.returned_le input leftTrace hsource.1 returned)
+
+/-- Exact phase-local query accounting is independent of structural backend overhead. -/
+theorem SeqCompTraceSource.length_le
+    {R₁ : QuantitativeRealization Q bd}
+    {R₂ : QuantitativeRealization Q (bd.mid outRep)}
+    {allows : ∀ position, p.B position → Prop}
+    {firstBound : A → ExecutionCost} {secondBound : B → ExecutionCost}
+    (first : R₁.RunsWithinUnder allows firstBound)
+    (second : R₂.RunsWithinUnder allows secondBound)
+    (handoff : SeqCompHandoffBound R₁ allows secondBound) (input : A)
+    {finish : R₁.machine.State ⊕ R₂.machine.State}
+    (source : SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish)
+    (hsource : source.Conforms allows) :
+    source.length ≤ (firstBound input + handoff.bound input).queries := by
+  rw [← source.queries_cost input]
+  exact (source.cost_le first second handoff input hsource).2.1
+
+end SeqCompSource
+
+section SeqComp
+
+variable [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive]
+  {D : Type u} {outRep : C.Str D}
+
 namespace QuantitativeRealization.ExecutionTrace
+
+/-- Embed a first-phase trace in the left summand of a sequentially composed realization.
+
+`toSeqCompRight` is the second-phase counterpart on `Sum.inr`, and `conforms_toSeqCompLeft`
+carries a query contract across this embedding. -/
+def toSeqCompLeft (R₁ : QuantitativeRealization Q bd)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start finish : R₁.machine.State}
+    (trace : R₁.ExecutionTrace start finish) :
+    (R₁.seqComp R₂).ExecutionTrace (Sum.inl start) (Sum.inl finish) :=
+  match trace with
+  | .nil state => .nil (R := R₁.seqComp R₂) (Sum.inl state)
+  | .query view_eq direction tail =>
+      .query (R₁.machine.seqComp_view_inl_of_query R₂.machine view_eq) direction
+        (toSeqCompLeft R₁ R₂ tail)
+
+/-- Embed a second-phase trace in the right summand of a sequentially composed realization.
+
+`toSeqCompLeft` is the first-phase counterpart on `Sum.inl`, and `conforms_toSeqCompRight`
+carries a query contract across this embedding. -/
+def toSeqCompRight (R₁ : QuantitativeRealization Q bd)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) {start finish : R₂.machine.State}
+    (trace : R₂.ExecutionTrace start finish) :
+    (R₁.seqComp R₂).ExecutionTrace (Sum.inr start) (Sum.inr finish) :=
+  match trace with
+  | .nil state => .nil (R := R₁.seqComp R₂) (Sum.inr state)
+  | .query (next := next) view_eq direction tail =>
+      .query (next := fun answer ↦ Sum.inr (next answer))
+        (by
+          change (R₁.machine.seqComp R₂.machine).view (Sum.inr start) = _
+          rw [R₁.machine.seqComp_view_inr, view_eq]
+          rfl) direction
+        (toSeqCompRight R₁ R₂ tail)
+
+/-- Embedding a first-phase trace in the left summand preserves conformance, so a query contract
+verified for `R₁` transfers verbatim to the embedded trace; the companion `conforms_toSeqCompRight`
+states the same for the second-phase embedding. -/
+@[simp] theorem conforms_toSeqCompLeft (R₁ : QuantitativeRealization Q bd)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
+    {start finish : R₁.machine.State} (trace : R₁.ExecutionTrace start finish) :
+    (trace.toSeqCompLeft R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
+  induction trace <;> simp [toSeqCompLeft, Conforms, *]
+
+/-- Embedding a second-phase trace on the `Sum.inr` side of a sequential composition leaves its
+query contract unchanged: the composite issues exactly the queries of `trace`, so `allows` neither
+gains nor discharges an obligation. `conforms_toSeqCompLeft` is the first-phase analogue. -/
+@[simp] theorem conforms_toSeqCompRight (R₁ : QuantitativeRealization Q bd)
+    (R₂ : QuantitativeRealization Q (bd.mid outRep)) (allows : ∀ position, p.B position → Prop)
+    {start finish : R₂.machine.State} (trace : R₂.ExecutionTrace start finish) :
+    (trace.toSeqCompRight R₁ R₂).Conforms allows ↔ trace.Conforms allows := by
+  induction trace <;> simp [toSeqCompRight, Conforms, *]
 
 /-- A phase decomposition paired with its generic answer-contract transport theorem. -/
 structure SeqCompAnyDecomposition (R₁ : QuantitativeRealization Q bd)
@@ -960,21 +1022,6 @@ theorem conforms_seqCompSource (R₁ : QuantitativeRealization Q bd)
 
 end QuantitativeRealization.ExecutionTrace
 
-/-- A uniform envelope for the second-phase bounds of every conformingly reachable handoff.
-
-The quantification over actual first-phase traces is deliberate: clients can derive this field
-from the first realization's returned-size theorem and a size-indexed second-phase bound, without
-claiming that unreachable values have small encodings. -/
-structure SeqCompHandoffBound (R₁ : QuantitativeRealization Q bd)
-    (allows : ∀ position, p.B position → Prop) (secondBound : B → ExecutionCost) where
-  /-- Input-indexed uniform resource envelope for a reached second phase. -/
-  bound : A → ExecutionCost
-  /-- Every value returned along a conforming first-phase prefix fits the envelope. -/
-  returned_le : ∀ input {finish : R₁.machine.State}
-    (trace : R₁.ExecutionTrace (R₁.machine.init input) finish),
-    trace.Conforms allows → ∀ {value : B},
-      R₁.machine.view finish = Sum.inl value → secondBound value ≤ bound input
-
 /-- Backend-cost comparison between a composite trace and its exact phase decomposition.
 
 The sole proof obligation is genuinely quantitative: it accounts for concrete structural
@@ -1074,56 +1121,6 @@ theorem QuantitativeRealization.traceProgressUnder_seqComp
   intro state trace htrace position next view_eq
   exact (trace.seqCompSource R₁ R₂).response_exists first second input
     (trace.conforms_seqCompSource R₁ R₂ allows htrace) view_eq
-
-omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
-/-- The exact phase-local cost of a composite prefix is bounded by the first-phase bound plus
-the reachable second-phase envelope. -/
-theorem SeqCompTraceSource.cost_le
-    {R₁ : QuantitativeRealization Q bd}
-    {R₂ : QuantitativeRealization Q (bd.mid outRep)}
-    {allows : ∀ position, p.B position → Prop}
-    {firstBound : A → ExecutionCost} {secondBound : B → ExecutionCost}
-    (first : R₁.RunsWithinUnder allows firstBound)
-    (second : R₂.RunsWithinUnder allows secondBound)
-    (handoff : SeqCompHandoffBound R₁ allows secondBound) (input : A)
-    {finish : R₁.machine.State ⊕ R₂.machine.State}
-    (source : SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish)
-    (hsource : source.Conforms allows) :
-    source.cost input ≤ firstBound input + handoff.bound input := by
-  cases source with
-  | left leftTrace leftView =>
-      change leftTrace.Conforms allows at hsource
-      exact (first.cost_le input leftTrace hsource).trans
-        (ExecutionCost.le_add_right (firstBound input) (handoff.bound input))
-  | handoff leftTrace returned =>
-      rename_i leftFinish value
-      change leftTrace.Conforms allows at hsource
-      apply ExecutionCost.add_le_add (first.cost_le input leftTrace hsource)
-      exact (second.cost_le value (.nil (R₂.machine.init value)) trivial).trans
-        (handoff.returned_le input leftTrace hsource returned)
-  | right leftTrace returned rightTrace =>
-      rename_i leftFinish value rightFinish
-      change leftTrace.Conforms allows ∧ rightTrace.Conforms allows at hsource
-      apply ExecutionCost.add_le_add (first.cost_le input leftTrace hsource.1)
-      exact (second.cost_le value rightTrace hsource.2).trans
-        (handoff.returned_le input leftTrace hsource.1 returned)
-
-omit [Q.HasComposition] [Q.HasSum] [Q.HasOption] [Q.HasProd] [Q.IsDistributive] in
-/-- Exact phase-local query accounting is independent of structural backend overhead. -/
-theorem SeqCompTraceSource.length_le
-    {R₁ : QuantitativeRealization Q bd}
-    {R₂ : QuantitativeRealization Q (bd.mid outRep)}
-    {allows : ∀ position, p.B position → Prop}
-    {firstBound : A → ExecutionCost} {secondBound : B → ExecutionCost}
-    (first : R₁.RunsWithinUnder allows firstBound)
-    (second : R₂.RunsWithinUnder allows secondBound)
-    (handoff : SeqCompHandoffBound R₁ allows secondBound) (input : A)
-    {finish : R₁.machine.State ⊕ R₂.machine.State}
-    (source : SeqCompTraceSource R₁ R₂ (R₁.machine.init input) finish)
-    (hsource : source.Conforms allows) :
-    source.length ≤ (firstBound input + handoff.bound input).queries := by
-  rw [← source.queries_cost input]
-  exact (source.cost_le first second handoff input hsource).2.1
 
 /-- Sequential composition resolves within the sum of its phase query bounds.
 

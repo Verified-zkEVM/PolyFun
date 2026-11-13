@@ -51,7 +51,7 @@ open PFunctor ReactiveProcess MonadAttach
 
 variable {Node result S : Type} {boundary : PortBoundary}
   {network : Network Node boundary result} [DecidableEq Node]
-  {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+  {m : Type → Type} [Monad m] [MonadAttach m]
 
 attribute [local implicit_reducible] signature Response
 
@@ -86,10 +86,9 @@ variable {impl : (id : Node) → Handler (StateT S m) (network.effect id)}
     (state : State network S) : ℕ :=
   (∑ id, c.pot id (state.localState id)) + credit.held state
 
-variable [Fintype Node]
-
 /-- **One activation.** The network potential pays the acting node's charge. -/
-theorem total_activate (c : Conserving impl discipline charge credit invariant) {id : Node}
+theorem total_activate [LawfulMonad m] [ExactMonadAttach m] [Fintype Node]
+    (c : Conserving impl discipline charge credit invariant) {id : Node}
     {state next : State network S} (hinv : invariant state)
     (hsched : Schedulable discipline id state)
     (h : CanReturn (activate impl discipline id state) next) :
@@ -101,9 +100,8 @@ theorem total_activate (c : Conserving impl discipline charge credit invariant) 
   simp only [total]
   omega
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- An external input raises the network potential by exactly the credit it is funded with. -/
-theorem total_input (c : Conserving impl discipline charge credit invariant)
+theorem total_input [Fintype Node] (c : Conserving impl discipline charge credit invariant)
     (packet : Interface.Packet boundary.In) (state : State network S) :
     c.total (input packet state) = c.total state + credit.ingress packet := by
   have hloc : (input packet state).localState = state.localState := by
@@ -111,9 +109,8 @@ theorem total_input (c : Conserving impl discipline charge credit invariant)
   simp only [total, hloc, credit.held_input]
   omega
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- A FIFO delivery moves credit without changing the network potential. -/
-theorem total_deliver (c : Conserving impl discipline charge credit invariant)
+theorem total_deliver [Fintype Node] (c : Conserving impl discipline charge credit invariant)
     (state : State network S) : c.total (deliver state) = c.total state := by
   have hloc : (deliver state).localState = state.localState := by
     unfold deliver
@@ -122,18 +119,18 @@ theorem total_deliver (c : Conserving impl discipline charge credit invariant)
     | cons destination rest => cases destination <;> rfl
   simp only [total, hloc, credit.held_deliver]
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
 /-- The initial network potential is the sum of the initial node potentials. -/
-theorem total_initial (c : Conserving impl discipline charge credit invariant) (service : S) :
+theorem total_initial [Fintype Node] (c : Conserving impl discipline charge credit invariant)
+    (service : S) :
     c.total (initial network service) = ∑ id, c.pot id ((network.component id).init ()) := by
   simp only [total, credit.held_initial, add_zero]
   rfl
 
 /-! ## Administrative activations are free -/
 
-omit [LawfulMonad m] [Fintype Node] in
 /-- Conservation forces activations of finished nodes to be free. -/
-theorem charge_eq_zero_of_finished (c : Conserving impl discipline charge credit invariant)
+theorem charge_eq_zero_of_finished [ExactMonadAttach m]
+    (c : Conserving impl discipline charge credit invariant)
     {id : Node} {state : State network S} {value : Outcome result}
     (hinv : invariant state) (hsched : Schedulable discipline id state)
     (hout : outcome id state = some value) : charge (.node id) state = 0 := by
@@ -148,9 +145,9 @@ theorem charge_eq_zero_of_finished (c : Conserving impl discipline charge credit
     omega
   · simp [hv] at hout
 
-omit [LawfulMonad m] [Fintype Node] in
 /-- Conservation forces blocked receives, which change nothing, to be free. -/
-theorem charge_eq_zero_of_blocked (c : Conserving impl discipline charge credit invariant)
+theorem charge_eq_zero_of_blocked [ExactMonadAttach m]
+    (c : Conserving impl discipline charge credit invariant)
     {id : Node} {state : State network S}
     {cont : Interface.Packet (network.ports id).In → (network.component id).State}
     (hinv : invariant state) (hsched : Schedulable discipline id state)
@@ -166,10 +163,9 @@ theorem charge_eq_zero_of_blocked (c : Conserving impl discipline charge credit 
 
 end Conserving
 
-omit [LawfulMonad m] in
 /-- The unit charge counted by `State.elapsed` is not conservation-certifiable once an invariant
 state lets the discipline activate a finished node: conservation makes that activation free. -/
-theorem isEmpty_conserving_one_of_finished
+theorem isEmpty_conserving_one_of_finished [ExactMonadAttach m]
     {impl : (id : Node) → Handler (StateT S m) (network.effect id)} {discipline : Discipline}
     {credit : CreditModel network} {invariant : State network S → Prop} {id : Node}
     {state : State network S} {value : Outcome result} (hinv : invariant state)
@@ -216,7 +212,8 @@ end Executions
 
 namespace Conserving
 
-variable {impl : (id : Node) → Handler (StateT S m) (network.effect id)}
+variable [LawfulMonad m] [ExactMonadAttach m]
+  {impl : (id : Node) → Handler (StateT S m) (network.effect id)}
   {charge : Charge network S} {credit : CreditModel network}
   {invariant : State network S → Prop} [Fintype Node]
 

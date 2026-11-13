@@ -40,8 +40,9 @@ variable {Client α S : Type} {p : PFunctor.{0, 0}}
   | zero => rfl
   | succ n ih => simp [serialSchedule, ih, Nat.mul_add]
 
-variable [DecidableEq Client] [DecidableEq p.A]
-  {m : Type → Type} [Monad m] [LawfulMonad m]
+section
+
+variable {m : Type → Type} [Monad m]
 
 /-- Interpret a client with the standard response-dependent trace instrumentation. -/
 @[expose] def loggedRun (impl : Handler (StateT S m) p) (id : Client)
@@ -49,14 +50,14 @@ variable [DecidableEq Client] [DecidableEq p.A]
     m ((α × List (Interface.RoutedPacket p Client)) × S) :=
   (FreeM.liftM (impl.withTraceAppend fun a answer => [⟨id, ⟨a, answer⟩⟩]) program).run.run service
 
-omit [DecidableEq Client] [DecidableEq p.A] [LawfulMonad m] in
 /-- Returning produces no response traffic and retains the private service state. -/
 @[simp] theorem loggedRun_pure (impl : Handler (StateT S m) p) (id : Client)
     (value : α) (service : S) :
     loggedRun impl id (pure value) service = pure ((value, []), service) := by
   rfl
 
-omit [DecidableEq Client] [DecidableEq p.A] in
+variable [LawfulMonad m]
+
 /-- Logged oracle interpretation prepends the current response to the continuation's traffic. -/
 theorem loggedRun_liftBind (impl : Handler (StateT S m) p) (id : Client)
     (a : p.A) (next : p.B a → FreeM p α) (service : S) :
@@ -67,6 +68,22 @@ theorem loggedRun_liftBind (impl : Handler (StateT S m) p) (id : Client)
   change ((impl.withTraceAppend _ a >>= fun answer =>
     FreeM.liftM (impl.withTraceAppend _) (next answer)).run).run service = _
   simp [loggedRun]
+
+/-- Erasing the standard trace instrumentation recovers the original stateful oracle game. -/
+theorem map_loggedRun (impl : Handler (StateT S m) p)
+    (id : Client) (program : FreeM p α) (service : S) :
+    (fun out => (out.1.1, out.2)) <$> loggedRun impl id program service =
+      (FreeM.liftM impl program).run service := by
+  have h := congrArg (fun action : StateT S m α => action.run service)
+    (Handler.fst_map_run_liftM_withTraceAppend impl
+      (fun a answer => ([⟨id, ⟨a, answer⟩⟩] :
+        List (Interface.RoutedPacket p Client))) program)
+  simpa [loggedRun] using h
+
+end
+
+variable [DecidableEq Client] [DecidableEq p.A]
+  {m : Type → Type} [Monad m] [LawfulMonad m]
 
 /-- A returned client and an empty queue remain fixed through all further serial rounds. -/
 theorem run_serialSchedule_return (impl : Handler (StateT S m) p) (id : Client)
@@ -139,7 +156,6 @@ theorem run_serialSchedule (impl : Handler (StateT S m) p) (id : Client)
   (fun state => ((result () state, state.transcript), state.service)) <$>
     run impl (serialSchedule () n) (initial program service)
 
-omit [DecidableEq Client] in
 /-- The network's complete transcript and result coincide with traced oracle interpretation. -/
 theorem serialObservation_eq_loggedRun (impl : Handler (StateT S m) p)
     (n : ℕ) (program : FreeM p α) (hbound : FreeM.IsTotalRollBound program n)
@@ -149,19 +165,6 @@ theorem serialObservation_eq_loggedRun (impl : Handler (StateT S m) p)
   rw [serialObservation, run_serialSchedule impl () n program hbound _ rfl rfl]
   simp [initial, result, bind_pure_comp, ← FreeM.pure_eq_pure]
 
-omit [DecidableEq Client] [DecidableEq p.A] in
-/-- Erasing the standard trace instrumentation recovers the original stateful oracle game. -/
-theorem map_loggedRun (impl : Handler (StateT S m) p)
-    (id : Client) (program : FreeM p α) (service : S) :
-    (fun out => (out.1.1, out.2)) <$> loggedRun impl id program service =
-      (FreeM.liftM impl program).run service := by
-  have h := congrArg (fun action : StateT S m α => action.run service)
-    (Handler.fst_map_run_liftM_withTraceAppend impl
-      (fun a answer => ([⟨id, ⟨a, answer⟩⟩] :
-        List (Interface.RoutedPacket p Client))) program)
-  simpa [loggedRun] using h
-
-omit [DecidableEq Client] in
 /-- The result and private state of a completed FIFO run are those of the original oracle game. -/
 theorem map_serialObservation (impl : Handler (StateT S m) p)
     (n : ℕ) (program : FreeM p α) (hbound : FreeM.IsTotalRollBound program n)

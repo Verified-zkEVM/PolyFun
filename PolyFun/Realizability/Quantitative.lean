@@ -398,7 +398,130 @@ end ExecutionCost
 namespace DynSystem.DynComputation
 
 variable {p : PFunctor.{u, u}} {α β : Type u}
-  {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
+
+/-! ## Resolution under an answer relation -/
+
+/-- Every answer branch allowed by `allows` returns within `k` visible queries.
+
+This is the contract-relative analogue of `DynComputation.ResolvesIn`. Disallowed typed answers
+remain part of the underlying interface syntax, but they are not quantified over by this bound. -/
+def ResolvesInUnder (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) : ℕ → M.State → Prop
+  | 0, state => match M.view state with
+    | Sum.inl _ => True
+    | Sum.inr _ => False
+  | k + 1, state => match M.view state with
+    | Sum.inl _ => True
+    | Sum.inr ⟨position, next⟩ =>
+        ∀ direction, allows position direction → M.ResolvesInUnder allows k (next direction)
+
+/-- At budget zero, relation-restricted resolution is exactly immediate return. -/
+theorem resolvesInUnder_zero (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) (state : M.State) :
+    M.ResolvesInUnder allows 0 state ↔ ∃ value, M.view state = Sum.inl value := by
+  cases hview : M.view state <;> simp [ResolvesInUnder, hview]
+
+/-- A returning state resolves under every answer relation and every budget. -/
+@[simp] theorem resolvesInUnder_return (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) (k : ℕ) (state : M.State) (value : β)
+    (hview : M.view state = Sum.inl value) : M.ResolvesInUnder allows k state := by
+  cases k <;> simp [ResolvesInUnder, hview]
+
+/-- A query cannot resolve with zero remaining queries, even under a restrictive relation. -/
+theorem not_resolvesInUnder_query_zero (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) (state : M.State) (position : p.A)
+    (next : p.B position → M.State) (hview : M.view state = Sum.inr ⟨position, next⟩) :
+    ¬M.ResolvesInUnder allows 0 state := by
+  simp [ResolvesInUnder, hview]
+
+/-- Unfold relation-restricted resolution at a querying state. -/
+theorem resolvesInUnder_query_succ_iff (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) (k : ℕ) (state : M.State)
+    (position : p.A) (next : p.B position → M.State)
+    (hview : M.view state = Sum.inr ⟨position, next⟩) :
+    M.ResolvesInUnder allows (k + 1) state ↔
+      ∀ direction, allows position direction →
+        M.ResolvesInUnder allows k (next direction) := by
+  simp [ResolvesInUnder, hview]
+
+/-- Relation-restricted resolution is monotone in the available query budget. -/
+theorem ResolvesInUnder.mono {M : DynComputation.{u} p α β}
+    {allows : ∀ position, p.B position → Prop} {j k : ℕ} {state : M.State}
+    (h : M.ResolvesInUnder allows j state) (hjk : j ≤ k) :
+    M.ResolvesInUnder allows k state := by
+  induction j generalizing k state with
+  | zero =>
+      obtain ⟨value, hview⟩ := (M.resolvesInUnder_zero allows state).mp h
+      exact M.resolvesInUnder_return allows k state value hview
+  | succ j ih =>
+      obtain ⟨k, rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
+      cases hview : M.view state with
+      | inl value => exact M.resolvesInUnder_return allows _ state value hview
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          rw [M.resolvesInUnder_query_succ_iff allows j state position next hview] at h
+          rw [M.resolvesInUnder_query_succ_iff allows k state position next hview]
+          exact fun direction hAllows ↦ ih (h direction hAllows) (by omega)
+
+/-- Restricting the set of admitted answers preserves relation-restricted resolution. -/
+theorem ResolvesInUnder.antitone {M : DynComputation.{u} p α β}
+    {allows allows' : ∀ position, p.B position → Prop}
+    (hAllows : ∀ position direction, allows' position direction → allows position direction)
+    {k : ℕ} {state : M.State} (h : M.ResolvesInUnder allows k state) :
+    M.ResolvesInUnder allows' k state := by
+  induction k generalizing state with
+  | zero => simpa [ResolvesInUnder] using h
+  | succ k ih =>
+      cases hview : M.view state with
+      | inl value => exact M.resolvesInUnder_return allows' _ state value hview
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          rw [M.resolvesInUnder_query_succ_iff allows k state position next hview] at h
+          rw [M.resolvesInUnder_query_succ_iff allows' k state position next hview]
+          exact fun direction hAllows' ↦
+            ih (h direction (hAllows position direction hAllows'))
+
+/-- Allowing every typed answer recovers ordinary branchwise resolution. -/
+theorem resolvesInUnder_all_iff (M : DynComputation.{u} p α β)
+    (k : ℕ) (state : M.State) :
+    M.ResolvesInUnder (fun _ _ ↦ True) k state ↔ M.ResolvesIn k state := by
+  induction k generalizing state with
+  | zero =>
+      cases hview : M.view state <;> rfl
+  | succ k ih =>
+      cases hview : M.view state with
+      | inl value => simp [ResolvesInUnder, ResolvesIn, hview]
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          simp only [ResolvesInUnder, ResolvesIn, hview, true_implies]
+          exact forall_congr' fun direction ↦ ih (next direction)
+
+/-- Ordinary branchwise resolution implies resolution under any answer relation: restricting the
+allowed answers only weakens the universal quantification. -/
+theorem resolvesInUnder_of_resolvesIn (M : DynComputation.{u} p α β)
+    (allows : ∀ position, p.B position → Prop) :
+    ∀ (k : ℕ) (state : M.State), M.ResolvesIn k state → M.ResolvesInUnder allows k state := by
+  intro k
+  induction k with
+  | zero =>
+      intro state h
+      rw [resolvesInUnder_zero]
+      cases hview : M.view state with
+      | inl value => exact ⟨value, rfl⟩
+      | inr query => simp [ResolvesIn, hview] at h
+  | succ k ih =>
+      intro state h
+      cases hview : M.view state with
+      | inl value => simp [ResolvesInUnder, hview]
+      | inr query =>
+          rcases query with ⟨position, next⟩
+          simp only [ResolvesInUnder, hview]
+          intro direction _
+          have h' := h
+          simp only [ResolvesIn, hview] at h'
+          exact ih _ (h' direction)
+
+variable {C : StepClass.{u, v}} [C.HasProd] [C.HasSum] [C.HasOption]
   [DecidableEq p.A] (Q : QuantitativeStepClass.{u, v, w} C)
   (bd : Boundary C p α β)
 
@@ -788,142 +911,6 @@ remains the syntactic length of the execution prefix. -/
     (trace : ExecutionTrace R (R.machine.init input) finish) :
     (R.executionCost input trace).queries = trace.length := by
   simp [executionCost]
-
-end QuantitativeRealization
-
-/-! ## Resolution under an answer relation -/
-
-/-- Every answer branch allowed by `allows` returns within `k` visible queries.
-
-This is the contract-relative analogue of `DynComputation.ResolvesIn`. Disallowed typed answers
-remain part of the underlying interface syntax, but they are not quantified over by this bound. -/
-def ResolvesInUnder (M : DynComputation.{u} p α β)
-    (allows : ∀ position, p.B position → Prop) : ℕ → M.State → Prop
-  | 0, state => match M.view state with
-    | Sum.inl _ => True
-    | Sum.inr _ => False
-  | k + 1, state => match M.view state with
-    | Sum.inl _ => True
-    | Sum.inr ⟨position, next⟩ =>
-        ∀ direction, allows position direction → M.ResolvesInUnder allows k (next direction)
-
-omit [DecidableEq p.A] in
-/-- At budget zero, relation-restricted resolution is exactly immediate return. -/
-theorem resolvesInUnder_zero (M : DynComputation.{u} p α β)
-    (allows : ∀ position, p.B position → Prop) (state : M.State) :
-    M.ResolvesInUnder allows 0 state ↔ ∃ value, M.view state = Sum.inl value := by
-  cases hview : M.view state <;> simp [ResolvesInUnder, hview]
-
-omit [DecidableEq p.A] in
-/-- A returning state resolves under every answer relation and every budget. -/
-@[simp] theorem resolvesInUnder_return (M : DynComputation.{u} p α β)
-    (allows : ∀ position, p.B position → Prop) (k : ℕ) (state : M.State) (value : β)
-    (hview : M.view state = Sum.inl value) : M.ResolvesInUnder allows k state := by
-  cases k <;> simp [ResolvesInUnder, hview]
-
-omit [DecidableEq p.A] in
-/-- A query cannot resolve with zero remaining queries, even under a restrictive relation. -/
-theorem not_resolvesInUnder_query_zero (M : DynComputation.{u} p α β)
-    (allows : ∀ position, p.B position → Prop) (state : M.State) (position : p.A)
-    (next : p.B position → M.State) (hview : M.view state = Sum.inr ⟨position, next⟩) :
-    ¬M.ResolvesInUnder allows 0 state := by
-  simp [ResolvesInUnder, hview]
-
-omit [DecidableEq p.A] in
-/-- Unfold relation-restricted resolution at a querying state. -/
-theorem resolvesInUnder_query_succ_iff (M : DynComputation.{u} p α β)
-    (allows : ∀ position, p.B position → Prop) (k : ℕ) (state : M.State)
-    (position : p.A) (next : p.B position → M.State)
-    (hview : M.view state = Sum.inr ⟨position, next⟩) :
-    M.ResolvesInUnder allows (k + 1) state ↔
-      ∀ direction, allows position direction →
-        M.ResolvesInUnder allows k (next direction) := by
-  simp [ResolvesInUnder, hview]
-
-omit [DecidableEq p.A] in
-/-- Relation-restricted resolution is monotone in the available query budget. -/
-theorem ResolvesInUnder.mono {M : DynComputation.{u} p α β}
-    {allows : ∀ position, p.B position → Prop} {j k : ℕ} {state : M.State}
-    (h : M.ResolvesInUnder allows j state) (hjk : j ≤ k) :
-    M.ResolvesInUnder allows k state := by
-  induction j generalizing k state with
-  | zero =>
-      obtain ⟨value, hview⟩ := (M.resolvesInUnder_zero allows state).mp h
-      exact M.resolvesInUnder_return allows k state value hview
-  | succ j ih =>
-      obtain ⟨k, rfl⟩ : ∃ k', k = k' + 1 := ⟨k - 1, by omega⟩
-      cases hview : M.view state with
-      | inl value => exact M.resolvesInUnder_return allows _ state value hview
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          rw [M.resolvesInUnder_query_succ_iff allows j state position next hview] at h
-          rw [M.resolvesInUnder_query_succ_iff allows k state position next hview]
-          exact fun direction hAllows ↦ ih (h direction hAllows) (by omega)
-
-omit [DecidableEq p.A] in
-/-- Restricting the set of admitted answers preserves relation-restricted resolution. -/
-theorem ResolvesInUnder.antitone {M : DynComputation.{u} p α β}
-    {allows allows' : ∀ position, p.B position → Prop}
-    (hAllows : ∀ position direction, allows' position direction → allows position direction)
-    {k : ℕ} {state : M.State} (h : M.ResolvesInUnder allows k state) :
-    M.ResolvesInUnder allows' k state := by
-  induction k generalizing state with
-  | zero => simpa [ResolvesInUnder] using h
-  | succ k ih =>
-      cases hview : M.view state with
-      | inl value => exact M.resolvesInUnder_return allows' _ state value hview
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          rw [M.resolvesInUnder_query_succ_iff allows k state position next hview] at h
-          rw [M.resolvesInUnder_query_succ_iff allows' k state position next hview]
-          exact fun direction hAllows' ↦
-            ih (h direction (hAllows position direction hAllows'))
-
-omit [DecidableEq p.A] in
-/-- Allowing every typed answer recovers ordinary branchwise resolution. -/
-theorem resolvesInUnder_all_iff (M : DynComputation.{u} p α β)
-    (k : ℕ) (state : M.State) :
-    M.ResolvesInUnder (fun _ _ ↦ True) k state ↔ M.ResolvesIn k state := by
-  induction k generalizing state with
-  | zero =>
-      cases hview : M.view state <;> rfl
-  | succ k ih =>
-      cases hview : M.view state with
-      | inl value => simp [ResolvesInUnder, ResolvesIn, hview]
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          simp only [ResolvesInUnder, ResolvesIn, hview, true_implies]
-          exact forall_congr' fun direction ↦ ih (next direction)
-
-omit [DecidableEq p.A] in
-/-- Ordinary branchwise resolution implies resolution under any answer relation: restricting the
-allowed answers only weakens the universal quantification. -/
-theorem resolvesInUnder_of_resolvesIn (M : DynComputation.{u} p α β)
-    (allows : ∀ position, p.B position → Prop) :
-    ∀ (k : ℕ) (state : M.State), M.ResolvesIn k state → M.ResolvesInUnder allows k state := by
-  intro k
-  induction k with
-  | zero =>
-      intro state h
-      rw [resolvesInUnder_zero]
-      cases hview : M.view state with
-      | inl value => exact ⟨value, rfl⟩
-      | inr query => simp [ResolvesIn, hview] at h
-  | succ k ih =>
-      intro state h
-      cases hview : M.view state with
-      | inl value => simp [ResolvesInUnder, hview]
-      | inr query =>
-          rcases query with ⟨position, next⟩
-          simp only [ResolvesInUnder, hview]
-          intro direction _
-          have h' := h
-          simp only [ResolvesIn, hview] at h'
-          exact ih _ (h' direction)
-
-namespace QuantitativeRealization
-
-variable {Q bd}
 
 /-! ## Syntactic progress under an answer relation -/
 
