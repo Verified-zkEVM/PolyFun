@@ -7,7 +7,6 @@ module
 
 public import PolyFun.PFunctor.Dynamical.Run
 public import PolyFun.PFunctor.Dynamical.Simulation
-import Batteries.Tactic.Lint
 
 /-!
 # Forward simulation and safety refinement between dynamical systems

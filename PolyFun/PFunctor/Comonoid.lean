@@ -8,7 +8,6 @@ module
 public import PolyFun.PFunctor.Lens.Composite
 public import PolyFun.PFunctor.Lens.State
 public import Mathlib.CategoryTheory.Category.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # Comonoids in the composition-monoidal category
