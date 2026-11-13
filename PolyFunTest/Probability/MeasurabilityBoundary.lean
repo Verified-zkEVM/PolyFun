@@ -15,6 +15,9 @@ A two-point answer space with only trivial measurable sets cannot reveal its hid
 discrete output. Every individual continuation is a Dirac probability measure, but the family
 of continuations is not almost everywhere measurable. The direct fold assigns zero measure to
 that invalid composition. A constant continuation over the same interface remains lossless.
+
+The mass that `reveal` loses is therefore not the probability of failure. Mapping its output to a
+constant gives that constant continuation, whose denotation is a Dirac probability measure.
 -/
 
 public section
@@ -93,5 +96,10 @@ theorem constant_continuation_lossless :
   rw [FreeM.denote_liftBind (P := coarseSpec) _ _ measurable_const.aemeasurable]
   simp only [FreeM.denote_pure, Measure.bind_const,
     (AnswerMeasure.isProbabilityMeasure (P := coarseSpec) ()).measure_univ, one_smul]
+
+/-- Erasing the hidden bit restores the mass that the fold of `reveal` loses. -/
+theorem denote_map_const_reveal :
+    FreeM.denote (FreeM.map (fun _ => true) reveal) = Measure.dirac true :=
+  constant_continuation_lossless
 
 end PolyFunTest.Probability.MeasurabilityBoundary

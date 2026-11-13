@@ -23,9 +23,13 @@ the measure modules supply measure-valued instances of those parameters.
   `Mathlib.Probability.ProbabilityMassFunction.Constructions`, whose import closure brings in most
   of Mathlib's analysis.
 - **Subprobability for failure.** A computation that may fail to return denotes a measure of total
-  mass at most one (`MeasureTheory.IsSubprobabilityMeasure`). The missing mass is the probability
-  of failure, so failure needs no `Option` wrapper. Mathlib's `IsZeroOrProbabilityMeasure` is a
-  different condition: it allows only total mass `0` or `1`.
+  mass at most one (`MeasureTheory.IsSubprobabilityMeasure`), so failure needs no `Option` wrapper.
+  Missing mass is not always failure. The measure fold also loses mass at a step whose continuation
+  is not almost-everywhere measurable, as the `reveal` program in
+  [`MeasurabilityBoundary`](../../PolyFunTest/Probability/MeasurabilityBoundary.lean) shows. Over
+  discrete answers every continuation is measurable, and the missing mass is the probability of
+  failure. Mathlib's `IsZeroOrProbabilityMeasure` is a different condition: it allows only total
+  mass `0` or `1`.
 - **Explicit measurable spaces.** Theorems state the measurability hypotheses they use. Mathlib's
   `Measure.map` and `Measure.bind` return a junk value for a non-measurable function, so lemmas
   about them carry measurability or almost-everywhere measurability side conditions.
@@ -103,10 +107,10 @@ the rest of `ToCslib`, they import no PolyFun module.
   (`KernelHandler.ofMeasure`), whose run is the measure fold (`runKernel_ofMeasure`).
 - **Possible outputs and positive mass**
   ([`Free/Measure/Support`](../../PolyFun/PFunctor/Free/Measure/Support.lean)).
-  Over discrete answers, every result of positive mass is in PolyFun's `MonadAttach` support of
-  the program, and under answer measures of full support the two sets agree
-  (`support_eq_setOf_measureFold_ne_zero`). Without full support, reachability and positive
-  probability differ.
+  Over discrete answers and a result type with measurable singletons, every result of positive
+  mass is in PolyFun's `MonadAttach` support of the program, and under answer measures of full
+  support the two sets agree (`support_eq_setOf_measureFold_ne_zero`). Without full support, the
+  two sets can differ.
 - **Path measures**
   ([`Free/Measure/Path`](../../PolyFun/PFunctor/Free/Measure/Path.lean)).
   `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path

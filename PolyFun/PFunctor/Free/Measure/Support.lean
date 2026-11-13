@@ -20,8 +20,8 @@ answer of every operation has positive mass, every possible output has positive 
 (`measureFold_singleton_ne_zero_of_mem_support`), so the two sets agree
 (`support_eq_setOf_measureFold_ne_zero`).
 
-Without full support the inclusion is strict: an answer measure may give a reachable answer zero
-mass, so reachability and positive probability stay separate notions.
+Without full support the inclusion can be strict: an answer measure may give a reachable answer
+zero mass, so reachability and positive probability are separate notions.
 -/
 
 @[expose] public section
