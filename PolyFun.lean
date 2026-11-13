@@ -397,6 +397,7 @@ public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Bang
+public import PolyFun.PFunctor.Lens.BangCofree
 public import PolyFun.PFunctor.Lens.BangLE
 public import PolyFun.PFunctor.Lens.BangW
 public import PolyFun.PFunctor.Lens.BangWSeely
