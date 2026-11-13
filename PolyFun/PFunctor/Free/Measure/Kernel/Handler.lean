@@ -27,13 +27,18 @@ relate kernel handlers to PolyFun's other handlers and to the measure fold:
 * `KernelHandler.ofMeasure ν` is the stateless kernel handler of answer measures. Its run is the
   measure fold paired with the unit state (`runKernel_ofMeasure`), so the kernel and measure
   interpretations agree.
+
+Instances record which constructions give Markov or subprobability operation kernels, so instance
+search sees through them to whole programs. `ofFun` is Markov. `ofMeasure` is Markov under
+probability answer measures and a subprobability kernel under subprobability answer measures.
+`comap` keeps both properties of the handler it pulls back.
 -/
 
 @[expose] public section
 
 open MeasureTheory ProbabilityTheory
 
-universe uA uB uS uR uQ
+universe uA uB uS uR uQ uT
 
 namespace PFunctor
 
@@ -51,6 +56,13 @@ noncomputable def comap [∀ b, Countable (Q.B b)] [∀ b, MeasurableSingletonCl
 noncomputable def ofFun (step : (a : P.A) → S → P.B a × S) (hstep : ∀ a, Measurable (step a)) :
     KernelHandler P S :=
   fun a => Kernel.deterministic (step a) (hstep a)
+
+/-- The Dirac kernel handler of a measurable step is Markov. -/
+instance ofFun.instIsMarkovKernel (step : (a : P.A) → S → P.B a × S)
+    (hstep : ∀ a, Measurable (step a)) (a : P.A) :
+    IsMarkovKernel (β := no_index (P.B a × S)) (ofFun step hstep a) := by
+  unfold ofFun
+  infer_instance
 
 end KernelHandler
 
@@ -103,12 +115,29 @@ end FreeM
 
 namespace KernelHandler
 
-variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uQ, uB}} {R : PFunctor.{uQ, uB}} {S : Type uS}
+variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uQ, uB}} {R : PFunctor.{uT, uB}} {S : Type uS}
   [∀ a, MeasurableSpace (P.B a)] [∀ a, MeasurableSpace (Q.B a)] [∀ a, MeasurableSpace (R.B a)]
   [MeasurableSpace S]
   [∀ a, Countable (P.B a)] [∀ a, MeasurableSingletonClass (P.B a)]
   [∀ a, Countable (Q.B a)] [∀ a, MeasurableSingletonClass (Q.B a)]
   [∀ a, Countable (R.B a)] [∀ a, MeasurableSingletonClass (R.B a)]
+
+omit [∀ a, Countable (P.B a)] [∀ a, MeasurableSingletonClass (P.B a)] in
+/-- Pulling a Markov kernel handler back along a free handler gives a Markov kernel handler. -/
+instance comap.instIsMarkovKernel (impl : KernelHandler Q S) [∀ b, IsMarkovKernel (impl b)]
+    (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) :
+    IsMarkovKernel (β := no_index (P.B a × S)) (impl.comap handler a) := by
+  unfold comap
+  infer_instance
+
+omit [∀ a, Countable (P.B a)] [∀ a, MeasurableSingletonClass (P.B a)] in
+/-- Pulling a subprobability kernel handler back along a free handler gives a subprobability
+kernel handler. -/
+instance comap.instIsSubprobabilityKernel (impl : KernelHandler Q S)
+    [∀ b, IsSubprobabilityKernel (impl b)] (handler : (a : P.A) → FreeM Q (P.B a)) (a : P.A) :
+    IsSubprobabilityKernel (β := no_index (P.B a × S)) (impl.comap handler a) := by
+  unfold comap
+  infer_instance
 
 omit [∀ a, Countable (P.B a)] [∀ a, MeasurableSingletonClass (P.B a)] in
 /-- Pulling a kernel handler back along two free handlers in turn is pulling it back along their
@@ -128,9 +157,26 @@ namespace KernelHandler
 
 variable {P : PFunctor.{uA, uB}} [∀ a, MeasurableSpace (P.B a)]
 
-/-- The stateless kernel handler of answer measures. -/
+/-- The stateless kernel handler of answer measures.
+
+The universe of the unit state appears only in the result type, so a use where nothing else fixes
+it needs an explicit universe, as in `KernelHandler.ofMeasure.{_, _, 0} ν`. -/
 noncomputable def ofMeasure (ν : (a : P.A) → Measure (P.B a)) : KernelHandler P PUnit.{uS + 1} :=
   fun a => Kernel.const _ ((ν a).map fun b => (b, PUnit.unit))
+
+/-- Probability answer measures give a Markov kernel handler. -/
+instance ofMeasure.instIsMarkovKernel (ν : (a : P.A) → Measure (P.B a))
+    [∀ a, IsProbabilityMeasure (ν a)] (a : P.A) :
+    IsMarkovKernel (β := no_index (P.B a × PUnit.{uS + 1})) (ofMeasure ν a) := by
+  unfold ofMeasure
+  infer_instance
+
+/-- Subprobability answer measures give a subprobability kernel handler. -/
+instance ofMeasure.instIsSubprobabilityKernel (ν : (a : P.A) → Measure (P.B a))
+    [∀ a, IsSubprobabilityMeasure (ν a)] (a : P.A) :
+    IsSubprobabilityKernel (β := no_index (P.B a × PUnit.{uS + 1})) (ofMeasure ν a) := by
+  unfold ofMeasure
+  infer_instance
 
 end KernelHandler
 
