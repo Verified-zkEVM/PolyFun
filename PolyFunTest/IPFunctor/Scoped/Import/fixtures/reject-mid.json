@@ -1,0 +1,24 @@
+[
+  {
+    "name": "first",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"var": 0}}}
+  },
+  {
+    "name": "second",
+    "deps": ["first"],
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"app": [{"var": 1}, {"var": 0}]}}}
+  },
+  {
+    "name": "third",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"lit": 3}}},
+    "compareWith": {"lam": {"arg": "nat", "body": {"lit": 4}}}
+  },
+  {
+    "name": "fourth",
+    "scheme": "nat",
+    "body": {"lit": 7}
+  }
+]

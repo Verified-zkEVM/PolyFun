@@ -106,6 +106,37 @@ This is the semantic counterpart of a constructor argument binding one variable.
 @[simp] theorem bindOne_apply {a : S} {E : Type w} [OmegaCompletePartialOrder E]
     (f : Env V [a] →𝒄 E) (x : V a) : bindOne f x = f (cons x empty) := rfl
 
+/-- The value of an abstraction whose body means `f`: the map `x ↦ f (single x)`, which is
+`bindOne f`. It is written `ContinuousHom.ofFun F h`, with `F` bound by `let` and `h` ascribed with
+`id` at type `ωScottContinuous F`.
+
+This form keeps the kernel's equality checks linear in the nesting of abstractions. The kernel
+compares two maps `ofFun F h` and `ofFun G k` by the types of `h` and `k`, then by `F` and `G`.
+When each proof's type names its own function, the second comparison repeats the first, and the
+kernel reuses its result. So an equation whose right side writes each map in the same form,
+`ofFun G (id (α := ωScottContinuous G) k)`, checks in time linear in the nesting depth. With
+`bindOne f`, a composite that the kernel unfolds to a structure, the time grows exponentially with
+the depth. This is measured behavior of Lean's kernel, which no specification fixes. -/
+@[expose] noncomputable def abstraction {a : S} {E : Type w} [OmegaCompletePartialOrder E]
+    (f : Env V [a] →𝒄 E) : V a →𝒄 E :=
+  let F : V a → E := fun x => f (single x)
+  .ofFun F (id (α := ωScottContinuous F) (f.ωScottContinuous.comp
+    (ωScottContinuous_single ωScottContinuous.id)))
+
+theorem abstraction_eq_bindOne {a : S} {E : Type w} [OmegaCompletePartialOrder E]
+    (f : Env V [a] →𝒄 E) : abstraction f = bindOne f := rfl
+
+@[simp] theorem abstraction_apply {a : S} {E : Type w} [OmegaCompletePartialOrder E]
+    (f : Env V [a] →𝒄 E) (x : V a) : abstraction f x = f (cons x empty) := rfl
+
+/-- `abstraction`, continuous in the body's meaning. -/
+@[expose] noncomputable def abstractionContinuous {a : S} {E : Type w}
+    [OmegaCompletePartialOrder E] : (Env V [a] →𝒄 E) →𝒄 (V a →𝒄 E) :=
+  .ofFun abstraction (bindOne (V := V) (a := a) (E := E)).ωScottContinuous
+
+@[simp] theorem abstractionContinuous_apply {a : S} {E : Type w} [OmegaCompletePartialOrder E]
+    (f : Env V [a] →𝒄 E) : abstractionContinuous f = abstraction f := rfl
+
 /-- Appending a finite block of bindings is jointly continuous. -/
 @[expose] noncomputable def appendContinuous {Ξ : List S} :
     (Env V Ξ × Env V Γ) →𝒄 Env V (Ξ ++ Γ) := .ofFun (fun p => append p.1 p.2) (by
@@ -120,6 +151,20 @@ This is the semantic counterpart of a constructor argument binding one variable.
       · have h : ωScottContinuous (fun p : Env V (a :: Ξ) × Env V Γ =>
             (((fun b v => p.1 b (.succ v)) : Env V Ξ), p.2)) := by fun_prop
         exact ih.comp h)
+
+/-- Appending two blocks of bindings is continuous in both. -/
+@[fun_prop] theorem ωScottContinuous_append {α : Type w} [OmegaCompletePartialOrder α]
+    {Ξ : List S} {f : α → Env V Ξ} {g : α → Env V Γ} (hf : ωScottContinuous f)
+    (hg : ωScottContinuous g) : ωScottContinuous fun t => append (f t) (g t) :=
+  appendContinuous.ωScottContinuous.comp (Prod.ωScottContinuous.prodMk hf hg)
+
+/-- Transport along an equation of contexts is continuous. -/
+@[expose] noncomputable def castCtxContinuous {Γ' : List S} (h : Γ = Γ') :
+    Env V Γ →𝒄 Env V Γ' :=
+  .ofFun (castCtx h) (by subst h; exact ωScottContinuous.id)
+
+@[simp] theorem castCtxContinuous_apply {Γ' : List S} (h : Γ = Γ') (η : Env V Γ) :
+    castCtxContinuous h η = castCtx h η := rfl
 
 /-! ## Positional maps -/
 

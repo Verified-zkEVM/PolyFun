@@ -10,6 +10,7 @@ public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Domain.Pointed
 public import PolyFun.Control.Domain.PrefixRecursion
 public import PolyFun.Control.Domain.Result
+public import PolyFun.Control.Domain.ResultRel
 public import PolyFun.Control.LTS.Trace
 public import PolyFun.Control.Lawful.MonadControl
 public import PolyFun.Control.Lawful.MonadFunctor
@@ -71,9 +72,12 @@ public import PolyFun.IPFunctor.Notation
 public import PolyFun.IPFunctor.Notation.Common
 public import PolyFun.IPFunctor.Notation.Deterministic
 public import PolyFun.IPFunctor.Notation.Indexed
+public import PolyFun.IPFunctor.Scoped.Adequacy
 public import PolyFun.IPFunctor.Scoped.Basic
+public import PolyFun.IPFunctor.Scoped.Certificate
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
+public import PolyFun.IPFunctor.Scoped.DomainInterpretation
 public import PolyFun.IPFunctor.Scoped.DomainRelation
 public import PolyFun.IPFunctor.Scoped.EnvRelation
 public import PolyFun.IPFunctor.Scoped.Family
@@ -82,10 +86,15 @@ public import PolyFun.IPFunctor.Scoped.FamilyMapCongr
 public import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
 public import PolyFun.IPFunctor.Scoped.FamilySize
 public import PolyFun.IPFunctor.Scoped.FamilySubstitution
+public import PolyFun.IPFunctor.Scoped.Import.Driver
+public import PolyFun.IPFunctor.Scoped.Import.Quote
+public import PolyFun.IPFunctor.Scoped.Import.Submit
 public import PolyFun.IPFunctor.Scoped.Interpretation
 public import PolyFun.IPFunctor.Scoped.Reindex
 public import PolyFun.IPFunctor.Scoped.Renaming
 public import PolyFun.IPFunctor.Scoped.Size
+public import PolyFun.IPFunctor.Scoped.Stacked
+public import PolyFun.IPFunctor.Scoped.StackedInterpretation
 public import PolyFun.IPFunctor.Scoped.Substitution
 public import PolyFun.IPFunctor.Scoped.Transport
 public import PolyFun.ITree.Basic
@@ -250,6 +259,7 @@ public import PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
 public import PolyFun.Logic.HEq
+public import PolyFun.Logic.KernelRfl
 public import PolyFun.PFunctor.Adjunctions
 public import PolyFun.PFunctor.Basic
 public import PolyFun.PFunctor.Bound
@@ -378,6 +388,7 @@ public import PolyFun.PFunctor.Handler.Instrumentation.Free
 public import PolyFun.PFunctor.Handler.Meter
 public import PolyFun.PFunctor.Handler.Normalization
 public import PolyFun.PFunctor.Handler.Normalization.Attr
+public import PolyFun.PFunctor.Handler.Settled
 public import PolyFun.PFunctor.Handler.StateLens
 public import PolyFun.PFunctor.Handler.Stateful
 public import PolyFun.PFunctor.Handler.Stateful.Charge
@@ -387,7 +398,9 @@ public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Bang
+public import PolyFun.PFunctor.Lens.BangLE
 public import PolyFun.PFunctor.Lens.BangW
+public import PolyFun.PFunctor.Lens.BangWSeely
 public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence
