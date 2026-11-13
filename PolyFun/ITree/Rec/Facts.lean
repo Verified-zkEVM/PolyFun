@@ -50,7 +50,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   congr 1
   funext b
   exact b.elim
@@ -64,7 +64,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 @[simp] theorem interpMrec_query_recursive (d : D.A)
@@ -77,7 +77,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 @[simp] theorem interpMrec_query_external (e : E.A)
@@ -90,7 +90,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpMrec, shape'_corec_eq _ _ hstep]
   unfold ITree.query
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 /-- Recursive interpretation is a monad morphism: it commutes with bind

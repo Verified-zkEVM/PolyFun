@@ -41,7 +41,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.pure
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   congr 1
   funext b
   exact b.elim
@@ -55,7 +55,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 @[simp] theorem interpState_get (s : σ)
@@ -71,7 +71,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 @[simp] theorem interpState_put (s s' : σ)
@@ -89,7 +89,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.step
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 @[simp] theorem interpState_query_external (s : σ) (e : E.A)
@@ -105,7 +105,7 @@ attribute [local implicit_reducible] Sum.elim
   apply eq_of_shape'_eq
   rw [interpState, shape'_corec_eq _ _ hstep]
   unfold ITree.query
-  rw [ITree.shape'_mk]
+  rw [ITree.shape'_ofShape]
   rfl
 
 /-- State interpretation is the canonical state-transformer monad morphism. -/
