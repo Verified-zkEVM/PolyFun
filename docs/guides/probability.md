@@ -149,8 +149,10 @@ the rest of `ToCslib`, they import no PolyFun module.
   [`Monad/Measure/Failure`](../../PolyFun/Control/Monad/Measure/Failure.lean),
   [`Monad/Measure/Lossless`](../../PolyFun/Control/Monad/Measure/Lossless.lean)).
   `EvalDistSemantics m` interprets each computation `mx : m α` as a subprobability measure
-  `evalDist mx` on its successful outputs, in every measurable structure on `α`. The missing mass
-  is the probability of failure or divergence. Three `Prop` mixins state laws:
+  `evalDist mx` on its successful outputs, in every measurable structure on `α`. Under lawful
+  semantics the missing mass is the probability of failure or divergence. Without the bind law it
+  can also include mass lost at a continuation that is not measurable. Three `Prop` mixins state
+  laws:
   `LawfulPureEvalDistSemantics` sends `pure` to a Dirac measure, `LawfulEvalDistSemantics` sends a
   bind with a measurable continuation to the Giry bind, and `LawfulFailureEvalDistSemantics` sends
   `failure` to zero. A fourth, `LosslessEvalDistSemantics`, states that every computation denotes a
@@ -163,11 +165,15 @@ the rest of `ToCslib`, they import no PolyFun module.
   [`Monad/Measure/EvalDistEq`](../../PolyFun/Control/Monad/Measure/EvalDistEq.lean)).
   `prEvent mx` is the mass that `mx : m Prop` puts on `True`, so an event `p` of `mx : m α` has
   probability `prEvent (p <$> mx)`. The measure modules define no notation, and state the event
-  laws in this form. `prFail mx` is the defect of the output measure. It is read on the image of the
-  outputs in `PUnit`, so it needs no measurable structure and is defined at every universe. Under
-  lawful semantics it is the defect in every measurable structure (`prFail_eq_defect`), and a
-  lossless semantics never fails (`prFail_eq_zero_of_lossless`). `evalDistWithFailure` completes
-  the output measure to a probability measure on `Option α` that puts `prFail` on `none`.
+  laws in this form. `prFail mx` is the probability of failure or divergence: the defect of the
+  output measure with the outputs erased to `PUnit`, so it needs no measurable structure and is
+  defined at every universe. Under lawful semantics it is the defect in every measurable structure
+  (`prFail_eq_defect`), and a lossless semantics never fails (`prFail_eq_zero_of_lossless`).
+  `evalDistWithFailure` completes the output measure to a probability measure on `Option α` that
+  puts the missing mass on `none`. Under lawful semantics that mass is `prFail`
+  (`evalDistWithFailure_none_eq_prFail`). Otherwise the two can differ: the free program `reveal`
+  in [`MeasurabilityBoundary`](../../PolyFunTest/Probability/MeasurabilityBoundary.lean) has
+  `prFail` zero and puts mass one on `none`.
   `EvalDistEq mx my` says that two computations, possibly in different monads, give every event the
   same probability. Under lawful semantics it is equality of the output measures in the discrete
   structure (`evalDistEq_iff_evalDist_eq`), and maps and binds preserve it (`EvalDistEq.map`,

@@ -18,9 +18,12 @@ event `p` of the outputs of `mx : m α` is the computation `p <$> mx`, so its pr
 `prEvent (p <$> mx)`; the event laws below are stated in this form. Downstream notation for events
 of `do` sequences, such as VCVio's `Pr{…}[…]`, elaborates to it.
 
-`prFail mx` is the probability that `mx` fails or does not terminate: the defect of its
-successful-output measure, the mass that never reached a value. It is defined at every universe
-and needs no measurable structure on the outputs.
+`prFail mx` is the probability that `mx` fails or does not terminate. It is the defect of the
+successful-output measure of `mx` with its outputs erased to `PUnit`, so it is defined at every
+universe and needs no measurable structure on the outputs. Under lawful semantics it is the defect
+of the output measure itself (`prFail_eq_defect`). Without the bind law the output measure can lose
+more mass: the measure fold of free programs also loses mass at a call whose continuation is not
+almost everywhere measurable, and erasing the outputs restores that mass.
 
 The equations below identify an event with the measure of a set when the event is measurable.
 -/
@@ -48,9 +51,9 @@ theorem evalDist_singleton_true {m : Type → Type v} [EvalDistSemantics m] (mx 
     evalDist mx {True} = prEvent mx := rfl
 
 /-- The probability that a computation fails or does not terminate: the defect of its
-successful-output measure. The defect is read on the image of the outputs in `PUnit`, so it needs
-no measurable structure on the outputs. Under lawful semantics it is the defect of the output
-measure in every measurable structure (`prFail_eq_defect`). -/
+successful-output measure with the outputs erased to `PUnit`. It needs no measurable structure on
+the outputs. Under lawful semantics it is the defect of the output measure in every measurable
+structure (`prFail_eq_defect`); in general that defect can be larger. -/
 @[expose] noncomputable def prFail {m : Type u → Type v} [Monad m] [EvalDistSemantics m]
     {α : Type u} (mx : m α) : ℝ≥0∞ :=
   (evalDist ((fun _ ↦ PUnit.unit) <$> mx)).defect
@@ -485,7 +488,8 @@ theorem prFail_eq_defect [LawfulMonad m] [LawfulEvalDistSemantics m] [Measurable
   rw [prFail, evalDist_map mx measurable_const, Measure.defect, Measure.defect,
     Measure.map_apply measurable_const MeasurableSet.univ, Set.preimage_univ]
 
-/-- The failure probability is the mass missing from the output measure. -/
+/-- Under lawful semantics, the failure probability is the mass missing from the output
+measure. -/
 theorem prFail_eq_one_sub_evalDist_univ [LawfulMonad m] [LawfulEvalDistSemantics m]
     [MeasurableSpace α] (mx : m α) : prFail mx = 1 - evalDist mx Set.univ :=
   prFail_eq_defect mx
