@@ -100,13 +100,19 @@ behavior match the consumer.
 
 `ToCslib/Data/Fin/Cases.lean` proves compiler simplifications for core's
 `Fin.cases` and Mathlib's `Fin.cons`/`Matrix.vecCons` wrappers. At the pinned
-v4.35 release candidate, strict evaluation of the induction-based definition
-computes discarded recursive results; nested vector lookup compounds that
-work. The replacement selects the underlying natural-number case directly,
+v4.35.0, strict evaluation of the induction-based definition computes
+discarded recursive results; nested vector lookup compounds that work, so
+compiled code reads entry `i` of a chain of `Fin.cons` in time exponential in
+`i`. The replacement selects the underlying natural-number case directly,
 with a kernel-checked equality and unchanged logical computation rules.
 The wrapper equations matter because imported wrappers can be inlined after
-the compiler simplification pass. Remove these staging lemmas when the owning
-core and Mathlib definitions acquire equivalent compiled implementations.
+the compiler simplification pass. A compiler simplification applies only to
+definitions compiled in modules that import it, so a module that compiles
+nested chains imports `Cases.lean`, as `MOfFn.lean` does.
+[`PolyFunTest/ToCslib/FinCases.lean`](../../PolyFunTest/ToCslib/FinCases.lean)
+reads the last entry of 64-entry chains in compiled code. Remove these staging
+lemmas when the owning core and Mathlib definitions acquire equivalent compiled
+implementations.
 
 `ToCslib/Data/Fin/MOfFn.lean` defines `Fin.mOfFn`, which runs a `Fin n`-indexed
 family of monadic computations in order and collects the results as a function.
@@ -242,6 +248,7 @@ removal conditions. They do not require exposing the free-monoid carrier.
 
 | Area | Next check and acceptance condition |
 |---|---|
+| Kernel-only `rfl` | [`KernelRfl.lean`](../../PolyFun/Logic/KernelRfl.lean) adds `kernel_rfl`, built like core's `decide +kernel` but for equations without a `Decidable` instance. Propose it to core as `rfl +kernel`, with the restore after a kernel failure; remove the local tactic at the pin that ships it. |
 | Dependent events and request-network transport | Test an owning constructor/eliminator API against the generator reproducer; remove each override only after dependent lookup, supply, and transport consumers compile. |
 | Cofree polynomials, displayed constructions, and pattern-runs-on-matter | Follow an object equality and dependent continuation through public object/lens equations; preserve type-level tensor and unit computation. |
 | Reactive networks and realizability closure | Minimize actual transport/update consumers, retaining coherent representation and admissible-step data. |

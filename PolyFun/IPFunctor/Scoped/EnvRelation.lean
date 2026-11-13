@@ -15,8 +15,10 @@ public import PolyFun.IPFunctor.Scoped.Transport
 independently of the syntax of their sorts, using any family of relations. Binding,
 appending, positional assembly and positional reindexing preserve it, and against a
 mapped context it is the relation at each mapped position. `Pointwise` is the instance
-for values whose types are equal only propositionally. Nothing here assumes an order on
-the values; the continuous facts are in `PolyFun.IPFunctor.Scoped.DomainRelation`.
+for values whose types are equal only propositionally. `LiftRel R` relates two environments
+of one context by a relation indexed by a single sort, which is the form fundamental lemmas
+use. Nothing here assumes an order on the values; the continuous facts are in
+`PolyFun.IPFunctor.Scoped.DomainRelation`.
 -/
 
 public section
@@ -157,6 +159,53 @@ theorem forall₂_ofFin {Ξ : List S} {Ψ : List T} (hl : Ξ.length = Ψ.length)
           (fun i j he => h i.succ j.succ (congrArg (· + 1) he))
       · exact h 0 0 rfl
 
+/-! ## Relations over one context -/
+
+section LiftRel
+
+variable {V' : S → Type z'} {Γ : List S}
+
+/-- Two environments of one context are related when the values at each binding position are
+related at that position's sort. -/
+@[expose] def LiftRel (R : ∀ a, V a → V' a → Prop) (η : Env V Γ) (ζ : Env V' Γ) : Prop :=
+  ∀ a (x : ScopedVar Γ a), R a (η a x) (ζ a x)
+
+/-- The environments of the empty context are related. -/
+theorem liftRel_empty (R : ∀ a, V a → V' a → Prop) :
+    LiftRel R (empty : Env V []) (empty : Env V' []) :=
+  fun _ x => nomatch x
+
+/-- Related fresh bindings extend related environments. -/
+theorem LiftRel.cons {R : ∀ a, V a → V' a → Prop} {η : Env V Γ} {ζ : Env V' Γ}
+    (h : LiftRel R η ζ) {a : S} {x : V a} {y : V' a} (hxy : R a x y) :
+    LiftRel R (cons x η) (cons y ζ) := by
+  intro b v
+  cases v
+  · exact hxy
+  · exact h _ _
+
+/-- Related blocks of fresh bindings extend related environments. -/
+theorem LiftRel.append {R : ∀ a, V a → V' a → Prop} {Ξ : List S} {ξ : Env V Ξ}
+    {ψ : Env V' Ξ} {η : Env V Γ} {ζ : Env V' Γ} (hx : LiftRel R ξ ψ) (he : LiftRel R η ζ) :
+    LiftRel R (append ξ η) (append ψ ζ) := by
+  induction Ξ with
+  | nil => exact he
+  | cons a Ξ ih => exact (ih (fun b y => hx b (.succ y))).cons (hx a .zero)
+
+/-- Transport along an equation of contexts preserves a relation over one context. -/
+theorem LiftRel.castCtx {R : ∀ a, V a → V' a → Prop} {Γ' : List S} (hc : Γ = Γ')
+    {η : Env V Γ} {ζ : Env V' Γ} (h : LiftRel R η ζ) :
+    LiftRel R (Env.castCtx hc η) (Env.castCtx hc ζ) := by
+  subst hc
+  exact h
+
+/-- Relations over one context are monotone in the relation between values. -/
+theorem LiftRel.imp {R R' : ∀ a, V a → V' a → Prop} (hR : ∀ a x y, R a x y → R' a x y)
+    {η : Env V Γ} {ζ : Env V' Γ} (h : LiftRel R η ζ) : LiftRel R' η ζ :=
+  fun a x => hR a _ _ (h a x)
+
+end LiftRel
+
 /-! ## Values of propositionally equal types -/
 
 /-- Environments agree at every shared binding position, across different sorts and value
@@ -175,5 +224,22 @@ theorem Pointwise.symm {W : T → Type z} {η : Env V Γ} {ζ : Env W Δ} (h : P
 /-- Positional correspondence in one typed context implies equality. -/
 theorem pointwise_eq {η ζ : Env V Γ} (h : Pointwise η ζ) : η = ζ :=
   Forall₂.eq (fun _ _ _ e => eq_of_heq e) h
+
+/-- Reading heterogeneously equal environments at the same binding position gives
+heterogeneously equal values. -/
+theorem apply_heq_of_heq {Γ' : List S} (hΓ : Γ = Γ') {η : Env V Γ} {ζ : Env V Γ'}
+    (h : HEq η ζ) {a b : S} (x : ScopedVar Γ a) (y : ScopedVar Γ' b) (hi : x.index = y.index) :
+    HEq (η a x) (ζ b y) := by
+  subst hΓ
+  cases eq_of_heq h
+  cases ScopedVar.sigma_eq_of_index_eq x y hi
+  rfl
+
+/-- Environments of equal contexts and value families that agree at every binding position
+are heterogeneously equal. -/
+theorem heq_of_pointwise {V' : S → Type z} {Γ' : List S} (hΓ : Γ = Γ') (hV : V = V')
+    {η : Env V Γ} {ζ : Env V' Γ'} (h : Pointwise η ζ) : HEq η ζ := by
+  subst hΓ hV
+  exact heq_of_eq (pointwise_eq h)
 
 end IPFunctor.ScopedSignature.Env

@@ -212,7 +212,8 @@ them with the branch lemmas (`isSilentStep_interleave_left_iff_decoration`,
 
 Ordinary imports do not expose opaque definition bodies. Prove public
 equations in the owning module (where `rfl` may use the body), or use
-`import all` in an internal proof module. Consumers should use those equations;
+`import all` in an internal proof module of the same library; nothing opens an
+external library. Consumers should use those equations;
 expose a definition only when its reduction is part of the intended API.
 `TypeTree.Sampler.interleave_eq` is an equation for an opaque definition, while
 the path re-encodings and nested draws expose their computation rules.
@@ -276,6 +277,17 @@ matching.
 Intrinsic typed reindexing operations such as `Fin.castLE`, `Fin.succ`,
 or established Mathlib combinators are acceptable when they are the
 intended data transformation.
+
+### A large definitional equation: `kernel_rfl`
+
+When `rfl` or `decide` exceeds the elaborator's recursion depth or heartbeats on
+an equation the kernel can reduce, such as the unfolding of a large interpreted
+term, close it with `kernel_rfl`
+([`PolyFun/Logic/KernelRfl.lean`](../../PolyFun/Logic/KernelRfl.lean)). It hands
+`Eq.refl lhs` to the kernel through an auxiliary lemma and reports a rejection at
+the tactic, leaving nothing in the environment. Do not raise `maxRecDepth` or
+`maxHeartbeats` instead. The kernel unfolds only exposed bodies, so an equation
+that needs a hidden body from another module fails here too.
 
 ### Preserve partial proof attempts with `stop`
 

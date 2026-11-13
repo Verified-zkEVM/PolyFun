@@ -36,6 +36,12 @@ changes the signature/re-export boundary only.
 | `Examples/`, `PolyFunParliamentMain.lean`, consumer packages | nothing | everything |
 | `PolyFunTest/` worked examples | `ComplexityBackends` modules; `PolyFun` modules only in the grandfathered `PolyFunTest/Interaction/` examples listed in the script | `PolyFun` elsewhere |
 | `PolyFunTest/ModuleAPI/` canaries | nothing | everything |
+| Every file in the repository | at most the modules the rows above allow | any external library: Lean core, `Std`, Batteries, Mathlib, CSLib or another dependency |
+
+The repository owns none of its dependencies, so nothing here opens their
+bodies. A body that an external library hides is reached through that
+library's public equations, or proved about by its own lemmas; `kernel_rfl`
+fails on it rather than unfolding it.
 
 Staging opens nothing because its modules are meant to be lifted into cslib
 unchanged, and cslib has no access to this repository's bodies. Tutorials, the

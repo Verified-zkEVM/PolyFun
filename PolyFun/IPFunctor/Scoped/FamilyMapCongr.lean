@@ -29,9 +29,9 @@ theorem node_heq {a b : W} {Γ : List (S a)} {Δ : List (S b)}
     {s : S a} {t : S b} {op : σ.Op a s} {op' : σ.Op b t}
     (hw : a = b) (hc : HEq Γ Δ) (hs : HEq s t) (ho : HEq op op')
     (args : (p : σ.Arg op) → σ.Term (σ.world op p)
-      (σ.binders op p ++ Γ.map (σ.reindex op p)) (σ.sort op p))
+      (σ.binders op p ++ (σ.ambient op p).context Γ) (σ.sort op p))
     (args' : (p : σ.Arg op') → σ.Term (σ.world op' p)
-      (σ.binders op' p ++ Δ.map (σ.reindex op' p)) (σ.sort op' p))
+      (σ.binders op' p ++ (σ.ambient op' p).context Δ) (σ.sort op' p))
     (hargs : ∀ p q, HEq p q → HEq (args p) (args' q)) :
     HEq (node op args) (node op' args') := by
   cases hw
