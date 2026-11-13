@@ -8,6 +8,7 @@ module
 
 public import PolyFun.IPFunctor.Scoped.FamilyMap
 public import PolyFun.IPFunctor.Scoped.FamilySubstitution
+import PolyFun.IPFunctor.Scoped.EnvRelation
 
 /-!
 # Substitution through binding-family translations
@@ -155,51 +156,33 @@ theorem Hom.PreservesReindex.preservesSubstitution (h : Hom σ τ M f)
     (A : σ.ReindexAction) (B : τ.ReindexAction) (compatible : h.PreservesReindex A B) :
     h.PreservesSubstitution A B := by
   intro w z μ Γ Δ θ a op p
-  let r := σ.reindex op (h.arg μ op p)
-  let g := f (h.next μ op p)
-  let k := τ.reindex (h.op μ op) p
-  have hs : g ∘ r = k ∘ f μ := funext (h.reindex μ op p)
-  have hc (Γ : List (S w)) : (Γ.map r).map g = (Γ.map (f μ)).map k := by
-    simp only [List.map_map, hs]
-  have hl : Substitution.cast List.map_map rfl
-      (Substitution.map h (h.next μ op p) (θ.reindex A op (h.arg μ op p))) =
-      ScopedSignature.Env.reindex (g ∘ r)
-        fun _ x => (A op (h.arg μ op p) (θ _ x)).map h (h.next μ op p) := by
-    funext b x
-    induction x using ScopedVar.map_inductionOn (g ∘ r) with
-    | h b x =>
-        change Substitution.cast _ _ _ (g (r b)) _ = _
-        rw [← ScopedVar.map_map r g x, Substitution.cast_apply, Substitution.map_apply,
-          Substitution.reindex_map, Term.cast_self, ScopedVar.map_map]
-        exact (ScopedSignature.Env.reindex_map (g ∘ r)
-          (fun _ x => (A op (h.arg μ op p) (θ _ x)).map h (h.next μ op p)) x).symm
-  have hr : Substitution.cast List.map_map rfl
-      (Substitution.reindex B (θ.map h μ) (h.op μ op) p) =
-      ScopedSignature.Env.reindex (k ∘ f μ)
-        fun _ x => B (h.op μ op) p ((θ _ x).map h μ) := by
-    funext b x
-    induction x using ScopedVar.map_inductionOn (k ∘ f μ) with
-    | h b x =>
-        change Substitution.cast _ _ _ (k (f μ b)) _ = _
-        rw [← ScopedVar.map_map (f μ) k x, Substitution.cast_apply,
-          Substitution.reindex_map, Substitution.map_apply, Term.cast_self,
-          ScopedVar.map_map]
-        exact (ScopedSignature.Env.reindex_map (k ∘ f μ)
-          (fun _ x => B (h.op μ op) p ((θ _ x).map h μ)) x).symm
+  have hs := h.reindex μ op p
   have hm : HEq
       (Substitution.map h (h.next μ op p) (θ.reindex A op (h.arg μ op p)))
       (Substitution.reindex B (θ.map h μ) (h.op μ op) p) := by
-    apply (Substitution.cast_heq List.map_map rfl _).symm.trans
-    apply (heq_of_eq hl).trans
-    apply (ScopedSignature.Env.reindex_heq hs
-      (congrArg (fun Δ => fun b => τ.Term (τ.world (h.op μ op) p) Δ b) (hc Δ))
-      (fun _ x => compatible μ op p (θ _ x))).trans
-    exact (heq_of_eq hr).symm.trans (Substitution.cast_heq List.map_map rfl _)
+    apply ScopedSignature.Env.heq_of_pointwise (Ambient.map_context _ _ hs Γ)
+      (funext fun b => congrArg (fun Δ => τ.Term (τ.world (h.op μ op) p) Δ b)
+        (Ambient.map_context _ _ hs Δ))
+    intro b c x y hxy
+    induction x using ScopedVar.map_inductionOn (f (h.next μ op p)) with
+    | h b x =>
+      induction x using Ambient.var_inductionOn (σ.ambient op (h.arg μ op p)) with
+      | h b x =>
+        induction y using Ambient.var_inductionOn (τ.ambient (h.op μ op) p) with
+        | h c y =>
+          induction y using ScopedVar.map_inductionOn (f μ) with
+          | h c y =>
+            simp only [ScopedVar.index_map, Ambient.index_var] at hxy
+            cases ScopedVar.sigma_eq_of_index_eq x y hxy
+            rw [Substitution.map_apply, Substitution.reindex_var, Substitution.reindex_var,
+              Substitution.map_apply]
+            exact compatible μ op p (θ _ x)
   apply eq_of_heq
   apply (Substitution.cast_heq _ _ _).trans
   apply (Substitution.cast_heq List.map_append List.map_append _).symm.trans
   apply (heq_of_eq (Substitution.map_liftMany _ _ _ _)).trans
-  exact Substitution.liftMany_heq (hc Γ) (hc Δ) hm (h.binders μ op p)
+  exact Substitution.liftMany_heq (Ambient.map_context _ _ hs Γ)
+    (Ambient.map_context _ _ hs Δ) hm (h.binders μ op p)
 
 /-- A constructor-compatible parameter translation commutes with value substitution. -/
 theorem Term.map_subst (h : Hom σ τ M f) (A : σ.ReindexAction) (B : τ.ReindexAction)

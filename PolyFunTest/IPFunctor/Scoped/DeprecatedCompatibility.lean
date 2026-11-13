@@ -16,7 +16,8 @@ public import PolyFun.IPFunctor.Scoped.Interpretation
 Ordinary imports keep the spellings that predate the single environment type. The old
 bundled environment type and both `Substitution.cons` keep their signatures. The renamed
 continuous-environment lemmas still rewrite goals about the continuous renaming, and the
-renamed positional lookup still computes. Each use reports its deprecation.
+renamed positional lookup still computes, and the family substitution lookup keeps its old
+name. Each use reports its deprecation.
 -/
 
 @[expose] public section
@@ -176,5 +177,18 @@ Hint: Replace the deprecated name:
 example {S T : Type} {D : S → PointedDomain} {E : T → PointedDomain} {Γ : List S}
     (f : S → T) (hf : ∀ a, E (f a) = D a) (η : ScopedSignature.Env (fun a => D a) Γ) :
     ScopedDomain.Env.reindex E f hf η = ScopedSignature.Env.transport E f hf η := rfl
+
+/--
+warning: `IPFunctor.ScopedFamily.Substitution.reindex_map` has been deprecated: Use `IPFunctor.ScopedFamily.Substitution.reindex_var` instead
+
+Hint: Replace the deprecated name:
+  ScopedFamily.Substitution.reindex_m̵v̲ap̵r̲
+-/
+#guard_msgs in
+example {W : Type} {S : W → Type} {σ : ScopedFamily W S} (A : σ.ReindexAction) {w : W}
+    {Γ Δ : List (S w)} (θ : σ.Substitution Γ Δ) {a b : S w} (op : σ.Op w a) (p : σ.Arg op)
+    (x : ScopedVar Γ b) :
+    θ.reindex A op p _ ((σ.ambient op p).var x) = A op p (θ b x) := by
+  rw [ScopedFamily.Substitution.reindex_map]
 
 end PolyFunTest.Scoped.DeprecatedCompatibility

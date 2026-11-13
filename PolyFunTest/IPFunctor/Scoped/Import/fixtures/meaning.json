@@ -1,0 +1,7 @@
+[
+  {
+    "name": "seven",
+    "scheme": "nat",
+    "body": {"app": [{"lam": {"arg": "nat", "body": {"var": 0}}}, {"lit": 7}]}
+  }
+]
