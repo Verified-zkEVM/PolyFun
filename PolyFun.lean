@@ -404,6 +404,7 @@ public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence
 public import PolyFun.PFunctor.Lens.Composite
+public import PolyFun.PFunctor.Lens.DirMonad
 public import PolyFun.PFunctor.Lens.Distributivity
 public import PolyFun.PFunctor.Lens.Duoidal
 public import PolyFun.PFunctor.Lens.Factorization
