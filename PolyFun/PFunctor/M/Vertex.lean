@@ -200,8 +200,7 @@ equality. -/
 theorem castEquiv_trans {t t' t'' : M P} (h : t = t') (h' : t' = t'')
     (vertex : Vertex t) :
     castEquiv h' (castEquiv h vertex) = castEquiv (h.trans h') vertex := by
-  subst t'
-  subst t''
+  subst t' t''
   rfl
 
 /-- Transporting a vertex forward and then back is the identity. -/

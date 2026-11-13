@@ -344,13 +344,7 @@ theorem wpFold_angelicUnder_iff_exists_reachable
   | lift_bind position next ih =>
       rw [wpFold_bind', wpFold_lift, ← FreeM.liftBind_eq, reachableUnder_liftBind]
       simp only [OpSpec.angelicUnder, Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
-      constructor
-      · rintro ⟨direction, hallowed, hpost⟩
-        obtain ⟨result, hreach, hresult⟩ := (ih direction).mp hpost
-        exact ⟨result, ⟨direction, hallowed, hreach⟩, hresult⟩
-      · rintro ⟨result, ⟨direction, hallowed, hreach⟩, hresult⟩
-        exact ⟨direction, hallowed,
-          (ih direction).mpr ⟨result, hreach, hresult⟩⟩
+      grind
 
 @[simp]
 theorem reachableUnder_bind (allows : (a : P.A) → P.B a → Prop)
@@ -569,13 +563,7 @@ theorem leavesSatisfyUnder_iff_forall_reachable
   | lift_bind position next ih =>
       rw [← FreeM.liftBind_eq, leavesSatisfyUnder_liftBind, reachableUnder_liftBind]
       simp only [Set.mem_iUnion, Set.mem_ofPred_eq, exists_prop]
-      constructor
-      · intro h result ⟨direction, hallowed, hchild⟩
-        exact (ih direction).mp (h direction hallowed) result hchild
-      · intro h direction hallowed
-        apply (ih direction).mpr
-        intro result hchild
-        exact h result ⟨direction, hallowed, hchild⟩
+      grind
 
 section FreeHandler
 

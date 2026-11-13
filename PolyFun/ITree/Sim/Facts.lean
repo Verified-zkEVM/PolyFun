@@ -758,8 +758,7 @@ need any bisimulation tooling. -/
     (φ : PFunctor.Lens E F) (r : α) :
     mapSpec φ (pure (F := E) r) = pure r := by
   apply eq_of_shape'_eq
-  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_pure φ r)]
-  rw [shape'_pure]
+  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_pure φ r), shape'_pure]
   congr 1
   funext b
   exact b.elim
@@ -769,8 +768,7 @@ need any bisimulation tooling. -/
     (φ : PFunctor.Lens E F) (t : ITree E α) :
     mapSpec φ (step t) = step (mapSpec φ t) := by
   apply eq_of_shape'_eq
-  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_step φ t)]
-  rw [shape'_step]
+  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_step φ t), shape'_step]
 
 @[simp] theorem mapSpec_query {E : PFunctor.{uEA, uEB}}
     {F : PFunctor.{uFA, uFB}} {α : Type uα}
@@ -778,8 +776,7 @@ need any bisimulation tooling. -/
     mapSpec φ (query a k) =
       query (φ.toFunA a) (fun b => mapSpec φ (k (φ.toFunB a b))) := by
   apply eq_of_shape'_eq
-  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_query φ a k)]
-  rw [shape'_query]
+  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_query φ a k), shape'_query]
 
 /-! ### Functoriality of `mapSpec` -/
 

@@ -513,15 +513,9 @@ namespace Terminal
 theorem ext {left right : Terminal program}
     (cursor_eq : left.cursor = right.cursor)
     (output_eq : left.output = right.output) : left = right := by
-  cases left with
-  | mk leftCursor leftOutput leftResidual =>
-      cases right with
-      | mk rightCursor rightOutput rightResidual =>
-          cases cursor_eq
-          cases output_eq
-          have residual_eq : leftResidual = rightResidual := Subsingleton.elim _ _
-          cases residual_eq
-          rfl
+  cases left
+  cases right
+  grind
 
 /-- A terminal cursor satisfies `Cursor.IsTerminal`. -/
 theorem isTerminal (terminal : Terminal program) : terminal.cursor.IsTerminal :=
