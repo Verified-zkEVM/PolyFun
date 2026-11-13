@@ -161,6 +161,13 @@ def mapLens (l : Lens I J) (h : Stateful (FreeM I) S E) : Stateful (FreeM J) S E
 @[simp] theorem mapLens_apply_run (l : Lens I J) (h : Stateful (FreeM I) S E) (a : E.A)
     (s : S) : (h.mapLens l a).run s = ((h a).run s).mapLens l := rfl
 
+/-- Relabelling the imports of a package changes its target along the monad morphism
+`StateT.mapHom (FreeM.mapLensHom l)`. -/
+theorem mapLens_eq_mapTarget (l : Lens I J) (h : Stateful (FreeM I) S E) :
+    h.mapLens l =
+      mapTarget (fun {α} (x : StateT S (FreeM I) α) => StateT.mapHom (FreeM.mapLensHom l) x) h :=
+  rfl
+
 /-- Running a program through a relabelled package relabels the resulting program. -/
 theorem run_mapLens (l : Lens I J) (h : Stateful (FreeM I) S E) {α : Type u} :
     ∀ (x : FreeM E α) (s : S), (h.mapLens l).run x s = (h.run x s).mapLens l
@@ -204,7 +211,7 @@ theorem run_sum_mapLens_inl [Monad m] [LawfulMonad m] (f : Stateful m T₁ M₁)
     (sum f g).run (x.mapLens Lens.inl) (t₁, t₂) = Prod.map _root_.id (·, t₂) <$> f.run x t₁ := by
   rw [run, FreeM.liftM_mapLens]
   refine (run_map_eq_of_apply_map_eq f _ (·, t₂) (fun a s => ?_) x t₁).symm
-  rw [StateT.run_map]
+  rw [comapLens_apply, StateT.run_map]
   change _ = (fun p => (p.1, p.2)) <$> (Prod.map _root_.id (·, t₂) <$> (f a).run s)
   simp
 
@@ -215,7 +222,7 @@ theorem run_sum_mapLens_inr [Monad m] [LawfulMonad m] (f : Stateful m T₁ M₁)
     (sum f g).run (x.mapLens Lens.inr) (t₁, t₂) = Prod.map _root_.id (t₁, ·) <$> g.run x t₂ := by
   rw [run, FreeM.liftM_mapLens]
   refine (run_map_eq_of_apply_map_eq g _ (t₁, ·) (fun a s => ?_) x t₂).symm
-  rw [StateT.run_map]
+  rw [comapLens_apply, StateT.run_map]
   change _ = (fun p => (p.1, p.2)) <$> (Prod.map _root_.id (t₁, ·) <$> (g a).run s)
   simp
 
