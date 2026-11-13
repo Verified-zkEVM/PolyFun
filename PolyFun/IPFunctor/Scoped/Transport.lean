@@ -157,6 +157,19 @@ theorem cast_apply {V : S → Type z} {Γ Δ : List S} (h : Γ = Δ) (η : Env V
   cases h
   rfl
 
+/-- Move an environment along an equation of contexts. -/
+@[expose] def castCtx {V : S → Type z} {Γ Γ' : List S} (h : Γ = Γ') (η : Env V Γ) :
+    Env V Γ' := h ▸ η
+
+@[simp] theorem castCtx_rfl {V : S → Type z} {Γ : List S} (η : Env V Γ) :
+    castCtx rfl η = η := rfl
+
+/-- Transport along an equation of contexts keeps the environment. -/
+theorem castCtx_heq {V : S → Type z} {Γ Γ' : List S} (h : Γ = Γ') (η : Env V Γ) :
+    HEq (castCtx h η) η := by
+  subst h
+  rfl
+
 end IPFunctor.ScopedSignature.Env
 
 namespace IPFunctor.ScopedSignature.Renaming
@@ -249,6 +262,18 @@ theorem liftMany_heq {Γ' Δ' Ξ Ξ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ')
   cases hΞ
   cases eq_of_heq hρ
   rfl
+
+/-- Renamings between equal contexts that produce the same binding positions are
+heterogeneously equal. -/
+theorem heq_of_index {Γ' Δ' : List S} (hΓ : Γ = Γ') (hΔ : Δ = Δ') {ρ : Renaming Γ Δ}
+    {τ : Renaming Γ' Δ'}
+    (h : ∀ a b (x : ScopedVar Γ a) (y : ScopedVar Γ' b), x.index = y.index →
+      (ρ a x).index = (τ b y).index) : HEq ρ τ := by
+  subst hΓ hΔ
+  apply heq_of_eq
+  funext a x
+  exact eq_of_heq (Sigma.mk.inj_iff.mp
+    (ScopedVar.sigma_eq_of_index_eq (ρ a x) (τ a x) (h a a x x rfl))).2
 
 @[simp] theorem map_id (f : S → T) :
     map f (fun _ x => x : Renaming Γ Γ) = fun _ x => x := by

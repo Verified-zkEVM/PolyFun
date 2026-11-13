@@ -13,11 +13,19 @@ public import Mathlib.Data.Fin.VecNotation
 
 The pinned core defines `Fin.cases` using induction. Strict evaluation may
 compute discarded induction hypotheses, which compounds for nested vector
-constructors. A proved compiler simplification selects the case directly.
-The logical definition and its computation equations remain those of core.
+constructors: compiled code reads entry `i` of a chain of `Fin.cons` in time
+exponential in `i`. A proved compiler simplification selects the case
+directly, so the read takes time linear in `i`. The logical definition and its
+computation equations remain those of core.
+
+A compiler simplification applies to the definitions compiled in the modules
+that import it. A library that compiles finite case analysis, `Fin.cons` or
+vector notation imports this module, as `ToCslib.Data.Fin.MOfFn` does.
 -/
 
 public section
+
+-- upstream candidate: compiled case analysis for core's `Fin.cases` and Mathlib's wrappers.
 
 namespace Fin
 

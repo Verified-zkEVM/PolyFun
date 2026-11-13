@@ -85,6 +85,8 @@ if (( run_lint )); then
     Examples.Tutorials.BoundedController Examples.Tutorials.LazyLanguages \
     Examples.IO.Console Examples.IO.Storage \
     Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
+    Examples.Tutorials.ScopedDomains \
+    Examples.Tutorials.ScopedVectors \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -102,7 +104,8 @@ fi
 if (( run_axioms )); then
   echo ""
   echo "# Building axiom sweep roots"
-  lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain --wfail
+  lake build PolyFun ToCslib ComplexityBackends PolyFunExamples +PolyFunParliamentMain \
+    PolyFunTest.IPFunctor.Scoped.Import.Toy PolyFunTest.IPFunctor.Scoped.Import.ToyImport --wfail
 
   echo ""
   echo "# Testing the axiom sweep tool"
@@ -118,7 +121,11 @@ if (( run_axioms )); then
     --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
     --root Examples.Tutorials.BoundedController --root Examples.Tutorials.LazyLanguages \
     --root Examples.Tutorials.ScopedPrograms --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
+    --root Examples.Tutorials.ScopedDomains \
+    --root Examples.Tutorials.ScopedVectors \
     --root Examples.IO.Console --root Examples.IO.Storage --root Examples.Parliament \
+    --root PolyFunTest.IPFunctor.Scoped.Import.Toy \
+    --root PolyFunTest.IPFunctor.Scoped.Import.ToyImport \
     --root PolyFunParliamentMain --check
 fi
 
