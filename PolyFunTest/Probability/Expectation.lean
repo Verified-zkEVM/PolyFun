@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.Measure.Expectation
+public import PolyFunTest.Probability.MeasurabilityBoundary
 
 /-!
 # Expectations of free programs
@@ -16,7 +17,8 @@ and the expectation algebras over `ℝ≥0∞`, the carrier that the generic pro
 otherwise model with `ℕ∞` on a deterministic monad.
 
 The universe tests instantiate the algebras over answers in `Type 1`, at results in `Type 1`
-through `ULift`, and the fold lemmas at results in `Type 2`.
+through `ULift`, and the fold lemmas at results in `Type 2`. The last test shows that the integral
+against the measure fold can lie strictly below the fold.
 -/
 
 public section
@@ -167,5 +169,25 @@ example :
 /-- The generic lifted expectation algebra applies to any lawful semantics at values in `Type 1`. -/
 noncomputable example : MAlgOrdered (FreeM.{1} Coin) (ULift.{1} ℝ≥0∞) :=
   ExpectationWP.algebraULift (FreeM.{1} Coin)
+
+/-! ## The integral can lie strictly below the fold -/
+
+section Strict
+
+open PolyFunTest.Probability.MeasurabilityBoundary
+
+/-- The continuation of `reveal` is not measurable, so its measure fold is zero and the constant
+`1` integrates to `0` against it. The fold integrates each continuation directly and gives `1`. -/
+example :
+    ∫⁻ _, (1 : ℝ≥0∞) ∂measureFold (AnswerMeasure.toMeasure (P := coarseSpec)) reveal = 0 ∧
+      wpFold (OpSpec.lintegral (AnswerMeasure.toMeasure (P := coarseSpec))) reveal
+        (fun _ => 1) = 1 := by
+  constructor
+  · change ∫⁻ _, (1 : ℝ≥0∞) ∂FreeM.denote reveal = 0
+    simp [denote_reveal]
+  · have := AnswerMeasure.isProbabilityMeasure (P := coarseSpec)
+    exact wpFold_lintegral_const _ reveal 1
+
+end Strict
 
 end PolyFunTest.Probability.Expectation
