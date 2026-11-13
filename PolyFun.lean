@@ -382,6 +382,7 @@ public import PolyFun.PFunctor.Handler.Certified
 public import PolyFun.PFunctor.Handler.CertifiedUnder
 public import PolyFun.PFunctor.Handler.CertifiedVec
 public import PolyFun.PFunctor.Handler.Charge
+public import PolyFun.PFunctor.Handler.CountMat
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Instrumentation
 public import PolyFun.PFunctor.Handler.Instrumentation.Free
