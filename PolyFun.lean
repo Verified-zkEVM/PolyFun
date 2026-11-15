@@ -39,6 +39,7 @@ public import PolyFun.Control.Monad.Relation
 public import PolyFun.Control.Monad.Relative
 public import PolyFun.Control.Monad.Support
 public import PolyFun.Control.Monad.Support.Charged
+public import PolyFun.Control.Monad.Support.IdLoops
 public import PolyFun.Control.Monad.Support.Indexed
 public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Control.Monad.Support.Loops
