@@ -205,8 +205,7 @@ end MonadHom
 
 namespace StateT
 
-variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
-  [LawfulMonad m] [LawfulMonad n] {σ α : Type u}
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n] {σ α : Type u}
 
 /-- `StateT σ` is functorial on monad morphisms: a monad morphism `φ : m →ᵐ n` lifts to a monad
 morphism `StateT σ m →ᵐ StateT σ n`, acting on the underlying state-run and threading the state
@@ -219,20 +218,17 @@ def mapHom (φ : m →ᵐ n) : StateT σ m →ᵐ StateT σ n where
   toFun_pure' a := by ext s; simp
   toFun_bind' x y := by ext s; simp
 
-omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : StateT σ m α) (s : σ) :
     (StateT.mapHom φ x).run s = φ (x.run s) := rfl
 
-omit [LawfulMonad m] in
 @[simp] theorem mapHom_id :
     StateT.mapHom (σ := σ) (MonadHom.id m) = MonadHom.id (StateT σ m) := by
   apply MonadHom.ext'
   intro α x
   rfl
 
-variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+variable {n' : Type u → Type x} [Monad n']
 
-omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
     StateT.mapHom (σ := σ) (G ∘ᵐ F) =
       StateT.mapHom (σ := σ) G ∘ᵐ StateT.mapHom (σ := σ) F := by
@@ -244,8 +240,7 @@ end StateT
 
 namespace ReaderT
 
-variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
-  [LawfulMonad m] [LawfulMonad n] {ρ α : Type u}
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n] {ρ α : Type u}
 
 /-- `ReaderT ρ` is functorial on monad morphisms, acting under the environment. -/
 def mapHom (φ : m →ᵐ n) : ReaderT ρ m →ᵐ ReaderT ρ n where
@@ -253,20 +248,17 @@ def mapHom (φ : m →ᵐ n) : ReaderT ρ m →ᵐ ReaderT ρ n where
   toFun_pure' a := by ext r; simp
   toFun_bind' x y := by ext r; simp
 
-omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : ReaderT ρ m α) (r : ρ) :
     (ReaderT.mapHom φ x).run r = φ (x.run r) := rfl
 
-omit [LawfulMonad m] in
 @[simp] theorem mapHom_id :
     ReaderT.mapHom (ρ := ρ) (MonadHom.id m) = MonadHom.id (ReaderT ρ m) := by
   apply MonadHom.ext'
   intro α x
   rfl
 
-variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+variable {n' : Type u → Type x} [Monad n']
 
-omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
     ReaderT.mapHom (ρ := ρ) (G ∘ᵐ F) =
       ReaderT.mapHom (ρ := ρ) G ∘ᵐ ReaderT.mapHom (ρ := ρ) F := by
@@ -278,8 +270,7 @@ end ReaderT
 
 namespace OptionT
 
-variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
-  [LawfulMonad m] [LawfulMonad n] {α : Type u}
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n] {α : Type u}
 
 /-- `OptionT` is functorial on monad morphisms. The failure branch is preserved because a
 monad morphism commutes with `pure`, so `none` is carried to `none`. -/
@@ -296,20 +287,17 @@ def mapHom (φ : m →ᵐ n) : OptionT m →ᵐ OptionT n where
     simp only [OptionT.run_bind, OptionT.mk, Option.elimM, MonadHom.mmap_bind, h]
     rfl
 
-omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : OptionT m α) :
     (OptionT.mapHom φ x).run = φ x.run := rfl
 
-omit [LawfulMonad m] in
 @[simp] theorem mapHom_id :
     OptionT.mapHom (MonadHom.id m) = MonadHom.id (OptionT m) := by
   apply MonadHom.ext'
   intro α x
   rfl
 
-variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+variable {n' : Type u → Type x} [Monad n']
 
-omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
     OptionT.mapHom (G ∘ᵐ F) = OptionT.mapHom G ∘ᵐ OptionT.mapHom F := by
   apply MonadHom.ext'
@@ -320,8 +308,7 @@ end OptionT
 
 namespace ExceptT
 
-variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
-  [LawfulMonad m] [LawfulMonad n] {ε α : Type u}
+variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n] {ε α : Type u}
 
 /-- `ExceptT ε` is functorial on monad morphisms. As for `OptionT`, the error branch
 survives because a monad morphism preserves `pure`. -/
@@ -337,20 +324,17 @@ def mapHom (φ : m →ᵐ n) : ExceptT ε m →ᵐ ExceptT ε n where
       | error e => simp
       | ok b => rfl
 
-omit [LawfulMonad m] [LawfulMonad n] in
 @[simp] lemma run_mapHom (φ : m →ᵐ n) (x : ExceptT ε m α) :
     (ExceptT.mapHom φ x).run = φ x.run := rfl
 
-omit [LawfulMonad m] in
 @[simp] theorem mapHom_id :
     ExceptT.mapHom (ε := ε) (MonadHom.id m) = MonadHom.id (ExceptT ε m) := by
   apply MonadHom.ext'
   intro α x
   rfl
 
-variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
+variable {n' : Type u → Type x} [Monad n']
 
-omit [LawfulMonad m] [LawfulMonad n] [LawfulMonad n'] in
 @[simp] theorem mapHom_comp (G : n →ᵐ n') (F : m →ᵐ n) :
     ExceptT.mapHom (ε := ε) (G ∘ᵐ F) =
       ExceptT.mapHom (ε := ε) G ∘ᵐ ExceptT.mapHom (ε := ε) F := by

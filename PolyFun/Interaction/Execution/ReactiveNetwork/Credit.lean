@@ -43,7 +43,7 @@ namespace Interaction.Execution.ReactiveNetwork
 open PFunctor ReactiveProcess MonadAttach
 
 variable {Node result S : Type} {boundary : PortBoundary}
-  {network : Network Node boundary result} [DecidableEq Node]
+  {network : Network Node boundary result}
 
 attribute [local implicit_reducible] signature Response
 
@@ -102,11 +102,20 @@ abbrev dest (destination : Destination network) : ℕ :=
   | .inr ⟨.send packet, _⟩ => credit.outbound id packet
   | _ => 0
 
+/-- Held credit depends only on mailboxes, the FIFO queue, and the output trace. -/
+theorem held_congr [Fintype Node] {state next : State network S} (hinbox : next.inbox = state.inbox)
+    (hpending : next.pending = state.pending) (houtput : next.output = state.output) :
+    credit.held next = credit.held state := by
+  simp only [held, hinbox, hpending, houtput]
+
+/-- No credit is held initially. -/
+theorem held_initial [Fintype Node] (service : S) : credit.held (initial network service) = 0 := by
+  simp [held, initial]
+
 end CreditModel
 
 /-! ## Sums over one updated coordinate -/
 
-omit [DecidableEq Node] in
 /-- Changing a dependent family at one coordinate changes a sum over it by that coordinate. -/
 theorem sum_frame [Fintype Node] {β : Node → Type} (F : (i : Node) → β i → ℕ)
     (g g' : (i : Node) → β i) (t : Node) (h : ∀ i, i ≠ t → g' i = g i) :
@@ -119,18 +128,13 @@ theorem sum_frame [Fintype Node] {β : Node → Type} (F : (i : Node) → β i �
   rw [hrest]
   omega
 
+variable [DecidableEq Node]
+
 /-! ## Accounting for held credit -/
 
 namespace CreditModel
 
 variable (credit : CreditModel network) [Fintype Node]
-
-omit [DecidableEq Node] in
-/-- Held credit depends only on mailboxes, the FIFO queue, and the output trace. -/
-theorem held_congr {state next : State network S} (hinbox : next.inbox = state.inbox)
-    (hpending : next.pending = state.pending) (houtput : next.output = state.output) :
-    credit.held next = credit.held state := by
-  simp only [held, hinbox, hpending, houtput]
 
 /-- Routing a packet adds exactly its destination credit. -/
 theorem held_dispatch (destination : Destination network) (state : State network S) :
@@ -164,11 +168,6 @@ theorem held_deliver (state : State network S) :
     rw [held_dispatch]
     simp only [held, hp, List.map_cons, List.sum_cons]
     omega
-
-omit [DecidableEq Node] in
-/-- No credit is held initially. -/
-theorem held_initial (service : S) : credit.held (initial network service) = 0 := by
-  simp [held, initial]
 
 end CreditModel
 

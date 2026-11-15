@@ -212,8 +212,11 @@ end Envelope
 
 section Derived
 
-variable [Q.HasComposition] [CC : Q.HasCompositionCost] [P : C.HasProd] [QP : Q.HasProd]
-  [PC : Q.HasProdCost]
+variable [Q.HasComposition] [CC : Q.HasCompositionCost] [P : C.HasProd]
+
+section
+
+variable [QP : Q.HasProd] [PC : Q.HasProdCost]
 
 /-- Retaining an input costs the wrapped code plus identity and pairing at the input's size. -/
 theorem cost_withInput_le {A B : Type u} {a : C.Str A} {b : C.Str B} {f : A → B}
@@ -262,10 +265,11 @@ theorem cost_pairLeft_le {A B D : Type u} {a : C.Str A} {b : C.Str B} {d : C.Str
   change CC.overhead (Q.size a x) ≥ Q.composeOverhead (QP.snd d a) code (y, x) at hglue
   omega
 
+end
+
 variable [S : C.HasSum] [QS : Q.HasSum] [SC : Q.HasSumCost] [QD : Q.IsDistributive]
   [DC : Q.IsDistributiveCost]
 
-omit QP PC in
 /-- Case analysis in a context, left branch: the branch code plus distribution, case analysis and
 glue, each at the size of the distributed scrutinee. -/
 theorem cost_elimContext_inl_le {A B E D : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
@@ -288,7 +292,6 @@ theorem cost_elimContext_inl_le {A B E D : Type u} {a : C.Str A} {b : C.Str B} {
   simp only [Sum.elim_inl] at helim
   omega
 
-omit QP PC in
 /-- Case analysis in a context, right branch. -/
 theorem cost_elimContext_inr_le {A B E D : Type u} {a : C.Str A} {b : C.Str B} {e : C.Str E}
     {d : C.Str D} {f : A × E → D} {g : B × E → D}
@@ -376,15 +379,11 @@ theorem pairRightCount_eq : pairRightCount = 4 := rfl
 
 section Carry
 
-variable [Q.HasComposition] [P : C.HasProd] [S : C.HasSum] [O : C.HasOption]
-  [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
-  [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost] [OC : Q.HasOptionCost]
-  [DC : Q.IsDistributiveCost]
+variable [Q.HasComposition] [P : C.HasProd]
 
-omit [S : C.HasSum] [O : C.HasOption] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
-  [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
 /-- The rotation costs at most nine product primitives and glues. -/
-theorem cost_rotate_le {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I)
+theorem cost_rotate_le [QP : Q.HasProd] [CC : Q.HasCompositionCost] [PC : Q.HasProdCost]
+    {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I)
     (x : A) (y : E) (j : I) :
     Q.cost (rotate Q a e i) ((x, y), j) ≤
       5 * PC.overhead (Q.size (P.prod (P.prod a e) i) ((x, y), j)) +
@@ -407,11 +406,10 @@ theorem cost_rotate_le {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I
   dsimp only at hc1 hc2 hg1 hg2
   omega
 
-omit [S : C.HasSum] [O : C.HasOption] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
-  [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
 /-- The exchange costs at most nine product primitives and glues, at the sizes of its input and of
 the inner pair. -/
-theorem cost_exchange_le {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I)
+theorem cost_exchange_le [QP : Q.HasProd] [CC : Q.HasCompositionCost] [PC : Q.HasProdCost]
+    {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str I)
     (x : A) (y : E) (j : I) :
     Q.cost (exchange Q a e i) ((x, y), j) ≤
       5 * PC.overhead (Q.size (P.prod (P.prod a e) i) ((x, y), j)) +
@@ -433,6 +431,11 @@ theorem cost_exchange_le {A E I : Type u} (a : C.Str A) (e : C.Str E) (i : C.Str
   have hs' := PC.cost_snd_le a e (x, y)
   dsimp only at hc1 hc2 hg1 hg2
   omega
+
+variable [S : C.HasSum] [O : C.HasOption]
+  [QP : Q.HasProd] [QS : Q.HasSum] [QO : Q.HasOption] [QD : Q.IsDistributive]
+  [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost] [OC : Q.HasOptionCost]
+  [DC : Q.IsDistributiveCost]
 
 /-- Attaching a carried value to a readout costs the wrapped code plus at most
 `carryReadoutCount` structural primitives, each charged the combined envelope at the input,

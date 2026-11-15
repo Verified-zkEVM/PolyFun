@@ -36,7 +36,7 @@ open PFunctor ReactiveProcess MonadAttach
 attribute [local implicit_reducible] signature Response
 
 variable {Node result S : Type} {boundary : PortBoundary}
-  {network : Network Node boundary result} [DecidableEq Node]
+  {network : Network Node boundary result}
 
 /-- The network charge of component charges: a component's charge on its productive activations,
 and zero on administrative ones (finished no-ops, blocked receives, deliveries). -/
@@ -45,14 +45,14 @@ and zero on administrative ones (finished no-ops, blocked receives, deliveries).
   | .node id, state => if isProductive id state then κ id (state.localState id) else 0
   | .deliver, _ => 0
 
-omit [DecidableEq Node] in
 /-- Unit component charges give the productive unit charge. -/
 theorem Charge.ofLocal_one :
     Charge.ofLocal (network := network) (S := S) (fun _ _ => 1) = Charge.productive := by
   funext activation state
   cases activation <;> rfl
 
-variable {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+variable [DecidableEq Node]
+  {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
 
 /-- **Locality.** Process certificates, placed at the nodes of a network whose credit model agrees
 with their port credits, form a conserving certificate for every discipline and invariant. -/
