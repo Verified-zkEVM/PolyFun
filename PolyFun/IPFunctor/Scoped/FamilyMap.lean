@@ -90,14 +90,11 @@ variable {σ τ : ScopedFamily.{u, v, w, z} W S}
 /-- The child's complete context, including both fresh and ambient bindings. -/
 theorem context (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ : List (S w)} {a : S w} (o : σ.Op w a) (p : τ.Arg (h.op μ o)) :
-    (σ.binders o (h.arg μ o p) ++ Γ.map (σ.reindex o (h.arg μ o p))).map
+    (σ.binders o (h.arg μ o p) ++ (σ.ambient o (h.arg μ o p)).context Γ).map
         (f (h.next μ o p)) =
-      τ.binders (h.op μ o) p ++ (Γ.map (f μ)).map (τ.reindex (h.op μ o) p) := by
-  rw [List.map_append, h.binders, List.map_map, List.map_map]
-  congr 1
-  apply List.map_congr_left
-  intro b _
-  exact h.reindex μ o p b
+      τ.binders (h.op μ o) p ++ (τ.ambient (h.op μ o) p).context (Γ.map (f μ)) := by
+  rw [List.map_append, h.binders]
+  exact congrArg _ (Ambient.map_context _ _ (h.reindex μ o p) Γ)
 
 /-- The complete child-context square also commutes on value renamings. -/
 theorem context_renaming (h : Hom σ τ M f) {w z : W} (μ : M w z)
@@ -106,29 +103,17 @@ theorem context_renaming (h : Hom σ τ M f) {w z : W} (μ : M w z)
     ScopedSignature.Renaming.cast (h.context μ o p) (h.context μ o p)
       (ScopedSignature.Renaming.map (f (h.next μ o p))
         (ScopedSignature.Renaming.liftMany
-          (ScopedSignature.Renaming.map (σ.reindex o (h.arg μ o p)) ρ)
-          (σ.binders o (h.arg μ o p)))) =
+          ((σ.ambient o (h.arg μ o p)).mapRenaming ρ) (σ.binders o (h.arg μ o p)))) =
       ScopedSignature.Renaming.liftMany
-        (ScopedSignature.Renaming.map (τ.reindex (h.op μ o) p)
-          (ScopedSignature.Renaming.map (f μ) ρ)) (τ.binders (h.op μ o) p) := by
-  let r := σ.reindex o (h.arg μ o p)
-  let g := f (h.next μ o p)
-  let k := τ.reindex (h.op μ o) p
-  have hs : g ∘ r = k ∘ f μ := funext (h.reindex μ o p)
-  have hc (Γ : List (S w)) : (Γ.map r).map g = (Γ.map (f μ)).map k := by
-    simp only [List.map_map, hs]
-  have hm : HEq (ScopedSignature.Renaming.map g (ScopedSignature.Renaming.map r ρ))
-      (ScopedSignature.Renaming.map k (ScopedSignature.Renaming.map (f μ) ρ)) := by
-    have h1 := ScopedSignature.Renaming.map_map r g ρ
-    have h2 := ScopedSignature.Renaming.map_map (f μ) k ρ
-    exact (ScopedSignature.Renaming.cast_heq _ _ _).symm.trans
-      ((heq_of_eq h1).trans ((ScopedSignature.Renaming.map_heq hs ρ).trans
-        ((heq_of_eq h2).symm.trans (ScopedSignature.Renaming.cast_heq _ _ _))))
+        ((τ.ambient (h.op μ o) p).mapRenaming (ScopedSignature.Renaming.map (f μ) ρ))
+        (τ.binders (h.op μ o) p) := by
+  have hs := h.reindex μ o p
   apply eq_of_heq
   apply (ScopedSignature.Renaming.cast_heq _ _ _).trans
   apply (ScopedSignature.Renaming.cast_heq List.map_append List.map_append _).symm.trans
   apply (heq_of_eq (ScopedSignature.Renaming.map_liftMany _ _ _)).trans
-  exact ScopedSignature.Renaming.liftMany_heq (hc Γ) (hc Δ) hm (h.binders μ o p)
+  exact ScopedSignature.Renaming.liftMany_heq (Ambient.map_context _ _ hs Γ)
+    (Ambient.map_context _ _ hs Δ) (Ambient.map_mapRenaming_heq _ _ hs ρ) (h.binders μ o p)
 
 /-- Assemble the local context equations into an indexed traversal. -/
 @[expose] def toTraversal (h : Hom σ τ M f) :
@@ -141,7 +126,7 @@ theorem context_renaming (h : Hom σ τ M f) {w z : W} (μ : M w z)
     cases s with
     | @mk w z μ Γ a =>
         have he : (⟨τ.world (h.op μ o) p,
-            (σ.binders o (h.arg μ o p) ++ Γ.map (σ.reindex o (h.arg μ o p))).map
+            (σ.binders o (h.arg μ o p) ++ (σ.ambient o (h.arg μ o p)).context Γ).map
               (f (h.next μ o p)), f (h.next μ o p) (σ.sort o (h.arg μ o p))⟩ : Judgment S) =
             τ.polynomial.src ⟨z, Γ.map (f μ), f μ a⟩ (h.op μ o) p := by
           exact congrArg (fun q => (⟨τ.world (h.op μ o) p, q⟩ : Judgment S))
@@ -229,9 +214,9 @@ theorem cast_var {w : W} {Γ Δ : List (S w)} {a b : S w}
 theorem cast_node {w : W} {Γ Δ : List (S w)} {a : S w}
     (hΓ : Γ = Δ) (op : σ.Op w a)
     (args : (p : σ.Arg op) → σ.Term (σ.world op p)
-      (σ.binders op p ++ Γ.map (σ.reindex op p)) (σ.sort op p)) :
+      (σ.binders op p ++ (σ.ambient op p).context Γ) (σ.sort op p)) :
     (node op args).cast hΓ rfl = node op (fun p => (args p).cast
-      (congrArg (fun Γ => σ.binders op p ++ Γ.map (σ.reindex op p)) hΓ) rfl) := by
+      (congrArg (fun Γ => σ.binders op p ++ (σ.ambient op p).context Γ) hΓ) rfl) := by
   cases hΓ
   rfl
 
@@ -239,7 +224,7 @@ theorem cast_node {w : W} {Γ Δ : List (S w)} {a : S w}
 theorem map_node (h : Hom σ τ M f) {w z : W} (μ : M w z)
     {Γ : List (S w)} {a : S w} (op : σ.Op w a)
     (args : (p : σ.Arg op) → σ.Term (σ.world op p)
-      (σ.binders op p ++ Γ.map (σ.reindex op p)) (σ.sort op p)) :
+      (σ.binders op p ++ (σ.ambient op p).context Γ) (σ.sort op p)) :
     (node op args).map h μ = node (h.op μ op) (fun p =>
       ((args (h.arg μ op p)).map h (h.next μ op p)).cast
         (h.context μ op p) (h.sort μ op p)) := by

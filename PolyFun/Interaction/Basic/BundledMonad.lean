@@ -6,8 +6,6 @@ Authors: Quang Dao
 
 module
 
-import Batteries.Tactic.Lint
-
 /-!
 # Bundled monads
 

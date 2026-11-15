@@ -135,6 +135,110 @@ while IFS= read -r file; do
   fi
 done < <(lean_sources)
 
+# PMF bridges (docs/guides/probability.md): measure interpretations use Mathlib's `Measure` and
+# `Kernel`, not its probability mass functions. Only a PMF bridge imports
+# `Mathlib.Probability.ProbabilityMassFunction`, and only its `Basic` or `Monad` module:
+# `Constructions`, which holds the lawful monad instance on `PMF`, brings in most of Mathlib's
+# analysis. A bridge is a module `<M>/PMF.lean` beside a tracked module `<M>.lean`, by convention
+# the measure module whose construction it relates to `PMF`; the check does not read `<M>.lean`.
+# Like the Std.WP rules, these checks read direct imports only: a Mathlib module that imports
+# `Constructions`, such as `Mathlib.Probability.Distributions.Uniform`, passes them.
+pmf_bridge_path() {
+  case "$1" in
+    */*/PMF.lean) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+# The module `<M>.lean` that the bridge `<M>/PMF.lean` sits beside.
+pmf_bridge_sibling() {
+  printf '%s.lean' "${1%/PMF.lean}"
+}
+pmf_pattern="${import_prefix}Mathlib\.Probability\.ProbabilityMassFunction([[:space:]]|\.|$)"
+pmf_light_pattern="${import_prefix}Mathlib\.Probability\.ProbabilityMassFunction\.(Basic|Monad)([[:space:]]|$)"
+
+for pmf_import in \
+    'import Mathlib.Probability.ProbabilityMassFunction.Constructions' \
+    'public import Mathlib.Probability.ProbabilityMassFunction.Basic' \
+    'meta import Mathlib.Probability.ProbabilityMassFunction.Monad' \
+    'public meta import all Mathlib.Probability.ProbabilityMassFunction'; do
+  if ! grep -qE "$pmf_pattern" <<< "$pmf_import"; then
+    echo "ERROR: probability-mass-function matcher does not recognize: $pmf_import" >&2
+    status=1
+  fi
+done
+for other_import in 'import Mathlib.Probability.Kernel.Basic' 'import Mathlib.Probability.UniformOn' \
+    'import Mathlib.Probability.ProbabilityMassFunctionExtra'; do
+  if grep -qE "$pmf_pattern" <<< "$other_import"; then
+    echo "ERROR: probability-mass-function matcher must not classify: $other_import" >&2
+    status=1
+  fi
+done
+for light_import in 'public import Mathlib.Probability.ProbabilityMassFunction.Basic' \
+    'import Mathlib.Probability.ProbabilityMassFunction.Monad -- bind'; do
+  if ! grep -qE "$pmf_light_pattern" <<< "$light_import"; then
+    echo "ERROR: PMF bridge import matcher does not allow: $light_import" >&2
+    status=1
+  fi
+done
+for heavy_import in 'import Mathlib.Probability.ProbabilityMassFunction.Constructions' \
+    'import Mathlib.Probability.ProbabilityMassFunction.Integrals' \
+    'import Mathlib.Probability.ProbabilityMassFunction.Basic.Extra' \
+    'import Mathlib.Probability.ProbabilityMassFunction'; do
+  if grep -qE "$pmf_light_pattern" <<< "$heavy_import"; then
+    echo "ERROR: PMF bridge import matcher must not allow: $heavy_import" >&2
+    status=1
+  fi
+done
+for bridge in \
+    'ToCslib/Probability/UniformOn/PMF.lean' \
+    'PolyFun/PFunctor/Free/Measure/PMF.lean' \
+    'PolyFunTest/Probability/Uniform/PMF.lean'; do
+  if ! pmf_bridge_path "$bridge"; then
+    echo "ERROR: PMF bridge matcher does not recognize: $bridge" >&2
+    status=1
+  fi
+done
+for non_bridge in \
+    'PolyFun.lean' \
+    'PolyFun/PMF.lean' \
+    'PolyFunTest/PMF.lean' \
+    'ToCslib/Probability/UniformOn.lean' \
+    'ToCslib/Probability/UniformOn/PMFBridge.lean' \
+    'ToCslib/Probability/UniformOn/PMF/Extra.lean'; do
+  if pmf_bridge_path "$non_bridge"; then
+    echo "ERROR: PMF bridge matcher must reject: $non_bridge" >&2
+    status=1
+  fi
+done
+if [[ "$(pmf_bridge_sibling 'ToCslib/Probability/UniformOn/PMF.lean')" \
+    != 'ToCslib/Probability/UniformOn.lean' ]]; then
+  echo "ERROR: PMF bridge sibling does not name the module beside the bridge." >&2
+  status=1
+fi
+
+while IFS= read -r file; do
+  if ! grep -qE "$pmf_pattern" "$file"; then
+    continue
+  fi
+  if ! pmf_bridge_path "$file"; then
+    echo "ERROR: $file imports Mathlib's probability mass functions outside a PMF bridge." >&2
+    echo "Use Measure and Kernel, or relate a measure module <M>.lean to PMF in <M>/PMF.lean." >&2
+    echo "See docs/guides/probability.md, \"Where the modules live\"." >&2
+    status=1
+    continue
+  fi
+  sibling="$(pmf_bridge_sibling "$file")"
+  if [[ -z "$(git ls-files -- "$sibling")" ]]; then
+    echo "ERROR: PMF bridge $file has no module $sibling beside it." >&2
+    status=1
+  fi
+  if grep -E "$pmf_pattern" "$file" | grep -qvE "$pmf_light_pattern"; then
+    echo "ERROR: PMF bridge $file imports a module of Mathlib's probability mass functions" >&2
+    echo "other than Basic and Monad. See docs/guides/probability.md." >&2
+    status=1
+  fi
+done < <(lean_sources)
+
 if grep -rEn --include='*.lean' '@\[expose\][[:space:]]+public section' PolyFun/Interaction; then
   echo "ERROR: Broad exposed public sections are forbidden in PolyFun/Interaction." >&2
   echo "Expose individual definitions, or use 'import all' in proof modules." >&2
@@ -250,6 +354,53 @@ for ordinary_form in \
   fi
 done
 
+# No file opens an external library (Lean core, Std, Batteries, Mathlib, CSLib or any other
+# dependency). Bodies are opened only inside the library that owns them, and this repository owns
+# none of its dependencies; a body that module mode hides must be reached through a public
+# equation. `import all` may name only this repository's own libraries.
+own_library_pattern="${import_all_prefix}(PolyFun[[:alnum:]_]*|ToCslib|ComplexityBackends|Examples)([[:space:]]|\.|$)"
+
+opens_external_library() {
+  local opened
+  opened=$(grep -E "${import_all_prefix}" | grep -vE "$own_library_pattern" || true)
+  [[ -n "$opened" ]]
+}
+
+for external_form in \
+    'import all Mathlib.Data.List.Sort' \
+    'public import all Batteries.Data.List.Basic' \
+    'meta import all Init.Data.List.Sort.Basic' \
+    'public meta import all Lean.Elab.Command' \
+    'import all Std.Data.HashMap' \
+    'import all Cslib.Foundations.Data.FreeM'; do
+  if ! opens_external_library <<< "$external_form"; then
+    echo "ERROR: external-library matcher does not recognize: $external_form" >&2
+    status=1
+  fi
+done
+
+for own_form in \
+    'import all PolyFun.IPFunctor.Scoped.Basic' \
+    'import all PolyFunTest.Realizability.Quantitative' \
+    'public import all ToCslib.Order.Basic' \
+    'meta import all ComplexityBackends.CslibSingleTape.Counting' \
+    'import all Examples.Tutorials.Requests' \
+    'import Mathlib.Data.List.Sort' \
+    '-- import all Mathlib.Data.List.Sort'; do
+  if opens_external_library <<< "$own_form"; then
+    echo "ERROR: external-library matcher must not classify: $own_form" >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  if opens_external_library < "$file"; then
+    echo "ERROR: $file uses 'import all' on an external library. Reach a hidden body through a" >&2
+    echo "public equation instead; only this repository's own libraries may be opened." >&2
+    status=1
+  fi
+done < <(git ls-files -- '*.lean')
+
 backend_import_all_allowed() {
   case "$1" in
     PolyFunTest/ModuleAPI/*) return 1 ;;
@@ -329,6 +480,61 @@ while IFS= read -r file; do
     status=1
   fi
 done < <(git ls-files -- 'PolyFunTest/ModuleAPI/*.lean')
+
+# Imported declarations reach the kernel only through `IPFunctor.Import.submit`, which turns off
+# asynchronous checking and `debug.skipKernelTC`, applies the per-declaration budget, and restores
+# the environment after a rejection so that no fallback axiom remains. In the import machinery and
+# its tests, only `Import/Submit.lean` adds declarations. The pattern names the functions that add
+# a declaration: `addDecl`, `addAndCompile`, the auxiliary-declaration helpers `mkAuxLemma`,
+# `mkAuxTheorem`, `mkAuxDefinition` and `mkAuxDefinitionFor`, and the kernel's `addDeclCore` and
+# `addDeclWithoutChecking`, which skip the check (`addDeclCore` when `doCheck := false`). Every
+# mention of `addDeclCore` is rejected, whatever its arguments, because the flag can be passed
+# positionally or through a variable. The match is textual, so a declaration added by another
+# route, such as elaborating a command, is outside it.
+import_add_pattern='(^|[^[:alnum:]_])(addDecl|addDeclCore|addDeclWithoutChecking|addAndCompile|mkAuxLemma|mkAuxTheorem|mkAuxDefinition|mkAuxDefinitionFor)([^[:alnum:]_]|$)'
+
+for add_form in \
+    'addDecl decl' \
+    '  atomically <| withOptions (guard b) <| addDecl decl (forceExpose := forceExpose)' \
+    '  return env.addDecl (guard b (← getOptions)) decl' \
+    '  discard <| mkAuxLemma [] type value' \
+    'addAndCompile d' \
+    '  return env.addDeclWithoutChecking decl' \
+    '  setEnv (← ofExceptKernelException <| (← getEnv).addDeclCore 0 0 decl none (doCheck := false))' \
+    '  let env ← ofExceptKernelException (Kernel.Environment.addDeclCore env 0 0 decl none)' \
+    '  discard <| mkAuxTheorem type value' \
+    '  let c ← mkAuxDefinition name type value' \
+    '  let c ← mkAuxDefinitionFor name value'; do
+  if ! grep -qE "$import_add_pattern" <<< "$add_form"; then
+    echo "ERROR: import addDecl matcher does not recognize: $add_form" >&2
+    status=1
+  fi
+done
+
+for other_form in \
+    '  submit (← reflDecl name lhs rhs) cfg.budget' \
+    'def addDeclaration := 0' \
+    'readdDeclared' \
+    '  addDeclarationRanges name stx' \
+    '  let n ← mkAuxName base 1' \
+    '  discard <| mkAuxTheoremLike type'; do
+  if grep -qE "$import_add_pattern" <<< "$other_form"; then
+    echo "ERROR: import addDecl matcher must not classify: $other_form" >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  case "$file" in
+    */Import/Submit.lean) continue ;;
+  esac
+  if grep -qE "$import_add_pattern" "$file"; then
+    echo "ERROR: $file adds declarations directly; the import machinery and its tests go through" >&2
+    echo "IPFunctor.Import.submit (PolyFun/IPFunctor/Scoped/Import/Submit.lean)." >&2
+    status=1
+  fi
+done < <(git ls-files -- 'PolyFun/IPFunctor/Scoped/Import/*.lean' \
+  'PolyFunTest/IPFunctor/Scoped/Import/*.lean')
 
 if (( status != 0 )); then
   exit "$status"

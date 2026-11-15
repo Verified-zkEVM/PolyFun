@@ -101,6 +101,15 @@ theorem denote_substOne (alg : Interpretation σ V) {a b : S}
   funext a x
   cases x <;> rfl
 
+/-- A term weakened below a block of fresh variables ignores their values. -/
+theorem denote_weakenMany (alg : Interpretation σ V) {a : S} (t : σ.Term Γ a) {Ξ : List S}
+    (ξ : Env V Ξ) (η : Env V Γ) :
+    (t.subst (Substitution.weakenMany Ξ)).denote alg (Env.append ξ η) = t.denote alg η := by
+  rw [denote_subst]
+  congr 1
+  funext b x
+  exact Env.append_weakenMany ξ η x
+
 end Term
 
 /-! ## Deprecated aliases -/

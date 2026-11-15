@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Lens.Cartesian
-import Batteries.Tactic.Lint
 
 /-!
 # Vertical–cartesian factorization of lenses

@@ -1,0 +1,7 @@
+[
+  {
+    "name": "badScope",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"var": 1}}}
+  }
+]

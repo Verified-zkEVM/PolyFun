@@ -95,6 +95,47 @@ example {W : Type} {S : W → Type} {σ τ : ScopedFamily W S}
     (t.subst A θ).map h μ = (t.map h μ).subst B (θ.map h μ) :=
   ScopedFamily.Term.map_subst h A B (compatible.preservesSubstitution h A B) μ θ t
 
+/-- An application keeps its parameter context, so its children take terms in the ambient
+context itself, with no cast. -/
+example {n : Nat} {Γ : List (Examples.ScopedFamily.ValueSort n)}
+    {a b : Examples.ScopedFamily.Ty n}
+    (f : Examples.ScopedFamily.Term n Γ (.mono (.arrow a b)))
+    (x : Examples.ScopedFamily.Term n Γ (.mono a)) :
+    Examples.ScopedFamily.Term n Γ (.mono b) :=
+  IPFunctor.ScopedFamily.Term.node (.app a b) (Fin.cases f fun _ => x)
+
+/-- A kept child reads the ambient environment unchanged. -/
+example {W : Type} {S : W → Type} {w : W} {V : S w → Type} {Γ : List (S w)}
+    (η : ScopedSignature.Env V Γ) :
+    (ScopedFamily.Ambient.keep : ScopedFamily.Ambient S w w).env η = η := rfl
+
+/-- Every ambient context is the positional image of the original one. -/
+example {W : Type} {S : W → Type} {w w' : W} (c : ScopedFamily.Ambient S w w')
+    (Γ : List (S w)) : c.context Γ = Γ.map c.sort :=
+  ScopedFamily.Ambient.context_eq_map c Γ
+
+/-- Positional lookup in a mapped child context retrieves the original value. -/
+example {W : Type} {S : W → Type} {w w' : W} (c : ScopedFamily.Ambient S w w')
+    {V : S w' → Type} {Γ : List (S w)} (η : ScopedSignature.Env (fun a => V (c.sort a)) Γ)
+    {a : S w} (x : ScopedVar Γ a) : c.env η (c.sort a) (c.var x) = η a x := by
+  simp
+
+/-- Every child of a constant family keeps its context, so the two polynomials have the same
+child judgments definitionally. -/
+example {S : Type} (σ : ScopedSignature S) (j : ScopedSignature.Judgment S) (o : σ.Op j.2)
+    (p : σ.Arg o) :
+    σ.asFamily.polynomial.src ⟨(), j⟩ o p = ⟨(), σ.polynomial.src j o p⟩ := rfl
+
+/-- Moving a variable into the constant family computes definitionally. -/
+example {S : Type} {σ : ScopedSignature S} {Γ : List S} {a : S} (x : ScopedVar Γ a) :
+    (ScopedSignature.Term.var (σ := σ) x).toFamily = ScopedFamily.Term.var x := rfl
+
+/-- The tutorial's action is the identity at an application, which keeps its context. -/
+example {n : Nat} {Γ : List (Examples.ScopedFamily.ValueSort n)}
+    {a b : Examples.ScopedFamily.Ty n} {s : Examples.ScopedFamily.ValueSort n}
+    (t : Examples.ScopedFamily.Term n Γ s) (p : Fin 2) :
+    Examples.ScopedFamily.reindexAction (.app a b) p t = t := rfl
+
 /-- A noninjective type map retains both positional assignments. -/
 example :
     let f : Bool → Unit := fun _ => ()

@@ -515,6 +515,74 @@ and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
 constructor algebra. Algebras receive argument meanings as functions of new bound
 values, so entering a binder does not execute its body.
 
+[`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
+interprets a binding signature continuously. A `DomainInterpretation σ V` receives each
+argument as a continuous function of only the variables that argument binds, over an
+unbundled family of omega-complete partial orders `V`. `Term.denoteDomain` folds it into
+continuous functions of the environment. It satisfies `denoteDomain_rename`,
+`denoteDomain_subst` and `denoteDomain_substOne` for every such algebra. Because arguments
+arrive as continuous functions, a constructor can also take a least fixed point of one.
+`Term.denoteDomain_related` is the fundamental lemma. Let a continuous algebra and an
+ordinary `Interpretation` relate their results whenever their arguments are related, by a
+relation `R : ∀ a, V a → W a → Prop`. Then every term has related meanings in environments
+related by `Env.LiftRel R`. The
+[lazy-language tutorial](../../Examples/Tutorials/ScopedDomains.lean) relates a lazy meaning
+with recursion to a call-by-value evaluator this way.
+
+A constructor that returns a function should return `Env.abstraction` of its body's meaning, in
+an `ofFun` clause, as the tutorial's `lam` does. `Env.abstraction f` is `Env.bindOne f` with its
+proof of continuity stated at its own function. The form matters when the kernel checks an
+equation between nested abstractions, such as one whose right side writes each continuous map
+`ofFun G (id (α := ωScottContinuous G) k)`. In measurements of Lean's kernel, whose comparison
+order no specification fixes, it compares two maps `ofFun F h` by the types of their proofs and
+then by their functions. When each proof is stated at its function, the second comparison repeats
+the first and the kernel reuses it, so the check takes time linear in the nesting depth. A
+composite with `Env.bindOne` unfolds to a structure instead, and the time grows exponentially with
+the depth. [`KernelBudget`](../../PolyFunTest/IPFunctor/Scoped/KernelBudget.lean) checks eight
+nested abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They
+need between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
+
+Names in the scoped layer follow one rule. A plain name is an ordinary interpretation and its
+fold: `Interpretation` and `Term.denote`, and for stacked families `Model.Interp`, `Model.alg`
+and `Model.denote`. `Domain` marks the continuous counterpart, semantics in omega-complete
+partial orders: `DomainInterpretation`, `Term.denoteDomain`, `substitutionEnvDomain`,
+`Model.DomainInterp`, `Model.domainAlg` and `Model.denoteDomain`. The suffix `Continuous` marks
+instead the bundled `→𝒄` form of an existing function, such as `Env.renameContinuous`.
+`DomainInterpretation` is the binding-signature analogue of `PFunctor.Resumption.ContinuousAlgebra`,
+whose fold over resumptions is called `denote`.
+
+Here an algebra is always a signature algebra, which interprets each constructor given its
+arguments' meanings. `Interpretation` and `DomainInterpretation` are algebras of a binding
+signature, and the tutorials' `algebra` definitions are instances of them. `Model.alg` and
+`Model.domainAlg` are the `IPFunctor.FoldAlgebra`s that a stacked model's interpretation induces
+on the syntax polynomial, the input of `IFreeM.fold`. The ordered monad algebras of the program
+logic, such as `MAlgOrdered`, are a different notion: they interpret the computations of a monad.
+
+[`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
+lemma into a `Control.Semantics.CertifiedMeaning`. `Term.certifiedMeaning` certifies a term
+with one free variable, its input, against a native implementation. It needs two more facts.
+The representation relates each encoded input to a native representative (`represents`), and a
+representative determines its encoded output (`determines`). Totality says that the evaluator
+returns the representative of the implementation's result (`total`). When the evaluator returns
+it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn` there.
+`Term.liftFun_denoteDomain` states the fundamental lemma as `Relator.LiftFun`, the premise of
+`CertifiedMeaning.ofLiftFun`, so a language with function sorts can certify a closed function
+term through its relation at function sorts. The lazy-language tutorial certifies a program
+against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`.
+
+[`Scoped.Adequacy`](../../PolyFun/IPFunctor/Scoped/Adequacy.lean) relates a continuous meaning to
+closed syntax, the generic part of an adequacy proof. A relation
+`R : ∀ a, V a → σ.Term [] a → Prop` can describe an operational semantics, for example "the term
+evaluates to a value term related to the semantic value". Suppose that each constructor's result
+is related to the closed node whenever each argument's meaning is related to the argument closed
+by related terms (`DomainInterpretation.RelatedSyntax`). Then
+`Term.denoteDomain_relatedSyntax` relates every term's meaning in an environment to the term
+closed by a related substitution, and each closed term is related to its own meaning. Each
+argument is closed with `Term.instantiate`, which below one binder is `substOne`
+(`instantiate_single`). The lazy-language tutorial proves computational adequacy for a
+call-by-name evaluator this way. A closed numeric term means `n` exactly when it evaluates to the
+numeral `n`, and a closed term means bottom exactly when it does not evaluate.
+
 For a different semantic carrier, `IPFunctor.FoldAlgebra` and `IFreeM.fold` provide
 an indexed constructor fold. `fold_rel`, `fold_fusion`, and `fold_unique` separate
 constructor reasoning from whole-tree induction. In particular, a lazy language
@@ -544,6 +612,15 @@ context, and the result sort. Terms remain `IFreeM` trees. This supports type
 or numeric quantifiers without representing syntax as a callback that builds a
 different term for each instantiation.
 
+The field `ambient` says how a child sees the ambient value context. A child that stays in
+its parent's parameter context can `keep` that context. Its ambient context is then `Γ`
+itself, definitionally, so ambient variables keep their sorts and a denotation passes its
+environment unchanged. A child that changes parameter context moves each ambient sort along
+a `map`. `ScopedFamily.reindex σ op p` is the resulting sort map. At a child,
+`Ambient.context`, `Ambient.var`, `Ambient.env` and `Ambient.mapRenaming` replace `List.map`,
+`ScopedVar.map`, `Env.reindex` and `Renaming.map`. Each of their laws reduces to the
+`List.map` law at `map`.
+
 [`ScopedFamily.Hom`](../../PolyFun/IPFunctor/Scoped/FamilyMap.lean) describes a
 parameter transformation by constructor-local equations. It checks how the
 parameter map lifts at every child, including compatibility with old variable
@@ -553,7 +630,7 @@ into an [`IPFunctor.Traversal`](../../PolyFun/IPFunctor/Free/Traversal.lean).
 `Term.map_rename` proves that mapping parameters commutes with value renaming.
 `Hom.comp` composes the constructor translations and their lifted parameter
 maps. `Term.map_map` identifies successive maps with this composite after
-normalizing the ambient context's two `List.map` applications.
+normalizing the mapped context's two `List.map` applications.
 `Hom.identity` transports between equal parameter contexts; `Term.map_identity`
 normalizes an identity map in one context, and `Term.map_identity_heq` handles
 distinct but provably equal parameter contexts.
@@ -568,8 +645,9 @@ Its self-transport simplifier accepts arbitrary equality proofs, while
 [`Scoped.Transport`](../../PolyFun/IPFunctor/Scoped/Transport.lean) defines
 `Env.reindex f`, which moves an environment of `Γ` to `Γ.map f` by its original
 binding positions. No injectivity assumption is required: two parameters can
-instantiate to the same type without merging their bindings. `Renaming.map`,
-`Substitution.map` and `Substitution.reindex` are instances of `Env.reindex`.
+instantiate to the same type without merging their bindings. `Renaming.map` and
+`Substitution.map` are instances of `Env.reindex`, and `Substitution.reindex` is an instance
+of `Ambient.env`.
 Value renaming has identity and composition laws. The
 [`family substitution API`](../../PolyFun/IPFunctor/Scoped/FamilySubstitution.lean)
 requires a language action for reindexing substitution images when entering a
@@ -591,7 +669,8 @@ This does not assume injectivity of sort maps or preservation of an interpretati
 simplifier also covers contexts that are only propositionally equal.
 
 The [constant-family adapter](../../PolyFun/IPFunctor/Scoped/ConstantFamily.lean)
-provides both proved round trips to the existing `ScopedSignature` API.
+provides both proved round trips to the existing `ScopedSignature` API. Every child keeps
+its ambient context, so the two polynomials agree definitionally.
 [`FamilySize`](../../PolyFun/IPFunctor/Scoped/FamilySize.lean) counts nodes when
 every constructor has finitely many children. The count excludes head payloads
 and measures neither execution cost nor the size of a semantic value.
@@ -602,6 +681,8 @@ of `DomainResult` computations. Extension, append, renaming and `Env.map` are
 continuous maps. `ωScottContinuous_cons` and `ωScottContinuous_single` let
 `fun_prop` prove continuity through extension. `Env.bindOne` turns the meaning of an
 argument that binds one variable into a continuous function of that variable.
+`Env.abstraction` is the same map, written so that the kernel compares nested abstractions in
+linear time.
 `Env.map` applies a family of continuous maps along a sort map. `Env.transport` is
 its instance for an equation of bundled
 [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) carriers. With bottom
@@ -614,7 +695,8 @@ commutes with whole-group unfolding.
 
 [`Scoped.EnvRelation`](../../PolyFun/IPFunctor/Scoped/EnvRelation.lean) defines
 `Env.Forall₂`, which relates two environments by binding position for any family of
-relations and assumes no order on the values. It is preserved by extension, append
+relations and assumes no order on the values. `Env.LiftRel` is the form for two environments
+of one context and a relation indexed by one sort. It is preserved by extension, append
 and assembly, and by positional reindexing on either side (`Forall₂.reindex_left` and
 `Forall₂.reindex_right`). `Env.Pointwise` is its instance for heterogeneous equality.
 [`Scoped.DomainRelation`](../../PolyFun/IPFunctor/Scoped/DomainRelation.lean) derives
@@ -625,11 +707,190 @@ errors and quantifier stages remain outside this generic layer.
 The [polymorphic tutorial](../../Examples/Tutorials/ScopedFamily.lean) constructs
 a finite identity under a type binder and proves erasure preservation for every
 parameter renaming using `fold_map_rel`. It also demonstrates an ambient value
-remaining free below a type binder and a value binder. Its `reindexAction` builds
-a lawful parameter action from parameter renaming, in steps that another language
-can repeat. It has no Cryptol or cryptography
+remaining free below a type binder and a value binder. Its `reindexAction` is the
+identity at children that keep their context and parameter renaming below a type
+binder, and it satisfies the whole substitution algebra. It has no Cryptol or cryptography
 dependency. [Public API checks](../../PolyFunTest/ModuleAPI/ScopedFamily.lean)
 and the separate documentation consumer exercise the same theorems through
 ordinary imports. The public API checks also substitute a lambda below both binder
 kinds, compare the exact term, and apply `subst_subst` and `substOne_subst_lift`
 with `reindexAction_lawful`.
+
+## Two-level binding families
+
+[`ScopedSignature.Stacked τ k₀ H`](../../PolyFun/IPFunctor/Scoped/Stacked.lean) describes a
+value-level language whose parameter contexts are the contexts of a type-level signature `τ`.
+Its sorts are type-level terms of one kind `k₀`. A head is a shape from `H` together with
+annotations: type-level terms, one per slot, each under its own type binders. A checked head
+`Stacked.Op Θ s` stores its annotations and the proof that they compute the result sort `s`. It
+also stores the side condition `WF`, which can carry the evidence of a coercion between two
+types. The language gives the value binders, child sorts and result sort of each shape as
+functions of the annotations, with one substitution equation for each.
+
+From these equations, `toFamily`, `paramHom` (type-parameter substitution as a
+`ScopedFamily.Hom`), `reindexAction` and `reindexAction_lawful` are derived once. So
+`Stacked.subst_subst`, `Stacked.map_subst` and `Stacked.substOne_subst_lift` hold for every
+stacked family. A child that binds no type parameter keeps its parent's value context
+(`Stacked.enter [] = .keep`). A child below type binders weakens each ambient sort by
+`Substitution.weakenMany`, which agrees with `Term.weaken` below one binder. `Stacked.node`
+builds a node whose result sort is computed from its head, so the check is definitional.
+
+Two-child type formers do not commute with substitution definitionally: their children are
+selected by a match on the child index. Where a substituted type meets a type written
+independently, as after an instantiation, a language uses a coercion head. Its side condition
+`WF` carries the evidence that the two types agree in the sense the language chooses.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) builds size-indexed vectors
+this way. Applications take terms in the ambient context with no coercion. A coercion's side
+condition compares the shapes of the two evaluated types, with their lengths erased, at every
+assignment. Its evidence is therefore `rfl` for any two vector types with one entry shape, such
+as `[m + n]nat` and `[n + m]nat`, but also `[1]nat` and `[1000]nat`; no size arithmetic is
+checked.
+
+[`Scoped.StackedInterpretation`](../../PolyFun/IPFunctor/Scoped/StackedInterpretation.lean)
+interprets a stacked family through evaluated heads. A `Stacked.Model` gives the type-level
+interpretation `tyAlg`, value-level typing rules on evaluated annotations (`bindersV`, `sortV`,
+`resultV`) and a value-level side condition `WFV`, with one coherence equation per rule in the
+type-level meanings. The names follow the signature level: `Model.Interp V` is an ordinary
+interpretation and `Model.denote` its fold, while `Model.DomainInterp D` is a continuous one,
+over an unbundled family of omega-complete partial orders, and `Model.denoteDomain` its fold.
+Both see a head only through its evaluated annotations and receive each child as a function
+of the child's type arguments and fresh value binders. Two theorems need no proof for any
+individual head:
+
+- `Model.denoteDomain_map` and `denoteDomain_map_closed`: substituting type parameters in the
+  syntax and then taking the meaning agrees with taking the meaning at the evaluated
+  assignment;
+- `Model.denoteDomain_related`: if a continuous and an ordinary interpretation are related by
+  `DomainInterp.Related R` at every evaluated head, then every term has related meanings at
+  every type assignment, in environments related by `Env.LiftRel`.
+
+A coercion's carrier equation is stated in `WFV`, and the coercion's interpretation casts
+there with `ContinuousHom.ofEq`; the relation of `denoteDomain_related` needs no other
+invariance. `denote_stackedNode` and `denoteDomain_stackedNode` state one step of a meaning.
+A large meaning is better computed by rewriting with them than by one `rfl` through several
+instantiations.
+
+The stacked meanings have no value-level renaming or substitution laws, which
+`Term.denoteDomain` has at the signature level, and the ordinary fold `Model.denote` has no
+counterpart of `denoteDomain_map`.
+
+Spell value contexts in theorems about meanings as `τ.Term Θ k₀`, the spelling the generic
+lemmas use. The vectors tutorial's `repSeven_three` states `denoteDomain_map_closed` for
+`repSeven`, an application of a coerced instantiation. Defined with its value context written
+through the tutorial's abbreviation, as `[] : List (TyTerm [.size] .scheme)`, the same
+statement exceeds the default heartbeats: the elaborator unfolds both meanings instead of first
+identifying the two spellings of the context. With the generic spelling it checks at once.
+Smaller terms check with either spelling, because the cost is that of evaluating the meanings.
+
+The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a lazy call-by-name
+meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
+`denoteDomain_map_closed`.
+
+`Stacked.Model.certifiedMeaning` certifies a term with one free value variable at a type
+assignment, under the premises of `Term.certifiedMeaning`. A total evaluator can be its own
+implementation, so its totality premise holds by definition. The vectors tutorial encodes numbers
+and vectors of data faithfully and so certifies every term with one data input at every size
+assignment (`certifiedEvaluator`).
+
+## Importing typed syntax
+
+`Scoped/Import` lets a frontend for an external language add typed terms of a binding signature
+or a stacked family through the kernel, and have the kernel accept each one against its source.
+The frontend decodes its source into a mirror type, elaborates each declaration in meta code into
+a `Tree`, and names an erasure `erase : Term → Mirror`, an exposed fold. For each declaration `d`,
+`importDecls` adds:
+
+- `d`, the quoted term, as an exposed definition, whose type the kernel checks;
+- the frontend's auxiliary definitions of `d` (`Extra`), such as its source or its meaning,
+  exposed, and compiled when `Extra.compile` holds, `noncomputable` otherwise;
+- `d.accepted : erase d = src`, by `Eq.refl` (the default) or by evaluating a `Decidable`
+  instance, which the kernel decides;
+- the frontend's equation lemmas, each by `Eq.refl`, with right sides written without syntax;
+- the frontend's other theorems about `d` (`ExtraTheorem`), each with a proof term the frontend
+  assembles in meta code. Only the kernel checks it, so the frontend can submit a proof whose
+  elaboration from source would exceed the budget.
+
+The driver prepares a declaration's steps before it adds any of them, so the elaborator cannot
+infer the type of a declaration's own auxiliary definitions. An equation whose left side is one of
+them, possibly applied, takes that definition's `Extra.type` instead; given the type, `reflDecl`
+reads nothing from the environment. `theoremDecl` reads nothing from it either, so a theorem's
+statement and proof can name the declaration and its auxiliary definitions.
+
+Bundle declarations (`BundleDecl`), such as a table the acceptance theorems mention, come before
+the first declaration.
+
+A frontend can name, for each declaration it generates, the environment linters that skip it:
+`Elaborated.nolint` for the term, `Extra.nolint` and `ExtraTheorem.nolint`, and
+`Elaborated.equationNolint` for the equation lemmas. The driver marks the declaration
+`@[nolint …]` in the step that adds it, so a rollback removes the mark with the declaration. The
+marks are for findings that hold by construction, such as a name that the source language
+dictates. A hand-written declaration keeps every linter.
+
+[`Import/Quote.lean`](../../PolyFun/IPFunctor/Scoped/Import/Quote.lean) turns a `Tree` into a
+term. A node carries a `Head` of the frontend's table, usually `Head.const` of a smart
+constructor. The quoter keeps scopes and writes variables, with every implicit argument
+explicit. A child that enters type binders replaces the parameters and weakens the ambient sorts,
+as `Stacked.enter` does. `Syntax.ofSignature` and `Syntax.ofStacked` cover both levels of a
+stacked family, so annotations and terms use one quoter. The elaborator never compares
+value-level types, so a mistake in a head table is a kernel type mismatch.
+
+[`Import/Submit.lean`](../../PolyFun/IPFunctor/Scoped/Import/Submit.lean) is the only place that
+adds declarations. In the import machinery and its tests, `check-modules.sh` rejects any other file
+that names `addDecl`, `addDeclCore`, `addDeclWithoutChecking`, `addAndCompile`, `mkAuxLemma`,
+`mkAuxTheorem`, `mkAuxDefinition` or `mkAuxDefinitionFor`. The match is textual, so a declaration
+added by another route, such as elaborating a command, is outside it.
+`submit` runs the kernel check synchronously, with `debug.skipKernelTC` off, within a positive
+`Budget` of heartbeats, at most the ambient `maxHeartbeats` when that is positive, and compiles a
+definition that should be compiled in the same synchronous step; it returns the compilation's
+time, so that `Config.report` gives it apart from the kernel's. When the kernel rejects a
+declaration, `addDecl` keeps its statement as an axiom, even when the error is caught or
+swallowed by `#guard_msgs`. `atomically`, the machinery's only handler, restores the environment
+and rethrows, also after a heartbeat or recursion-depth limit, which an ordinary `try` does not
+catch. [`Import/Driver.lean`](../../PolyFun/IPFunctor/Scoped/Import/Driver.lean) runs a frontend
+in commit mode, `atomically` over the whole import. Any failure restores the environment from
+before the import: a kernel rejection, a compilation error, a frontend error or a resource limit.
+None of the import's declarations, compiled code or fallback axioms remain; messages logged before
+the failure do. Check mode adds and compiles nothing; it checks every step against an
+accumulating kernel environment and reports each declaration's verdict. Rejection tests use check
+mode.
+
+The kernel's allocations count against the elaborator's heartbeats, which accumulate over a
+command. The driver therefore runs each declaration, its elaboration included, `withBudget`: a
+fresh heartbeat count with the import's budget as its limit. A bundle whose declarations each fit
+the budget imports in one command, however many it has.
+
+**Trust.** The kernel checks that each imported term has the type the frontend declares and that
+each theorem is proved. It does not check that these statements say what the import should
+establish: the frontend chooses them, and they are trusted. The trusted part of a frontend is
+its declared type of each term, its auxiliary definitions, such as a declaration's `source`, the
+two sides of each acceptance theorem, and the statements of its equation lemmas and other
+theorems; the decoder from the external file to the mirror; the mirror's `ToExpr` instances,
+which write the source as a term; and the exposed erasure. The source side of an acceptance
+theorem must come from the decoded file, not from the term. Only the `Tree` quoted into the term
+is untrusted: a mistake in it is a kernel type mismatch or a failed acceptance theorem.
+
+Never set `debug.skipKernelTC` where imported declarations are accepted. With it set,
+`addDecl` admits a declaration unchecked, and the declaration depends on no axiom, so neither
+`#print axioms` nor the axiom sweep can see it. `submit` overrides the option for its own checks.
+The kernel's heartbeats bound allocations, not time, so a budget is a deterministic regression
+guard rather than a time limit; report times with `Config.report`.
+
+Kernel acceptance unfolds only exposed bodies: the erasure, and for acceptance by `decide` the
+mirror's derived decidable equality. Meta code that builds mirror values needs `public meta
+import` of the mirror's module. Lake does not track the JSON files a frontend reads; declare them
+with an `input_file` or `input_dir` target in the library's `needs` when they change between
+builds.
+
+The [toy JSON frontend](../../PolyFunTest/IPFunctor/Scoped/Import/Toy.lean) imports the
+[vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean)'s language, inserting a coercion
+after each size instantiation. Its [fixtures](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean)
+cover acceptance by both proofs, auxiliary and bundle declarations, a compiled auxiliary
+definition that compiled code runs, equation lemmas, one of them on an auxiliary definition, a
+theorem whose proof term only the kernel checks, a wrong proof of that theorem, a wrong scheme and a
+mismatched source rejected in check mode, budgets that the kernel or the elaboration exhausts, a
+bundle that fits only with per-declaration scopes, and generated declarations that `#lint` skips
+beside a hand-written one it reports. In commit mode, neither a rejection in the middle of a
+bundle, nor a wrong proof of a theorem, nor a declaration that the kernel accepts and the code
+generator cannot compile leaves a declaration or an axiom behind. The
+validation wrapper's axiom sweep includes both modules.

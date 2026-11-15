@@ -1,0 +1,7 @@
+[
+  {
+    "name": "badType",
+    "scheme": {"arrow": ["nat", {"vec": [{"lit": 3}, "nat"]}]},
+    "body": {"lam": {"arg": "nat", "body": {"var": 0}}}
+  }
+]

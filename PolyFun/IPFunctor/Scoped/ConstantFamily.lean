@@ -12,9 +12,10 @@ public import PolyFun.IPFunctor.Free.Reindex
 /-!
 # Ordinary binding signatures as constant parameter families
 
-The two representations convert by polynomial reindexing. Both round trips are
-identity, so clients of the ordinary scoped API can use the family machinery
-without changing their syntax or trusting a new representation theorem.
+The two representations convert by polynomial reindexing. Every argument keeps its
+ambient context, so the two polynomials agree definitionally and both round trips are
+identity. Clients of the ordinary scoped API can use the family machinery without
+changing their syntax or trusting a new representation theorem.
 -/
 
 public section
@@ -31,7 +32,7 @@ variable {S : Type u}
   Op _ := σ.Op
   Arg := σ.Arg
   world _ _ := ()
-  reindex _ _ := id
+  ambient _ _ := .keep
   binders := σ.binders
   sort := σ.sort
 
@@ -40,21 +41,14 @@ variable {S : Type u}
     Reindexing σ.polynomial σ.asFamily.polynomial (fun j => ⟨(), j⟩) where
   op _ o := o
   arg _ _ p := p
-  source j o p := by
-    change (⟨(), (σ.binders o p ++ j.1, σ.sort o p)⟩ :
-      ScopedFamily.Judgment (fun _ : Unit => S)) =
-      ⟨(), (σ.binders o p ++ j.1.map id, σ.sort o p)⟩
-    rw [List.map_id]
+  source _ _ _ := rfl
 
 /-- Forget the unique parameter context. -/
 @[expose] def fromFamilyReindexing (σ : ScopedSignature.{u, v, w} S) :
     Reindexing σ.asFamily.polynomial σ.polynomial (fun j => j.2) where
   op _ o := o
   arg _ _ p := p
-  source j o p := by
-    change (σ.binders o p ++ j.2.1.map id, σ.sort o p) =
-      (σ.binders o p ++ j.2.1, σ.sort o p)
-    rw [List.map_id]
+  source _ _ _ := rfl
 
 namespace Term
 

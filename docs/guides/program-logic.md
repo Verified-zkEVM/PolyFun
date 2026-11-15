@@ -11,8 +11,9 @@ interpretation. The *demonic* reading (`MonadAttach.toWPMonadDemonic`) asks the 
 every possible output, and the *angelic* reading (`MonadAttach.toWPMonadAngelic`) asks it of some
 possible output. Together they are the *support readings*. The *dual* reading of an exact
 interpretation (`ExactWPMonad.dual`) states upper bounds. An *expectation* reading takes
-postconditions valued in `ℝ≥0∞` and gives their expected values. VCVio, which builds on PolyFun,
-supplies the expectation reading of its oracle computations.
+postconditions valued in `ℝ≥0∞` and gives their expected values. A measure interpretation of a
+program, such as those in PolyFun's measure companions, determines one. VCVio, which
+builds on PolyFun, supplies the expectation reading of its oracle computations.
 [Names in VCVio](#names-in-vcvio) lists VCVio's names for these readings.
 
 For a small application-facing entry point, read
@@ -218,7 +219,9 @@ local instance : Anchored m₁ m₂ Prop := MonadAttach.anchoredPropDemonic
 ```
 
 Use the `Angelic` definitions with the same pattern when existential support is
-the intended observation. `ReaderT` itself is not `ExactMonadAttach`; its named
+the intended observation. PolyFun's measure companions supply a coupling algebra,
+`ExpectationWP.couplingAlgebra`, as another named definition to install the same way; see
+[probability](probability.md). `ReaderT` itself is not `ExactMonadAttach`; its named
 relational lifts instead reason at explicit left/right environments.
 
 ## Support: which interface is canonical
@@ -444,6 +447,12 @@ has no such constraint. On free programs, `OpSpec.ulift` reads a spec over `ULif
 lattice in `Type` therefore induces `Φ.ulift.toMAlgOrdered hΦ.ulift`, an algebra on programs with
 values in any universe. `PolyFunTest/PFunctor/FreeWP.lean` lifts the demonic reading this way.
 
+The expectation reading of free programs is such an algebra. PolyFun's measure companions define
+the integration spec `OpSpec.lintegral ν`, which specifies a call by the integral
+of its continuation under the answer measure `ν a`. Its algebra is `expectationAlgebra ν`, and
+its lifted algebra `expectationAlgebraULift ν` applies to values in any universe. See
+[probability](probability.md).
+
 ## Frame rules for sums of stateful handlers
 
 `PolyFun/PFunctor/Free/WP/StatefulFrame.lean` proves that a program run on one summand of
@@ -564,13 +573,16 @@ by explicit theorems, with the full-support, losslessness, and measurability hyp
 theorems need. An expectation reading does not change the attachment instance, and it satisfies
 `LawfulWPMonadAttach` only where a theorem proves it.
 
-## What stays downstream
+## What lives elsewhere
 
-Probability semantics stays downstream: output measures (`evalDist`), the expectation reading
-over `ℝ≥0∞` and the `Prob` carrier, couplings and pRHL/eRHL, concrete handler specifications,
-verification tactics specific to those readings, and any dependency on Loom2 or Iris/Bluebell.
-PolyFun supplies the generic definitions, the rule lemmas, and the quarantined `vcgen` bridges
-and specifications described above.
+Outside the `Measure` companions, the program-logic modules import no measure theory. Measure
+interpretations of programs live in those companions (see [probability](probability.md)),
+including the output measure `evalDist` of a monadic computation, which VCVio instantiates for
+its oracle computations. VCVio keeps its oracle-specific readings and their notation: the `Prob`
+carrier, couplings and pRHL/eRHL over oracle computations, concrete handler specifications, and
+verification tactics specific to those readings. Any dependency on Loom2 or Iris/Bluebell stays
+downstream. PolyFun supplies the generic definitions, the rule lemmas, and the quarantined `vcgen`
+bridges and specifications described above.
 
 ### Names in VCVio
 
@@ -583,4 +595,4 @@ VCVio, which builds on PolyFun, has its own names for the readings of its oracle
 | the angelic reading (`MonadAttach.toWPMonadAngelic`) | the *possible* reading (`OracleComp.Possible`) |
 | the expectation reading, whose triples state lower bounds | the *lower* reading (`OracleComp.Lower`) |
 | the dual reading (`ExactWPMonad.dual`) of the expectation reading, whose triples state upper bounds | the *upper* reading (`OracleComp.Upper`) |
-| the output measure | the *successful-output measure* (`evalDist`) |
+| the output measure (`evalDist`) | the *successful-output measure* (PolyFun's `evalDist`) |

@@ -1,0 +1,22 @@
+[
+  {
+    "name": "twice",
+    "scheme": {"arrow": [{"arrow": ["nat", "nat"]}, {"arrow": ["nat", "nat"]}]},
+    "body": {"lam": {"arg": {"arrow": ["nat", "nat"]}, "body":
+      {"lam": {"arg": "nat", "body":
+        {"app": [{"var": 1}, {"app": [{"var": 1}, {"var": 0}]}]}}}}}
+  },
+  {
+    "name": "idv",
+    "deps": ["twice"],
+    "scheme": {"all": {"arrow": [{"vec": [{"svar": 0}, "nat"]}, {"vec": [{"svar": 0}, "nat"]}]}},
+    "body": {"sabs": {"lam": {"arg": {"vec": [{"svar": 0}, "nat"]}, "body": {"var": 0}}}}
+  },
+  {
+    "name": "inst",
+    "deps": ["idv"],
+    "scheme": {"arrow": [{"vec": [{"lit": 3}, "nat"]}, {"vec": [{"lit": 3}, "nat"]}]},
+    "body": {"lam": {"arg": {"vec": [{"lit": 3}, "nat"]}, "body":
+      {"app": [{"sapp": {"fun": {"var": 1}, "size": {"lit": 3}}}, {"var": 0}]}}}
+  }
+]
