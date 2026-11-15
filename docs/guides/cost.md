@@ -292,10 +292,12 @@ on reachable states needs a state type that excludes the unreachable ones.
   additive hom `f` is charging by `f ∘ c` (`mapOutputHom_liftM_withChargeW`). The two writer
   morphisms behind these laws, `WriterT.mapOutputHom` and `WriterT.toStateTHom`, are in
   `PolyFun/Control/Monad/Hom/Writer.lean`.
-- An expected-cost reading needs a probability semantics, which this guide does not cover. It
-  transfers through a handler only from a per-call bound that holds for every call argument and
-  every handler state. A bound that holds only on average can fail once later calls depend on
-  earlier answers.
+- An expected-cost reading needs a probability semantics, which this guide does not cover;
+  PolyFun's measure companions define one as a fold
+  (`PFunctor/Free/Measure/ExpectedCharge.lean`; see [probability](probability.md)). It transfers
+  through a handler only from a per-call bound that holds for every call argument and every
+  handler state. A bound that holds only on average can fail once later calls depend on earlier
+  answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).

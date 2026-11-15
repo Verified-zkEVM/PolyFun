@@ -91,15 +91,20 @@ attribute [local implicit_reducible] signature Response Network.reindex State.re
   cases h
   rfl
 
-variable {network : Network Node boundary result} [DecidableEq Node] [DecidableEq Node']
+variable {network : Network Node boundary result}
 
-omit [DecidableEq Node] [DecidableEq Node'] in
+/-- Initialization commutes with relabeling, including the initial token holder. -/
+theorem initial_reindex (e : Node' ≃ Node) (service : S) :
+    initial (network.reindex e) service = (initial network service).reindex e := rfl
+
 private theorem packet_reindex (e : Node' ≃ Node) (id : Node')
     (packet : Interface.Packet (network.ports (e id)).In) :
     (Equiv.sigmaCongrLeft (β := fun id => Interface.Packet (network.ports id).In) e).symm
       ⟨e id, packet⟩ = ⟨id, packet⟩ :=
   Equiv.symm_apply_apply
     (Equiv.sigmaCongrLeft (β := fun id => Interface.Packet (network.ports id).In) e) ⟨id, packet⟩
+
+variable [DecidableEq Node] [DecidableEq Node']
 
 /-- Delivery respects dependent recipient types after relabeling. -/
 theorem dispatch_reindex (e : Node' ≃ Node) (packet : Destination network)
@@ -127,7 +132,6 @@ theorem deliver_reindex (e : Node' ≃ Node) (state : State network S) :
 
 variable {m : Type → Type} [Monad m] [LawfulMonad m]
 
-omit [DecidableEq Node'] in
 /-- Token execution commutes with equality of network presentations. -/
 theorem runToken_castNetwork {network' : Network Node boundary result}
     (h : network = network')
@@ -140,7 +144,6 @@ theorem runToken_castNetwork {network' : Network Node boundary result}
   simp only [id_map]
   rfl
 
-omit [DecidableEq Node'] in
 /-- FIFO execution commutes with equality of network presentations, keeping the schedule. -/
 theorem runFIFO_castNetwork {network' : Network Node boundary result}
     (h : network = network')
@@ -189,11 +192,6 @@ theorem activate_reindex
       | yield =>
           simp [activate, Network.reindex, State.reindex, h,
             Function.update_comp_eq_of_injective' _ e.injective]
-
-omit [DecidableEq Node] [DecidableEq Node'] in
-/-- Initialization commutes with relabeling, including the initial token holder. -/
-theorem initial_reindex (e : Node' ≃ Node) (service : S) :
-    initial (network.reindex e) service = (initial network service).reindex e := rfl
 
 /-- One scheduled FIFO operation commutes with relabeling. -/
 theorem fifoStep_reindex
