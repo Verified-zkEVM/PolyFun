@@ -21,7 +21,9 @@ the measure modules supply measure-valued instances of those parameters.
   the Giry operations (`Measure.bind`, `Measure.dirac`, `Kernel.comp`). They do not use `PMF`: the
   lawful monad instance on `PMF` lives in
   `Mathlib.Probability.ProbabilityMassFunction.Constructions`, whose import closure brings in most
-  of Mathlib's analysis.
+  of Mathlib's analysis. A PMF bridge relates the construction of a measure module `<M>.lean` to
+  `PMF`, through `PMF.toMeasure` and `Measure.toPMF`, in the sibling module `<M>/PMF.lean`. A
+  bridge imports as little of `Mathlib.Probability.ProbabilityMassFunction` as it needs.
 - **Subprobability for failure.** A computation that may fail to return denotes a measure of total
   mass at most one (`MeasureTheory.IsSubprobabilityMeasure`), so failure needs no `Option` wrapper.
   Missing mass is not always failure. The measure fold also loses mass at a step whose continuation
@@ -42,10 +44,10 @@ The measure interpretation of a construction lives in a `Measure` companion besi
 measure home of its area. An area is a directory that holds one kind of construction, together with
 its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
 interfaces), `PFunctor/Free/` (free programs), `PFunctor/Wiring/` (polynomial wiring),
-`Control/Monad/` (monads) and `Control/Domain/` (partial results). A measure
-interpretation of another kind of construction starts a new area. Each area whose constructions get
-a measure interpretation has one measure home: `<area>/Measure.lean` holds the area's main measure
-module, and `<area>/Measure/` holds the others.
+`Control/Monad/` (monads), `Control/Domain/` (partial results) and `Control/Semantics/` (certified
+meanings). A measure interpretation of another kind of construction starts a new area. Each area
+whose constructions get a measure interpretation has one measure home: `<area>/Measure.lean` holds
+the area's main measure module, and `<area>/Measure/` holds the others.
 
 A subdirectory of an area uses the area's home, unless it is an area itself. Free programs
 therefore have one home: a measure reading of their paths, weakest preconditions or costs
@@ -56,6 +58,16 @@ sits inside `PFunctor/`, so its measure module is `PFunctor/Wiring/Measure.lean`
 The staged lemmas are about Mathlib's and core's types, not about PolyFun constructions, so they
 live in `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's. Like
 the rest of `ToCslib`, they import no PolyFun module.
+
+In the whole repository, only a PMF bridge imports `Mathlib.Probability.ProbabilityMassFunction`,
+and a bridge imports only its `Basic` or `Monad` module. `Basic` adds one Mathlib module to the
+measure theory that the measure modules already import, and `Monad` one more, while
+`Constructions`, which holds the lawful monad instance, adds more than a thousand.
+`scripts/check-modules.sh` checks both rules on direct imports only, so a module may still reach
+`Constructions` through another Mathlib module: `Mathlib.Probability.Distributions.Uniform`
+imports it and passes the check. The script takes a module for a bridge when its path is
+`<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does not check that `<M>.lean` is a
+measure module.
 
 ## Contents
 
@@ -90,6 +102,25 @@ the rest of `ToCslib`, they import no PolyFun module.
 - **Bit vectors**
   ([`MeasurableSpace/Instances`](../../ToCslib/MeasureTheory/MeasurableSpace/Instances.lean)).
   `BitVec n` carries the discrete σ-algebra `⊤`.
+- **Uniform measures**
+  ([`UniformOn`](../../ToCslib/Probability/UniformOn.lean)).
+  Mathlib's `uniformOn s` is the counting measure conditioned on `s`: a probability measure when
+  `s` is finite and nonempty, and zero when `s` is infinite. The staged lemmas give the mass of a
+  point and of a decidable event under the uniform measure on a finite type or a finite set, and
+  integrals and products of uniform measures. A measurable equivalence carries `uniformOn s` to
+  `uniformOn (e '' s)` for every set, with no finiteness or measurable singletons
+  (`MeasurableEquiv.map_uniformOn`). With measurable singletons, a measurable map injective on `s`
+  does the same (`map_uniformOn_of_injOn`), so a measurable bijection preserves the uniform measure
+  on the whole space (`map_uniformOn_univ_of_bijective`, `uniformOn_univ_map_equiv`).
+- **Uniform measures and mass functions**
+  ([`UniformOn/PMF`](../../ToCslib/Probability/UniformOn/PMF.lean)).
+  The first PMF bridge. A mass function is the uniform measure on a finite set exactly when it
+  gives each point of the set mass `1 / #s` (`PMF.toMeasure_eq_uniformOn_iff`), and
+  `Measure.toPMF` of the uniform measure has these masses (`Measure.toPMF_uniformOn_apply`). The
+  bridge imports only `Mathlib.Probability.ProbabilityMassFunction.Basic`. Mathlib has no uniform
+  mass functions: `PMF.uniformOfFinset` no longer exists, and `PMF.uniformOfFintype` and the
+  `PMF.uniformOfFinset_*` lemmas are deprecated aliases of the measure `Measure.uniformOfFinset`
+  and its lemmas.
 - **Partial results**
   ([`Domain/Measure/Measurable`](../../PolyFun/Control/Domain/Measure/Measurable.lean),
   [`Domain/Measure`](../../PolyFun/Control/Domain/Measure.lean)).
@@ -103,7 +134,8 @@ the rest of `ToCslib`, they import no PolyFun module.
   measure, the defect of `success ν` is the defect of `ν` plus `failureMass ν` (`defect_success`),
   so for a probability measure it is `failureMass ν` (`defect_success_eq_failureMass`). The
   pushforward of a probability measure along `toOption` is the failure completion of `success ν`
-  (`map_toOption_eq_withFailure`).
+  (`map_toOption_eq_withFailure`). The failure mass of a pushforward `μ.map g` is the mass of the
+  points at which `g` returns no value (`failureMass_map`).
 - **The measure fold**
   ([`PFunctor/Measure`](../../PolyFun/PFunctor/Measure.lean),
   [`Free/Measure`](../../PolyFun/PFunctor/Free/Measure.lean)).
@@ -240,6 +272,25 @@ the rest of `ToCslib`, they import no PolyFun module.
   `DomainResult ε` is not a monad. A partial result reaches the semantics through `toOption` and the
   `Option` instance, under which it denotes the values of its Dirac measure
   (`DomainResult.evalDist_toOption`).
+- **Uniform draws**
+  ([`Monad/Measure/Uniform`](../../PolyFun/Control/Monad/Measure/Uniform.lean),
+  [`Free/Measure/Uniform`](../../PolyFun/PFunctor/Free/Measure/Uniform.lean)).
+  `EvalDist.IsUniformOn mx s` states that the output measure of `mx` is `uniformOn s` in every
+  measurable structure with measurable singletons, and `EvalDist.IsUniform mx` is the case
+  `s = Set.univ`. The predicate names no sampler. On a finite type one output measure establishes
+  it (`IsUniformOn.of_evalDist_eq`). Under lawful semantics, a map injective on `s` gives a uniform
+  draw from the image (`IsUniformOn.map_of_injOn`), so a bijection keeps a draw uniform
+  (`IsUniform.map_of_bijective`). A uniform draw from a finite nonempty set never fails
+  (`IsUniformOn.prFail_eq_zero`). Two independent uniform draws are a uniform pair
+  (`IsUniform.pair`). Two uniform draws from one set are equal in distribution
+  (`IsUniformOn.evalDistEq`), and equality in distribution preserves uniformity
+  (`EvalDistEq.isUniformOn_iff`). Events of a uniform draw are counting statements
+  (`IsUniformOn.prEvent_eq`, `IsUniform.prEvent_eq` and the `prEvent_eq_singleton`,
+  `prEvent_eq_zero_iff`, `prEvent_pos_iff` and `prEvent_eq_one_iff` forms). A bijection onto a
+  second uniform draw transports events (`IsUniform.prEvent_comp_of_bijective`) and continuations
+  (`IsUniform.evalDistEq_bind_comp`). A call to an operation whose answer measure is uniform is a
+  uniform draw (`PFunctor.FreeM.isUniform_lift`). The answer measures of
+  `PFunctor.AnswerMeasure.uniformOfFiniteNonempty` satisfy its hypothesis by `rfl`.
 - **Transformers**
   ([`Monad/Measure/OptionT`](../../PolyFun/Control/Monad/Measure/OptionT.lean),
   [`Monad/Measure/ExceptT`](../../PolyFun/Control/Monad/Measure/ExceptT.lean)).
@@ -292,6 +343,24 @@ the rest of `ToCslib`, they import no PolyFun module.
   (`evalDistEq_iff_relWP_eq`). `ExpectationWP.couplingAlgebra m₁ m₂` presents `RelWP`, read in the
   discrete structures, as a `MAlgRelOrdered m₁ m₂ Prop`, so PolyFun's relational triple rules apply
   to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
+- **Certified meanings**
+  ([`Semantics/Measure`](../../PolyFun/Control/Semantics/Measure.lean)).
+  A certified meaning `f : Control.Semantics.CertifiedMeaning input output` agrees with its native
+  implementation on every encoded input. Pushing a measure on native inputs forward along the
+  encoded meaning `f.meaning ∘ input` therefore gives the encoding of the implementation's
+  pushforward (`CertifiedMeaning.map_meaning`). A correspondence on an admissible set gives the
+  same equation when almost every input is admissible (`CorrespondsOn.map_meaning_ae`). For a
+  computation `mx`, the meaning's pushforward of its output measure is the encoding of the output
+  measure of `f.implementation <$> mx` (`CertifiedMeaning.evalDist_map_meaning`,
+  `CorrespondsOn.evalDist_map_meaning_ae`). The statements need measurability of the output
+  encoding and of the implementation only. A decoded certificate, whose output encoding is
+  `DomainResult.valueEmbedding`, pushes a measure on native inputs to a measure whose values are
+  the implementation's pushforward and whose failure mass is zero
+  (`CertifiedMeaning.success_map_meaning`, `CertifiedMeaning.failureMass_map_meaning`, and the
+  correspondence forms `CorrespondsOn.success_map_meaning_ae` and
+  `CorrespondsOn.failureMass_map_meaning_ae`). These forms need the implementation to be
+  measurable only almost everywhere. The `ScopedDomains` tutorial's decoded `addTwo` and `pred`
+  are their consumers in `PolyFunTest/Probability/ScopedDomains.lean`.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
 so VCVio can import them without renaming. The coupling predicates and the expectation algebra
@@ -303,7 +372,9 @@ abstract `MAlgRelOrdered.RelWP`.
 VCVio specializes these interpretations to oracle computations. Its `OracleComp` programs are
 PolyFun free programs, and its measure semantics is an `EvalDistSemantics` instance. VCVio
 supplies the notation for the declarations defined here: `𝒟[…]` for `evalDist`, `Pr{…}[…]` for
-`prEvent` and `=ᵈ` for `EvalDistEq`. `Pr{let x ← mx}[p x]` elaborates to `prEvent (p <$> mx)`,
+`prEvent` and `=ᵈ` for `EvalDistEq`. Its canonical samplers `$ᵗ α` (`SampleableType`) stay in
+VCVio. The law of a sampler is the field of `EvalDist.IsUniform` for its program, so the
+uniform-draw laws here apply to it. `Pr{let x ← mx}[p x]` elaborates to `prEvent (p <$> mx)`,
 the form in which the measure modules state the event laws. That notation takes the functor of the
 map from the monad. Over `OptionT m` and an `AlternativeMonad`, `p <$> mx` finds its functor through
 `Alternative` instead. The event laws over these monads therefore write the map as `p <$>ₘ mx`, a

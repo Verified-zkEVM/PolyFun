@@ -34,7 +34,9 @@ an observation.
 Measure interpretations go in `Measure` companions beside the construction they
 interpret (see [probability](../guides/probability.md)). Use Mathlib's `Measure` and
 `Kernel` there, and PolyFun's `evalDist` for the output measure of a monadic
-computation, not `PMF` or VCVio's `ProbComp`.
+computation, not `PMF` or VCVio's `ProbComp`. Only a PMF bridge `<M>/PMF.lean`,
+which relates the construction of the module `<M>.lean` beside it to `PMF`,
+imports Mathlib's `PMF` modules.
 
 When in doubt, ask: *can I state this with no security notion?* If yes, it
 belongs in PolyFun, in a `Measure` companion when it needs measures. If no, push
