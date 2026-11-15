@@ -1,0 +1,8 @@
+[
+  {
+    "name": "opaque",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"var": 0}}},
+    "uncompiled": true
+  }
+]

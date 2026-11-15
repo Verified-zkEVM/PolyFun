@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Lens.Basic
-import Batteries.Tactic.Lint
 
 /-!
 # The internal hom of the tensor product

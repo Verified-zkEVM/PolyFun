@@ -23,6 +23,10 @@ leastness are Mathlib's `fixedPoints.ωSup_iterate_mem_fixedPoint` and
 fixed-point induction, fusion, and continuity in the recursive body. As the least
 prefixed point (`ContinuousHom.isLeast_fix`), the result agrees with `OrderHom.lfp`
 on a complete lattice (`ContinuousHom.fix_eq_lfp`).
+
+The file also provides currying, argument exchange, and `ContinuousHom.ofEq`, the continuous
+map between two members of a family of omega-complete partial orders along an equation of
+their indices.
 -/
 
 public section
@@ -80,6 +84,45 @@ variable {α β γ : Type*} [OmegaCompletePartialOrder α]
 /-- Exchange two continuous arguments. -/
 @[expose] def swapArgs (f : α →𝒄 (β →𝒄 γ)) : β →𝒄 (α →𝒄 γ) :=
   curry (.ofFun (fun ba : β × α => f ba.2 ba.1))
+
+section OfEq
+
+variable {ι : Type*} (D : ι → Type*) [∀ i, OmegaCompletePartialOrder (D i)]
+
+/-- The continuous map between two members of a family along an equation of their indices.
+It is the identity once the equation is `rfl`. -/
+@[expose] def ofEq {i j : ι} (h : i = j) : D i →𝒄 D j :=
+  .ofFun (_root_.cast (congrArg D h)) (by subst h; exact ωScottContinuous.id)
+
+theorem ofEq_apply {i j : ι} (h : i = j) (x : D i) :
+    ofEq D h x = _root_.cast (congrArg D h) x := rfl
+
+/-- Transport along any equation of an index with itself is the identity. -/
+@[simp] theorem ofEq_self {i : ι} (h : i = i) (x : D i) : ofEq D h x = x := rfl
+
+/-- Transport keeps the value, across the equal members of the family. -/
+theorem ofEq_heq {i j : ι} (h : i = j) (x : D i) : HEq (ofEq D h x) x := by
+  subst h
+  rfl
+
+/-- Equality after transport is heterogeneous equality before it. -/
+theorem ofEq_eq_iff {i j : ι} (h : i = j) (x : D i) (y : D j) :
+    ofEq D h x = y ↔ HEq x y := by
+  subst h
+  exact ⟨heq_of_eq, eq_of_heq⟩
+
+/-- Successive transports compose. -/
+theorem ofEq_ofEq {i j k : ι} (h : i = j) (h' : j = k) (x : D i) :
+    ofEq D h' (ofEq D h x) = ofEq D (h.trans h') x := by
+  subst h h'
+  rfl
+
+/-- Transport keeps the least element. -/
+@[simp] theorem ofEq_bot [∀ i, OrderBot (D i)] {i j : ι} (h : i = j) : ofEq D h ⊥ = ⊥ := by
+  subst h
+  rfl
+
+end OfEq
 
 instance orderBot [OrderBot β] : OrderBot (α →𝒄 β) where
   bot := .const ⊥

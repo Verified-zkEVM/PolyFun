@@ -1,0 +1,8 @@
+[
+  {
+    "name": "badSource",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"lit": 3}}},
+    "compareWith": {"lam": {"arg": "nat", "body": {"lit": 4}}}
+  }
+]

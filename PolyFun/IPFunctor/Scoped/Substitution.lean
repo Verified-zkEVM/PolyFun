@@ -193,4 +193,58 @@ theorem substOne_subst_lift {a b : S} (body : σ.Term (a :: Γ) b)
     exact subst_id (θ _ x)
 
 end Term
+
+/-! ## Composition and weakening below a block of fresh variables -/
+
+namespace Substitution
+
+/-- Substitute by `θ`, then by `θ'`. -/
+@[expose] def comp (θ' : σ.Substitution Δ Θ) (θ : σ.Substitution Γ Δ) : σ.Substitution Γ Θ :=
+  fun _ x => (θ _ x).subst θ'
+
+@[simp] theorem comp_apply (θ' : σ.Substitution Δ Θ) (θ : σ.Substitution Γ Δ) {a : S}
+    (x : ScopedVar Γ a) : θ'.comp θ a x = (θ a x).subst θ' := rfl
+
+/-- Weakening below a block of fresh variables, as a substitution. -/
+@[expose] def weakenMany (Ξ : List S) : σ.Substitution Γ (Ξ ++ Γ) :=
+  fun _ x => Term.var (x.weakenMany Ξ)
+
+/-- A substitution lifted past a block sends a weakened variable to its weakened image. -/
+theorem liftMany_weakenMany (θ : σ.Substitution Γ Δ) (Ξ : List S) {a : S}
+    (x : ScopedVar Γ a) :
+    liftMany θ Ξ a (x.weakenMany Ξ) = (θ a x).subst (weakenMany Ξ) := by
+  induction Ξ with
+  | nil => exact (Term.subst_id _).symm
+  | cons b Ξ ih =>
+    change Term.weaken (liftMany θ Ξ a (x.weakenMany Ξ)) b = _
+    rw [ih, Term.weaken, Term.rename_subst]
+    rfl
+
+end Substitution
+
+namespace Term
+
+/-- Substituting by a composite substitutes twice. -/
+theorem subst_comp {a : S} (t : σ.Term Γ a) (θ : σ.Substitution Γ Δ)
+    (θ' : σ.Substitution Δ Θ) : t.subst (θ'.comp θ) = (t.subst θ).subst θ' :=
+  (subst_subst t θ θ').symm
+
+/-- Weakening below one fresh variable by substitution is the renaming `Term.weaken`. -/
+theorem subst_weakenMany_singleton (b : S) {a : S} (t : σ.Term Γ a) :
+    t.subst (Substitution.weakenMany [b]) = t.weaken b := by
+  conv_rhs => rw [← subst_id t]
+  rw [weaken, rename_subst]
+  rfl
+
+/-- Substitution commutes with weakening below a block of fresh variables. -/
+theorem subst_weakenMany_liftMany (θ : σ.Substitution Γ Δ) (Ξ : List S) {a : S}
+    (t : σ.Term Γ a) :
+    (t.subst (Substitution.weakenMany Ξ)).subst (Substitution.liftMany θ Ξ) =
+      (t.subst θ).subst (Substitution.weakenMany Ξ) := by
+  rw [subst_subst, subst_subst]
+  congr 1
+  funext b x
+  exact Substitution.liftMany_weakenMany θ Ξ x
+
+end Term
 end IPFunctor.ScopedSignature

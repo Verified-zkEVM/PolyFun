@@ -246,17 +246,15 @@ private theorem viewMap_toM_ofM
   rw [PFunctor.map_map]
   exact (ViewPoly F α).id_map layer
 
+/-- Destructing a tree assembled from one ergonomic shape layer recovers
+that layer. This mirrors the constructor/destructor equation for `PFunctor.M`. -/
 @[simp] theorem shape'_ofShape (layer : (ViewPoly F α).Obj (ITree F α)) :
     shape' (ofShape layer) = layer := by
   unfold shape' ofShape
   rw [PFunctor.M.dest_mk, unpack_pack]
   exact viewMap_ofM_toM layer
 
-/-- Destructing a tree assembled from one ergonomic shape layer recovers
-that layer. This mirrors the constructor/destructor equation for `PFunctor.M`. -/
-theorem shape'_mk (layer : (ViewPoly F α).Obj (ITree F α)) :
-    shape' (ofShape layer) = layer :=
-  shape'_ofShape layer
+@[deprecated (since := "2026-11-12")] alias shape'_mk := shape'_ofShape
 
 @[simp] theorem ofShape_shape' (tree : ITree F α) : ofShape (shape' tree) = tree := by
   apply toM_injective
