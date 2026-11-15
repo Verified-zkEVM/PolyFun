@@ -202,7 +202,8 @@ Mathlib's. All of it is written so that the upstream pull request is a move rath
 
 - every declaration lives in the namespace it will have upstream (`PFunctor.FreeM`, `Cslib`,
   `Cslib.IsMonadHom`, `Lean.Order`, `Std.Internal`, `OmegaCompletePartialOrder`, `Fin`; in the
-  staged measure modules, `MeasureTheory` and `ProbabilityTheory`), so
+  staged measure modules, `MeasureTheory`, `ProbabilityTheory`, `MeasurableEquiv` and the
+  namespaces of the types the lemmas are about, such as `Option` and `Sum`), so
   downstream call sites do not change when it lands, and neither does cslib's `topNamespace`
   linter for a cslib-bound module;
 - a lemma that duplicates an open upstream pull request carries an `-- upstream:` comment
