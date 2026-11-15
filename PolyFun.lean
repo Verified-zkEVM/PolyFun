@@ -356,6 +356,13 @@ public import PolyFun.PFunctor.Free.Do
 public import PolyFun.PFunctor.Free.Except
 public import PolyFun.PFunctor.Free.Fold
 public import PolyFun.PFunctor.Free.HandlerMachine
+public import PolyFun.PFunctor.Free.Measure
+public import PolyFun.PFunctor.Free.Measure.Expectation
+public import PolyFun.PFunctor.Free.Measure.Kernel
+public import PolyFun.PFunctor.Free.Measure.Kernel.Handler
+public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
+public import PolyFun.PFunctor.Free.Measure.Path
+public import PolyFun.PFunctor.Free.Measure.Support
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
 public import PolyFun.PFunctor.Free.Path.AppendAlong
@@ -415,6 +422,7 @@ public import PolyFun.PFunctor.Lens.Yoneda
 public import PolyFun.PFunctor.M
 public import PolyFun.PFunctor.M.Vertex
 public import PolyFun.PFunctor.M.WellFounded
+public import PolyFun.PFunctor.Measure
 public import PolyFun.PFunctor.NaturalModel
 public import PolyFun.PFunctor.Obj
 public import PolyFun.PFunctor.Parallel
@@ -442,6 +450,7 @@ public import PolyFun.PFunctor.Supply
 public import PolyFun.PFunctor.Supply.Trace
 public import PolyFun.PFunctor.Trace
 public import PolyFun.PFunctor.Wiring
+public import PolyFun.PFunctor.Wiring.Measure
 public import PolyFun.PFunctor.Wiring.Parallel
 public import PolyFun.Realizability.Basic
 public import PolyFun.Realizability.Closure
