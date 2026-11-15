@@ -9,6 +9,7 @@ module
 public import PolyFun.Control.Monad.Measure.Lossless
 public import ToCslib.MeasureTheory.Measure.Prop
 public import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
+import Mathlib.MeasureTheory.Integral.Lebesgue.Sub
 
 /-!
 # Event probabilities and failure probabilities of computations
@@ -16,7 +17,10 @@ public import Mathlib.MeasureTheory.Integral.Lebesgue.Countable
 `prEvent mx` is the mass that the successful-output measure of `mx : m Prop` puts on `True`. An
 event `p` of the outputs of `mx : m α` is the computation `p <$> mx`, so its probability is
 `prEvent (p <$> mx)`; the event laws below are stated in this form. Downstream notation for events
-of `do` sequences, such as VCVio's `Pr{…}[…]`, elaborates to it.
+of `do` sequences, such as VCVio's `Pr{…}[…]`, elaborates to it, with the functor taken from the
+monad. Over monads where `p <$> mx` finds its functor through `Alternative`, such as `OptionT m`,
+the event laws write the map as `p <$>ₘ mx`, a scoped notation that names the monad's functor
+(`open scoped EvalDistSemantics`).
 
 `prFail mx` is the probability that `mx` fails or does not terminate. It is the defect of the
 successful-output measure of `mx` with its outputs erased to `PUnit`, so it is defined at every
@@ -57,6 +61,15 @@ structure (`prFail_eq_defect`); in general that defect can be larger. -/
 @[expose] noncomputable def prFail {m : Type u → Type v} [Monad m] [EvalDistSemantics m]
     {α : Type u} (mx : m α) : ℝ≥0∞ :=
   (evalDist ((fun _ ↦ PUnit.unit) <$> mx)).defect
+
+/-- `f <$>ₘ x` is `f <$> x` with the functor taken from the monad, `Monad.toApplicative.toFunctor`.
+Downstream notation for events of `do` sequences, such as VCVio's `Pr{…}[…]`, builds its final map
+this way, as `bind_pure_comp` does. Over `OptionT m` or an `AlternativeMonad`, `f <$> x` finds its
+functor through `Alternative` instead. The two maps are definitionally equal but not syntactically
+equal, so event laws over such monads write `<$>ₘ` to state exactly the term that the downstream
+notation elaborates to. -/
+scoped[EvalDistSemantics] notation:100 f:101 " <$>ₘ " x:100 =>
+  Functor.map (self := Monad.toApplicative.toFunctor) f x
 
 /-! ## Events -/
 
@@ -536,5 +549,26 @@ theorem prFail_eq_one_iff (mx : m α) : prFail mx = 1 ↔ prEvent ((fun _ ↦ Tr
   rw [prFail_def] at h
   by_contra hne
   exact (ENNReal.sub_lt_self ENNReal.one_ne_top one_ne_zero hne).ne h
+
+/-- A bind fails when its prefix fails, or when the continuation fails after a successful prefix
+output. -/
+theorem prFail_bind_eq_add_lintegral_of_discrete {β : Type} [MeasurableSpace α]
+    [DiscreteMeasurableSpace α] (mx : m α) (f : α → m β) :
+    prFail (mx >>= f) = prFail mx + ∫⁻ x, prFail (f x) ∂evalDist mx := by
+  have hbind : prEvent ((fun _ ↦ True) <$> (mx >>= f)) =
+      ∫⁻ x, prEvent ((fun _ ↦ True) <$> f x) ∂evalDist mx :=
+    prEvent_bind_eq_lintegral_of_discrete mx f (fun _ ↦ True)
+  have hle : ∫⁻ x, prEvent ((fun _ ↦ True) <$> f x) ∂evalDist mx ≤ evalDist mx Set.univ :=
+    calc ∫⁻ x, prEvent ((fun _ ↦ True) <$> f x) ∂evalDist mx ≤ ∫⁻ _, 1 ∂evalDist mx :=
+          lintegral_mono fun x ↦ prEvent_le_one _
+      _ = evalDist mx Set.univ := by simp
+  have hsub : ∫⁻ x, prFail (f x) ∂evalDist mx =
+      evalDist mx Set.univ - ∫⁻ x, prEvent ((fun _ ↦ True) <$> f x) ∂evalDist mx := by
+    simp only [prFail_def]
+    rw [lintegral_sub Measurable.of_discrete (ne_top_of_le_ne_top (measure_ne_top _ _) hle)
+      (Filter.Eventually.of_forall fun x ↦ prEvent_le_one _)]
+    simp
+  rw [prFail_def, prFail_eq_one_sub_evalDist_univ, hsub, hbind]
+  exact (tsub_add_tsub_cancel (evalDist_apply_univ_le_one mx) hle).symm
 
 end prFailEvent
