@@ -117,9 +117,7 @@ theorem toITree_bind (computation : Resumption p α) (k : α → Resumption p β
       left = toITree (mapLens lens source) ∧
       right = ITree.mapSpec lens (toITree source))
     ?_ _ _ ⟨computation, rfl, rfl⟩
-  rintro left right ⟨source, hleft, hright⟩
-  subst left
-  subst right
+  rintro left right ⟨source, rfl, rfl⟩
   rcases h : dest source with value | ⟨position, next⟩
   · have hsource : source = pure value := by
       apply eq_of_dest_eq
@@ -174,13 +172,7 @@ theorem TauFreeF.mono {R S : _root_.ITree p β → Prop} (hRS : ∀ {tree}, R tr
     {tree : _root_.ITree p β} (h : TauFreeF R tree) : TauFreeF S tree := by
   rcases hshape : shape' tree with ⟨shape, next⟩
   unfold TauFreeF at h ⊢
-  rw [hshape] at h ⊢
-  cases shape with
-  | pure value => trivial
-  | step => exact h
-  | query position =>
-      intro direction
-      exact hRS (h direction)
+  grind
 
 /-- Greatest postfixed point of `TauFreeF`. This admits infinite visible-query
 trees while ruling out a tau at every recursively reachable query child. -/
@@ -256,8 +248,7 @@ variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
     rcases h : dest source with value | ⟨position, next⟩
     · simp [ITree.TauFreeF, h]
     · simp only [ITree.TauFreeF, shape'_toITree, h]
-      intro direction
-      exact ⟨next direction, rfl⟩
+      exact fun direction => ⟨next direction, rfl⟩
   · exact ⟨computation, rfl⟩
 
 /-- The proof carried by one tau-free observation. -/
@@ -336,9 +327,7 @@ theorem toITree_ofTauFreeITree
     (fun left right : _root_.ITree p β => ∃ current,
       left = toITree (ofTauFreeITree current) ∧ right = current.1)
     ?_ _ _ ⟨state, rfl, rfl⟩
-  rintro left right ⟨current, hleft, hright⟩
-  subst left
-  subst right
+  rintro left right ⟨current, rfl, rfl⟩
   rcases hshape : ITree.shape' current.1 with ⟨shape, next⟩
   cases shape with
   | pure value =>
@@ -370,14 +359,12 @@ theorem ofTauFreeITree_toITree (computation : Resumption p β) :
     (fun left right => ∃ source : Resumption p β,
       left = ofTauFreeITree ⟨toITree source, toITree_tauFree source⟩ ∧ right = source)
   · rintro left right ⟨source, hleft, hright⟩
-    subst left
-    subst right
+    subst left right
     rcases h : dest source with value | ⟨position, next⟩
     · refine .pure value ?_ h
       have hshape := shape'_toITree source
       rw [h] at hshape
-      rw [dest_ofTauFreeITree]
-      rw [ofTauFreeStep_of_shape'_pure _ value _ hshape]
+      rw [dest_ofTauFreeITree, ofTauFreeStep_of_shape'_pure _ value _ hshape]
       rfl
     · refine .query position
         (fun direction => ofTauFreeITree
@@ -385,8 +372,7 @@ theorem ofTauFreeITree_toITree (computation : Resumption p β) :
         next ?_ h (fun direction => ⟨next direction, rfl, rfl⟩)
       have hshape := shape'_toITree source
       rw [h] at hshape
-      rw [dest_ofTauFreeITree]
-      rw [ofTauFreeStep_of_shape'_query _ position _ hshape]
+      rw [dest_ofTauFreeITree, ofTauFreeStep_of_shape'_query _ position _ hshape]
       rfl
   · exact ⟨computation, rfl, rfl⟩
 

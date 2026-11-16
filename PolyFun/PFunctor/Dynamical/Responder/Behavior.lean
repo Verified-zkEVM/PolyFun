@@ -161,15 +161,12 @@ theorem behavior_eq_of_responderMap
   apply DynSystem.behavior_eq_of_isSimulation
     (R := fun leftState rightState => leftState = mapState rightState)
   · refine ⟨?_, ?_⟩
-    · intro leftState rightState h
-      subst leftState
-      exact exposeEq rightState
+    · grind
     · intro leftState rightState h direction
       subst leftState
       have hquery := transport_ihom_direction_fst
         (exposeEq rightState) direction
-      rw [left.update_eq_next, right.update_eq_next, hquery]
-      exact next_eq rightState direction.1
+      simp_all
   · rfl
 
 variable {P : PFunctor.{uA, uB}}
@@ -490,9 +487,7 @@ theorem reindexBehavior_behavior (f : Handler (FreeM Q) P)
     rw [DynSystem.dest_behavior]
     apply Sigma.ext
     · apply Lens.ext
-      case h₁ =>
-        intro trivialDirection
-        exact Subsingleton.elim _ _
+      case h₁ => exact fun _ => Subsingleton.elim _ _
       case h₂ =>
         intro query
         funext trivialDirection
@@ -583,9 +578,7 @@ theorem reindexDisplayedBehavior_congr
           behavior displayedBehavior) =
       reindexDisplayedBehavior S T g displayedG behavior displayedBehavior := by
   subst g
-  simp only [Display.Handler.transport_rfl] at displayedEq
-  subst displayedG
-  rfl
+  simp_all
 
 /-- The postcondition returned by one state-free displayed reindexing step is
 exactly the postcondition produced by executing the displayed handler program

@@ -60,14 +60,9 @@ heterogeneously equal direction maps identify two lenses. Useful when the
 direction families are equal only after rewriting along the position map. -/
 theorem ext_heq {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (l₁ l₂ : Lens P Q)
     (hA : l₁.toFunA = l₂.toFunA) (hB : l₁.toFunB ≍ l₂.toFunB) : l₁ = l₂ := by
-  cases l₁ with
-  | mk a₁ b₁ =>
-    cases l₂ with
-    | mk a₂ b₂ =>
-      dsimp only [Lens.toFunA, Lens.toFunB] at hA hB
-      cases hA
-      cases eq_of_heq hB
-      rfl
+  cases l₁
+  cases l₂
+  grind
 
 /-- The identity lens -/
 @[reducible]
@@ -114,9 +109,7 @@ theorem ext_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (
   apply eq_of_heq
   have hraw : l₁.toFunB a ≍ l₂.toFunB a :=
     (Sigma.ext_iff.mp (h a)).2
-  have hcast : (hA a ▸ l₂.toFunB a) ≍ l₂.toFunB a :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  grind
 
 @[simp]
 theorem id_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (f : Lens P Q) :

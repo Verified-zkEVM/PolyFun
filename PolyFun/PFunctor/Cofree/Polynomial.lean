@@ -137,10 +137,7 @@ theorem pullDirection_decode (x : (CofreeP P).Obj α)
         (M.castDirection (erase_decode x).symm direction) =
       toDecodeDirection x direction := by
   unfold M.pullDirection M.castDirection toDecodeDirection
-  rw [forgetLabels_toFunB]
-  apply eq_of_heq
-  exact (cast_heq _ _).trans
-    ((cast_heq _ direction).trans (cast_heq _ direction).symm)
+  simp_all
 
 @[simp]
 theorem encode_root_label (tree : CofreeC P α) :
@@ -150,8 +147,7 @@ theorem encode_root_label (tree : CofreeC P α) :
         (M.Vertex.pullMapLens (forgetLabels P α) tree
           (.root (erase tree)))) = CofreeC.head tree
   unfold erase
-  rw [M.Vertex.pullMapLens_root]
-  rfl
+  simp_all
 
 /-- Restricting an encoding to one erased child is exactly the encoding of
 the corresponding source child. -/
@@ -206,10 +202,7 @@ theorem decodeStep_encode (tree : CofreeC P α) :
       (congrArg P.B
         (M.head_mapLens (forgetLabels P α) tree)) leftDirection =
       rightDirection
-    apply eq_of_heq
-    exact (cast_heq
-      (congrArg P.B (M.head_mapLens (forgetLabels P α) tree))
-      leftDirection).trans hDirection
+    grind
   calc
     (decodeStep (encode tree)).snd leftDirection =
         encode (M.children tree
@@ -665,9 +658,7 @@ private theorem map_comul_obj {Q : PFunctor.{uA, uB}}
         M.Vertex.subtree vertex) =
       (fun vertex : M.Vertex (M.mapLens lens tree) =>
         M.mapLens lens
-          (M.Vertex.subtree (M.Vertex.pullMapLens lens tree vertex))) := by
-    funext vertex
-    exact (M.Vertex.subtree_pullMapLens lens tree vertex).symm
+          (M.Vertex.subtree (M.Vertex.pullMapLens lens tree vertex))) := by simp_all
   let hPosition :
       ((comonoid Q).comul ∘ₗ map lens).toFunA tree =
         ((map lens ◃ₗ map lens) ∘ₗ

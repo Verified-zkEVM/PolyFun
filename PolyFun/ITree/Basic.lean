@@ -419,8 +419,7 @@ theorem corec_eq_corec {S : Type uS} {T : Type uT}
     fun direction => corec rightStep (rightNext direction), ?_, ?_, ?_⟩
   · exact shape'_corec_eq leftStep leftState hleft
   · exact shape'_corec_eq rightStep rightState hright
-  · intro direction
-    exact ⟨leftNext direction, rightNext direction, hnext direction, rfl, rfl⟩
+  · exact fun direction => ⟨leftNext direction, rightNext direction, hnext direction, rfl, rfl⟩
 
 /-! ### Destructor-injectivity helpers -/
 

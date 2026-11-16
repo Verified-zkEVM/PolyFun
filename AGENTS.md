@@ -2,9 +2,10 @@
 
 PolyFun is a Lean 4 library for polynomial interfaces, programs, machines,
 interaction trees, generic open-system composition, program logic, and
-realizability. It extends Mathlib and CSLib. Cryptographic interpretations,
-probability semantics, distinguishing advantage, and scheme-specific proofs
-belong in [VCVio](https://github.com/Verified-zkEVM/VCVio).
+realizability. It extends Mathlib and CSLib. Cryptographic security
+notions belong in [VCVio](https://github.com/Verified-zkEVM/VCVio): security
+experiments, distinguishing advantage, adversary classes, negligibility, hardness
+assumptions, named reductions and scheme-specific proofs.
 
 `AGENTS.md` is the canonical agent guide, and `CLAUDE.md` is its symlink.
 Human readers should start with [README.md](README.md) and the
@@ -58,14 +59,20 @@ boundary. Imports flow downward and must remain acyclic.
 Start with `PFunctor/Basic.lean`, `PFunctor/Free/Basic.lean`, `ITree/Basic.lean`,
 and `Interaction/Basic/{TypeTree,Decoration}.lean` under `PolyFun/`.
 CSLib owns `PFunctor.FreeM` and the functor-generic `Cslib.FreeM`. Extend them.
-`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend, probability
+`ToCslib` imports core, CSLib and Mathlib, never PolyFun, a backend
 or cryptography. `ComplexityBackends` imports PolyFun and `ToCslib`, and PolyFun never
 imports a backend. `scripts/check-modules.sh` enforces both directions.
 
 ## Semantic boundaries
 
-- Parameterize generic effects by an abstract monad. Keep oracle/probability
-  interpretations, security policy and concrete protocol runtime semantics downstream.
+- Parameterize generic effects by an abstract monad. Keep oracle
+  conventions, security policy and concrete protocol runtime semantics downstream.
+- PolyFun contains no cryptographic security notions: security experiments,
+  distinguishing advantage, adversary classes, negligibility, hardness assumptions,
+  named reductions or schemes. The emulation judgments in `Interaction/Open/`
+  (`Emulates`, `UCSecure`, `SecurelyEmulates`) are structural.
+  They take the observation and the allowed classes as parameters, and VCVio
+  supplies the observations and classes that make them security statements.
 - `TypeTree := PFunctor.FreeM TypeTree.basePFunctor PUnit`. Its `done` and
   `node` are `@[match_pattern, reducible]` wrappers. Preserve pattern matching
   and definitional equality with the substrate.
@@ -116,15 +123,27 @@ CSLib `topNamespace` checker is unregistered. Do not add a local replacement or
 namespace exceptions for its module-system limitations. See
 [lint policy](docs/development/linting.md).
 
-## Std.WP quarantine
+## Core program-logic rules
 
-Definitions from `Std.WP`, and from core's `Std.Do` framework, which `mvcgen` uses, may be directly
-imported only by `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-`PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean`, and `PolyFunTest/Do/`. Tactics from
-`Std.Tactic.Do` stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
-`PolyFunTest/Do/`. Export constructions or scoped instances, never global WP instances. `ToCslib`
-directly imports neither tier. It may import `Std.Do.WP` transitively through CSLib's `IsMonadHom`.
-See [program logic](docs/guides/program-logic.md).
+The program logic builds on core's `Std.WP` and `vcgen`. Four rules keep its readings
+replaceable downstream:
+
+1. No library declares a global instance of `WP`, `WPMonad`, `MAlgOrdered` or `MAlgRelOrdered`.
+   Provide an interpretation as a construction or a `scoped` instance, in a named scope where
+   users select it. Global `Prop`-valued facts about a construction, such as
+   `ExactWPMonad`, `WPConjunctive` and `LawfulWPMonadAttach`, are allowed.
+2. Any module may import `Std.WP` and `Std.Tactic.Do`, except under `ToCslib/`, which imports no
+   module of `Std.WP`, `Std.Do` or `Std.Tactic.Do` directly. It may import `Std.Do.WP`
+   transitively through CSLib's `IsMonadHom`.
+3. A `@[spec]` rule for one reading is registered `scoped`, in the scope of that reading. A rule is
+   global only if it holds for every interpretation it mentions, or for all parameters of the
+   construction it is stated against. `specAllowlist` (`PolyFunTest/Policy/WP/Check.lean`) lists
+   the global rules.
+4. Only tests under `PolyFunTest/` call `vcgen` or `mvcgen`, or set `experimental.vcgen`.
+
+`scripts/check-modules.sh` checks rules 2 and 4. `PolyFunTest/Policy/WP.lean` checks rules 1 and 3
+on the elaborated environment. See
+[program logic](docs/guides/program-logic.md#core-program-logic-rules).
 
 ## Attribution and documentation
 

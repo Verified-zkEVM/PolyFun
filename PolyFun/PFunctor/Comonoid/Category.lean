@@ -132,8 +132,7 @@ theorem comul_toFunA (c : C.carrier.A) :
   intro rawDirection canonicalDirection hDirection
   apply heq_of_eq
   unfold target
-  apply congrArg ((C.comul.toFunA c).2)
-  exact ((cast_eq_iff_heq).2 hDirection.symm).symm
+  exact congrArg ((C.comul.toFunA c).2) ((cast_eq_iff_heq).2 hDirection.symm).symm
 
 @[deprecated (since := "2026-10-19")] alias comultPosition_eq := comul_toFunA
 
@@ -285,11 +284,7 @@ theorem target_compose (c : C.carrier.A) (d : C.carrier.B c)
           (C.carrier ◃ C.carrier).A)) := by
     exact eq_of_heq (Sigma.ext_iff.mp h).2
   have hAtDirection := congrFun hOuter d
-  have hInner :
-      (fun e => target C c (compose C c d e)) =
-      (fun e => target C (target C c d) e) :=
-    eq_of_heq (Sigma.ext_iff.mp hAtDirection).2
-  exact congrFun hInner e
+  exact congrFun (eq_of_heq (Sigma.ext_iff.mp hAtDirection).2) e
 
 /-- Composition of outgoing arrows is associative. The final arrow is
 transported from the right-associated target fiber to the propositionally
@@ -315,9 +310,7 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
   let rightChildren (d : C.carrier.B c) :
       (C.carrier ◃ C.carrier).A :=
     ⟨target C c d, rightTargets d⟩
-  let childrenEq : leftChildren = rightChildren := by
-    funext direction
-    exact Sigma.ext rfl (heq_of_eq (targetEq direction))
+  let childrenEq : leftChildren = rightChildren := by grind
   let leftPosition :
       (C.carrier ◃ (C.carrier ◃ C.carrier)).A :=
     ⟨c, leftChildren⟩
@@ -379,12 +372,8 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
       -- intermediate type needs unfolding beyond implicit transparency to pick
       -- the `Trans` instance. The cast is discharged by rewriting instead.
       rw [cast_comp_direction]
-      · dsimp only [innerRight]
-        congr 1
-        rw [cast_cast]
-        exact cast_eq _ _
-      · change leftTargets d = rightTargets d
-        exact targetEq d
+      · grind
+      · exact targetEq d
     calc
       _ =
           (⟨d, cast (congrArg (C.carrier ◃ C.carrier).B
@@ -419,9 +408,7 @@ theorem compose_assoc (c : C.carrier.A) (d : C.carrier.B c)
         (C.carrier ◃ (C.carrier ◃ C.carrier)).B
         (congrArg (fun lens => lens.toFunA c)
           (normalized_comul_assoc C).symm).symm) leftDirection =
-        rightDirection := by
-    rw [hPosition]
-    exact hTransport
+        rightDirection := by grind
   rw [hTransportActual] at h
   change compose C c d (compose C (target C c d) e f) =
     compose C c (compose C c d e)
@@ -460,12 +447,7 @@ theorem Hom.map_target (F : Hom C D) (c : C.carrier.A)
     ⟨F.toLens.toFunA c, fun d =>
       F.toLens.toFunA
         (target C c (F.toLens.toFunB c d))⟩ at h
-  have hTargets :
-      target D (F.toLens.toFunA c) =
-      (fun d => F.toLens.toFunA
-        (target C c (F.toLens.toFunB c d))) :=
-    eq_of_heq (Sigma.ext_iff.mp h).2
-  exact (congrFun hTargets d).symm
+  exact (congrFun (eq_of_heq (Sigma.ext_iff.mp h).2) d).symm
 
 /-- A retrofunctor pulls a composite back to the composite of the pulled-back
 arrows. The second arrow is transported across target preservation before it
@@ -525,9 +507,7 @@ theorem Hom.map_compose (F : Hom C D) (c : C.carrier.A)
       cast (congrArg (D.carrier ◃ D.carrier).B
         (congrArg (fun lens => lens.toFunA c)
           (F.map_normalizedComul).symm).symm) leftDirection =
-        rightDirection := by
-    rw [hPosition]
-    exact hTransport
+        rightDirection := by grind
   rw [hTransportActual] at h
   change compose C c (F.toLens.toFunB c d)
       (F.toLens.toFunB (target C c (F.toLens.toFunB c d))
@@ -616,11 +596,7 @@ private theorem normalizedComul_natural_of_categoryLaws
       (normalizedComul D ∘ₗ F).toFunB c ≍
         ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunB c :=
     (Sigma.ext_iff.mp (hobj c)).2
-  have htransport :
-      (hA c ▸ ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunB c) ≍
-        ((F ◃ₗ F) ∘ₗ normalizedComul C).toFunB c :=
-    eqRec_heq_self _ _
-  exact hraw.trans htransport.symm
+  grind
 
 /-- Construct a comonoid homomorphism from a carrier lens satisfying the three
 outgoing-category laws of a retrofunctor. This is the converse of

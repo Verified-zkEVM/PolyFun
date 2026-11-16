@@ -9,12 +9,12 @@ upstream README can describe APIs that the pinned revision does not yet supply.
 
 | Project | Existing role | Guidance for PolyFun contributors |
 |---|---|---|
-| [Lean](https://github.com/leanprover/lean4) | Language, module system, basic effects, weakest-precondition infrastructure | Use core monad laws and the pinned `Std.WP` interfaces through the documented quarantine. |
+| [Lean](https://github.com/leanprover/lean4) | Language, module system, basic effects, weakest-precondition infrastructure | Use core monad laws and the pinned `Std.WP` interfaces under the [core program-logic rules](../guides/program-logic.md#core-program-logic-rules). |
 | [Mathlib](https://github.com/leanprover-community/mathlib4) | `PFunctor`, W/M-types, algebra, order and category theory | Extend existing structures, notation, and typeclasses; use its naming and documentation conventions. |
 | [CSLib](https://github.com/leanprover/cslib) | Polynomial and generic free monads, transition systems, temporal and machine foundations | Reuse `PFunctor.FreeM`, `Cslib.FreeM`, relational LTS laws and machine APIs; stage reusable additions in `ToCslib`. |
 | [Batteries](https://github.com/leanprover-community/batteries) | Lean utilities and environment linter driver | Use the existing linter integration rather than a second policy implementation. |
-| PolyFun | Polynomial interaction, machines, handlers, open composition, generic logic and realizability | Keep applications and cryptographic interpretations separate from the generic APIs. |
-| [VCVio](https://github.com/Verified-zkEVM/VCVio) | Oracle computations, probabilistic semantics, cryptographic definitions and proofs | Consume PolyFun's public equations and instantiate its abstract observations and resource predicates. |
+| PolyFun | Polynomial interaction, machines, handlers, open composition, generic logic and realizability; measure interpretations in `Measure` companions | Keep applications and cryptographic security interpretations separate from the generic APIs. |
+| [VCVio](https://github.com/Verified-zkEVM/VCVio) | Oracle computations and their probability conventions, cryptographic definitions and proofs | Consume PolyFun's public equations and instantiate its abstract observations and resource predicates. |
 
 The remaining resolved packages support proof automation, widgets, import
 graphs, search, and testing. They do not introduce another interaction model.
@@ -83,6 +83,10 @@ Their pins are recorded in the manifest; their README files live under
   lattice-generic weakest-precondition framework `Std.WP`, which `vcgen` uses.
   Core's `Std.Do` framework, which `mvcgen` uses, is a distinct interface that
   PolyFun does not instantiate. See [program logic](../guides/program-logic.md).
+- **Measure staging:** the Mathlib lemmas that PolyFun's `Measure` companions need are staged
+  under `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's, so
+  VCVio's `ToMathlib` modules of the same relative paths can re-export them. See
+  [probability](../guides/probability.md).
 - **Complexity:** `ComplexityBackends/` holds machine-relative theory and the
   adapters that certify PolyFun step maps with it, one subdirectory per
   backend. Generic PolyFun does not acquire a concrete complexity backend
@@ -118,7 +122,7 @@ implementations.
 family of monadic computations in order and collects the results as a function.
 The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
 version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
-`PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
+`PolyFun/Control/Do/Spec.lean`, because `ToCslib` imports no `Std.WP` module.
 
 `ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
 rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums but not over `Fin`;
@@ -139,7 +143,8 @@ PolyFun's core does not import the reals.
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
 least fixed points, admissibility, discrete, lifted, and disjoint-sum orders,
-and finite prefix recursion. Order-only results are candidates for Mathlib or
+finite prefix recursion, and uniqueness for prefix-dependent equations over any well-founded
+order of coordinates. Order-only results are candidates for Mathlib or
 CSLib; remove superseded local instances before upgrading their owning
 dependency. The pinned Mathlib has no omega-CPO instance for `WithBot` or for
 disjoint sums, and no equality-ordered wrapper; `DiscreteOrder` leaves the

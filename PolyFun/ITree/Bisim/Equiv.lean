@@ -89,10 +89,7 @@ theorem step_cases {t t' : ITree F α} (c : PUnit.{uFB + 1} → ITree F α)
     t' = t ∨ TauSteps (c PUnit.unit) t' := by
   cases h with
   | refl _ => exact Or.inl rfl
-  | @step _ t'' c' ht' hr =>
-      have hcc : c = c' := TauSteps.cont_eq ht ht'
-      subst hcc
-      exact Or.inr hr
+  | @step _ t'' c' ht' hr => simp_all
 
 private theorem diverge_target_eq_aux {source t : ITree F α}
     (hsource : source = diverge) (h : TauSteps source t) :
@@ -105,8 +102,7 @@ private theorem diverge_target_eq_aux {source t : ITree F α}
       subst t
       have hc : c = fun _ => diverge :=
         TauSteps.cont_eq hstep shape'_diverge
-      subst c
-      exact ih rfl)
+      simp_all)
     h hsource
 
 /-- Every finite silent stripping of `diverge` still ends at `diverge`. -/
@@ -560,18 +556,8 @@ theorem pure_not_diverge (r : α) :
   have hleft_eq : left = pure (F := F) r :=
     TauSteps.rigid_of_pure r (shape'_pure r) hleft
   have hright_eq : right = diverge := TauSteps.diverge_target_eq hright
-  subst left
-  subst right
-  cases matched with
-  | pure _ _ hdiverge =>
-      rw [shape'_diverge] at hdiverge
-      cases hdiverge
-  | query _ _ _ hpure _ _ =>
-      rw [shape'_pure] at hpure
-      cases hpure
-  | tau _ _ hpure _ _ =>
-      rw [shape'_pure] at hpure
-      cases hpure
+  subst left right
+  cases matched <;> simp_all
 
 /-- Reflexivity: every tree is weakly bisimilar to itself. -/
 @[refl] theorem refl (t : ITree F α) : t ≈ t := by
@@ -685,8 +671,7 @@ theorem step_absorb_right {t s : ITree F α} (c : PUnit.{uFB + 1} → ITree F α
                 refine ⟨X, cs PUnit.unit,
                     ha.trans ((TauSteps.one ct ht_a).trans hX), .refl _, ?_⟩
                 refine Match.query qa' c_X c_Y ht_X hshc_rw ?_
-                intro b
-                exact Or.inl (hcc_XY b)
+                exact fun b => Or.inl (hcc_XY b)
             | tau _ _ _ hs_Y _ =>
                 rw [hs_Y] at hshc_rw; cases hshc_rw
   · refine ⟨a', s₁, ha, hs_strict, ?_⟩
@@ -912,8 +897,7 @@ Case analysis on the head of `c'` via `Ma'`:
                       ha.trans (ha'.trans ((TauSteps.one ct Ha'').trans hX)),
                       hb.trans hb'', ?_⟩
                     refine Match.query q'' cq_a cq'_outer HX Hb'' ?_
-                    intro b
-                    exact ⟨cq_b b, h_q b, hq b⟩
+                    exact fun b => ⟨cq_b b, h_q b, hq b⟩
                 | tau _ _ _ HY _ => rw [HY] at Hc''; cases Hc''
             | tau ct'' cs'' Hc'' Hb'' h_b =>
                 refine ⟨a'', b'', ha.trans ha', hb.trans hb'', ?_⟩
@@ -980,8 +964,7 @@ Case analysis on the head of `c'` via `Ma'`:
                       hb.trans (hb'.trans ((TauSteps.one cs Hb'').trans hY)),
                       ?_⟩
                     refine Match.query q'' cq_outer cq_b Ha'' HY ?_
-                    intro b
-                    exact ⟨cq_a b, hq b, h_q b⟩
+                    exact fun b => ⟨cq_a b, hq b, h_q b⟩
                 | tau _ _ HX _ _ => rw [HX] at Hc''; cases Hc''
             | tau ct'' cs'' Ha'' Hc'' h_a =>
                 refine ⟨a'', b'', ha.trans ha'', hb.trans hb', ?_⟩

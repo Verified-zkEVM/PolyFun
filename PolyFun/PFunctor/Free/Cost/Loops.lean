@@ -93,24 +93,23 @@ end Bound
 section Cost
 
 variable [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω]
-  [CanonicallyOrderedAdd ω]
-  {c : P.A → ω}
 
-omit [CanonicallyOrderedAdd ω] in
 /-- A sequence whose continuation ignores the result costs at most the sum of the parts. -/
-theorem cost_bind_const_le {α : Type v} {δ : Type v} (x : FreeM P α) (y : FreeM P δ) :
+theorem cost_bind_const_le {c : P.A → ω} {α : Type v} {δ : Type v} (x : FreeM P α)
+    (y : FreeM P δ) :
     cost c (x >>= fun _ => y) ≤ cost c x + cost c y :=
   (cost_bind_le x _).trans (add_le_add le_rfl (iSup_le fun _ => le_rfl))
 
-omit [CanonicallyOrderedAdd ω] in
 /-- A `forM` loop costs at most the sum of the costs of its iterations. -/
-theorem cost_forM_le (xs : List γ) (f : γ → FreeM P PUnit) :
+theorem cost_forM_le {c : P.A → ω} (xs : List γ) (f : γ → FreeM P PUnit) :
     cost c (forM xs f) ≤ (xs.map fun a => cost c (f a)).sum := by
   induction xs with
   | nil => simp
   | cons a as ih =>
     rw [List.forM_cons, List.map_cons, List.sum_cons]
     exact (cost_bind_const_le _ _).trans (add_le_add le_rfl ih)
+
+variable [CanonicallyOrderedAdd ω] {c : P.A → ω}
 
 /-- A `forIn` loop whose body costs at most `B` from every state costs at most
 `xs.length • B`. -/

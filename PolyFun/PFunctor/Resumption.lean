@@ -145,9 +145,7 @@ def corec {X : Type uX} (step : X → β ⊕ p.Obj X) (seed : X) : Resumption p 
 @[simp] theorem corec_dest (computation : Resumption p β) :
     corec dest computation = computation := by
   unfold corec
-  have hstep : (fun state : Resumption p β => pack (dest state)) = M.dest := by
-    funext state
-    exact pack_dest state
+  have hstep : (fun state : Resumption p β => pack (dest state)) = M.dest := funext pack_dest
   rw [hstep]
   exact M.corec_dest computation
 
@@ -321,16 +319,14 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   rcases h : dest source with value | ⟨position, next⟩
   · refine ⟨Sum.inr value, PEmpty.elim, PEmpty.elim, ?_, ?_, fun direction => ?_⟩
     · rw [← pack_dest, ← pack_inl]
-      apply congrArg pack
-      simp [dest_bind, h]
+      simp_all
     · rw [← pack_dest, ← pack_inl]
       exact congrArg pack h
     · exact direction.elim
   · refine ⟨Sum.inl position, (fun direction : p.B position => bind (next direction) pure), next,
       ?_, ?_, fun direction => ⟨next direction, rfl, rfl⟩⟩
     · rw [← pack_dest, ← pack_inr]
-      apply congrArg pack
-      simp [dest_bind, h]
+      simp_all
     · rw [← pack_dest, ← pack_inr]
       exact congrArg pack h
 
@@ -362,11 +358,9 @@ theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
         (fun direction : p.B position => bind (next direction) (fun value => bind (k value) k')),
         ?_, ?_, fun direction => Or.inr ⟨next direction, rfl, rfl⟩⟩
       · rw [← pack_dest, ← pack_inr]
-        apply congrArg pack
-        simp [dest_bind, h]
+        simp_all
       · rw [← pack_dest, ← pack_inr]
-        apply congrArg pack
-        simp [dest_bind, h]
+        simp_all
 
 @[simp] theorem map_pure (f : α → β) (value : α) :
     map f (pure (p := p) value) = pure (f value) := by
@@ -438,8 +432,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
     (fun left right => ∃ source,
       left = mapLens (Lens.id p) source ∧ right = source)
   · rintro left right ⟨source, hleft, hright⟩
-    subst left
-    subst right
+    subst left right
     rcases h : dest source with value | ⟨position, next⟩
     · exact .pure value (by rw [dest_mapLens, h]) h
     · exact .query position
@@ -456,9 +449,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
     (fun left right => ∃ source,
       left = mapLens lens₂ (mapLens lens₁ source) ∧
       right = mapLens (lens₂ ∘ₗ lens₁) source)
-  · rintro left right ⟨source, hleft, hright⟩
-    subst left
-    subst right
+  · rintro left right ⟨source, rfl, rfl⟩
     rcases h : dest source with value | ⟨position, next⟩
     · exact .pure value (by simp [h]) (by simp [h])
     · exact .query (lens₂.toFunA (lens₁.toFunA position))
@@ -489,8 +480,7 @@ theorem mapLens_bind (lens : Lens p q) (computation : Resumption p α)
       rcases h : dest right with value | ⟨position, next⟩
       · exact .pure value h h
       · exact .query position next next h h (fun _ => Or.inl rfl)
-    · subst left
-      subst right
+    · subst left right
       rcases h : dest source with value | ⟨position, next⟩
       · rw [show source = pure value by apply eq_of_dest_eq; simpa using h]
         simp only [pure_bind, mapLens_pure]

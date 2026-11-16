@@ -58,8 +58,7 @@ private theorem bindGuarded_closure {F : PFunctor.{uFA, uFB}}
       refine ⟨bind u k, bind u l, .refl _, .refl _,
         Match.query a _ _ (dest_bind_query k u a c hu)
           (dest_bind_query l u a c hu) ?_⟩
-      intro b
-      exact hbind (c b)
+      exact fun b => hbind (c b)
 
 private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
     {α : Type uα} {β : Type uβ} {γ : Type uγ} {δ : Type uδ}
@@ -89,8 +88,7 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
             apply eq_of_shape'_eq
             change shape' v' = shape' (pure (Sum.inl j))
             exact hv'.trans (shape'_pure (Sum.inl j)).symm
-          subst hu_eq
-          subst hv_eq
+          subst hu_eq hv_eq
           refine ⟨step (iter body₁ i), step (iter body₂ j), ?_, ?_, ?_⟩
           · simpa only [bind_pure_left] using hu.bind
               (fun | .inl i => step (iter body₁ i) | .inr r => pure r)
@@ -107,8 +105,7 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
             apply eq_of_shape'_eq
             change shape' v' = shape' (pure (Sum.inr s))
             exact hv'.trans (shape'_pure (Sum.inr s)).symm
-          subst hu_eq
-          subst hv_eq
+          subst hu_eq hv_eq
           refine ⟨pure r, pure s, ?_, ?_,
             MatchRel.pure r s hrs (shape'_pure r) (shape'_pure s)⟩
           · simpa only [bind_pure_left] using hu.bind
@@ -121,8 +118,7 @@ private theorem bindIterRel_closure {F : PFunctor.{uFA, uFB}}
         hu.bind _, hv.bind _, ?_⟩
       refine MatchRel.query a _ _
         (dest_bind_query _ u' a c hu') (dest_bind_query _ v' a c' hv') ?_
-      intro b
-      exact hbind (c b) (c' b) (hcc b)
+      exact fun b => hbind (c b) (c' b) (hcc b)
   | tau cu cv hu' hv' hcc =>
       refine ⟨bind u' (fun | .inl i => step (iter body₁ i) | .inr r => pure r),
         bind v' (fun | .inl j => step (iter body₂ j) | .inr s => pure s),
@@ -171,9 +167,7 @@ theorem iter_weakBisim {F : PFunctor.{uFA, uFB}} {α : Type uα}
     WeakBisim (iter body₁ init) (iter body₂ init) :=
   iter_weakBisimRel
     (RI := Eq) (RR := Eq)
-    (fun i _ h => h ▸ (hbody i).mono_result (fun x _ hx => by
-      subst hx
-      cases x <;> constructor <;> rfl)) rfl
+    (fun i _ h => h ▸ (hbody i).mono_result (fun x _ hx => by grind)) rfl
 
 /-! ## Characteristic iteration laws -/
 
@@ -423,8 +417,7 @@ theorem iter_uniform_weak {F : PFunctor.{uFA, uFB}} {α : Type uα} {β : Type u
   have hmap : WeakBisimRel (Sum.LiftRel (fun b c => c = φ b) Eq) (f b)
       (ITree.map (Sum.map φ id) (f b)) := by
     have := map_weakBisimRel (SS := Sum.LiftRel (fun b c => c = φ b) Eq) id (Sum.map φ id)
-      (WeakBisimRel.refl (fun _ => rfl) (f b)) fun a a' haa' => by
-        subst haa'; cases a <;> constructor <;> rfl
+      (WeakBisimRel.refl (fun _ => rfl) (f b)) fun a a' haa' => by grind
     simpa [ITree.map, bind_pure_right] using this
   exact (hmap.comp (h b).symm).mono_result fun _ _ ⟨_, hxy, hyz⟩ => hyz ▸ hxy
 

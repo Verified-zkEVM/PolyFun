@@ -378,8 +378,7 @@ theorem simulate_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
       refine ⟨query a (fun b => step (simulate (Handler.id E) (c b))),
         query a c, hxx', .refl _, ?_⟩
       refine Match.query a _ _ (shape'_query _ _) (shape'_query _ _) ?_
-      intro b
-      exact Or.inr rfl
+      exact fun b => Or.inr rfl
 
 /-! ### Handler-composition identities -/
 
@@ -495,8 +494,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
                   (bind (simulate h (c b)) (fun a => simulate h (k a))))),
               .refl _, .refl _, ?_⟩
             refine Match.query a_F _ _ (shape'_query _ _) (shape'_query _ _) ?_
-            intro b'
-            exact Or.inr (Or.inr ⟨E.B a_E, c' b', c, rfl, rfl⟩)
+            exact fun b' => Or.inr (Or.inr ⟨E.B a_E, c' b', c, rfl, rfl⟩)
   · -- Auxiliary disjunct: split on `u`.
     rcases hu : ITree.shape' u with ⟨sh, c⟩
     cases sh with
@@ -529,8 +527,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
               (bind (simulate h (f b)) (fun a => simulate h (k a))))),
           .refl _, .refl _, ?_⟩
         refine Match.query a_F _ _ (shape'_query _ _) (shape'_query _ _) ?_
-        intro b'
-        exact Or.inr (Or.inr ⟨γ, c b', f, rfl, rfl⟩)
+        exact fun b' => Or.inr (Or.inr ⟨γ, c b', f, rfl, rfl⟩)
 
 /-! ### Composition of simulation -/
 
@@ -644,9 +641,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
                 refine Match.query q' _ _
                   (dest_bind_query _ (outer a_F) q' cw hw)
                   (dest_bind_query _ (outer a_F) q' cw hw) ?_
-                intro z
-                exact Or.inr (Or.inr
-                  ⟨E.B a, F.B a_F, cw z, cu, c, rfl, rfl⟩)
+                exact fun z => Or.inr (Or.inr ⟨E.B a, F.B a_F, cw z, cu, c, rfl, rfl⟩)
   · rcases hu : ITree.shape' u with ⟨sh, c⟩
     cases sh with
     | pure r =>
@@ -702,8 +697,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
               .refl _, .refl _, ?_⟩
             refine Match.query q' _ _ (dest_bind_query _ (outer a) q' cw hw)
               (dest_bind_query _ (outer a) q' cw hw) ?_
-            intro z
-            exact Or.inr (Or.inr ⟨γ, F.B a, cw z, c, k, rfl, rfl⟩)
+            exact fun z => Or.inr (Or.inr ⟨γ, F.B a, cw z, c, k, rfl, rfl⟩)
   · rcases hw : ITree.shape' w with ⟨sh, c⟩
     cases sh with
     | pure z =>
@@ -734,8 +728,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
           .refl _, .refl _, ?_⟩
         refine Match.query a _ _ (dest_bind_query _ w a c hw)
           (dest_bind_query _ w a c hw) ?_
-        intro z
-        exact Or.inr (Or.inr ⟨γ, δ, c z, q, k, rfl, rfl⟩)
+        exact fun z => Or.inr (Or.inr ⟨γ, δ, c z, q, k, rfl, rfl⟩)
 
 /-- Handler composition is associative pointwise up to weak bisimulation. -/
 theorem Handler.comp_assoc_apply {E : PFunctor.{uEA, uEB}}
@@ -758,8 +751,7 @@ need any bisimulation tooling. -/
     (φ : PFunctor.Lens E F) (r : α) :
     mapSpec φ (pure (F := E) r) = pure r := by
   apply eq_of_shape'_eq
-  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_pure φ r)]
-  rw [shape'_pure]
+  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_pure φ r), shape'_pure]
   congr 1
   funext b
   exact b.elim
@@ -769,8 +761,7 @@ need any bisimulation tooling. -/
     (φ : PFunctor.Lens E F) (t : ITree E α) :
     mapSpec φ (step t) = step (mapSpec φ t) := by
   apply eq_of_shape'_eq
-  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_step φ t)]
-  rw [shape'_step]
+  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_step φ t), shape'_step]
 
 @[simp] theorem mapSpec_query {E : PFunctor.{uEA, uEB}}
     {F : PFunctor.{uFA, uFB}} {α : Type uα}
@@ -778,8 +769,7 @@ need any bisimulation tooling. -/
     mapSpec φ (query a k) =
       query (φ.toFunA a) (fun b => mapSpec φ (k (φ.toFunB a b))) := by
   apply eq_of_shape'_eq
-  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_query φ a k)]
-  rw [shape'_query]
+  rw [mapSpec, shape'_corec_eq _ _ (mapSpecStep_query φ a k), shape'_query]
 
 /-! ### Functoriality of `mapSpec` -/
 
@@ -806,20 +796,14 @@ theorem mapSpec_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
       simp only [mapSpecStep, h]
 
 /-- Computing one `shape'` step of `mapSpec`, in terms of `mapSpecStep`. -/
-theorem dest_mapSpec {E : PFunctor.{uEA, uEB}}
-    {F : PFunctor.{uFA, uFB}} {α : Type uα}
-    (φ : PFunctor.Lens E F) (u : ITree E α) :
-    ITree.shape' (mapSpec φ u) =
-      .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) := by
-  rw [mapSpec, shape'_corec_apply]
-
-/-- Same as `dest_mapSpec` but stated with `shape'` on the LHS. -/
 theorem shape'_mapSpec {E : PFunctor.{uEA, uEB}}
     {F : PFunctor.{uFA, uFB}} {α : Type uα}
     (φ : PFunctor.Lens E F) (u : ITree E α) :
     shape' (mapSpec φ u) =
-      .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) :=
-  dest_mapSpec φ u
+      .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) := by
+  rw [mapSpec, shape'_corec_apply]
+
+@[deprecated (since := "2026-11-15")] alias dest_mapSpec := shape'_mapSpec
 
 open scoped PFunctor in
 theorem mapSpec_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
@@ -998,7 +982,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
               fun _ => ITree.corec
                 (iterStep (fun j => mapSpec φ (body j))) (mapSpec φ (body j)),
               ?_, hR, fun _ => Or.inr ⟨body j, rfl, rfl⟩⟩
-            simp only [dest_mapSpec, mapSpecStep]
+            simp only [shape'_mapSpec, mapSpecStep]
             rw [hL]
             rfl
         | inr r =>
@@ -1017,7 +1001,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
                 (fun j => mapSpec φ (body j)) (pure (.inr r)) r PEmpty.elim
                 (shape'_pure _)
             refine ⟨.pure r, PEmpty.elim, PEmpty.elim, ?_, hR, fun b => b.elim⟩
-            simp only [dest_mapSpec, mapSpecStep]
+            simp only [shape'_mapSpec, mapSpecStep]
             rw [hL]
             congr 1
             funext z
@@ -1045,7 +1029,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
             (iterStep (fun j => mapSpec φ (body j)))
             (mapSpec φ (c PUnit.unit)),
           ?_, hR, fun _ => Or.inr ⟨c PUnit.unit, rfl, rfl⟩⟩
-        simp only [dest_mapSpec, mapSpecStep]
+        simp only [shape'_mapSpec, mapSpecStep]
         rw [hL]
         rfl
     | query a =>
@@ -1076,7 +1060,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
             (iterStep (fun j => mapSpec φ (body j)))
             (mapSpec φ (c (φ.toFunB a b))),
           ?_, hR, fun b => Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩⟩
-        simp only [dest_mapSpec, mapSpecStep]
+        simp only [shape'_mapSpec, mapSpecStep]
         rw [hL]
         rfl
 
@@ -1167,8 +1151,7 @@ theorem simulate_ofLens {E : PFunctor.{uEA, uEB}}
         query (φ.toFunA a) (fun b => mapSpec φ (c (φ.toFunB a b))),
         hxx', .refl _, ?_⟩
       refine Match.query (φ.toFunA a) _ _ (shape'_query _ _) (shape'_query _ _) ?_
-      intro b
-      exact Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩
+      exact fun b => Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩
 
 open scoped PFunctor in
 /-- Composition of pure-renaming handlers agrees pointwise, up to weak

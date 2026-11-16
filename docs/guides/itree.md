@@ -229,7 +229,7 @@ a value whose entries, arguments and results are still partial.
 apart. A result with a flat order, such as `Part (Except ε α)`, has no partial
 information inside a returned value. The
 [lazy-language tutorial](../../Examples/Tutorials/LazyLanguages.lean) works through
-numbers, vectors, functions, recursion and a quantifier.
+numbers, vectors, lazy sequences, functions, recursion and a quantifier.
 
 [`PointedDomain`](../../PolyFun/Control/Domain/Pointed.lean) bundles the carrier,
 omega-CPO structure, and bottom when a semantic domain depends on syntax.
@@ -238,6 +238,21 @@ adds a new outer suspension and an explicit error alternative. The strict
 `DomainResult.elim` map can target any pointed omega-CPO, including a dependent
 family without an additional suspension. For continuous local environments and
 simultaneous recursive groups, see [binding families](ipfunctor.md#binders-that-change-parameter-contexts).
+
+Strict operations fix an evaluation order. `DomainResult.strict1` and `strict2` demand one or two
+discrete operands, from left to right, before they compute. `condContinuous (t, e) c` demands the
+Boolean condition `c`, then returns only the branch it selects.
+
+[`LazySeq ε X`](../../PolyFun/Control/Domain/LazySeq.lean) is a lazy sequence: a stream
+`ℕ → DomainResult ε X` of suspended elements behind one suspension. Its length `n : ℕ∞` is static,
+so a language reads it from the type and passes it to each operation, and it may be `⊤`.
+`LazySeq.mk n` returns a stream whose spine is available at once, with bottom at and past `n`.
+`index i` demands the spine, then element `i`. `map` and `zipWith` demand their operands' spines,
+then combine elements lazily. `reindex` and `append` return a spine at once, and reading one of
+their elements demands the spine of the source it reads from. On `encList`, the encoding of a
+native list, the operations compute the corresponding `List` operations (`map_encList`,
+`reindex_id_encList`, `reindex_add_encList`, `append_encList`). `LazySeq.forceSteps` forces a run
+of elements from left to right.
 
 [`DomainResult.LiftRel E R`](../../PolyFun/Control/Domain/ResultRel.lean) relates two results
 constructor by constructor: bottom to bottom, errors by `E` and returned values by `R`. Neither
@@ -252,13 +267,20 @@ induction.
 A native evaluator computes with results whose values have no order. `DomainResult.map`,
 `bindPlain` and `ifValue` sequence such results, and `Fin.mOfFn` in their monad
 (`DomainResult.monad`) collects a `Fin`-indexed family from left to right; `bindPlain` passes an
-error through, and `ifValue` gives bottom instead. On ordered values, the continuous `bind` is
-`bindPlain` (`bind_eq_bindPlain`). An evaluator that may give up relates its result `r` to a
-meaning `d` by
+error through, and `ifValue` gives bottom instead. `applyPlain` applies a returned function, whose
+argument may be a suspended result. On ordered values, the continuous `bind` is `bindPlain`
+(`bind_eq_bindPlain`). Through an injective function, `map` is injective (`map_injective`), so a
+result that reads back as `f x` returned `x` (`map_eq_value_apply_iff`). An evaluator that may
+give up relates its result `r` to a meaning `d` by
 [`DomainResult.Approx P d r`](../../PolyFun/Control/Domain/ResultRel.lean): bottom approximates
 every result, an error only the same error, and a value a value related by `P`. Away from bottom it
-is `LiftRel` with equal errors (`approx_iff`), and `approx_bind` and `approx_bind₂` carry it through
-the continuous `bind` and `bind₂`.
+is `LiftRel` with equal errors (`approx_iff`). `approx_bind` and `approx_bind₂` carry it through
+the continuous `bind` and `bind₂`, and `approx_applyContinuous` through `applyContinuous` and
+`applyPlain`. An evaluator that unrolls a least fixed point `k` times from bottom approximates it
+without an admissibility proof: bottom approximates every meaning, and the least fixed point is
+its own unfolding, so induction on `k` suffices. The
+[scoped lazy-language tutorial](../../Examples/Tutorials/ScopedDomains.lean) relates such a
+fuel-bounded evaluator to its lazy meaning.
 
 A decoder `dec` into results over native values *decodes above* an encoder `enc`
 ([`DomainResult.DecodesAbove`](../../PolyFun/Control/Domain/Result.lean)) when the computations
@@ -267,7 +289,11 @@ that decode to `x` are exactly those above `enc x`. Reading a discrete value bac
 (`value_le_iff_eq`). Decoding is then stable upward (`dec_eq_of_le`), and a monotone map acts on
 every computation that decodes to `x` as it acts on `enc x` (`dec_apply_eq_of_monotone`). A fact
 proved by computation at an encoding thus transfers to a computation that only decodes to a value,
-such as the accumulator of a fold. No order on the decoded type is needed.
+such as the accumulator of a fold. No order on the decoded type is needed. Decoders compose.
+`DecodesAbove.bindPlain` decodes behind one suspension, and `DecodesAbove.prod` decodes a pair
+componentwise. `DecodesAbove.lazySeq` lifts an element decoder to `LazySeq.decode n`, which reads a
+sequence of length `n` from left to right. `dec_foldl_eq_of_monotone` carries a decoded value
+through a fold of monotone steps whose accumulators need not be encodings.
 
 [`ITree.Domain`](../../PolyFun/ITree/Domain.lean) interprets trees into any
 pointed omega-CPO with a continuous algebra for each visible query. Silent
@@ -291,11 +317,21 @@ do not require finite branching or a uniform finite depth for a well-founded tre
 solves a finite recursive array by its strict-prefix equations. The generator
 must expose its outer constructor; entries may still be bottom or errors.
 `Function.UsesPrefix` expresses that coordinate `i` observes only coordinates
-strictly before `i`, and yields uniqueness without requiring total entries.
+strictly before `i`, over any well-founded order of coordinates, and yields uniqueness
+without requiring total entries.
 `generateStep_fix_eq_prefixRecursion` connects the least fixed point to the
 well-founded `Function.prefixRecursion` in `ToCslib/Order/PrefixRecursion.lean`.
 Self-dependent equations and generators that demand the whole array before
 returning its constructor do not satisfy this contract.
+
+A recursive lazy sequence is a fixed point in stream form,
+`X = mk n fun i => step i fun j => index j X`. Its step is productive below `n`
+([`LazySeq.Productive`](../../PolyFun/Control/Domain/PrefixRecursion.lean)) when, at each position
+below `n`, it reads only earlier elements. The masked stream equations then satisfy `UsesPrefix`
+over `ℕ` (`Productive.usesPrefix_mask`). `LazySeq.eq_mk_of_productive` identifies
+every fixed point with any stream that satisfies the step below `n`, at any length including `⊤`.
+At a finite length, `fix_eq_encList_of_productive` gives the least fixed point as an encoded native
+list.
 
 ### Sequencing and iterating continuous interpretations
 
@@ -307,7 +343,8 @@ interpretation to `fun a => denote ret alg (next a)` and retains the query algeb
 The proof uses leastness and increasing approximants, so it covers unbounded
 branching and divergence. `ITree.denote_toITree` connects these laws across the
 canonical tau-free resumption embedding. Measure and kernel algebras belong in
-VCVio; these laws themselves impose no probability interpretation.
+PolyFun's measure companions; these laws themselves impose no
+probability interpretation.
 
 `ITree.denote_iter_eq` gives the semantic loop-body equation, and
 `denote_iter_le` bounds an unbounded iteration by any family preserved by its

@@ -1,0 +1,388 @@
+# Probability
+
+PolyFun interprets its programs measure-theoretically, as Giry interpretations with Mathlib's
+`Measure` and `Kernel`. The measure modules live beside the constructions they interpret, and
+`import PolyFun` loads them. They contain no cryptographic security notions; those belong in
+[VCVio](polyfun-and-vcvio.md).
+
+## Scope
+
+The measure modules hold statements about measures that need no security notion: subprobability
+measures and kernels, and the measures and kernels that free programs, kernel handlers and their
+paths denote. Security experiments, distinguishing advantage, adversary classes, negligibility,
+hardness assumptions, named reductions and schemes stay downstream.
+
+A generic construction takes a monad, a semantic carrier or an observation as a parameter, and
+the measure modules supply measure-valued instances of those parameters.
+
+## Conventions
+
+- **Measures, not mass functions.** The measure modules use Mathlib's `Measure` and `Kernel` and
+  the Giry operations (`Measure.bind`, `Measure.dirac`, `Kernel.comp`). They do not use `PMF`: the
+  lawful monad instance on `PMF` lives in
+  `Mathlib.Probability.ProbabilityMassFunction.Constructions`, whose import closure brings in most
+  of Mathlib's analysis. A PMF bridge relates the construction of a measure module `<M>.lean` to
+  `PMF`, through `PMF.toMeasure` and `Measure.toPMF`, in the sibling module `<M>/PMF.lean`. A
+  bridge imports as little of `Mathlib.Probability.ProbabilityMassFunction` as it needs.
+- **Subprobability for failure.** A computation that may fail to return denotes a measure of total
+  mass at most one (`MeasureTheory.IsSubprobabilityMeasure`), so failure needs no `Option` wrapper.
+  Missing mass is not always failure. The measure fold also loses mass at a step whose continuation
+  is not almost-everywhere measurable, as the `reveal` program in
+  [`MeasurabilityBoundary`](../../PolyFunTest/Probability/MeasurabilityBoundary.lean) shows. Over
+  discrete answers every continuation is measurable, and the missing mass is the probability of
+  failure. Mathlib's `IsZeroOrProbabilityMeasure` is a different condition: it allows only total
+  mass `0` or `1`.
+- **Explicit measurable spaces.** Theorems state the measurability hypotheses they use. Mathlib's
+  `Measure.map` and `Measure.bind` return a junk value for a non-measurable function, so lemmas
+  about them carry measurability or almost-everywhere measurability side conditions.
+- **Staged Mathlib lemmas.** Lemmas that belong in Mathlib live under `ToCslib/MeasureTheory/` and
+  `ToCslib/Probability/`, in paths that mirror Mathlib's, until they are upstreamed.
+
+## Where the modules live
+
+The measure interpretation of a construction lives in a `Measure` companion beside it, in the
+measure home of its area. An area is a directory that holds one kind of construction, together with
+its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
+interfaces), `PFunctor/Free/` (free programs), `PFunctor/Wiring/` (polynomial wiring),
+`Control/Monad/` (monads), `Control/Domain/` (partial results) and `Control/Semantics/` (certified
+meanings). A measure interpretation of another kind of construction starts a new area. Each area
+whose constructions get a measure interpretation has one measure home: `<area>/Measure.lean` holds
+the area's main measure module, and `<area>/Measure/` holds the others.
+
+A subdirectory of an area uses the area's home, unless it is an area itself. Free programs
+therefore have one home: a measure reading of their paths, weakest preconditions or costs
+(`Free/Path`, `Free/WP`, `Free/Cost`) belongs in `PFunctor/Free/Measure/`, not in a companion under
+`Free/Path/`, `Free/WP/` or `Free/Cost/`. Polynomial wiring is an area of its own, although it
+sits inside `PFunctor/`, so its measure module is `PFunctor/Wiring/Measure.lean`.
+
+The staged lemmas are about Mathlib's and core's types, not about PolyFun constructions, so they
+live in `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's. Like
+the rest of `ToCslib`, they import no PolyFun module.
+
+In the whole repository, only a PMF bridge imports `Mathlib.Probability.ProbabilityMassFunction`,
+and a bridge imports only its `Basic` or `Monad` module. `Basic` adds one Mathlib module to the
+measure theory that the measure modules already import, and `Monad` one more, while
+`Constructions`, which holds the lawful monad instance, adds more than a thousand.
+`scripts/check-modules.sh` checks both rules on direct imports only, so a module may still reach
+`Constructions` through another Mathlib module: `Mathlib.Probability.Distributions.Uniform`
+imports it and passes the check. The script takes a module for a bridge when its path is
+`<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does not check that `<M>.lean` is a
+measure module.
+
+## Contents
+
+- **Subprobability measures**
+  ([`Subprobability`](../../ToCslib/MeasureTheory/Measure/Subprobability.lean)).
+  `IsSubprobabilityMeasure μ` states `μ Set.univ ≤ 1`. It has instances for `dirac`, products
+  and pushforwards, and `isSubprobabilityMeasure_bind` keeps the bound through a bind with an
+  almost-everywhere measurable subprobability family. `Measure.defect` is the missing mass.
+- **Subprobability kernels**
+  ([`Subprobability`](../../ToCslib/Probability/Kernel/Subprobability.lean)).
+  `IsSubprobabilityKernel κ` bounds every fibre. Constant, restricted, pushed-forward,
+  pulled-back, composed and product kernels keep the bound, and every Markov kernel is a
+  subprobability kernel.
+- **Optional outcomes and sums**
+  ([`MeasurableSpace/Option`](../../ToCslib/MeasureTheory/MeasurableSpace/Option.lean),
+  [`MeasurableSpace/Sum`](../../ToCslib/MeasureTheory/MeasurableSpace/Sum.lean),
+  [`Measure/Option`](../../ToCslib/MeasureTheory/Measure/Option.lean)).
+  `Option α` carries the coproduct σ-algebra generated by `some` and the point `none`, and it is
+  discrete, or has measurable singletons, when `α` does. The same holds for a sum `α ⊕ β`, whose
+  injections are measurable embeddings. `Measure.dropNone` keeps the mass of the present outcomes.
+  `Measure.withFailure` completes a subprobability measure to a probability measure on `Option α`
+  by putting the missing mass on `none`. The two are inverse bijections between subprobability
+  measures on `α` and probability measures on `Option α` (`dropNone_withFailure`,
+  `withFailure_dropNone`).
+- **Exceptional outcomes**
+  ([`MeasurableSpace/Except`](../../ToCslib/MeasureTheory/MeasurableSpace/Except.lean),
+  [`Measure/Except`](../../ToCslib/MeasureTheory/Measure/Except.lean)).
+  `Except ε α` carries the coproduct σ-algebra generated by `error` and `ok`, both measurable
+  embeddings. Mathlib's `Measure.comap Except.ok` keeps the mass of the successful outcomes. It is
+  the Giry bind that sends errors to zero (`comap_ok_eq_bind`), and it commutes with maps and
+  binds of successful values (`comap_ok_map`, `comap_ok_bind`).
+- **Bit vectors**
+  ([`MeasurableSpace/Instances`](../../ToCslib/MeasureTheory/MeasurableSpace/Instances.lean)).
+  `BitVec n` carries the discrete σ-algebra `⊤`.
+- **Uniform measures**
+  ([`UniformOn`](../../ToCslib/Probability/UniformOn.lean)).
+  Mathlib's `uniformOn s` is the counting measure conditioned on `s`: a probability measure when
+  `s` is finite and nonempty, and zero when `s` is infinite. The staged lemmas give the mass of a
+  point and of a decidable event under the uniform measure on a finite type or a finite set, and
+  integrals and products of uniform measures. A measurable equivalence carries `uniformOn s` to
+  `uniformOn (e '' s)` for every set, with no finiteness or measurable singletons
+  (`MeasurableEquiv.map_uniformOn`). With measurable singletons, a measurable map injective on `s`
+  does the same (`map_uniformOn_of_injOn`), so a measurable bijection preserves the uniform measure
+  on the whole space (`map_uniformOn_univ_of_bijective`, `uniformOn_univ_map_equiv`).
+- **Uniform measures and mass functions**
+  ([`UniformOn/PMF`](../../ToCslib/Probability/UniformOn/PMF.lean)).
+  The first PMF bridge. A mass function is the uniform measure on a finite set exactly when it
+  gives each point of the set mass `1 / #s` (`PMF.toMeasure_eq_uniformOn_iff`), and
+  `Measure.toPMF` of the uniform measure has these masses (`Measure.toPMF_uniformOn_apply`). The
+  bridge imports only `Mathlib.Probability.ProbabilityMassFunction.Basic`. Mathlib has no uniform
+  mass functions: `PMF.uniformOfFinset` no longer exists, and `PMF.uniformOfFintype` and the
+  `PMF.uniformOfFinset_*` lemmas are deprecated aliases of the measure `Measure.uniformOfFinset`
+  and its lemmas.
+- **Partial results**
+  ([`Domain/Measure/Measurable`](../../PolyFun/Control/Domain/Measure/Measurable.lean),
+  [`Domain/Measure`](../../PolyFun/Control/Domain/Measure.lean)).
+  In the measurable structure on `DomainResult ε α`, bottom and every error are atoms, and the
+  values carry the σ-algebra of `α`. `DiscreteOrder ε` carries `⊤`, so errors need no σ-algebra
+  on `ε`. `DomainResult.measurableEquiv` identifies results with `Option (DiscreteOrder ε ⊕ α)`, and
+  its underlying function is the identity. `measurableEquivSum` identifies them with
+  `Option (ε ⊕ α)` when `ε` is discrete. There is no instance on `WithBot α` in general. A measure
+  `ν` on results splits into `DomainResult.success ν`, the subprobability measure of its values,
+  and `DomainResult.failureMass ν`, the mass of bottom plus the errors. For a subprobability
+  measure, the defect of `success ν` is the defect of `ν` plus `failureMass ν` (`defect_success`),
+  so for a probability measure it is `failureMass ν` (`defect_success_eq_failureMass`). The
+  pushforward of a probability measure along `toOption` is the failure completion of `success ν`
+  (`map_toOption_eq_withFailure`). The failure mass of a pushforward `μ.map g` is the mass of the
+  points at which `g` returns no value (`failureMass_map`).
+- **The measure fold**
+  ([`PFunctor/Measure`](../../PolyFun/PFunctor/Measure.lean),
+  [`Free/Measure`](../../PolyFun/PFunctor/Free/Measure.lean)).
+  `PFunctor.FreeM.measureFold μ` folds a free program into a measure on its results with
+  `Measure.bind`, under arbitrary per-operation answer measures `μ`: probability measures,
+  subprobability measures for operations that can fail, or other weightings. An unmeasurable
+  continuation folds to zero. Subprobability answers give a subprobability result, and over
+  discrete answers probability answers give a probability result. Substitution is pullback:
+  folding a program simulated by a free handler is folding the source program under the
+  measures its implementations fold to (`measureFold_liftM`), the measure counterpart of
+  `wpFold_liftM`. `PFunctor.AnswerMeasure` assigns a probability measure to each operation, and
+  `PFunctor.FreeM.denote` is the fold under it. Over discrete answers, `denote` preserves bind and
+  map out of a discrete result type (`denote_bind_of_discrete`, `denote_map_of_discrete`), and two
+  independent runs, the first with a discrete result type, denote the product measure
+  (`denote_bind_bind_prod_mk_eq_prod`).
+- **Expectations through the fold**
+  ([`Free/Measure/Lintegral`](../../PolyFun/PFunctor/Free/Measure/Lintegral.lean)).
+  `OpSpec.lintegral ν` specifies a call at `a` by the integral of its continuation under `ν a`. Its
+  fold `wpFold (OpSpec.lintegral ν) x post` is the expectation of `post`, taken one call at a time.
+  The fold needs no measurable space on the results and no measurability of `post`, and the
+  results may lie in any universe. For all answer measures, the integral of `post` against the
+  measure fold is at most the fold (`lintegral_measureFold_le_wpFold`). Over discrete answers, the
+  two are equal for a measurable `post` (`lintegral_measureFold_eq_wpFold`). The fold can be larger
+  because the measure fold sends a call whose continuation family is not almost everywhere
+  measurable to zero. Over discrete answers, the probability of a measurable event is the fold of
+  its indicator (`measureFold_apply_eq_wpFold`). The integration spec pulled back along a free
+  handler is the integration spec of the measures its implementations fold to
+  (`OpSpec.lintegral_pullback`).
+- **The expectation algebras**
+  ([`Free/Measure/Expectation`](../../PolyFun/PFunctor/Free/Measure/Expectation.lean),
+  [`Monad/Measure/Expectation`](../../PolyFun/Control/Monad/Measure/Expectation.lean)).
+  `expectationAlgebra ν` is the ordered monad algebra that the integration spec induces
+  (`OpSpec.toMAlgOrdered`). It is defined for all answer measures and answer universes. PolyFun's
+  program-logic bridges make it an exact weakest-precondition interpretation in which `wp x post`
+  is the fold of `post`. Over discrete answers, that fold is the expected value of `post`
+  (`expectationAlgebra_μ_bind_pure`). Under subprobability answers the algebra restricts to the
+  probability carrier `Set.Iic (1 : ℝ≥0∞)` (`probabilityAlgebra`). The carrier of an ordered monad
+  algebra lies in the universe of the values, so these algebras apply to values in `Type`.
+  `expectationAlgebraULift ν` is the algebra of the lifted spec `(OpSpec.lintegral ν).ulift` over
+  `ULift ℝ≥0∞`, for values in any universe. `ExpectationWP.algebra m` and
+  `ExpectationWP.algebraULift m` are the expectation algebras of any lawful measure semantics
+  `m`. On free programs over discrete answers, they are the algebras of the integration spec of
+  the answer measures (`ExpectationWP.algebra_freeM`, `ExpectationWP.algebraULift_freeM`). All of
+  these algebras are definitions. `open scoped PFunctor.FreeM.Expectation` installs the algebra of
+  `PFunctor.AnswerMeasure`.
+- **Expected charge**
+  ([`Free/Measure/ExpectedCharge`](../../PolyFun/PFunctor/Free/Measure/ExpectedCharge.lean)).
+  `OpSpec.expectedCharge ν c` reads a call at `a` as costing `c a`, followed by the expected value
+  of its continuation under `ν a`. Its fold with zero leaf costs is the expected charge, the
+  expected counterpart of the worst-case `cost c x`. Under subprobability answers it is at most the
+  worst case (`wpFold_expectedCharge_le_costWith`). Over discrete answers the leaf costs split off
+  (`wpFold_expectedCharge_eq_add`). Under probability answers over discrete answer types, the
+  expected charge is the integral of the charge of the completed path
+  (`lintegral_measureFold_withPathCharge`), and the expected query count is the expected unit
+  charge (`expectedQueryCount_eq_wpFold`). Expected cost transfers through a free handler as an
+  instance of `wpFold_liftM_le`. If each implementation has expected charge at most `c a`, the
+  simulated program's expected charge is at most the source program's under `c`, with each call
+  answered by the measure fold of its implementation (`wpFold_expectedCharge_liftM_le`; the exact
+  form is `wpFold_expectedCharge_liftM`).
+- **Kernel handlers**
+  ([`Free/Measure/Kernel`](../../PolyFun/PFunctor/Free/Measure/Kernel.lean),
+  [`Free/Measure/Kernel/Transport`](../../PolyFun/PFunctor/Free/Measure/Kernel/Transport.lean),
+  [`Wiring/Measure`](../../PolyFun/PFunctor/Wiring/Measure.lean)).
+  A `KernelHandler P S` samples each operation's answer together with a successor state.
+  `PFunctor.FreeM.runKernel` extends it to a kernel from initial states to results and final
+  states, and it agrees with first interpreting a free handler's implementations
+  (`runKernel_liftM`). Almost-everywhere state invariants and state projections transport from
+  single steps to whole programs. `Wiring.runKernel` interprets recursive polynomial wiring.
+  [`Free/Measure/Kernel/Handler`](../../PolyFun/PFunctor/Free/Measure/Kernel/Handler.lean) gives
+  the constructions: pullback along a free handler (`KernelHandler.comap`, with `comap_comap`), the
+  Dirac handler of a deterministic step (`KernelHandler.ofFun`, run by `runKernel_ofFun`), Markov
+  program kernels from Markov operation kernels, and the stateless kernel of answer measures
+  (`KernelHandler.ofMeasure`), whose run is the measure fold (`runKernel_ofMeasure`).
+- **Possible outputs and positive mass**
+  ([`Free/Measure/Support`](../../PolyFun/PFunctor/Free/Measure/Support.lean)).
+  Over discrete answers and a result type with measurable singletons, every result of positive
+  mass is in PolyFun's `MonadAttach` support of the program, and under answer measures of full
+  support the two sets agree (`support_eq_setOf_measureFold_ne_zero`). Without full support, the
+  two sets can differ.
+- **Path measures**
+  ([`Free/Measure/Path`](../../PolyFun/PFunctor/Free/Measure/Path.lean)).
+  `pathMeasure` is the measure on completed paths, and `expectedQueryCount` is the expected path
+  length, bounded by a total roll bound (`expectedQueryCount_le_of_isTotalRollBound`).
+- **Measure semantics of monads**
+  ([`Monad/Measure`](../../PolyFun/Control/Monad/Measure.lean),
+  [`Monad/Measure/Failure`](../../PolyFun/Control/Monad/Measure/Failure.lean),
+  [`Monad/Measure/Lossless`](../../PolyFun/Control/Monad/Measure/Lossless.lean)).
+  `EvalDistSemantics m` interprets each computation `mx : m α` as a subprobability measure
+  `evalDist mx` on its successful outputs, in every measurable structure on `α`. Under lawful
+  semantics the missing mass is the probability of failure or divergence. Without the bind law it
+  can also include mass lost at a continuation that is not measurable. Three `Prop` mixins state
+  laws:
+  `LawfulPureEvalDistSemantics` sends `pure` to a Dirac measure, `LawfulEvalDistSemantics` sends a
+  bind with a measurable continuation to the Giry bind, and `LawfulFailureEvalDistSemantics` sends
+  `failure` to zero. A fourth, `LosslessEvalDistSemantics`, states that every computation denotes a
+  probability measure. Over a discrete source the laws need no measurability proofs
+  (`evalDist_bind_of_discrete`, `evalDist_map_of_discrete`), and two independent draws denote the
+  product measure (`evalDist_pair`).
+- **Events and failure**
+  ([`Monad/Measure/Event`](../../PolyFun/Control/Monad/Measure/Event.lean),
+  [`Monad/Measure/WithFailure`](../../PolyFun/Control/Monad/Measure/WithFailure.lean),
+  [`Monad/Measure/EvalDistEq`](../../PolyFun/Control/Monad/Measure/EvalDistEq.lean)).
+  `prEvent mx` is the mass that `mx : m Prop` puts on `True`, so an event `p` of `mx : m α` has
+  probability `prEvent (p <$> mx)`. The measure modules define no event notation, and state the
+  event laws in this form. `prFail mx` is the probability of failure or divergence: the defect of
+  the output measure with the outputs erased to `PUnit`, so it needs no measurable structure and is
+  defined at every universe. Under lawful semantics it is the defect in every measurable structure
+  (`prFail_eq_defect`), and a lossless semantics never fails (`prFail_eq_zero_of_lossless`). A bind
+  over a discrete source fails when its prefix fails, or when the continuation fails after a
+  successful output (`prFail_bind_eq_add_lintegral_of_discrete`). Under the failure law, `failure`
+  fails with probability one (`prFail_failure`) and `guard p` fails exactly when `p` does not hold
+  (`prFail_guard`). `evalDistWithFailure` completes the output measure to a probability measure on
+  `Option α` that puts the missing mass on `none`. Under lawful semantics that mass is `prFail`
+  (`evalDistWithFailure_none_eq_prFail`). Otherwise the two can differ: the free program `reveal`
+  in [`MeasurabilityBoundary`](../../PolyFunTest/Probability/MeasurabilityBoundary.lean) has
+  `prFail` zero and puts mass one on `none`.
+  `EvalDistEq mx my` says that two computations, possibly in different monads, give every event the
+  same probability. Under lawful semantics it is equality of the output measures in the discrete
+  structure (`evalDistEq_iff_evalDist_eq`), and maps and binds preserve it (`EvalDistEq.map`,
+  `EvalDistEq.bind`, `EvalDistEq.bind_right`). Event probabilities and equality in distribution are
+  stated for outputs in `Type`.
+- **Instances**
+  ([`Monad/Measure/Deterministic`](../../PolyFun/Control/Monad/Measure/Deterministic.lean),
+  [`Free/Measure/EvalDist`](../../PolyFun/PFunctor/Free/Measure/EvalDist.lean),
+  [`Domain/Measure/EvalDist`](../../PolyFun/Control/Domain/Measure/EvalDist.lean)).
+  `Id`, `Option` and `Except ε` have lawful semantics: a Dirac measure at a returned value, and zero
+  at a failure. `Id` is lossless. `PFunctor.FreeM P` has the semantics of `PFunctor.FreeM.denote`.
+  It satisfies the pure law for any answer spaces, and is lawful and lossless over discrete
+  answers. The instances name the universe of the results, as in `FreeM.{w, uA, u} P`, so they
+  apply at results in any universe, independently of the universes of the operations and answers.
+  A downstream instance at fixed universes must name its universes in the same way, as VCVio's
+  instance for its oracle computations does (`OracleComp.{u, v, v} spec`); otherwise proofs that
+  mix `prEvent` at two universes can fail to unify.
+  `DomainResult ε` is not a monad. A partial result reaches the semantics through `toOption` and the
+  `Option` instance, under which it denotes the values of its Dirac measure
+  (`DomainResult.evalDist_toOption`).
+- **Uniform draws**
+  ([`Monad/Measure/Uniform`](../../PolyFun/Control/Monad/Measure/Uniform.lean),
+  [`Free/Measure/Uniform`](../../PolyFun/PFunctor/Free/Measure/Uniform.lean)).
+  `EvalDist.IsUniformOn mx s` states that the output measure of `mx` is `uniformOn s` in every
+  measurable structure with measurable singletons, and `EvalDist.IsUniform mx` is the case
+  `s = Set.univ`. The predicate names no sampler. On a finite type one output measure establishes
+  it (`IsUniformOn.of_evalDist_eq`). Under lawful semantics, a map injective on `s` gives a uniform
+  draw from the image (`IsUniformOn.map_of_injOn`), so a bijection keeps a draw uniform
+  (`IsUniform.map_of_bijective`). A uniform draw from a finite nonempty set never fails
+  (`IsUniformOn.prFail_eq_zero`). Two independent uniform draws are a uniform pair
+  (`IsUniform.pair`). Two uniform draws from one set are equal in distribution
+  (`IsUniformOn.evalDistEq`), and equality in distribution preserves uniformity
+  (`EvalDistEq.isUniformOn_iff`). Events of a uniform draw are counting statements
+  (`IsUniformOn.prEvent_eq`, `IsUniform.prEvent_eq` and the `prEvent_eq_singleton`,
+  `prEvent_eq_zero_iff`, `prEvent_pos_iff` and `prEvent_eq_one_iff` forms). A bijection onto a
+  second uniform draw transports events (`IsUniform.prEvent_comp_of_bijective`) and continuations
+  (`IsUniform.evalDistEq_bind_comp`). A call to an operation whose answer measure is uniform is a
+  uniform draw (`PFunctor.FreeM.isUniform_lift`). The answer measures of
+  `PFunctor.AnswerMeasure.uniformOfFiniteNonempty` satisfy its hypothesis by `rfl`.
+- **Transformers**
+  ([`Monad/Measure/OptionT`](../../PolyFun/Control/Monad/Measure/OptionT.lean),
+  [`Monad/Measure/ExceptT`](../../PolyFun/Control/Monad/Measure/ExceptT.lean)).
+  `OptionT m` and `ExceptT ε m` denote the pullback of the run measure along `some` and
+  `Except.ok`, so a `none` or an error is missing mass. `ExceptT` needs a σ-algebra on `ε`. Both
+  are lawful when the base semantics is lawful, and `OptionT` satisfies the failure law when the
+  base semantics preserves `pure`. Lifting preserves the output measure (`OptionT.evalDist_lift`,
+  `ExceptT.evalDist_liftM`) and adds no failure (`OptionT.prFail_lift`). After a lifted draw, a
+  guard contributes its condition to the event (`OptionT.prEvent_bind_guard`).
+- **Bundled semantics**
+  ([`Monad/Measure/SemanticsVia`](../../PolyFun/Control/Monad/Measure/SemanticsVia.lean)).
+  `SemanticsVia m` selects a semantics as data instead of as an instance. It interprets `m` in an
+  internal monad by a monad morphism, and then observes each internal computation as a
+  subprobability measure. The observation need not preserve bind, so it may fix an initial state
+  or an environment. `SemanticsVia.ofEvalDistSemantics`, `SemanticsVia.optionT` and
+  `SemanticsVia.exceptT` bundle the instances above.
+- **Couplings**
+  ([`Measure/Coupling`](../../ToCslib/MeasureTheory/Measure/Coupling.lean),
+  [`Measure/Coupling/Bind`](../../ToCslib/MeasureTheory/Measure/Coupling/Bind.lean)).
+  Mathlib has no couplings. `Measure.IsCoupling c μ ν` states that the joint measure `c` has
+  marginals `μ` and `ν`, and `Measure.Coupling μ ν` bundles such a measure. The constructors are
+  the diagonal, the graph of a measurable map, Dirac pairs, the swap and pushforwards. Finite
+  measures of the same total mass are coupled by their normalized product
+  (`IsCoupling.smul_prod`), and only such measures have a coupling. A coupling concentrated on the
+  graph of a measurable map is that map's graph coupling (`IsCoupling.joint_eq_map_of_ae_eq`), and
+  composes with any coupling of its first marginal (`IsCoupling.trans_of_ae_eq`). Couplings of
+  arbitrary relations do not compose in these modules. `IsCoupling.bind` composes a coupling with a
+  measurable family of conditional couplings.
+- **Relational program logic**
+  ([`Monad/Measure/Relational`](../../PolyFun/Control/Monad/Measure/Relational.lean),
+  [`Monad/Measure/Relational/Bind`](../../PolyFun/Control/Monad/Measure/Relational/Bind.lean),
+  [`Monad/Measure/Relational/Deterministic`](../../PolyFun/Control/Monad/Measure/Relational/Deterministic.lean)).
+  `ExpectationWP.CouplingPost μ ν R` states that some coupling of `μ` and `ν` satisfies `R` almost
+  everywhere, and `ExpectationWP.RelWP mx my R` states it of two output measures, possibly in
+  different monads. `ExpectationWP.eRelWP` is the best coupled expectation of a post-expectation.
+  A coupling concentrated on the diagonal has equal marginals even when the diagonal is not
+  measurable, so in a discrete structure an equality coupling gives equality in distribution
+  (`EvalDistEq.of_coupling`, `EvalDistEq.of_relWP_eq`). The converse needs a measurable diagonal
+  (`EvalDistEq.relWP_eq`) or countable concentration
+  (`EvalDistEq.relWP_eq_of_ae_mem_countable`). The bind rules take an explicit measurable family of
+  conditional couplings, or pointwise witnesses when the marginals concentrate on countable sets
+  (`CouplingPost.bind_of_countable`).
+- **Countable support and the coupling algebra**
+  ([`Monad/Measure/Countable`](../../PolyFun/Control/Monad/Measure/Countable.lean),
+  [`Monad/Measure/Relational/Algebra`](../../PolyFun/Control/Monad/Measure/Relational/Algebra.lean)).
+  `CountableEvalDist m` states that every output measure is concentrated on a countable set. `Id`,
+  `Option`, `Except ε`, and free programs over countable discrete answers satisfy it. Under it, a
+  pointwise relational judgment composes by bind with no measurability obligation
+  (`relWP_bind_of_countableEvalDist`), and equality in distribution is the equality coupling
+  (`evalDistEq_iff_relWP_eq`). `ExpectationWP.couplingAlgebra m₁ m₂` presents `RelWP`, read in the
+  discrete structures, as a `MAlgRelOrdered m₁ m₂ Prop`, so PolyFun's relational triple rules apply
+  to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
+- **Certified meanings**
+  ([`Semantics/Measure`](../../PolyFun/Control/Semantics/Measure.lean)).
+  A certified meaning `f : Control.Semantics.CertifiedMeaning input output` agrees with its native
+  implementation on every encoded input. Pushing a measure on native inputs forward along the
+  encoded meaning `f.meaning ∘ input` therefore gives the encoding of the implementation's
+  pushforward (`CertifiedMeaning.map_meaning`). A correspondence on an admissible set gives the
+  same equation when almost every input is admissible (`CorrespondsOn.map_meaning_ae`). For a
+  computation `mx`, the meaning's pushforward of its output measure is the encoding of the output
+  measure of `f.implementation <$> mx` (`CertifiedMeaning.evalDist_map_meaning`,
+  `CorrespondsOn.evalDist_map_meaning_ae`). The statements need measurability of the output
+  encoding and of the implementation only. A decoded certificate, whose output encoding is
+  `DomainResult.valueEmbedding`, pushes a measure on native inputs to a measure whose values are
+  the implementation's pushforward and whose failure mass is zero
+  (`CertifiedMeaning.success_map_meaning`, `CertifiedMeaning.failureMass_map_meaning`, and the
+  correspondence forms `CorrespondsOn.success_map_meaning_ae` and
+  `CorrespondsOn.failureMass_map_meaning_ae`). These forms need the implementation to be
+  measurable only almost everywhere. The `ScopedDomains` tutorial's decoded `addTwo`, `pred` and
+  recursive `double` are their consumers in `PolyFunTest/Probability/ScopedDomains.lean`.
+
+The measure modules keep the names and namespaces of the declarations they took over from VCVio,
+so VCVio can import them without renaming. The coupling predicates and the expectation algebra
+`ExpectationWP.algebra` therefore live in VCVio's `ExpectationWP` namespace, apart from the
+abstract `MAlgRelOrdered.RelWP`.
+
+## Relation to VCVio and to interaction cost
+
+VCVio specializes these interpretations to oracle computations. Its `OracleComp` programs are
+PolyFun free programs, and its measure semantics is an `EvalDistSemantics` instance. VCVio
+supplies the notation for the declarations defined here: `𝒟[…]` for `evalDist`, `Pr{…}[…]` for
+`prEvent` and `=ᵈ` for `EvalDistEq`. Its canonical samplers `$ᵗ α` (`SampleableType`) stay in
+VCVio. The law of a sampler is the field of `EvalDist.IsUniform` for its program, so the
+uniform-draw laws here apply to it. `Pr{let x ← mx}[p x]` elaborates to `prEvent (p <$> mx)`,
+the form in which the measure modules state the event laws. That notation takes the functor of the
+map from the monad. Over `OptionT m` and an `AlternativeMonad`, `p <$> mx` finds its functor through
+`Alternative` instead. The event laws over these monads therefore write the map as `p <$>ₘ mx`, a
+scoped notation for the map through the monad's functor (`open scoped EvalDistSemantics`). The
+[`EventForms`](../../PolyFunTest/Probability/EventForms.lean) tests check that these statements
+map through the monad's functor up to syntactic equality.
+
+The interaction-cost modules are probability-free. An expected cost is a measure-valued reading
+of the same programs, so it belongs in a measure companion. It is the fold of
+`OpSpec.expectedCharge`, so the comparison and transfer principles of the core readings
+(`wpFold_le_wpFold_of_le`, `wpFold_liftM_le`) apply to it unchanged.

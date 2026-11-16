@@ -200,8 +200,7 @@ equality. -/
 theorem castEquiv_trans {t t' t'' : M P} (h : t = t') (h' : t' = t'')
     (vertex : Vertex t) :
     castEquiv h' (castEquiv h vertex) = castEquiv (h.trans h') vertex := by
-  subst t'
-  subst t''
+  subst t' t''
   rfl
 
 /-- Transporting a vertex forward and then back is the identity. -/
@@ -368,10 +367,7 @@ theorem depth_splitAt_fst (n : Nat) {t : M P} (vertex : Vertex t) :
   | succ n ih =>
       cases vertex with
       | root => simp
-      | child direction next =>
-          simp only [splitAt_succ_child, depth_child]
-          rw [ih]
-          omega
+      | child direction next => simp_all
 
 /-- The residual depth is the original depth minus the split depth. -/
 theorem depth_splitAt_snd (n : Nat) {t : M P} (vertex : Vertex t) :
@@ -381,11 +377,7 @@ theorem depth_splitAt_snd (n : Nat) {t : M P} (vertex : Vertex t) :
   | succ n ih =>
       cases vertex with
       | root => simp
-      | child direction next =>
-          simp only [splitAt_succ_child, depth_child]
-          calc
-            depth (splitAt n next).2 = depth next - n := ih next
-            _ = depth next + 1 - (n + 1) := by omega
+      | child direction next => simp_all
 
 /-- Splitting at the full depth yields the vertex itself followed by the root
 of its selected subtree. -/
@@ -658,15 +650,10 @@ private theorem pullMapLensAux_id (tree : M P) (target : M P)
         exact cast_heq _ direction
       have hsource : sourceDirection ≍ direction := by
         unfold sourceDirection M.pullDirection
-        change cast
-            (congrArg P.B (M.head_mapLens (Lens.id P) tree))
-            mappedDirection ≍ direction
-        exact (cast_heq
-          (congrArg P.B (M.head_mapLens (Lens.id P) tree))
-          mappedDirection).trans hmapped
+        grind
       have htargetDirection : targetDirection ≍ direction := by
         unfold targetDirection M.castDirection
-        exact cast_heq _ direction
+        grind
       have hdirection : sourceDirection = targetDirection :=
         eq_of_heq (hsource.trans htargetDirection.symm)
       rw [pullMapLensAux, castEquiv_child, Vertex.child.injEq]

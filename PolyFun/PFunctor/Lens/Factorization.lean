@@ -233,8 +233,7 @@ private theorem transport_inverse_comp {I : Type u} (B : I → Type v) {x y : I}
     (h : x = y) {A : Type w} {C : Type z} (e : B x ≃ A) (k : B y → C) :
     (fun a => k (h ▸ e.symm a)) ∘ e = h.symm ▸ k := by
   cases h
-  funext a
-  exact congrArg k (e.symm_apply_apply a)
+  exact funext fun a => congrArg k (e.symm_apply_apply a)
 
 private theorem toFunB_heq_of_eq {P : PFunctor.{uA₁, uB₁}}
     {Q : PFunctor.{uA₂, uB₂}} {l₁ l₂ : Lens P Q} (h : l₁ = l₂) (p : P.A) :
@@ -301,8 +300,7 @@ noncomputable def verticalCartesianDiagonal
     have harg : e.symm rb ≍ hp ▸ e.symm rb := (eqRec_heq _ _).symm
     have hsquare := congr_heq hfun harg
     simpa [comp, Function.comp_apply, e] using hsquare.symm
-  have hcast : (hA p ▸ f.toFunB p) ≍ f.toFunB p := eqRec_heq_self _ _
-  exact hnorm.trans ((heq_of_eq hnormEq).trans hcast.symm)
+  grind
 
 /-- The canonical diagonal fills the right triangle. -/
 @[simp] theorem verticalCartesianDiagonal_comp_right
@@ -380,8 +378,7 @@ private theorem eq_of_comp_cartesian_eq_of_toFunA_eq
       congr_arg_heq Sigma.snd hout
     have happ := congr_heq hfun hs
     simpa [comp, Function.comp_apply] using happ
-  have hcast : (hA p ▸ l₂.toFunB p) ≍ l₂.toFunB p := eqRec_heq_self _ _
-  exact hcancel.trans hcast.symm
+  grind
 
 /-- The vertical/cartesian diagonal is unique. Consequently the bundled type
 of fillers of such a square is a subsingleton. -/
@@ -413,11 +410,7 @@ theorem subsingleton_diagonalFiller
           ⟨diagonal₁, left₁, right₁⟩
         have h₂ := verticalCartesianDiagonal_unique v f c g hv hc comm
           ⟨diagonal₂, left₂, right₂⟩
-        change diagonal₁ = _ at h₁
-        change diagonal₂ = _ at h₂
-        cases h₁
-        cases h₂
-        rfl
+        grind
 
 @[deprecated (since := "2026-10-19")] alias subsingleton_verticalCartesianFillers :=
   subsingleton_diagonalFiller

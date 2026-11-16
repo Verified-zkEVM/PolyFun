@@ -453,11 +453,7 @@ theorem isChargeBound_prod_iff {x : FreeM P α} {c₁ : P.A → ω₁} {c₂ : P
   | pure a => exact Prod.mk_le_mk
   | liftBind a r ih =>
     simp only [isChargeBound_liftBind_iff, Prod.mk_add_mk, Prod.mk_le_mk, ih]
-    constructor
-    · rintro ⟨⟨h₁, h₂⟩, h⟩
-      exact ⟨⟨h₁, fun b => (h b).1⟩, ⟨h₂, fun b => (h b).2⟩⟩
-    · rintro ⟨⟨h₁, h₁'⟩, ⟨h₂, h₂'⟩⟩
-      exact ⟨⟨h₁, h₂⟩, fun b => ⟨h₁' b, h₂' b⟩⟩
+    grind
 
 /-- A bound with a family of charges is a family of bounds. Per-index query budgets are the
 instance with charges `Pi.single i 1`. -/

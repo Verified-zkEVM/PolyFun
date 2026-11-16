@@ -118,9 +118,7 @@ theorem unroll_wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α �
   | zero =>
       cases hview : M.view state with
       | inl value =>
-          rw [M.unroll_return 0 state value hview,
-            (M.wrap lens).unroll_return 0 state value (by simp [hview])]
-          exact (FreeM.mapLens_pure lens (some value)).symm
+          simp_all
       | inr query =>
           obtain ⟨position, next⟩ := query
           rw [M.unroll_query_zero state position next hview,
@@ -130,9 +128,7 @@ theorem unroll_wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α �
   | succ k ih =>
       cases hview : M.view state with
       | inl value =>
-          rw [M.unroll_return (k + 1) state value hview,
-            (M.wrap lens).unroll_return (k + 1) state value (by simp [hview])]
-          exact (FreeM.mapLens_pure lens (some value)).symm
+          simp_all
       | inr query =>
           obtain ⟨position, next⟩ := query
           rw [M.unroll_query_succ k state position next hview,
@@ -198,9 +194,7 @@ theorem run_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
   | zero =>
       cases hview : M.view state with
       | inl value =>
-          rw [M.unroll_return 0 state value hview,
-            (M.mapResult f).unroll_return 0 state (f value) (by simp [hview])]
-          exact (FreeM.map_pure (Option.map f) (some value)).symm
+          simp_all
       | inr query =>
           obtain ⟨position, next⟩ := query
           rw [M.unroll_query_zero state position next hview,
@@ -217,9 +211,7 @@ theorem run_setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
           rcases query with ⟨position, next⟩
           rw [M.unroll_query_succ k state position next hview,
             (M.mapResult f).unroll_query_succ k state position next (by simp [hview])]
-          rw [FreeM.map_liftBind]
-          exact congrArg (FreeM.liftBind position)
-            (funext fun direction => ih (next direction))
+          simp_all
 
 @[simp] theorem run_mapResult {γ : Type uγ} (M : DynComputation.{u} p α β)
     (f : β → γ) (k : ℕ) (input : α) :
@@ -423,8 +415,7 @@ theorem unroll_eq_map_some_of_resolvesIn {M : DynComputation.{u} p α β} :
   | k + 1, state, h => by
       cases hview : M.view state with
       | inl value =>
-          exact ⟨FreeM.pure value,
-            by rw [unroll_return M (k + 1) state value hview]; rfl⟩
+          exact ⟨FreeM.pure value, by simp_all⟩
       | inr query =>
           rcases query with ⟨position, next⟩
           have hnext : ∀ direction, M.ResolvesIn k (next direction) :=
@@ -567,15 +558,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
   induction k generalizing state₂ with
   | zero =>
       cases hview : M₂.view state₂ with
-      | inl result =>
-          have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
-              Sum.inl result := by
-            rw [seqComp_view_inr]
-            simp only [seqComp_state]
-            rw [hview]
-            rfl
-          rw [(M₁.seqComp M₂).unroll_return 0 _ result hcomposite,
-            M₂.unroll_return 0 state₂ result hview]
+      | inl result => simp_all
       | inr query =>
           rcases query with ⟨position, next⟩
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
@@ -588,15 +571,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
             M₂.unroll_query_zero state₂ position next hview]
   | succ k ih =>
       cases hview : M₂.view state₂ with
-      | inl result =>
-          have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
-              Sum.inl result := by
-            rw [seqComp_view_inr]
-            simp only [seqComp_state]
-            rw [hview]
-            rfl
-          rw [(M₁.seqComp M₂).unroll_return (k + 1) _ result hcomposite,
-            M₂.unroll_return (k + 1) state₂ result hview]
+      | inl result => simp_all
       | inr query =>
           rcases query with ⟨position, next⟩
           have hcomposite : (M₁.seqComp M₂).view (Sum.inr state₂) =
@@ -607,9 +582,7 @@ theorem unroll_seqComp_inr {γ : Type uγ}
             rfl
           rw [(M₁.seqComp M₂).unroll_query_succ k _ position _ hcomposite,
             M₂.unroll_query_succ k state₂ position next hview]
-          apply congrArg (FreeM.liftBind position)
-          funext direction
-          exact ih (next direction)
+          simp_all
 
 /-- If the first phase returns at its current state, the composite immediately
 executes the second phase with the same fuel; no query or silent step is added. -/
@@ -620,15 +593,7 @@ theorem unroll_seqComp_inl_of_return {γ : Type uγ}
     (M₁.seqComp M₂).unroll k (Sum.inl state₁) =
       M₂.unroll k (M₂.init value) := by
   cases hview₂ : M₂.view (M₂.init value) with
-  | inl result =>
-      have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
-          Sum.inl result := by
-        rw [seqComp_view_inl, hview]
-        simp only [seqComp_state]
-        rw [hview₂]
-        rfl
-      rw [(M₁.seqComp M₂).unroll_return k _ result hcomposite,
-        M₂.unroll_return k _ result hview₂]
+  | inl result => simp_all
   | inr query =>
       rcases query with ⟨position, next⟩
       have hcomposite : (M₁.seqComp M₂).view (Sum.inl state₁) =
@@ -905,8 +870,7 @@ theorem runWith_return (M : DynComputation.{u} q α β)
     (hview : M.view state = Sum.inl value) :
     M.runWith handler k state = pure (some value) := by
   unfold runWith
-  rw [unroll_return M k state value hview]
-  rfl
+  simp_all
 
 theorem runWith_query_zero (M : DynComputation.{u} q α β)
     (handler : Handler m q) (state : M.State) (position : q.A)
@@ -948,9 +912,7 @@ theorem ImplementsWithin.runWithInput_eq [LawfulMonad m]
   unfold runWithInput runWith
   have hrun := h input
   change M.unroll k (M.init input) = FreeM.map some (program input) at hrun
-  rw [hrun]
-  change FreeM.liftM handler (some <$> program input) = _
-  rw [FreeM.liftM_map]
+  simp_all
 
 /-- The free handler exposes bounded implementation without information loss. -/
 theorem implementsWithin_iff_runWithInput_lift

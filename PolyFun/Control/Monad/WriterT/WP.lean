@@ -26,8 +26,8 @@ the writer's `LawfulMonad` instance (`WriterT.lawfulMonad_monad`). Clients opt i
 `open scoped WriterT.MonoidWP` or `open scoped WriterT.AppendWP`, or install an explicit
 interpretation locally. Importing the module does not choose a writer interpretation.
 The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
-live in `PolyFun.Control.Do.Spec`, the tactic tier of the `Std.WP` quarantine; the entailments
-they wrap are stated here.
+live in `PolyFun.Control.Do.Spec`, registered in the same two scopes; the entailments they wrap
+are stated here.
 -/
 
 public section

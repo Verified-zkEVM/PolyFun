@@ -265,9 +265,7 @@ theorem behavior_mapResult {γ : Type uγ} (f : β → γ)
     (fun left right => ∃ current : M.State,
       left = (M.mapResult f).toDynSystem.behavior current ∧
       right = Resumption.map f (M.toDynSystem.behavior current))
-  · rintro left right ⟨current, hleft, hright⟩
-    subst left
-    subst right
+  · rintro left right ⟨current, rfl, rfl⟩
     rcases h : M.view current with value | query
     · exact .pure (f value)
         (by rw [dest_behavior_view, mapResult_view, h]; rfl)
@@ -335,9 +333,7 @@ theorem behavior_wrap {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
     (fun left right => ∃ current : M.State,
       left = (M.wrap lens).toDynSystem.behavior current ∧
       right = Resumption.mapLens lens (M.toDynSystem.behavior current))
-  · rintro left right ⟨current, hleft, hright⟩
-    subst left
-    subst right
+  · rintro left right ⟨current, rfl, rfl⟩
     rcases h : M.view current with value | query
     · exact .pure value
         (by rw [dest_behavior_view, wrap_view, h]; rfl)
@@ -973,8 +969,7 @@ theorem view_eq_query_of_withInput_view_eq_query (M : DynComputation.{u} p α β
       ∀ direction, (next direction).2 = state.2 := by
   rw [view_withInput] at h
   rcases hview : M.view state.1 with value | ⟨position', next'⟩
-  · rw [hview] at h
-    exact nomatch h
+  · grind
   · rw [hview] at h
     have h' := Sum.inr.inj h
     cases h'
@@ -987,11 +982,8 @@ theorem view_eq_return_of_withInput_view_eq_return (M : DynComputation.{u} p α 
     M.view state.1 = Sum.inl result.1 ∧ result.2 = state.2 := by
   rw [view_withInput] at h
   rcases hview : M.view state.1 with value | ⟨position', next'⟩
-  · rw [hview] at h
-    cases Sum.inl.inj h
-    exact ⟨rfl, rfl⟩
-  · rw [hview] at h
-    exact nomatch h
+  · grind
+  · simp_all
 
 /-- State-level semantics: retaining the input attaches it to every returned value. -/
 theorem behavior_withInput (M : DynComputation.{u} p α β) (state : M.State) (input : α) :
