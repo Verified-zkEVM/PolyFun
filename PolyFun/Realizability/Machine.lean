@@ -130,8 +130,7 @@ theorem head_init_eq_of_implements_pure (M : DynComputation.{u} p α β) {g : α
       simp only [Sum.map_inl, Sum.inl.injEq] at firstStep
       simpa [firstStep] using M.head_eq_inl_of_view viewEquation
   | inr query =>
-      rw [viewEquation] at firstStep
-      simp at firstStep
+      simp_all
 
 /-! ## The flattened transition -/
 
@@ -165,15 +164,13 @@ theorem update?_of_view_query [DecidableEq p.A] (M : DynComputation.{u} p α β)
     (hview : M.view state = Sum.inr ⟨position, next⟩)
     (direction : p.B position) :
     M.update? (state, ⟨position, direction⟩) = some (next direction) := by
-  unfold update?; rw [hview]
-  exact dite_eq_left rfl
+  unfold update?; simp_all
 
 theorem update?_of_view_query_of_ne [DecidableEq p.A]
     (M : DynComputation.{u} p α β) {state : M.State} {query : p.Obj M.State}
     (hview : M.view state = Sum.inr query) {index : p.Idx}
     (hne : index.1 ≠ query.1) : M.update? (state, index) = none := by
-  unfold update?; rw [hview]
-  exact dite_eq_right hne
+  unfold update?; simp_all
 
 /-- The total variant of the flattened transition: a mismatched tag or an already
 returned state leaves the state unchanged.
@@ -351,8 +348,7 @@ theorem update?_wrap {q : PFunctor.{uA₂, uB₂}} [DecidableEq p.A] [DecidableE
         rw [dite_eq_left rfl, Option.bind_some, update?_of_view_query M hview]
       · rw [update?_of_view_query_of_ne (M.wrap lens) hcomp h]
         change none = Option.bind (dite _ _ _) _
-        rw [dite_eq_right h]
-        rfl
+        simp_all
 
 /-! ## The step maps of a sequential composition -/
 
@@ -367,8 +363,7 @@ theorem seqComp_view_inl_of_return (M₁ : DynComputation.{u} p α β)
       Sum.map (fun result : γ => result)
         (p.map (Sum.inr : M₂.State → M₁.State ⊕ M₂.State))
         (M₂.view (M₂.init value)) := by
-  rw [seqComp_view_inl, hview]
-  rfl
+  simp_all
 
 theorem seqComp_view_inl_of_query (M₁ : DynComputation.{u} p α β)
     (M₂ : DynComputation.{v} p β γ) {state₁ : M₁.State}

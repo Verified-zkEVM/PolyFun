@@ -313,9 +313,7 @@ instance : LawfulCoapplicative NonEmptyList where
       | cons h2 t2 =>
         cases lc with
         | nil => simp [List.zip]
-        | cons h3 t3 =>
-          simp only [List.zip, List.zipWith, List.map]
-          exact congrArg _ (ih t2 t3)
+        | cons h3 t3 => simp_all
   map_coseq := by
     intro _ _ _ _ f g ⟨ha, la⟩ ⟨hb, lb⟩
     simp only [Functor.map, coseq, zip, NonEmptyList.map, List.zip_map]
@@ -442,7 +440,7 @@ def duplicate (z : Zipper α) : Zipper (Zipper α) :=
 
 theorem map_comp (f : α → β) (g : β → γ) (z : Zipper α) :
     map g (map f z) = map (g ∘ f) z := by
-  cases z; simp [map, List.map_map]
+  simp
 
 /-- Reading the focus of each leftward context recovers the stored left list. -/
 theorem iterateLeft_map_extract (ls : List α) (f : α) (rs : List α) :
@@ -559,7 +557,7 @@ instance : LawfulCoapplicative Zipper where
         | cons h2 t2 =>
           cases lc with
           | nil => simp [List.zip]
-          | cons h3 t3 => simp only [List.zip, List.zipWith]; exact congrArg _ (ih t2 t3)
+          | cons h3 t3 => simp_all
     · induction ra generalizing rb rc with
       | nil => simp [List.zip]
       | cons h t ih =>
@@ -568,7 +566,7 @@ instance : LawfulCoapplicative Zipper where
         | cons h2 t2 =>
           cases rc with
           | nil => simp [List.zip]
-          | cons h3 t3 => simp only [List.zip, List.zipWith]; exact congrArg _ (ih t2 t3)
+          | cons h3 t3 => simp_all
   map_coseq := by
     intro _ _ _ _ f g ⟨la, fa, ra⟩ ⟨lb, fb, rb⟩
     simp only [Functor.map, Coseq.coseq, coseq, map, List.zip_map]

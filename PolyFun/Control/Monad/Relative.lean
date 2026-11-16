@@ -108,9 +108,7 @@ def monadOfId (M : RelativeMonad C _ (𝟭 _)) : Monad C where
         M.μ (M.μ (f ≫ M.η) ≫ M.η) ≫ M.μ (𝟙 (M.T Y))
             = M.μ ((M.μ (f ≫ M.η) ≫ M.η) ≫ M.μ (𝟙 (M.T Y))) :=
                 (M.assoc (f := M.μ (f ≫ M.η) ≫ M.η) (g := 𝟙 (M.T Y))).symm
-        _ = M.μ (M.μ (f ≫ M.η)) := by
-              congr 1
-              simp [Category.assoc]
+        _ = M.μ (M.μ (f ≫ M.η)) := by simp
         _ = M.μ (𝟙 (M.T X) ≫ M.μ (f ≫ M.η)) := by simp
         _ = M.μ (𝟙 (M.T X)) ≫ M.μ (f ≫ M.η) :=
               M.assoc (f := 𝟙 (M.T X)) (g := f ≫ M.η))
@@ -121,18 +119,14 @@ def monadOfId (M : RelativeMonad C _ (𝟭 _)) : Monad C where
       M.μ (M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))
           = M.μ ((M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))) :=
               (M.assoc (f := M.η ≫ M.η) (g := 𝟙 (M.T X))).symm
-      _ = M.μ M.η := by
-            congr 1
-            simp [Category.assoc]
+      _ = M.μ M.η := by simp
       _ = 𝟙 (M.T X) := by simp
   assoc X := by
     calc
       M.μ (M.μ (𝟙 (M.T X)) ≫ M.η) ≫ M.μ (𝟙 (M.T X))
           = M.μ ((M.μ (𝟙 (M.T X)) ≫ M.η) ≫ M.μ (𝟙 (M.T X))) :=
               (M.assoc (f := M.μ (𝟙 (M.T X)) ≫ M.η) (g := 𝟙 (M.T X))).symm
-      _ = M.μ (M.μ (𝟙 (M.T X))) := by
-            congr 1
-            simp [Category.assoc]
+      _ = M.μ (M.μ (𝟙 (M.T X))) := by simp
       _ = M.μ (𝟙 (M.T (M.T X)) ≫ M.μ (𝟙 (M.T X))) := by simp
       _ = M.μ (𝟙 (M.T (M.T X))) ≫ M.μ (𝟙 (M.T X)) :=
             M.assoc (f := 𝟙 (M.T (M.T X))) (g := 𝟙 (M.T X))

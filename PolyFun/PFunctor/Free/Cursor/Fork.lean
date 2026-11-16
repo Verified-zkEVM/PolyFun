@@ -417,8 +417,7 @@ theorem map_locateAndForkBy [DecidableEq P.A] {κ β γ : Type*}
   rcases hselect : select (output program path) with _ | k
   · rfl
   · rcases hlocate : locateAt? target program path (index k) with _ | located
-    · simp only [hlocate]
-      rfl
+    · simp_all
     · simp only [hlocate]
       rw [FreeM.bind_pure_comp, ← FreeM.comp_map]
 
@@ -441,8 +440,7 @@ theorem filterMapLocateAndForkSelected_eq_filterMapLocateAndForkBy
   rcases select (output program path) with _ | label
   · simp
   · rcases hlocate : locateAt? target program path (index label) with _ | located
-    · simp only [hlocate]
-      rfl
+    · simp_all
     · simp only [hlocate]
       apply congrArg (fun f => FreeM.map f located.fork)
       funext view
@@ -588,9 +586,7 @@ theorem forkAt_eq_locateAndForkAt [DecidableEq P.A] (target : P.A) :
       forkAt target program n = locateAndForkAt target program n := by
   intro program
   induction program using FreeM.rec with
-  | pure value =>
-      intro n
-      rw [FreeM.pure_eq_pure, forkAt_pure, locateAndForkAt_pure]
+  | pure value => simp_all
   | liftBind a next ih =>
       intro n
       by_cases h : a = target
@@ -601,12 +597,8 @@ theorem forkAt_eq_locateAndForkAt [DecidableEq P.A] (target : P.A) :
         | succ n =>
             rw [forkAt_liftBind_same_succ,
               locateAndForkAt_liftBind_same_succ]
-            apply congrArg (FreeM.liftBind target)
-            funext answer
-            rw [ih answer n]
+            grind
       · rw [forkAt_liftBind_other h, locateAndForkAt_liftBind_other h]
-        apply congrArg (FreeM.liftBind a)
-        funext answer
-        rw [ih answer n]
+        grind
 
 end PFunctor.FreeM.Cursor
