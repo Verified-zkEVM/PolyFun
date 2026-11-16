@@ -493,3 +493,14 @@ rewriting equations (`FreeM.liftM_lift_bind'`, `FreeM.liftM_ite`, `FreeM.liftM_d
 A `WP` reading that a proof installs with `letI` is not used when `vcgen` builds rules from
 `Triple` specifications (`failed to synthesize WP`); install it with `attribute [local instance]`,
 as for `FreeM.budgetWPMonad`.
+
+### A rule for every spec states its condition through the spec's head
+
+`Spec.lift_lower` and `Spec.lift_upper` take the spec `Φ` from the reading's instance, by
+unification, and state the precondition of a call as `Φ a Q`. When the reading is defined from a
+named spec, such as `OpSpec.lintegral ν`, the condition `vcgen` leaves keeps that name:
+`OpSpec.lintegral ν a fun b => …`. When the reading is defined from the spec written out as a
+`fun`, the instantiated precondition beta-reduces to the body. The expectation readings of
+`PolyFun/PFunctor/Free/Measure/WP.lean` are defined from `fun a k => ∫⁻ b, k b ∂ν a` for this reason,
+so the condition is the integral itself, and lemmas stated with `∫⁻` apply to it without unfolding.
+`simp only [OpSpec.lintegral_apply]` unfolds the named form.

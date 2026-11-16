@@ -181,6 +181,20 @@ measure module.
   the answer measures (`ExpectationWP.algebra_freeM`, `ExpectationWP.algebraULift_freeM`). All of
   these algebras are definitions. `open scoped PFunctor.FreeM.Expectation` installs the algebra of
   `PFunctor.AnswerMeasure`.
+- **The expectation readings**
+  ([`Free/Measure/WP`](../../PolyFun/PFunctor/Free/Measure/WP.lean)).
+  `expectationWPMonad ν` is the weakest-precondition interpretation of `expectationAlgebra ν`, in
+  which `wp x post` is the fold of `post`, and `upperExpectationWPMonad ν` is its dual reading, whose
+  triples state upper bounds. Both are exact. `open scoped PFunctor.FreeM.Expectation` also
+  installs the expectation reading of `PFunctor.AnswerMeasure`, and
+  `open scoped PFunctor.FreeM.UpperExpectation` installs its dual. The integral of a postcondition
+  against the output measure is at most its weakest precondition, for all answer spaces
+  (`Expectation.lintegral_evalDist_le_wp`), so an upper-bound triple bounds the integral
+  (`UpperExpectation.lintegral_evalDist_le_of_triple`). Over discrete answers, the two agree for a
+  measurable postcondition (`Expectation.wp_eq_lintegral_evalDist`), and the expectation reading is
+  the interpretation of `ExpectationWP.algebra (FreeM P)` (`ExpectationWP.toWPMonad_algebra_freeM`).
+  The [program-logic guide](program-logic.md#expectation-readings-of-free-programs) describes their
+  rules for `vcgen`.
 - **Expected charge**
   ([`Free/Measure/ExpectedCharge`](../../PolyFun/PFunctor/Free/Measure/ExpectedCharge.lean)).
   `OpSpec.expectedCharge ν c` reads a call at `a` as costing `c a`, followed by the expected value
