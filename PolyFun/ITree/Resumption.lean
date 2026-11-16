@@ -172,13 +172,7 @@ theorem TauFreeF.mono {R S : _root_.ITree p β → Prop} (hRS : ∀ {tree}, R tr
     {tree : _root_.ITree p β} (h : TauFreeF R tree) : TauFreeF S tree := by
   rcases hshape : shape' tree with ⟨shape, next⟩
   unfold TauFreeF at h ⊢
-  rw [hshape] at h ⊢
-  cases shape with
-  | pure value => trivial
-  | step => exact h
-  | query position =>
-      intro direction
-      exact hRS (h direction)
+  grind
 
 /-- Greatest postfixed point of `TauFreeF`. This admits infinite visible-query
 trees while ruling out a tau at every recursively reachable query child. -/
@@ -254,8 +248,7 @@ variable {p : PFunctor.{uA, uB}} {q : PFunctor.{uA₂, uB₂}}
     rcases h : dest source with value | ⟨position, next⟩
     · simp [ITree.TauFreeF, h]
     · simp only [ITree.TauFreeF, shape'_toITree, h]
-      intro direction
-      exact ⟨next direction, rfl⟩
+      exact fun direction => ⟨next direction, rfl⟩
   · exact ⟨computation, rfl⟩
 
 /-- The proof carried by one tau-free observation. -/

@@ -214,9 +214,7 @@ instance instLawfulMonadIter : LawfulMonadIter (StateT σ m) where
       · rw [run_iterM]
         refine congrArg (iterM · _) (funext fun p => ?_)
         simp only [stateBody_eq, StateT.run_bind, bind_assoc]
-        refine bind_congr fun q => ?_
-        rcases q with ⟨_ | _, s'⟩ <;>
-          simp only [Sum.map_inl, Sum.map_inr, StateT.run_pure, pure_bind]
+        grind
       · simp only [Sum.map_inr, StateT.run_pure]
   iter_codiagonal {α β} body init s := by
     let inner : α × σ → m ((α × σ) ⊕ ((α × σ) ⊕ (β × σ))) := fun p =>
@@ -256,9 +254,7 @@ theorem exceptBody_eq {α β γ : Type u} (f : β → ExceptT ε m (γ ⊕ α)) 
       | .ok (.inl next) => pure (.inl next)
       | .ok (.inr result) => pure (.inr (.ok result)) := by
   rw [exceptBody, map_eq_pure_bind]
-  apply bind_congr
-  intro value
-  rcases value with e | (_ | _) <;> rfl
+  grind
 
 variable [MonadIter m] [LawfulMonadIter m]
 
@@ -290,9 +286,7 @@ instance instLawfulMonadIter : LawfulMonadIter (ExceptT ε m) where
     · simp only [pure_bind]
     · simp only [pure_bind, ExceptT.run_pure]
     · simp only [pure_bind, ExceptT.run_bind, ExceptT.run_pure, bind_assoc]
-      apply bind_congr
-      intro value
-      cases value <;> simp only [pure_bind]
+      grind
   iter_dinatural f g init := by
     rw [ExceptT.run_bind, run_iterM]
     refine eqv_trans (eqv_of_eq (congrArg (iterM · init) (funext fun a => ?_)))
@@ -351,9 +345,7 @@ theorem optionBody_eq {α β γ : Type u} (f : β → OptionT m (γ ⊕ α)) (b 
       | some (.inl next) => pure (.inl next)
       | some (.inr result) => pure (.inr (some result)) := by
   rw [optionBody, map_eq_pure_bind]
-  apply bind_congr
-  intro value
-  rcases value with _ | (_ | _) <;> rfl
+  grind
 
 variable [MonadIter m] [LawfulMonadIter m]
 
@@ -387,9 +379,7 @@ instance instLawfulMonadIter : LawfulMonadIter (OptionT m) where
     · simp only [Option.elim, pure_bind, OptionT.run_pure]
     · simp only [Option.elim, pure_bind, OptionT.run_bind, Option.elimM,
         OptionT.run_pure, bind_assoc]
-      apply bind_congr
-      intro value
-      cases value <;> simp only [pure_bind]
+      grind
   iter_dinatural f g init := by
     rw [OptionT.run_bind, Option.elimM, run_iterM]
     refine eqv_trans (eqv_of_eq (congrArg (iterM · init) (funext fun a => ?_)))

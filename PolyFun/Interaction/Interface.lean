@@ -803,10 +803,7 @@ are equal.
 theorem ext {Δ₁ Δ₂ : PortBoundary} (f g : Hom Δ₁ Δ₂) (hIn : f.onIn = g.onIn)
     (hOut : f.onOut = g.onOut) : f = g := by
   cases f
-  cases g
-  cases hIn
-  cases hOut
-  rfl
+  simp_all
 
 /--
 Combine two boundary adaptations side by side.

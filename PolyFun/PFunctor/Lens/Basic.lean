@@ -109,9 +109,7 @@ theorem ext_mapObj {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (
   apply eq_of_heq
   have hraw : l₁.toFunB a ≍ l₂.toFunB a :=
     (Sigma.ext_iff.mp (h a)).2
-  have hcast : (hA a ▸ l₂.toFunB a) ≍ l₂.toFunB a :=
-    eqRec_heq_self _ _
-  exact hraw.trans hcast.symm
+  grind
 
 @[simp]
 theorem id_comp {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (f : Lens P Q) :

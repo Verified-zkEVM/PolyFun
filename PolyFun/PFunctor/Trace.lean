@@ -235,9 +235,7 @@ theorem getAt?_of_mul {P : PFunctor.{uA, uB}} [DecidableEq P.A]
       simp
   | of_mul event tail ih =>
       rw [getAt?_of_mul, occurrences_of_mul]
-      by_cases h : event.1 = target
-      · cases n <;> simp [h, ih]
-      · simp [h, ih]
+      grind
 
 /-- The generator following a prefix is found at the prefix's occurrence count. -/
 theorem getAt?_mul_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]

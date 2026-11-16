@@ -159,9 +159,7 @@ theorem rel_cast {Party : Type u}
     (rightPrefix : Process.Prefix right pR n) :
     Rel rel (hL ▸ leftPrefix) (hR ▸ rightPrefix) ↔
       Rel rel leftPrefix rightPrefix := by
-  cases hL
-  cases hR
-  rfl
+  grind
 
 end Prefix
 
@@ -485,9 +483,7 @@ theorem currentControllersUpTo_eq_of_relUpTo_byController {Party : Type u}
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.currentController? 0 = rightRun.currentController? 0 := by
         simpa [StepRel.byController, Process.Run.currentController?] using hHead
-      change leftRun.currentController? 0 :: leftRun.tail.currentControllersUpTo n =
-        rightRun.currentController? 0 :: rightRun.tail.currentControllersUpTo n
-      rw [hHead', ih leftRun.tail rightRun.tail hTail]
+      grind
 
 /-- Matching by controller-path equality preserves the extracted controller-path
 sequence of the first `n` run steps. -/
@@ -502,9 +498,7 @@ theorem controllerPathsUpTo_eq_of_relUpTo_byPath {Party : Type u}
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.controllerPath 0 = rightRun.controllerPath 0 := by
         simpa [StepRel.byPath, Process.Run.controllerPath] using hHead
-      change leftRun.controllerPath 0 :: leftRun.tail.controllerPathsUpTo n =
-        rightRun.controllerPath 0 :: rightRun.tail.controllerPathsUpTo n
-      rw [hHead', ih leftRun.tail rightRun.tail hTail]
+      grind
 
 /-- Matching by stable event equality preserves the extracted event sequence of
 the first `n` run steps. -/
@@ -520,9 +514,7 @@ theorem eventsUpTo_eq_of_relUpTo_byEvent {Party : Type u}
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.event eventL 0 = rightRun.event eventR 0 := by
         simp only [Process.Run.event]; exact hHead
-      change leftRun.event eventL 0 :: leftRun.tail.eventsUpTo eventL n =
-        rightRun.event eventR 0 :: rightRun.tail.eventsUpTo eventR n
-      rw [hHead', ih leftRun.tail rightRun.tail hTail]
+      grind
 
 /-- Matching by stable ticket equality preserves the extracted ticket sequence
 of the first `n` run steps. -/
@@ -538,9 +530,7 @@ theorem ticketsUpTo_eq_of_relUpTo_byTicket {Party : Type u}
       rcases hrel with ⟨hHead, hTail⟩
       have hHead' : leftRun.ticket ticketL 0 = rightRun.ticket ticketR 0 := by
         simp only [Process.Run.ticket]; exact hHead
-      change leftRun.ticket ticketL 0 :: leftRun.tail.ticketsUpTo ticketL n =
-        rightRun.ticket ticketR 0 :: rightRun.tail.ticketsUpTo ticketR n
-      rw [hHead', ih leftRun.tail rightRun.tail hTail]
+      grind
 
 /-- Matching by local observation equality preserves the packed observation
 sequence of the first `n` run steps for the chosen party. -/

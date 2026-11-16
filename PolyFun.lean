@@ -398,6 +398,7 @@ public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Path.MapMoves
 public import PolyFun.PFunctor.Free.Polynomial
 public import PolyFun.PFunctor.Free.Quotient
+public import PolyFun.PFunctor.Free.QuotientRel
 public import PolyFun.PFunctor.Free.Replicate
 public import PolyFun.PFunctor.Free.Restrict
 public import PolyFun.PFunctor.Free.Resumption
@@ -440,6 +441,7 @@ public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence
 public import PolyFun.PFunctor.Lens.Composite
+public import PolyFun.PFunctor.Lens.DirMonad
 public import PolyFun.PFunctor.Lens.Distributivity
 public import PolyFun.PFunctor.Lens.Duoidal
 public import PolyFun.PFunctor.Lens.Factorization

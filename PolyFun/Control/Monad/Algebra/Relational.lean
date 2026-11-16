@@ -229,9 +229,7 @@ theorem triple_ite (b : Bool) {pre : l} {x x' : m₁ α} {y y' : m₂ β}
     (h_t : b = true → Triple pre x y post)
     (h_f : b = false → Triple pre x' y' post) :
     Triple pre (if b then x else x') (if b then y else y') post := by
-  cases hb : b
-  · simpa [hb] using h_f hb
-  · simpa [hb] using h_t hb
+  grind
 
 /-- Decidable propositional if-then-else with the same scrutinee on both sides. -/
 theorem triple_ite_prop {p : Prop} [Decidable p]
@@ -239,9 +237,7 @@ theorem triple_ite_prop {p : Prop} [Decidable p]
     (h_t : p → Triple pre x y post)
     (h_f : ¬ p → Triple pre x' y' post) :
     Triple pre (if p then x else x') (if p then y else y') post := by
-  by_cases hp : p
-  · simpa [hp] using h_t hp
-  · simpa [hp] using h_f hp
+  grind
 
 /-- Dependent if-then-else with the same scrutinee on both sides. -/
 theorem triple_dite {p : Prop} [Decidable p] {pre : l}
@@ -251,9 +247,7 @@ theorem triple_dite {p : Prop} [Decidable p] {pre : l}
     (h_t : ∀ hp : p, Triple pre (x hp) (y hp) post)
     (h_f : ∀ hnp : ¬ p, Triple pre (x' hnp) (y' hnp) post) :
     Triple pre (if h : p then x h else x' h) (if h : p then y h else y' h) post := by
-  by_cases hp : p
-  · simpa [hp] using h_t hp
-  · simpa [hp] using h_f hp
+  grind
 
 /-- `Option.elim` with the same scrutinee on both sides. -/
 theorem triple_option_elim {α' : Type u} (oa : Option α') {pre : l}
@@ -299,9 +293,7 @@ noncomputable def stateTLeft (σ : Type u) :
     MAlgRelOrdered (StateT σ m₁) m₂ (σ → l) where
   rwp x y post := fun s =>
     MAlgRelOrdered.rwp (x.run s) y (fun xs b => post xs.1 b xs.2)
-  rwp_pure a b post := by
-    funext s
-    simp [StateT.run_pure]
+  rwp_pure a b post := by simp
   rwp_mono hpost := by
     intro s
     exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l) (fun xs b => hpost xs.1 b xs.2)
@@ -320,9 +312,7 @@ noncomputable def stateTRight (σ : Type u) :
     MAlgRelOrdered m₁ (StateT σ m₂) (σ → l) where
   rwp x y post := fun s =>
     MAlgRelOrdered.rwp x (y.run s) (fun a ys => post a ys.1 ys.2)
-  rwp_pure a b post := by
-    funext s
-    simp [StateT.run_pure]
+  rwp_pure a b post := by simp
   rwp_mono hpost := by
     intro s
     exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l) (fun a ys => hpost a ys.1 ys.2)
@@ -343,9 +333,7 @@ noncomputable def stateTBoth (σ₁ σ₂ : Type u) :
   rwp x y post := fun s₁ s₂ =>
     MAlgRelOrdered.rwp (x.run s₁) (y.run s₂)
       (fun p₁ p₂ => post p₁.1 p₂.1 p₁.2 p₂.2)
-  rwp_pure a b post := by
-    funext s₁ s₂
-    simp [StateT.run_pure]
+  rwp_pure a b post := by simp
   rwp_mono hpost := by
     intro s₁ s₂
     exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)
@@ -368,9 +356,7 @@ noncomputable def readerTLeft (ρ : Type u) :
     MAlgRelOrdered (ReaderT ρ m₁) m₂ (ρ → l) where
   rwp x y post := fun r =>
     MAlgRelOrdered.rwp (x.run r) y (fun a b => post a b r)
-  rwp_pure a b post := by
-    funext r
-    simp [ReaderT.run_pure]
+  rwp_pure a b post := by simp
   rwp_mono hpost := by
     intro r
     exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)
@@ -389,9 +375,7 @@ noncomputable def readerTRight (ρ : Type u) :
     MAlgRelOrdered m₁ (ReaderT ρ m₂) (ρ → l) where
   rwp x y post := fun r =>
     MAlgRelOrdered.rwp x (y.run r) (fun a b => post a b r)
-  rwp_pure a b post := by
-    funext r
-    simp [ReaderT.run_pure]
+  rwp_pure a b post := by simp
   rwp_mono hpost := by
     intro r
     exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)
@@ -410,9 +394,7 @@ noncomputable def readerTBoth (ρ₁ ρ₂ : Type u) :
     MAlgRelOrdered (ReaderT ρ₁ m₁) (ReaderT ρ₂ m₂) (ρ₁ → ρ₂ → l) where
   rwp x y post := fun r₁ r₂ =>
     MAlgRelOrdered.rwp (x.run r₁) (y.run r₂) (fun a b => post a b r₁ r₂)
-  rwp_pure a b post := by
-    funext r₁ r₂
-    simp [ReaderT.run_pure]
+  rwp_pure a b post := by simp
   rwp_mono hpost := by
     intro r₁ r₂
     exact MAlgRelOrdered.rwp_mono (m₁ := m₁) (m₂ := m₂) (l := l)

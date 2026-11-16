@@ -576,14 +576,10 @@ theorem openTheory_unit_eq_activation_equiv :
         (openTheoryIdWire Party m PortBoundary.empty)) := by
   refine OpenProcessActivationEquiv.of_step_match (fun _ _ => True)
     (fun _ => ⟨PUnit.unit, trivial⟩) (fun _ => ⟨PUnit.unit, trivial⟩) ?_ ?_ ?_ ?_
-  · intro _ _ _ _ _
-    exact .inl ⟨PUnit.unit, trivial, trivial⟩
-  · intro _ _ _ _ hvisible
-    exact absurd trivial hvisible
-  · intro _ _ _ _ _
-    exact .inl ⟨PUnit.unit, trivial, trivial⟩
-  · intro _ _ _ _ hvisible
-    exact absurd trivial hvisible
+  · exact fun _ _ _ _ _ => .inl ⟨PUnit.unit, trivial, trivial⟩
+  · exact fun _ _ _ _ hvisible => absurd trivial hvisible
+  · exact fun _ _ _ _ _ => .inl ⟨PUnit.unit, trivial, trivial⟩
+  · exact fun _ _ _ _ hvisible => absurd trivial hvisible
 
 end Model
 

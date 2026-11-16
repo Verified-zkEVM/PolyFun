@@ -159,8 +159,7 @@ instance : Comonad (CofreeC F) where
     simp only [dest_extend, extendF_extract, h]
   have hid_corec : (id : CofreeC F α → CofreeC F α) = M.corec (F := constProd F α) M.dest := by
     apply M.corec_unique (P := constProd F α) (g := M.dest) (f := id)
-    intro x
-    simp [PFunctor.id_map (P := constProd F α) (x := M.dest x)]
+    simp_all
   have h_eq_id : h = id := by rw [h_corec, hid_corec]
   simpa [h] using congrArg (fun k => k t) h_eq_id
 
@@ -186,9 +185,7 @@ instance : Comonad (CofreeC F) where
     rw [hdest]
     have hfun :
         (fun x => extend x g) ∘ (fun y => extend y f) ∘ (M.dest x).snd =
-          (fun x => extend (extend x f) g) ∘ (M.dest x).snd := by
-      funext i
-      rfl
+          (fun x => extend (extend x f) g) ∘ (M.dest x).snd := rfl
     cases hfun
     rfl
   have hl_eq_r : l = r := by rw [hl_corec, hr_corec]

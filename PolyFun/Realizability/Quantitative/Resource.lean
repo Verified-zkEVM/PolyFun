@@ -427,10 +427,7 @@ theorem isTotalRollBound (witness : PolynomialProgramWitness Q bd contract progr
     (hAllows : ∀ position answer, model.resourceModel.allows position answer)
     (value : input) :
     (program value).IsTotalRollBound (witness.runBound.bound model value).queries := by
-  have hAllowsEq : model.resourceModel.allows = fun _ _ ↦ True := by
-    funext position answer
-    apply propext
-    exact ⟨fun _ ↦ trivial, fun _ ↦ hAllows position answer⟩
+  have hAllowsEq : model.resourceModel.allows = fun _ _ ↦ True := by grind
   have hRuns : witness.realization.RunsWithin (witness.runBound.bound model) := by
     change witness.realization.RunsWithinUnder (fun _ _ ↦ True) _
     rw [← hAllowsEq]
@@ -528,8 +525,7 @@ theorem implements (certificate : PureResourceCertificate Q bd function) :
     certificate.realization.machine.Implements fun input ↦ FreeM.pure (function input) := by
   change (DynComputation.ofFn (p := p) function).Implements _
   intro input
-  rw [denote_ofFn]
-  simp
+  simp_all
 
 /-- Every finite prefix of the pure realization satisfies its derived polynomial bound. -/
 theorem runsWithin {resourceLabel : Type x}
