@@ -411,8 +411,7 @@ abbrev ofWordClass.hasProd {W : Type u} {Q : (W → W) → Prop} {hid : Q id}
   pair_mem := by
     rintro A B D a b d f g ⟨qf, hqf, hfEq⟩ ⟨qg, hqg, hgEq⟩
     refine ⟨fun w => P.pair (qf w) (qg w), P.pair_mem hqf hqg, fun x => ?_⟩
-    change P.pair (qf (a.1 x)) (qg (a.1 x)) = P.pair (b.1 (f x)) (d.1 (g x))
-    rw [hfEq, hgEq]
+    grind
 
 /-- Sums for a word class, from a tagging scheme. -/
 abbrev ofWordClass.hasSum {W : Type u} {Q : (W → W) → Prop} {hid : Q id}
