@@ -79,10 +79,7 @@ theorem displayedTotalStepObj_ext
     left = right := by
   rcases left with ⟨⟨leftBehavior, leftPostcondition⟩, leftContinuation⟩
   rcases right with ⟨⟨rightBehavior, rightPostcondition⟩, rightContinuation⟩
-  cases hBehavior
-  cases hPostcondition
-  cases hContinuation
-  rfl
+  grind
 
 /-- Sigma-erasing a displayed behavior is the ordinary behavior of its total
 state-and-witness presentation. -/

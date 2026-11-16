@@ -594,8 +594,7 @@ theorem bind_weakBisimRel {RR : α → β → Prop} {SS : γ → δ → Prop}
         have hvt : v' = pure s := by
           apply eq_of_shape'_eq
           exact hv'.trans (shape'_pure s).symm
-        subst hut
-        subst hvt
+        subst hut hvt
         obtain ⟨x', y', hx, hy, Mxy⟩ := (hfg r s hrs).dest
         refine ⟨x', y', ?_, ?_, Mxy.mono (fun _ _ h => Or.inr h)⟩
         · have huf : TauSteps (bind u f) (f r) := by

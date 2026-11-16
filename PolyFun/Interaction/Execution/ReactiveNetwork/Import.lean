@@ -46,7 +46,7 @@ open PFunctor ReactiveProcess MonadAttach
 
 variable {Node result S : Type} {boundary : PortBoundary}
   {network : Network Node boundary result} [DecidableEq Node]
-  {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+  {m : Type → Type} [Monad m] [MonadAttach m]
 
 /-- A superadditive function of a sum dominates the sum of its values: Mathlib's
 `Finset.le_sum_of_subadditive` read in the order dual. -/
@@ -91,6 +91,39 @@ variable {impl : (id : Node) → Handler (StateT S m) (network.effect id)}
     (state : State network S) : ℕ :=
   ∑ id, c.steps id (state.localState id)
 
+/-- An external input raises the network's import by exactly the credit it is funded with. -/
+theorem imported_input (c : ImportBounded impl discipline charge credit invariant T)
+    (packet : Interface.Packet boundary.In) (state : State network S) :
+    c.imported (input packet state) = c.imported state + credit.ingress packet := by
+  have hloc : (input packet state).localState = state.localState := by
+    simp only [input, dispatch]
+  simp only [imported, hloc, credit.held_input]
+  omega
+
+/-- Superadditivity composes the local runtime bounds. -/
+theorem stepsTotal_le (c : ImportBounded impl discipline charge credit invariant T)
+    (hsuper : ∀ a b, T a + T b ≤ T (a + b)) (hmono : Monotone T) (state : State network S) :
+    c.stepsTotal state ≤ T (c.imported state) := by
+  calc c.stepsTotal state ≤ ∑ id, T (c.net id (state.localState id)) :=
+        Finset.sum_le_sum fun id _ => c.bounded id _
+    _ ≤ T (∑ id, c.net id (state.localState id)) :=
+        sum_le_of_superadditive _ _ T hsuper
+    _ ≤ T (c.imported state) := hmono (Nat.le_add_right _ _)
+
+/-- Without superadditivity, every node's steps are still at most `T` of the whole import. -/
+theorem stepsTotal_le_card (c : ImportBounded impl discipline charge credit invariant T)
+    (hmono : Monotone T) (state : State network S) :
+    c.stepsTotal state ≤ Fintype.card Node * T (c.imported state) := by
+  calc c.stepsTotal state ≤ ∑ id, T (c.net id (state.localState id)) :=
+        Finset.sum_le_sum fun id _ => c.bounded id _
+    _ ≤ ∑ _id : Node, T (c.imported state) :=
+        Finset.sum_le_sum fun id _ => hmono <|
+          (Finset.single_le_sum (fun i _ => Nat.zero_le (c.net i (state.localState i)))
+            (Finset.mem_univ id)).trans (Nat.le_add_right _ _)
+    _ = Fintype.card Node * T (c.imported state) := by simp
+
+variable [LawfulMonad m] [ExactMonadAttach m]
+
 /-- An activation never raises the network's import. -/
 theorem imported_activate (c : ImportBounded impl discipline charge credit invariant T)
     {id : Node} {state next : State network S} (hinv : invariant state)
@@ -115,27 +148,6 @@ theorem stepsTotal_activate (c : ImportBounded impl discipline charge credit inv
     (fun i hi => localState_activate_of_ne impl discipline id i state next h hi)
   simp only [stepsTotal]
   omega
-
-omit [LawfulMonad m] [ExactMonadAttach m] in
-/-- An external input raises the network's import by exactly the credit it is funded with. -/
-theorem imported_input (c : ImportBounded impl discipline charge credit invariant T)
-    (packet : Interface.Packet boundary.In) (state : State network S) :
-    c.imported (input packet state) = c.imported state + credit.ingress packet := by
-  have hloc : (input packet state).localState = state.localState := by
-    simp only [input, dispatch]
-  simp only [imported, hloc, credit.held_input]
-  omega
-
-omit [LawfulMonad m] [ExactMonadAttach m] in
-/-- Superadditivity composes the local runtime bounds. -/
-theorem stepsTotal_le (c : ImportBounded impl discipline charge credit invariant T)
-    (hsuper : ∀ a b, T a + T b ≤ T (a + b)) (hmono : Monotone T) (state : State network S) :
-    c.stepsTotal state ≤ T (c.imported state) := by
-  calc c.stepsTotal state ≤ ∑ id, T (c.net id (state.localState id)) :=
-        Finset.sum_le_sum fun id _ => c.bounded id _
-    _ ≤ T (∑ id, c.net id (state.localState id)) :=
-        sum_le_of_superadditive _ _ T hsuper
-    _ ≤ T (c.imported state) := hmono (Nat.le_add_right _ _)
 
 /-- **The ledgers along an open execution.** The work of an open token execution plus the initial
 steps is at most the final steps, and the import grows by at most the funded ingress credit. -/
@@ -200,19 +212,6 @@ theorem work_runTokenOpen_le (c : ImportBounded impl .token charge credit invari
     _ ≤ T (c.imported next) := c.stepsTotal_le hsuper hmono next
     _ ≤ T (c.imported state + (events.map credit.funded).sum) := hmono himport
 
-omit [LawfulMonad m] [ExactMonadAttach m] in
-/-- Without superadditivity, every node's steps are still at most `T` of the whole import. -/
-theorem stepsTotal_le_card (c : ImportBounded impl discipline charge credit invariant T)
-    (hmono : Monotone T) (state : State network S) :
-    c.stepsTotal state ≤ Fintype.card Node * T (c.imported state) := by
-  calc c.stepsTotal state ≤ ∑ id, T (c.net id (state.localState id)) :=
-        Finset.sum_le_sum fun id _ => c.bounded id _
-    _ ≤ ∑ _id : Node, T (c.imported state) :=
-        Finset.sum_le_sum fun id _ => hmono <|
-          (Finset.single_le_sum (fun i _ => Nat.zero_le (c.net i (state.localState i)))
-            (Finset.mem_univ id)).trans (Nat.le_add_right _ _)
-    _ = Fintype.card Node * T (c.imported state) := by simp
-
 /-- **Monotone budgets.** With a monotone `T` that need not be superadditive, the work of any open
 token execution plus the ledgers' initial steps is at most `Fintype.card Node` times `T` of the
 initial import plus the funded ingress credit. This covers bounds with a positive constant term. -/
@@ -230,7 +229,6 @@ theorem work_runTokenOpen_le_card (c : ImportBounded impl .token charge credit i
     _ ≤ Fintype.card Node * T (c.imported next) := c.stepsTotal_le_card hmono next
     _ ≤ _ := Nat.mul_le_mul_left _ (hmono himport)
 
-omit [Fintype Node] in
 /-- **Linear budgets are conservation.** For `T = id`, the ledger is a conserving certificate
 with potential `net - steps`. -/
 @[expose] def toConserving (c : ImportBounded impl discipline charge credit invariant id) :

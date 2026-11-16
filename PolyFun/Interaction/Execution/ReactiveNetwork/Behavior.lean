@@ -40,7 +40,30 @@ variable {Node result S : Type} {boundary : PortBoundary}
 attribute [local implicit_reducible] signature Response Network.behavior State.behavior
   DynComputation.ofResumption
 
-variable {network : Network Node boundary result} [DecidableEq Node]
+variable {network : Network Node boundary result}
+
+/-- The behavior map preserves the chosen initialization. -/
+theorem initial_behavior (service : S) :
+    initial network.behavior service = (initial network service).behavior := rfl
+
+/-- Reading a terminal result from execution commutes with the behavior map. -/
+theorem outcome_behavior (id : Node) (state : State network S) :
+    outcome id state.behavior = outcome id state := by
+  cases h : (network.component id).view (state.localState id) <;>
+    simp [outcome, Network.behavior, State.behavior, h]
+
+private theorem view_behavior_query (id : Node) (state : State network S)
+    (action : Action (network.effect id) (network.ports id))
+    (next : Response action → (network.component id).State)
+    (h : (network.component id).view (state.localState id) = .inr ⟨action, next⟩) :
+    (network.behavior.component id).view (state.behavior.localState id) =
+      .inr ⟨action, fun answer => (network.component id).toDynSystem.behavior (next answer)⟩ := by
+  change (DynComputation.ofResumption _).view _ = _
+  simp only [DynComputation.view_ofResumption, State.behavior]
+  rw [DynComputation.dest_behavior_view, h]
+  rfl
+
+variable [DecidableEq Node]
 
 private theorem behavior_update (state : State network S) (id : Node)
     (next : (network.component id).State) :
@@ -65,18 +88,6 @@ theorem deliver_behavior (state : State network S) :
   | nil => simp [deliver, State.behavior, h]
   | cons packet rest =>
       cases packet <;> simp [deliver, State.behavior, Network.behavior, h, dispatch]
-
-omit [DecidableEq Node] in
-private theorem view_behavior_query (id : Node) (state : State network S)
-    (action : Action (network.effect id) (network.ports id))
-    (next : Response action → (network.component id).State)
-    (h : (network.component id).view (state.localState id) = .inr ⟨action, next⟩) :
-    (network.behavior.component id).view (state.behavior.localState id) =
-      .inr ⟨action, fun answer => (network.component id).toDynSystem.behavior (next answer)⟩ := by
-  change (DynComputation.ofResumption _).view _ = _
-  simp only [DynComputation.view_ofResumption, State.behavior]
-  rw [DynComputation.dest_behavior_view, h]
-  rfl
 
 variable {m : Type → Type} [Monad m] [LawfulMonad m]
 
@@ -109,18 +120,6 @@ theorem activate_behavior
       | yield =>
           simp only [activate, hb, h]
           simp [Network.behavior, State.behavior, behavior_update]
-
-omit [DecidableEq Node] in
-/-- The behavior map preserves the chosen initialization. -/
-theorem initial_behavior (service : S) :
-    initial network.behavior service = (initial network service).behavior := rfl
-
-omit [DecidableEq Node] in
-/-- Reading a terminal result from execution commutes with the behavior map. -/
-theorem outcome_behavior (id : Node) (state : State network S) :
-    outcome id state.behavior = outcome id state := by
-  cases h : (network.component id).view (state.localState id) <;>
-    simp [outcome, Network.behavior, State.behavior, h]
 
 /-- One FIFO operation is adequate at exact behavior. -/
 theorem fifoStep_behavior
