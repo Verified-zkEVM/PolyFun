@@ -7,20 +7,23 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Domain.ResultRel
+public import Mathlib.Data.List.OfFn
 meta import PolyFun.Control.Domain.ResultRel
 
 /-!
 # Results without an order
 
-`DomainResult.bindPlain`, `ifValue` and `Fin.mOfFn` in `DomainResult.monad` compute on results
-over natural numbers, by `rfl` and as compiled code. `Fin.mOfFn` collects from left to right, so the
-first result that is not a value is the outcome, whether it is bottom or an error, and compiled code
-collects 64 results quickly.
+`DomainResult.bindPlain`, `ifValue`, `applyPlain` and `Fin.mOfFn` in `DomainResult.monad` compute
+on results over natural numbers, by `rfl` and as compiled code. `Fin.mOfFn` collects from left to
+right, so the first result that is not a value is the outcome, whether it is bottom or an error, and
+compiled code collects 64 results quickly. Read back through the injective `List.ofFn`, a collected
+result fixes the collected function.
 
 `DomainResult.Approx` lets bottom on the right approximate every result, which `LiftRel` does not,
 and an error approximates only the same error. `approx_bind` carries approximation through a
-continuous `bind` on the left and `bindPlain` on the right, and `approx_bind₂` through a sum of two
-results demanded left first.
+continuous `bind` on the left and `bindPlain` on the right, `approx_bind₂` through a sum of two
+results demanded left first, and `approx_applyContinuous` through the application of a function
+that maps approximated arguments to approximated results.
 -/
 
 public section
@@ -45,6 +48,14 @@ example : DomainResult.bindPlain (.value 2 : Res ℕ) succ = .value 3 ∧
     DomainResult.ifValue (.error "e" : Res ℕ) succ = ⊥ :=
   ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+/-- `applyPlain` applies a returned function to a suspended argument, and passes bottom and errors
+through. -/
+example : DomainResult.applyPlain
+      (.value fun r => DomainResult.bindPlain r succ : Res (Res ℕ → Res ℕ)) (.value 2) = .value 3 ∧
+    DomainResult.applyPlain (⊥ : Res (Res ℕ → Res ℕ)) (.value 2) = ⊥ ∧
+    DomainResult.applyPlain (.error "e" : Res (Res ℕ → Res ℕ)) (.value 2) = .error "e" :=
+  ⟨rfl, rfl, rfl⟩
+
 /-- Element `i` of a family: a value at `0`, then the given results. -/
 def family (second third : Res ℕ) (i : Fin 3) : Res ℕ :=
   if i.val = 0 then .value 7 else if i.val = 1 then second else third
@@ -59,6 +70,11 @@ example : @Fin.mOfFn _ DomainResult.monad _ 3 (family (.error "second") ⊥) = .
 
 /-- Bottom before an error is the outcome. -/
 example : @Fin.mOfFn _ DomainResult.monad _ 3 (family ⊥ (.error "third")) = ⊥ := rfl
+
+/-- A result read back through `List.ofFn` as the list of `g` returns `g`. -/
+example {r : Res (Fin 2 → ℕ)} {g : Fin 2 → ℕ}
+    (h : DomainResult.map List.ofFn r = .value (List.ofFn g)) : r = .value g :=
+  (DomainResult.map_eq_value_apply_iff List.ofFn_injective).mp h
 
 /-- A collected value fixes every element. -/
 example {f : Fin 2 → Res ℕ} {g : Fin 2 → ℕ} (h : @Fin.mOfFn _ DomainResult.monad _ 2 f = .value g) :
@@ -130,6 +146,25 @@ noncomputable def addD : DiscreteOrder ℕ →𝒄 (DiscreteOrder ℕ →𝒄 Re
 
 /-- The native sum, as a continuation. -/
 def add (m n : ℕ) : Res ℕ := .value (m + n)
+
+/-- The semantic successor as a function value, which demands its argument. -/
+noncomputable def succFn : Res (Res (DiscreteOrder ℕ) →𝒄 Res (DiscreteOrder ℕ)) :=
+  .value (DomainResult.bindContinuous succD)
+
+/-- The native successor as a function value. -/
+def succFn' : Res (Res ℕ → Res ℕ) := .value fun r => DomainResult.bindPlain r succ
+
+/-- Applying the successor to an approximated argument gives an approximated result. -/
+example {d : Res (DiscreteOrder ℕ)} {r : Res ℕ} (h : DomainResult.Approx Agree d r) :
+    DomainResult.Approx Agree (DomainResult.applyContinuous succFn d)
+      (DomainResult.applyPlain succFn' r) :=
+  DomainResult.approx_applyContinuous
+    (T := fun F G => ∀ d r, DomainResult.Approx Agree d r → DomainResult.Approx Agree (F d) (G r))
+    (DomainResult.approx_value_value.mpr fun _ _ hdr => DomainResult.approx_bind hdr
+      fun _ _ hxn => by
+        subst hxn
+        exact DomainResult.approx_value_value.mpr rfl)
+    fun _ _ hF => hF d r h
 
 /-- Sums of two approximated numbers, demanded left first, are approximated. -/
 example {d e : Res (DiscreteOrder ℕ)} {r s : Res ℕ} (hd : DomainResult.Approx Agree d r)

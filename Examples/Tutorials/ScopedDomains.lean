@@ -30,6 +30,14 @@ numeric input whose evaluation returns `implementation n` at every input `n` has
 inputs corresponds to its implementation there (`pred_correspondsOn`). A decoder into results
 over native numbers composes with a certificate (`addTwoDecoded`).
 
+A second evaluator returns `DomainResult`s and unrolls each `fix` a given number of times,
+starting from bottom. `DomainResult.Approx` relates its results to the lazy meaning at every
+amount of fuel (`meaning_approximates`). Bottom approximates every computation, and the least
+fixed point is its own unfolding, so every unrolling approximates it. The proof is an induction on
+the number of unrollings and needs no admissibility. With enough fuel for each input, the
+evaluator certifies the decoded lazy meaning of the recursive `double` against `(2 * ·)`
+(`doubleCertified`, by `CertifiedMeaning.ofLiftFunDecode`).
+
 The lazy meaning is also adequate for a call-by-name evaluator. A closed numeric term means `n`
 exactly when it evaluates to the numeral `n`, and a closed term means bottom exactly when it
 does not evaluate (`meaning_eq_number_iff`, `meaning_eq_bot_iff`). Soundness follows from the
@@ -348,6 +356,172 @@ theorem decodeNat_addTwo (n : ℕ) :
   addTwoDecoded.correct n
 
 end Certified
+
+/-! ## A fuel-bounded evaluator
+
+The call-by-value evaluator gives up on `fix`. An evaluator whose results are `DomainResult`s can
+instead unroll each `fix` a bounded number of times, starting from bottom, which claims nothing.
+Its functions take results, so it passes arguments unevaluated, as the lazy meaning does.
+`DomainResult.Approx` relates its results to the lazy meaning: bottom approximates every
+computation, and a returned value approximates only a related value. The relation holds at every
+amount of fuel (`meaning_approximates`). With enough fuel for each input, the evaluator certifies
+the decoded meaning of a recursive program (`doubleCertified`). -/
+
+section Fuel
+
+open Control.Semantics
+open DomainResult (Approx)
+
+/-- Values of the fuel-bounded evaluator: numbers, and functions of results. -/
+@[expose, reducible] def Ty.fuelValue : Ty → Type
+  | .nat => ℕ
+  | .arrow a b => DomainResult Empty a.fuelValue → DomainResult Empty b.fuelValue
+
+/-- Results of the fuel-bounded evaluator. Bottom claims nothing. -/
+abbrev Ty.Fuel (a : Ty) : Type := DomainResult Empty a.fuelValue
+
+/-- Call-by-name evaluation that unrolls each `fix` `fuel` times, starting from bottom. -/
+@[expose] def fuelEvaluator (fuel : ℕ) : Interpretation signature Ty.Fuel
+  | _, .zero, _ => DomainResult.value (0 : ℕ)
+  | _, .succ, k => DomainResult.bindPlain (k 0 Env.empty) fun n : ℕ => DomainResult.value (n + 1)
+  | _, .ifz _, k => DomainResult.bindPlain (k 0 Env.empty) fun n : ℕ => match n with
+      | 0 => k 1 Env.empty
+      | m + 1 => k 2 (Env.single (V := Ty.Fuel) (DomainResult.value m))
+  | _, .lam _ _, k => DomainResult.value fun x => k 0 (Env.single x)
+  | _, .app _ _, k => DomainResult.applyPlain (k 0 Env.empty) (k 1 Env.empty)
+  | _, .fix _, k => (fun x => k 0 (Env.single x))^[fuel] ⊥
+
+/-- Lazy values approximated by values of the fuel-bounded evaluator: a number by itself, and a
+function by one that maps approximated arguments to approximated results. -/
+@[expose] def FuelRel : (a : Ty) → a.value → a.fuelValue → Prop
+  | .nat, n, m => DiscreteOrder.value n = m
+  | .arrow a b, g, h => ∀ e r, Approx (FuelRel a) e r →
+      Approx (FuelRel b) ((show a.Comp →𝒄 b.Comp from g) e) (h r)
+
+/-- A lazy computation approximated by a result of the fuel-bounded evaluator. -/
+abbrev Approximates (a : Ty) : a.Comp → a.Fuel → Prop := Approx (FuelRel a)
+
+/-- Each constructor preserves approximation, at every amount of fuel. Application uses
+`DomainResult.approx_applyContinuous`. At `fix`, every unrolling from bottom approximates the
+least fixed point. -/
+theorem algebra_relatedFuel (fuel : ℕ) :
+    DomainInterpretation.Related Approximates algebra (fuelEvaluator fuel) := by
+  intro a op k k' hk
+  cases op with
+  | zero => exact DomainResult.approx_value_value.mpr rfl
+  | succ =>
+      change Approx _ (DomainResult.bind _ (k 0 Env.empty))
+        (DomainResult.bindPlain (k' 0 Env.empty) _)
+      exact DomainResult.approx_bind (hk 0 _ _ (Env.liftRel_empty _)) fun _ _ h =>
+        DomainResult.approx_value_value.mpr (congrArg (· + 1) h)
+  | ifz a =>
+      have h0 := hk 0 _ _ (Env.liftRel_empty _)
+      change Approx _ (DomainResult.elim Empty.elim (branch (k 1 Env.empty, Env.bindOne (k 2)))
+        (k 0 Env.empty)) (DomainResult.bindPlain (k' 0 Env.empty) _)
+      generalize k 0 Env.empty = d, k' 0 Env.empty = r at h0 ⊢
+      induction r using DomainResult.inductionOn with
+      | bot => exact DomainResult.approx_bot _ _
+      | error e => exact e.elim
+      | value m =>
+        obtain ⟨⟨n⟩, rfl, rfl⟩ := DomainResult.approx_value.mp h0
+        rcases n with _ | m
+        · exact hk 1 Env.empty Env.empty (Env.liftRel_empty _)
+        · exact hk 2 _ _ ((Env.liftRel_empty _).cons (DomainResult.approx_value_value.mpr rfl))
+  | lam a b =>
+      exact DomainResult.approx_value_value.mpr fun e r her =>
+        hk 0 (Env.single e) (Env.single r) ((Env.liftRel_empty _).cons her)
+  | app a b =>
+      change Approx _ (DomainResult.applyContinuous (k 0 Env.empty) (k 1 Env.empty))
+        (DomainResult.applyPlain (k' 0 Env.empty) (k' 1 Env.empty))
+      exact DomainResult.approx_applyContinuous (hk 0 _ _ (Env.liftRel_empty _))
+        fun _ _ hfl => hfl _ _ (hk 1 _ _ (Env.liftRel_empty _))
+  | fix a =>
+      change Approximates a (ContinuousHom.fix (Env.bindOne (k 0)))
+        ((fun x => k' 0 (Env.single x))^[fuel] ⊥)
+      -- Induction on the unrollings: bottom approximates the least fixed point, and an unrolling
+      -- of an approximation approximates the unfolded fixed point, which is the fixed point.
+      refine Function.Iterate.rec (Approximates a (ContinuousHom.fix (Env.bindOne (k 0))))
+        (DomainResult.approx_bot _ _) (fun r hr => ?_) fuel
+      rw [← ContinuousHom.map_fix (Env.bindOne (k 0))]
+      exact hk 0 _ _ ((Env.liftRel_empty _).cons hr)
+
+/-- At every amount of fuel, the evaluator's result approximates the lazy meaning. -/
+theorem meaning_approximates {a : Ty} (fuel : ℕ) (t : Expr [] a) :
+    Approximates a (meaning t) (t.denote (fuelEvaluator fuel) Env.empty) :=
+  Term.denoteDomain_related (algebra_relatedFuel fuel) t (Env.liftRel_empty _)
+
+/-- Double a number by recursion: the function `f` with `f 0 = 0` and `f (m + 1) = f m + 2`. -/
+@[expose] def doubleFn : Expr [.nat] (.arrow .nat .nat) :=
+  .fix (.lam (.ifz (.var .zero) .zero
+    (.succ (.succ (.app (.var (.succ (.succ .zero))) (.var .zero))))))
+
+/-- Double the input. -/
+@[expose] def double : Expr [.nat] .nat := .app doubleFn (.var .zero)
+
+/-- With no fuel, the evaluator claims nothing about `double`. -/
+theorem double_fuel_zero (n : ℕ) :
+    double.denote (fuelEvaluator 0) (Env.single (DomainResult.value n)) = ⊥ := rfl
+
+/-- Iterating from bottom a map that unrolls `doubleFn` once gives a function that doubles every
+number below the number of iterations. -/
+theorem applyPlain_iterate_double {B : Ty.Fuel (.arrow .nat .nat) → Ty.Fuel (.arrow .nat .nat)}
+    (hzero : ∀ h, DomainResult.applyPlain (B h) (DomainResult.value 0) = DomainResult.value 0)
+    (hsucc : ∀ h m, DomainResult.applyPlain (B h) (DomainResult.value (m + 1)) =
+      DomainResult.bindPlain (DomainResult.bindPlain (DomainResult.applyPlain h
+        (DomainResult.value m)) fun n => DomainResult.value (n + 1)) fun n =>
+          DomainResult.value (n + 1)) :
+    ∀ j m, m < j →
+      DomainResult.applyPlain (B^[j] ⊥) (DomainResult.value m) = DomainResult.value (2 * m)
+  | j + 1, 0, _ => by rw [Function.iterate_succ_apply', hzero]
+  | j + 1, m + 1, hm => by
+    rw [Function.iterate_succ_apply', hsucc,
+      applyPlain_iterate_double hzero hsucc j m (Nat.lt_of_succ_lt_succ hm)]
+    rfl
+
+/-- With one more unrolling than the input, the evaluator returns twice the input. -/
+theorem double_total (n : ℕ) :
+    double.denote (fuelEvaluator (n + 1)) (Env.single (DomainResult.value n)) =
+      DomainResult.value (2 * n) := by
+  refine applyPlain_iterate_double ?_ ?_ (n + 1) n (Nat.lt_succ_self n)
+  · intro h
+    rfl
+  · intro h m
+    rfl
+
+/-- A lazy number approximated by a returned number decodes to it. -/
+theorem decodeNat_of_approximates {d : Ty.nat.Comp} {y : ℕ}
+    (h : Approximates .nat d (DomainResult.value y)) : decodeNat d = DomainResult.value y := by
+  obtain ⟨⟨x⟩, rfl, rfl⟩ := DomainResult.approx_value.mp h
+  rfl
+
+/-- The decoded lazy meaning of `double`, certified against `(2 * ·)` by the fuel-bounded
+evaluator. Each input's native representative carries the fuel for that input. The output
+premise compares decoded results only (`decodeNat_of_approximates`), so it needs no encoding of
+outputs in the lazy carrier. -/
+@[expose] noncomputable def doubleCertified :
+    CertifiedMeaning natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) :=
+  CertifiedMeaning.ofLiftFunDecode (fun d => double.denoteDomain algebra (Env.single d)) decodeNat
+    (2 * ·) (Rin := fun d w => Approximates .nat d w.2) (Rout := Approximates .nat)
+    (eval := fun w : ℕ × Ty.nat.Fuel => double.denote (fuelEvaluator w.1) (Env.single w.2))
+    (nativeIn := fun n => (n + 1, DomainResult.value n)) (nativeOut := DomainResult.value)
+    (fun _ w hd => Term.denoteDomain_related (algebra_relatedFuel w.1) double
+      ((Env.liftRel_empty _).cons hd))
+    (fun _ => DomainResult.approx_value_value.mpr rfl) (fun _ _ => decodeNat_of_approximates)
+    double_total
+
+/-- At every input, the decoded lazy meaning of `double` returns `2 * n`. -/
+theorem decodeNat_double (n : ℕ) :
+    decodeNat (double.denoteDomain algebra (Env.single (number n))) =
+      DomainResult.value (2 * n) :=
+  doubleCertified.correct n
+
+/-- The lazy meaning itself is the number `2 * n`: a discrete result that decodes to `2 * n` lies
+above that number, and only the number itself lies above it. -/
+theorem double_meaning (n : ℕ) :
+    double.denoteDomain algebra (Env.single (number n)) = number (2 * n) :=
+  DomainResult.value_le_iff_eq.mp (DomainResult.map_value_eq_value_iff.mp (decodeNat_double n))
+
+end Fuel
 
 /-! ## Call-by-name evaluation and adequacy
 

@@ -267,13 +267,20 @@ induction.
 A native evaluator computes with results whose values have no order. `DomainResult.map`,
 `bindPlain` and `ifValue` sequence such results, and `Fin.mOfFn` in their monad
 (`DomainResult.monad`) collects a `Fin`-indexed family from left to right; `bindPlain` passes an
-error through, and `ifValue` gives bottom instead. On ordered values, the continuous `bind` is
-`bindPlain` (`bind_eq_bindPlain`). An evaluator that may give up relates its result `r` to a
-meaning `d` by
+error through, and `ifValue` gives bottom instead. `applyPlain` applies a returned function, whose
+argument may be a suspended result. On ordered values, the continuous `bind` is `bindPlain`
+(`bind_eq_bindPlain`). Through an injective function, `map` is injective (`map_injective`), so a
+result that reads back as `f x` returned `x` (`map_eq_value_apply_iff`). An evaluator that may
+give up relates its result `r` to a meaning `d` by
 [`DomainResult.Approx P d r`](../../PolyFun/Control/Domain/ResultRel.lean): bottom approximates
 every result, an error only the same error, and a value a value related by `P`. Away from bottom it
-is `LiftRel` with equal errors (`approx_iff`), and `approx_bind` and `approx_bind₂` carry it through
-the continuous `bind` and `bind₂`.
+is `LiftRel` with equal errors (`approx_iff`). `approx_bind` and `approx_bind₂` carry it through
+the continuous `bind` and `bind₂`, and `approx_applyContinuous` through `applyContinuous` and
+`applyPlain`. An evaluator that unrolls a least fixed point `k` times from bottom approximates it
+without an admissibility proof: bottom approximates every meaning, and the least fixed point is
+its own unfolding, so induction on `k` suffices. The
+[scoped lazy-language tutorial](../../Examples/Tutorials/ScopedDomains.lean) relates such a
+fuel-bounded evaluator to its lazy meaning.
 
 A decoder `dec` into results over native values *decodes above* an encoder `enc`
 ([`DomainResult.DecodesAbove`](../../PolyFun/Control/Domain/Result.lean)) when the computations

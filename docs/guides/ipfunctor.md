@@ -567,8 +567,13 @@ returns the representative of the implementation's result (`total`). When the ev
 it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn` there.
 `Term.liftFun_denoteDomain` states the fundamental lemma as `Relator.LiftFun`, the premise of
 `CertifiedMeaning.ofLiftFun`, so a language with function sorts can certify a closed function
-term through its relation at function sorts. The lazy-language tutorial certifies a program
-against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`.
+term through its relation at function sorts. When the meaning is read back by a decoder,
+`CertifiedMeaning.ofLiftFunDecode` certifies the decoded meaning, and a native representative of an
+output need only fix what each related result decodes to. The lazy-language tutorial certifies a
+program against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`. Its
+fuel-bounded evaluator unrolls `fix` from bottom and is related to the lazy meaning at every
+amount of fuel. It certifies the decoded meaning of a recursive program with `ofLiftFunDecode`,
+and each input's native representative carries the fuel for that input.
 
 [`Scoped.Adequacy`](../../PolyFun/IPFunctor/Scoped/Adequacy.lean) relates a continuous meaning to
 closed syntax, the generic part of an adequacy proof. A relation
