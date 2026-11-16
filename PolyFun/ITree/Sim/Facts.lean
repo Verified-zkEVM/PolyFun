@@ -803,20 +803,14 @@ theorem mapSpec_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
       simp only [mapSpecStep, h]
 
 /-- Computing one `shape'` step of `mapSpec`, in terms of `mapSpecStep`. -/
-theorem dest_mapSpec {E : PFunctor.{uEA, uEB}}
-    {F : PFunctor.{uFA, uFB}} {α : Type uα}
-    (φ : PFunctor.Lens E F) (u : ITree E α) :
-    ITree.shape' (mapSpec φ u) =
-      .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) := by
-  rw [mapSpec, shape'_corec_apply]
-
-/-- Same as `dest_mapSpec` but stated with `shape'` on the LHS. -/
 theorem shape'_mapSpec {E : PFunctor.{uEA, uEB}}
     {F : PFunctor.{uFA, uFB}} {α : Type uα}
     (φ : PFunctor.Lens E F) (u : ITree E α) :
     shape' (mapSpec φ u) =
-      .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) :=
-  dest_mapSpec φ u
+      .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) := by
+  rw [mapSpec, shape'_corec_apply]
+
+@[deprecated (since := "2026-11-15")] alias dest_mapSpec := shape'_mapSpec
 
 open scoped PFunctor in
 theorem mapSpec_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
@@ -995,7 +989,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
               fun _ => ITree.corec
                 (iterStep (fun j => mapSpec φ (body j))) (mapSpec φ (body j)),
               ?_, hR, fun _ => Or.inr ⟨body j, rfl, rfl⟩⟩
-            simp only [dest_mapSpec, mapSpecStep]
+            simp only [shape'_mapSpec, mapSpecStep]
             rw [hL]
             rfl
         | inr r =>
@@ -1014,7 +1008,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
                 (fun j => mapSpec φ (body j)) (pure (.inr r)) r PEmpty.elim
                 (shape'_pure _)
             refine ⟨.pure r, PEmpty.elim, PEmpty.elim, ?_, hR, fun b => b.elim⟩
-            simp only [dest_mapSpec, mapSpecStep]
+            simp only [shape'_mapSpec, mapSpecStep]
             rw [hL]
             congr 1
             funext z
@@ -1042,7 +1036,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
             (iterStep (fun j => mapSpec φ (body j)))
             (mapSpec φ (c PUnit.unit)),
           ?_, hR, fun _ => Or.inr ⟨c PUnit.unit, rfl, rfl⟩⟩
-        simp only [dest_mapSpec, mapSpecStep]
+        simp only [shape'_mapSpec, mapSpecStep]
         rw [hL]
         rfl
     | query a =>
@@ -1073,7 +1067,7 @@ theorem mapSpec_iter {E : PFunctor.{uEA, uEB}}
             (iterStep (fun j => mapSpec φ (body j)))
             (mapSpec φ (c (φ.toFunB a b))),
           ?_, hR, fun b => Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩⟩
-        simp only [dest_mapSpec, mapSpecStep]
+        simp only [shape'_mapSpec, mapSpecStep]
         rw [hL]
         rfl
 
