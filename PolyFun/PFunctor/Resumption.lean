@@ -438,8 +438,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
     (fun left right => ∃ source,
       left = mapLens (Lens.id p) source ∧ right = source)
   · rintro left right ⟨source, hleft, hright⟩
-    subst left
-    subst right
+    subst left right
     rcases h : dest source with value | ⟨position, next⟩
     · exact .pure value (by rw [dest_mapLens, h]) h
     · exact .query position
@@ -456,9 +455,7 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
     (fun left right => ∃ source,
       left = mapLens lens₂ (mapLens lens₁ source) ∧
       right = mapLens (lens₂ ∘ₗ lens₁) source)
-  · rintro left right ⟨source, hleft, hright⟩
-    subst left
-    subst right
+  · rintro left right ⟨source, rfl, rfl⟩
     rcases h : dest source with value | ⟨position, next⟩
     · exact .pure value (by simp [h]) (by simp [h])
     · exact .query (lens₂.toFunA (lens₁.toFunA position))
@@ -489,8 +486,7 @@ theorem mapLens_bind (lens : Lens p q) (computation : Resumption p α)
       rcases h : dest right with value | ⟨position, next⟩
       · exact .pure value h h
       · exact .query position next next h h (fun _ => Or.inl rfl)
-    · subst left
-      subst right
+    · subst left right
       rcases h : dest source with value | ⟨position, next⟩
       · rw [show source = pure value by apply eq_of_dest_eq; simpa using h]
         simp only [pure_bind, mapLens_pure]

@@ -471,8 +471,7 @@ handler states, readout and indices involved. -/
 
 section Laws
 
-variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost] [SC : Q.HasSumCost]
-  [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
+variable [CC : Q.HasCompositionCost] [PC : Q.HasProdCost]
 
 /-- Structural primitives charged by `wrapStatePull` beyond the adversary's readout and `onPull`:
 two `pairRight`s, the glue into `onPull`, the outer pairing, and two projections with their
@@ -494,7 +493,6 @@ theorem wrapStateStepCount_eq : wrapStateStepCount = 27 := rfl
 
 theorem wrapStateUpdateCount_eq : wrapStateUpdateCount = 42 := rfl
 
-omit [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost] in
 /-- Product initialization costs `R`'s plus `pairRightCount` structural primitives. -/
 theorem cost_initCode_wrapState_le (R : QuantitativeRealization Q bd)
     (hL : L.QuantitativelyAdmissible Q bd stateRep posRep idxRep) (input : A) (state : σ) :
@@ -503,6 +501,8 @@ theorem cost_initCode_wrapState_le (R : QuantitativeRealization Q bd)
           (Q.size (P.prod bd.input stateRep) (input, state)) +
         CC.overhead (Q.size bd.input input) :=
   QuantitativeStepClass.cost_pairRight_le Q R.initCode input state
+
+variable [SC : Q.HasSumCost] [OC : Q.HasOptionCost] [DC : Q.IsDistributiveCost]
 
 /-- A product readout costs `R`'s readout, `onPos` when `R` exposes a query, and at most
 `carryReadoutWithCount` structural primitives. -/

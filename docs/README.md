@@ -34,6 +34,7 @@ The Lean source is authoritative for definitions and theorem assumptions.
 - [Open systems](guides/open-systems.md): composition laws, contexts, observations, and instantiation obligations.
 - [Program logic](guides/program-logic.md): support, ordered algebras, and weakest preconditions.
 - [Interaction cost](guides/cost.md): charges, budgets and worst-case costs of interface use, across models and through handlers.
+- [Probability](guides/probability.md): measure interpretations of PolyFun programs, where they live, and the Mathlib lemmas staged for them.
 - [Realizability](guides/realizability.md): represented boundaries, admissible machines, and resource certificates.
 - [Bisimulation](guides/bisimulation.md): strong, delay, and weak behavioral relations.
 - [PolyFun and VCVio](guides/polyfun-and-vcvio.md): generic constructions and cryptographic interpretations.

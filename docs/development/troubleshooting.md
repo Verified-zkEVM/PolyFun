@@ -20,20 +20,27 @@ transparently; `rfl` against the polynomial substrate also works. **Do
 not break either invariant when refactoring** the substrate or these
 wrappers.
 
-### No cryptographic content
+### No cryptographic security content
 
-Do not introduce dependencies on probability monads (`PMF`,
-`evalDist`, `ProbComp`), evaluation distributions, oracle simulation
-typeclasses, security predicates, or concrete cryptographic algebra
-(specific groups, fields, hash functions). Parameterize over an abstract
-monad `m : Type v → Type w` with `[Pure m]` / `[Monad m]` / `[LawfulMonad m]`
-instead. Cryptographic content belongs in
-[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio)
-downstream.
+Do not introduce security predicates, security experiments, distinguishing
+advantage, adversary classes, negligibility, hardness assumptions, named
+reductions, or concrete cryptographic algebra (specific groups, fields, hash
+functions). These belong in
+[`Verified-zkEVM/VCVio`](https://github.com/Verified-zkEVM/VCVio) downstream.
+Parameterize generic constructions over an abstract monad
+`m : Type v → Type w` with `[Pure m]` / `[Monad m]` / `[LawfulMonad m]`, or over
+an observation.
 
-When in doubt, ask: *can I state this against an arbitrary monad with no
-probability and no security predicate?* If yes, it belongs here. If no,
-push it downstream.
+Measure interpretations go in `Measure` companions beside the construction they
+interpret (see [probability](../guides/probability.md)). Use Mathlib's `Measure` and
+`Kernel` there, and PolyFun's `evalDist` for the output measure of a monadic
+computation, not `PMF` or VCVio's `ProbComp`. Only a PMF bridge `<M>/PMF.lean`,
+which relates the construction of the module `<M>.lean` beside it to `PMF`,
+imports Mathlib's `PMF` modules.
+
+When in doubt, ask: *can I state this with no security notion?* If yes, it
+belongs in PolyFun, in a `Measure` companion when it needs measures. If no, push
+it downstream.
 
 ### Files should stay under 1500 lines
 

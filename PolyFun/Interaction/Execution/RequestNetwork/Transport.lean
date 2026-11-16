@@ -49,9 +49,8 @@ variable {Client Client' α S : Type} {p : PFunctor.{0, 0}}
   nextTicket := state.nextTicket
   transcript := state.transcript.map (Interface.RoutedPacket.mapSender e)
 
-variable [DecidableEq Client] [DecidableEq Client'] [DecidableEq p.A]
+variable [DecidableEq Client] [DecidableEq Client']
 
-omit [DecidableEq p.A] in
 private theorem update_rename (e : Client ≃ Client') (clients : Client → ClientState p α)
     (id : Client) (next : ClientState p α) :
     Function.update (fun id => clients (e.symm id)) (e id) next =
@@ -62,7 +61,6 @@ private theorem update_rename (e : Client ≃ Client') (clients : Client → Cli
   · have h' : e.symm id' ≠ id := fun heq => h (by simpa using congrArg e heq)
     simp [Function.update_of_ne h, Function.update_of_ne h']
 
-omit [DecidableEq p.A] in
 /-- Emission commutes with relabeling, including the client's waiting continuation. -/
 theorem emit_rename (e : Client ≃ Client') (id : Client) (state : State Client p α S) :
     emit (e id) (state.rename e) = (emit id state).rename e := by
@@ -80,6 +78,8 @@ theorem emit_rename (e : Client ≃ Client') (id : Client) (state : State Client
           rw [emit_ready_lift_bind (a := a) (next := next) (hrename.trans h),
             emit_ready_lift_bind (a := a) (next := next) h]
           simp [State.rename, Envelope.rename, update_rename]
+
+variable [DecidableEq p.A]
 
 /-- Accepting a typed response commutes with relabeling its destination client. -/
 theorem accept_rename (e : Client ≃ Client') (ticket : ℕ)

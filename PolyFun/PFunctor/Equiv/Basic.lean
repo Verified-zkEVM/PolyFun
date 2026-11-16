@@ -572,13 +572,7 @@ def compAssoc : (P ◃ Q) ◃ R ≃ₚ P ◃ (Q ◃ R) where
       rintro ⟨pa, g⟩
       simp only [comp]
       apply Sigma.ext rfl
-      apply heq_of_eq
-      funext pb
-      rcases g pb with ⟨qa, qf⟩
-      apply Sigma.ext rfl
-      apply heq_of_eq
-      funext qb
-      rfl
+      grind
   }
   equivB := fun ⟨⟨pa, qf⟩, rf⟩ =>
     _root_.Equiv.sigmaAssoc (fun pb qb => R.B (rf ⟨pb, qb⟩))

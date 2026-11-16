@@ -17,7 +17,8 @@ positions to `g`; `Handler.sumLift` first lifts each handler into a shared targe
 Interpreting a free program through a sum handler routes each request by its summand: a
 program over `P`, relabelled into `P + Q` along `Lens.inl`, is interpreted by the left handler
 alone (`liftM_sum_mapLens_inl`), and symmetrically on the right. The general fact behind these
-laws is `FreeM.liftM_mapLens` for lawful monads. Coproduct injections retain the response
+laws is `FreeM.liftM_mapLens` for lawful monads, with `sum_comapLens_inl`: pulling a sum handler
+back along an injection gives that component. Coproduct injections retain the response
 unchanged, so their specialized laws need only `Monad`. Changing the target monad acts on
 each component handler (`mapTarget_sum`).
 
@@ -49,6 +50,18 @@ def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max u
 /-- The sum handler answers a right position with the right handler. -/
 @[simp] theorem sum_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
     sum f g (.inr b) = g b := rfl
+
+/-- Pulling a sum handler back along the left injection gives the left handler. -/
+@[simp] theorem sum_comapLens_inl [Functor m] [LawfulFunctor m] (f : Handler m P)
+    (g : Handler m Q) : (sum f g).comapLens Lens.inl = f := by
+  funext a
+  exact id_map (f a)
+
+/-- Pulling a sum handler back along the right injection gives the right handler. -/
+@[simp] theorem sum_comapLens_inr [Functor m] [LawfulFunctor m] (f : Handler m P)
+    (g : Handler m Q) : (sum f g).comapLens Lens.inr = g := by
+  funext b
+  exact id_map (g b)
 
 /-- Changing the target monad acts independently on both component handlers. -/
 theorem mapTarget_sum {n : Type u → Type w} (transform : ∀ {α : Type u}, m α → n α)
@@ -83,6 +96,22 @@ the shared target monad. -/
 the shared target monad. -/
 @[simp] theorem sumLift_inr (f : Handler m P) (g : Handler n Q) (b : Q.A) :
     sumLift (r := r) f g (.inr b) = (monadLift (g b) : r _) := rfl
+
+/-- Pulling the lifted sum handler back along the left injection gives the left handler, lifted
+into the shared target monad. -/
+@[simp] theorem sumLift_comapLens_inl [Functor r] [LawfulFunctor r] (f : Handler m P)
+    (g : Handler n Q) :
+    (sumLift (r := r) f g).comapLens Lens.inl =
+      mapTarget (fun {α} (x : m α) => (monadLift x : r α)) f :=
+  sum_comapLens_inl _ _
+
+/-- Pulling the lifted sum handler back along the right injection gives the right handler,
+lifted into the shared target monad. -/
+@[simp] theorem sumLift_comapLens_inr [Functor r] [LawfulFunctor r] (f : Handler m P)
+    (g : Handler n Q) :
+    (sumLift (r := r) f g).comapLens Lens.inr =
+      mapTarget (fun {α} (x : n α) => (monadLift x : r α)) g :=
+  sum_comapLens_inr _ _
 
 end SumLift
 

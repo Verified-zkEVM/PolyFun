@@ -12,7 +12,9 @@ of the same behavior.
 This foundation supports effect handlers, programming-language semantics,
 stateful systems, and compositional protocol models. It grew out of
 [VCVio](https://github.com/Verified-zkEVM/VCVio), which uses it for cryptography.
-You can use PolyFun without probabilistic or cryptographic semantics.
+You can use PolyFun without cryptographic semantics. Its measure interpretations, Giry
+interpretations with Mathlib's `Measure` and `Kernel`, live beside the constructions they
+interpret.
 
 [Getting started](docs/getting-started.md) · [Documentation](docs/README.md) ·
 [API reference](https://verified-zkevm.github.io/PolyFun/docs/) ·
@@ -42,9 +44,9 @@ below and learn the categorical vocabulary as needed.
 | [Mathlib](https://github.com/leanprover-community/mathlib4) | Polynomial functors, W-types and M-types, mathematical structures, and supporting theory |
 | [CSLib](https://github.com/leanprover/cslib) | The upstream free monads and shared computer-science infrastructure |
 | **PolyFun** | Handlers, lenses, paths, computation-model connections, interaction frameworks, generic program logic, and realizability |
-| `ToCslib` | Local additions staged for upstream: free-monad and loop laws, an order bridge, bitvector and polynomial lemmas |
+| `ToCslib` | Local additions staged for upstream: free-monad and loop laws, an order bridge, bitvector, polynomial, measure and kernel lemmas |
 | `ComplexityBackends` | Optional concrete complexity backends, one subdirectory per machine model, instantiating PolyFun's quantitative realizability |
-| [VCVio](https://github.com/Verified-zkEVM/VCVio) | Probability semantics, cryptographic experiments, security definitions, reductions, and cryptographic applications |
+| [VCVio](https://github.com/Verified-zkEVM/VCVio) | Oracle computations and their probability conventions, cryptographic experiments, security definitions, reductions, and cryptographic applications |
 
 ```mermaid
 flowchart LR
@@ -61,9 +63,9 @@ flowchart LR
 For example, VCVio's `OracleComp` uses the upstream `PFunctor.FreeM` datatype,
 and its `QueryImpl` is definitionally a PolyFun handler. VCVio adds the
 interpretations and definitions needed to reason about cryptographic security.
-Generic program logic and resource accounting already live in PolyFun;
-probability, cryptographic adversary classes, and security guarantees require
-the additional downstream semantics. See [the detailed ownership guide](docs/guides/polyfun-and-vcvio.md).
+Generic program logic and resource accounting live in PolyFun, and generic
+measure interpretations live in PolyFun's `Measure` companions. Cryptographic adversary
+classes and security guarantees require the additional downstream semantics. See [the detailed ownership guide](docs/guides/polyfun-and-vcvio.md).
 
 ## Get started
 
