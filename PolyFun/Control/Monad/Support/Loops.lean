@@ -5,6 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
+public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Monad.Support.WP
 
 /-!
@@ -13,12 +14,12 @@ public import PolyFun.Control.Monad.Support.WP
 `for` loops elaborate to `forIn` / `forIn'` over the iterated container, and `forM` / `foldlM`
 are their common special cases. Under the demonic interpretation `wp x post = AllOutputs post x`
 (`MonadAttach.toWPMonadDemonic`), core's list-loop specifications `Spec.forIn'_list`,
-`Spec.forIn_list`, and `Spec.foldlM_list` *are* invariant rules for the "always" judgment, and
-the angelic interpretation gives their "sometimes" twins; this file states them in that form so
-that support reasoning about loops needs no `vcgen` and no `Triple`. Containers whose loop is
-the loop over the list `ForIn.toList` computes (`Std.Internal.PureForIn`: lists, arrays,
-ranges, slices, iterators, and `Option` / `Vector` via `ToCslib.Control.ForIn`) reduce to the
-list rules. `forM` has no core specification and is proved by induction.
+`Spec.forIn_list`, and `Spec.foldlM_list`, together with the `forM` rule `Spec.forM_list` of
+`PolyFun.Control.Do.Spec`, *are* invariant rules for the "always" judgment, and the angelic
+interpretation gives their "sometimes" twins. This file states them in that form, so that support
+reasoning about loops needs no `vcgen` and no `Triple`. Containers whose loop is the loop over the
+list `ForIn.toList` computes (`Std.Internal.PureForIn`: lists, arrays, ranges, slices, iterators,
+and `Option` / `Vector` via `ToCslib.Control.ForIn`) reduce to the list rules.
 
 Invariants follow core's shape: a predicate on the elements consumed so far, the elements
 remaining, and the accumulator. The rules are directed reasoning steps, not equations, and are
@@ -90,18 +91,10 @@ theorem allOutputs_forM_list_of_inv {xs : List ι} {f : ι → m PUnit}
     (step : ∀ pref cur suff, xs = pref ++ cur :: suff → inv pref (cur :: suff) →
       AllOutputs (fun _ => inv (pref ++ [cur]) suff) (f cur))
     (hinit : inv [] xs) : AllOutputs (fun _ => inv xs []) (xs.forM f) := by
-  suffices h : ∀ pref suff, xs = pref ++ suff → inv pref suff →
-      AllOutputs (fun _ => inv xs []) (suff.forM f) from h [] xs rfl hinit
-  intro pref suff
-  induction suff generalizing pref with
-  | nil =>
-    intro hxs hinv _ _
-    simpa [hxs] using hinv
-  | cons x suff ih =>
-    intro hxs hinv u hu
-    rw [List.forM_eq_forM, List.forM_cons] at hu
-    obtain ⟨v, hv, hu⟩ := LawfulMonadAttach.canReturn_bind_imp' hu
-    exact ih (pref ++ [x]) (by simp [hxs]) (step pref x suff hxs hinv v hv) u hu
+  let inst := toWPMonadDemonic (m := m)
+  rw [List.forM_eq_forM]
+  exact (Spec.forM_list (m := m) (fun pref suff _ => inv pref suff) (epost := Lean.Order.bot)
+    fun pref cur suff h => ⟨fun hpre => step pref cur suff h hpre⟩).le_wp hinit
 
 /-! ## Containers iterating over a list -/
 
