@@ -411,9 +411,7 @@ theorem laxTensorHom_assoc
       calc
         (cogenerator P ⊗ₗ cogenerator Q) ⊗ₗ cogenerator R =
             (cogenerator (P ⊗ Q) ∘ₗ laxTensor P Q) ⊗ₗ
-              (cogenerator R ∘ₗ Lens.id (CofreeP R)) := by
-          rw [cogenerator_comp_laxTensor]
-          simp only [Lens.comp_id]
+              (cogenerator R ∘ₗ Lens.id (CofreeP R)) := by simp
         _ = (cogenerator (P ⊗ Q) ⊗ₗ cogenerator R) ∘ₗ
               (laxTensor P Q ⊗ₗ Lens.id (CofreeP R)) :=
           Lens.tensorMap_comp _ _ _ _

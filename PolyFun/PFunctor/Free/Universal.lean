@@ -140,10 +140,8 @@ theorem foldLens_toFunB (s : (FreeP P).A)
 
 /-- The fold agrees with the target substitution unit on the one-leaf tree. -/
 theorem foldLens_comp_one :
-    foldLens M l ∘ₗ one (P := P) = M.one := by
-  apply Lens.ext _ _ (fun _ => rfl)
-  intro _
-  exact Subsingleton.elim _ _
+    foldLens M l ∘ₗ one (P := P) = M.one :=
+  Lens.ext _ _ (fun _ => rfl) fun _ => Subsingleton.elim _ _
 
 @[deprecated (since := "2026-10-19")] alias foldLens_comp_unit := foldLens_comp_one
 
