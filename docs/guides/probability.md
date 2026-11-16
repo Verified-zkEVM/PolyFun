@@ -44,10 +44,11 @@ The measure interpretation of a construction lives in a `Measure` companion besi
 measure home of its area. An area is a directory that holds one kind of construction, together with
 its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
 interfaces), `PFunctor/Free/` (free programs), `PFunctor/Wiring/` (polynomial wiring),
-`Control/Monad/` (monads), `Control/Domain/` (partial results) and `Control/Semantics/` (certified
-meanings). A measure interpretation of another kind of construction starts a new area. Each area
-whose constructions get a measure interpretation has one measure home: `<area>/Measure.lean` holds
-the area's main measure module, and `<area>/Measure/` holds the others.
+`Control/Monad/` (monads), `Control/Domain/` (partial results), `Control/Semantics/` (certified
+meanings) and `IPFunctor/Scoped/` (scoped syntax). A measure interpretation of another kind of
+construction starts a new area. Each area whose constructions get a measure interpretation has one
+measure home: `<area>/Measure.lean` holds the area's main measure module, and `<area>/Measure/`
+holds the others.
 
 A subdirectory of an area uses the area's home, unless it is an area itself. Free programs
 therefore have one home: a measure reading of their paths, weakest preconditions or costs
@@ -121,6 +122,21 @@ measure module.
   mass functions: `PMF.uniformOfFinset` no longer exists, and `PMF.uniformOfFintype` and the
   `PMF.uniformOfFinset_*` lemmas are deprecated aliases of the measure `Measure.uniformOfFinset`
   and its lemmas.
+- **Guessing one coordinate of a product**
+  ([`Integral/Marginal`](../../ToCslib/MeasureTheory/Integral/Marginal.lean)).
+  Under a finite product of probability measures, a measurable function that ignores coordinate
+  `i` takes the value of coordinate `i` with probability at most the largest mass that the law of
+  coordinate `i` gives a point (`Measure.pi_setOf_eq_apply_le`).
+- **Scoped terms over random tapes**
+  ([`Scoped/Measure`](../../PolyFun/IPFunctor/Scoped/Measure.lean)).
+  An interpretation that depends on a tape makes the meaning of a scoped term a function of the
+  tape. If the interpretation of every head the term uses ignores coordinate `i`, so does the
+  meaning (`Term.denote_update_eq`). An observation of the meaning then equals coordinate `i` with
+  probability at most the largest mass of a point under that coordinate's law
+  (`Term.pi_setOf_denote_eq_apply_le`), which is `1 / |X i|` for a uniform coordinate
+  (`Term.pi_setOf_denote_eq_apply_le_inv_card`). In
+  [`Scoped/Measure`](../../PolyFunTest/IPFunctor/Scoped/Measure.lean), a program that reads the
+  coordinate equals it with probability one, so the side condition is needed.
 - **Partial results**
   ([`Domain/Measure/Measurable`](../../PolyFun/Control/Domain/Measure/Measurable.lean),
   [`Domain/Measure`](../../PolyFun/Control/Domain/Measure.lean)).
