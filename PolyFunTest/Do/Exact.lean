@@ -6,12 +6,9 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Monad.Algebra.WP
-public import PolyFun.Control.Monad.Support.WP
-public import PolyFun.Control.Monad.Support.Instances
+public import PolyFunTest.Do.Fixtures
 public import PolyFun.PFunctor.Free.Do
 public import PolyFun.Control.Monad.WriterT.WP
-public import Mathlib.Data.ENat.Lattice
 
 /-!
 # Exact weakest preconditions under `simp`
@@ -20,7 +17,8 @@ public import Mathlib.Data.ENat.Lattice
 core's transformer lifts over it, the demonic and angelic support readings, and the scoped
 free-program readings — and its equational set normalizes core's `wp` itself: after `simp`, goals
 keep core's head, with no algebra value or support judgment in the result. The base monad is
-a fresh copy of `Id` so that no global core instance competes with the local one.
+`Det` of `PolyFunTest.Do.Fixtures`, a fresh copy of `Id`, so that no global core instance competes
+with the one that its scope installs.
 -/
 
 public section
@@ -29,26 +27,7 @@ open Std.WP
 
 namespace PolyFunTest.Exact
 
-/-- A deterministic monad with no global weakest-precondition instance. -/
-@[expose]
-def Det (α : Type) : Type := α
-
-instance : Monad Det where
-  pure a := a
-  bind x f := f x
-
-instance : LawfulMonad Det :=
-  LawfulMonad.mk' Det (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl)
-
-/-- The identity ordered algebra on `Det` at the extended naturals. -/
-noncomputable local instance instMAlgOrderedDetENat : MAlgOrdered Det ℕ∞ where
-  μ x := x
-  μ_pure _ := rfl
-  μ_bind_mono _ _ h x := h x
-
-/-- Its core interpretation, installed locally. -/
-noncomputable local instance instWPMonadDetENat : WPMonad Det ℕ∞ EStack⟨⟩ :=
-  MAlgOrdered.toWPMonad
+open scoped PolyFunTest.Det.ENatWP
 
 /-! ## Instances -/
 

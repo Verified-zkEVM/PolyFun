@@ -6,8 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Monad.Support.WP
-public import PolyFun.Control.Monad.Support.Instances
+public import PolyFunTest.Do.Fixtures
 public import PolyFun.Control.Do.Spec
 import Std.Do.Internal.Ensures
 import Mathlib.Data.ENat.Lattice
@@ -15,7 +14,7 @@ import Mathlib.Data.ENat.Lattice
 /-!
 # Lawful attachment on core's `vcgen`
 
-The demonic interpretation of a monad with lawful attachment, installed locally, lets `vcgen`
+The demonic interpretation of a monad with lawful attachment, installed by a scope, lets `vcgen`
 decompose `do` blocks whose leaves are then discharged against the support: `wp` is the "always"
 judgment by `rfl`, core's triple is the guarded judgment, and a sound triple converts back into a
 support fact through `allOutputs_of_wp`. The angelic interpretation is checked to compute the
@@ -96,9 +95,8 @@ example {m : Type → Type} [Monad m] (i j : MonadAttach m)
     exact hk.canReturn_map_imp h
   exact ⟨transfer i j hi hj, transfer j i hj hi⟩
 
-/-- The demonic interpretation of `SetM`, installed locally. -/
-local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=
-  toWPMonadDemonic
+/- The demonic interpretation of `SetM`. -/
+open scoped PolyFunTest.SetMDemonicWP
 
 /-- A nondeterministic choice followed by a deterministic step. -/
 def choose12 : SetM Nat := do
@@ -174,7 +172,8 @@ theorem checkAll'_spec (xs : List Nat) : ⦃ True ⦄ checkAll' xs ⦃ fun _ => 
 
 /-- The demonic interpretation is conjunctive. -/
 example (x : SetM Nat) :
-    @WPConjunctive (SetM Nat) Nat Prop EStack⟨⟩ _ _ (instWPMonadSetMDemonic.toWP Nat) x :=
+    @WPConjunctive (SetM Nat) Nat Prop EStack⟨⟩ _ _
+      (PolyFunTest.SetMDemonicWP.instWPMonad.toWP Nat) x :=
   toWPMonadDemonic_wpConjunctive x
 
 /-- The angelic interpretation computes the "sometimes" judgment. -/
