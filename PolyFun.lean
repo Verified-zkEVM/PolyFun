@@ -108,7 +108,9 @@ public import PolyFun.IPFunctor.Scoped.FamilyMapCongr
 public import PolyFun.IPFunctor.Scoped.FamilyMapSubstitution
 public import PolyFun.IPFunctor.Scoped.FamilySize
 public import PolyFun.IPFunctor.Scoped.FamilySubstitution
+public import PolyFun.IPFunctor.Scoped.Import.Apply
 public import PolyFun.IPFunctor.Scoped.Import.Driver
+public import PolyFun.IPFunctor.Scoped.Import.Env
 public import PolyFun.IPFunctor.Scoped.Import.Json
 public import PolyFun.IPFunctor.Scoped.Import.Quote
 public import PolyFun.IPFunctor.Scoped.Import.Registry

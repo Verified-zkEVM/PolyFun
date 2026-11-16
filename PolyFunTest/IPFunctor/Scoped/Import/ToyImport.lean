@@ -6,9 +6,11 @@ Authors: Devon Tuma
 
 module
 
-import PolyFunTest.IPFunctor.Scoped.Import.Toy
+public import PolyFunTest.IPFunctor.Scoped.Import.Toy
 import Batteries.Tactic.Lint
+import PolyFun.Logic.KernelRfl
 meta import Examples.Tutorials.ScopedVectors
+meta import PolyFunTest.IPFunctor.Scoped.Import.Toy
 public meta import Lean.Elab.Command
 public meta import Batteries.Tactic.Lint.Basic
 public meta import Lean.Compiler.NoncomputableAttr
@@ -16,24 +18,27 @@ public meta import Lean.Compiler.NoncomputableAttr
 /-!
 # Importing toy JSON fixtures
 
-The frontend in `Toy.lean` is imported normally, so every kernel check below unfolds only exposed
-bodies, as a downstream importer would.
+The frontend in `Toy.lean` is imported publicly and without `import all`, so every kernel check
+below unfolds only exposed bodies, as a downstream importer would, and a pasted theorem can name
+the tutorial's declarations.
 
 * `accept.json` declares `twice`, the size-polymorphic identity `idv` (in a context holding
   `twice`, which entering the size binder weakens), and `inst`, which instantiates `idv` at `3`
-  through an inserted coercion. Each comes with its source as an auxiliary definition, and the
-  closed `twice` with its lazy meaning, both `noncomputable`. All three are typed and accepted by
-  the kernel with `Eq.refl`, and again with `decide`; `twice` gets its equation lemma. The bundle
-  declarations `declNames` and `declNames_length` come first. Only standard axioms are used.
+  through an inserted coercion. Each comes with its source and its lazy meaning at its
+  dependencies' meanings as auxiliary definitions, both `noncomputable`. All three are typed and
+  accepted by the kernel with `Eq.refl`, and again with `decide`; `twice` gets its equation lemma.
+  The bundle declarations `declNames` and `declNames_length` come first. Only standard axioms are
+  used.
 * `meaning.json` declares `seven`, which is `(λ x. x) 7`. Its equation `seven.meaning_eq` states
   the auxiliary definition `seven.meaning` as a number. The import prepares the equation before it
   adds `seven.meaning`, so the equation takes the auxiliary definition's type.
-* With `natives`, the closed `twice` also gets `twice.native`, its total evaluation, as a compiled
-  auxiliary definition, which compiled code runs, and the theorem
-  `twice.meaning_represents : Rep _ twice.meaning twice.native`. The frontend assembles that proof
-  term before `twice.meaning` and `twice.native` exist, and only the kernel checks it, in commit
-  mode and in check mode. With `misrepresent` the kernel rejects that theorem, in check mode and in
-  commit mode, where nothing of the import remains.
+* With `natives`, each declaration also gets `d.native`, its total evaluation at its dependencies'
+  native values, as a compiled auxiliary definition, which compiled code runs, and the theorem
+  `d.meaning_represents : Represents _ d.meaning d.native`. The frontend assembles that proof term,
+  `meaningIn_represents` at the dependencies' theorems, before `d.meaning` and `d.native` exist,
+  and only the kernel checks it, in commit mode and in check mode. `inst` reads `idv`'s meaning,
+  native value and theorem through its environments. With `misrepresent` the kernel rejects
+  `twice`'s theorem, in check mode and in commit mode, where nothing of the import remains.
 * With `nolint`, `underscore.json`'s `twice_nat` and its auxiliary definitions are marked
   `@[nolint defsWithUnderscore]`, and its equation lemma `@[nolint checkType]`; its acceptance
   theorem and the bundle declarations are not marked. `#lint` skips the generated definitions and
@@ -66,6 +71,15 @@ bodies, as a downstream importer would.
   `equations except` refuse a name that the file does not declare, and `equations except` leaves
   out the equation lemmas of the declarations it names. On reuse, the registry gives only the
   bundle declarations whose names do not exist yet.
+* With `lazy`, `twice`, the size-polymorphic `idv` and `inst` get `meaning_eq`, their lazy
+  meanings written without syntax; `inst` reads `idv`'s meaning from its environment.
+  `#toy_apply` prints their application equations, with a size variable for `idv`'s quantifier,
+  the type level evaluated and the environment read off. Pasted, the printed theorems are proved by
+  `kernel_rfl`, after a rewrite by `inst.meaning_eq` for `inst`, which wraps `idv`.
+* In `two-deps.json`, `use` depends on `one` and `idn`, of different schemes, so their
+  environments type-check only in the right order. With `natives` and `lazy`, it gets its native
+  value, its representation theorem from both dependencies' theorems, and an equation that reads
+  the farther dependency.
 -/
 
 public section
@@ -198,10 +212,18 @@ info: 'PolyFunTest.ToyImportFixtures.Natives.twice.meaning_represents' depends o
 #guard_msgs in
 #print axioms Natives.twice.meaning_represents
 
--- A declaration with dependencies gets neither.
-/-- info: PolyFunTest.ToyImportFixtures.Natives.idv.native: false -/
+-- A declaration with dependencies gets both, at its dependencies' native values and theorems.
+/-- info: 20 -/
 #guard_msgs in
-#declared PolyFunTest.ToyImportFixtures.Natives.idv.native
+#eval (show (ℕ → ℕ) → ℕ → ℕ from Natives.inst.native) (· * 10) 2
+
+example : Represents _ Natives.inst.meaning Natives.inst.native :=
+  Natives.inst.meaning_represents
+
+open IPFunctor.ScopedSignature in
+/-- The meaning of `inst` is its meaning at the meaning of `idv`. -/
+example : Natives.inst.meaning = meaningIn Natives.inst (Env.cons Natives.idv.meaning Env.empty) :=
+  rfl
 
 namespace Misrepresented
 
@@ -210,10 +232,7 @@ namespace Misrepresented
 error: (kernel) declaration type mismatch, 'PolyFunTest.ToyImportFixtures.Misrepresented.twice.meaning_represents' has type
   True
 but it is expected to have type
-  Rep
-    (IPFunctor.ScopedSignature.Term.denote (fun {a} ↦ tyAlg)
-      ((TyTerm.nat.arrow TyTerm.nat).arrow (TyTerm.nat.arrow TyTerm.nat)).mono IPFunctor.ScopedSignature.Env.empty)
-    twice.meaning twice.native
+  Represents ((TyTerm.nat.arrow TyTerm.nat).arrow (TyTerm.nat.arrow TyTerm.nat)).mono twice.meaning twice.native
 -/
 #guard_msgs in
 toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" natives misrepresent
@@ -320,10 +339,7 @@ info: declNames_length: the kernel accepts
 info: twice: the kernel rejects `meaning_represents`: (kernel) declaration type mismatch, 'PolyFunTest.ToyImportFixtures.Checked.twice.meaning_represents' has type
   True
 but it is expected to have type
-  Rep
-    (IPFunctor.ScopedSignature.Term.denote (fun {a} ↦ tyAlg)
-      ((TyTerm.nat.arrow TyTerm.nat).arrow (TyTerm.nat.arrow TyTerm.nat)).mono IPFunctor.ScopedSignature.Env.empty)
-    twice.meaning twice.native
+  Represents ((TyTerm.nat.arrow TyTerm.nat).arrow (TyTerm.nat.arrow TyTerm.nat)).mono twice.meaning twice.native
 -/
 #guard_msgs in
 toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" check natives misrepresent
@@ -661,6 +677,175 @@ example : erase Prefixed.P.inst = Prefixed.P.inst.source :=
 /-- info: PolyFunTest.ToyImportFixtures.Prefixed.E.twice.evaluate_eq: false -/
 #guard_msgs in
 #declared PolyFunTest.ToyImportFixtures.Prefixed.E.twice.evaluate_eq
+
+/-! ## Application equations -/
+
+namespace Applied
+
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" lazy
+
+end Applied
+
+/--
+info: theorem Applied.twice.meaning_apply :
+    ∀
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono
+            (Examples.ScopedVectors.TValue.nat.arrow Examples.ScopedVectors.TValue.nat)))
+      (x1 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono Examples.ScopedVectors.TValue.nat)),
+      (Examples.ScopedVectors.asHom
+            ((Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.Applied.twice.meaning) x0))
+          x1 =
+        (Examples.ScopedVectors.asHom x0) ((Examples.ScopedVectors.asHom x0) x1) := by
+  kernel_rfl
+-/
+#guard_msgs in
+#toy_apply Applied.twice
+
+theorem Applied.twice.meaning_apply :
+    ∀
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono
+            (Examples.ScopedVectors.TValue.nat.arrow Examples.ScopedVectors.TValue.nat)))
+      (x1 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono Examples.ScopedVectors.TValue.nat)),
+      (Examples.ScopedVectors.asHom
+            ((Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.Applied.twice.meaning) x0))
+          x1 =
+        (Examples.ScopedVectors.asHom x0) ((Examples.ScopedVectors.asHom x0) x1) := by
+  kernel_rfl
+
+-- A size abstraction is a size variable of the equation.
+/--
+info: theorem Applied.idv.meaning_apply :
+    ∀ (n : ℕ)
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono
+            (Examples.ScopedVectors.TValue.vec n Examples.ScopedVectors.TValue.nat))),
+      (Examples.ScopedVectors.asHom (PolyFunTest.ToyImportFixtures.Applied.idv.meaning n)) x0 = x0 := by
+  kernel_rfl
+-/
+#guard_msgs in
+#toy_apply Applied.idv
+
+theorem Applied.idv.meaning_apply :
+    ∀ (n : ℕ)
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono
+            (Examples.ScopedVectors.TValue.vec n Examples.ScopedVectors.TValue.nat))),
+      (Examples.ScopedVectors.asHom (PolyFunTest.ToyImportFixtures.Applied.idv.meaning n)) x0 =
+        x0 := by
+  kernel_rfl
+
+-- `inst` instantiates its dependency `idv`, read from its environment: the theorem rewrites by
+-- `inst.meaning_eq` first.
+/--
+info: theorem Applied.inst.meaning_apply :
+    ∀
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono
+            (Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat))),
+      (Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.Applied.inst.meaning) x0 =
+        (Examples.ScopedVectors.asHom
+            ((Examples.ScopedVectors.convLazy
+                ((Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat).arrow
+                  (Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat))
+                ((Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat).arrow
+                  (Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat))
+                (Eq.refl
+                  ((Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat).arrow
+                      (Examples.ScopedVectors.TValue.vec 3
+                        Examples.ScopedVectors.TValue.nat)).shape))
+              ((Examples.ScopedVectors.atSize
+                  (fun n ↦
+                    Examples.ScopedVectors.SScheme.mono
+                      ((Examples.ScopedVectors.TValue.vec n Examples.ScopedVectors.TValue.nat).arrow
+                        (Examples.ScopedVectors.TValue.vec n Examples.ScopedVectors.TValue.nat)))
+                  3)
+                PolyFunTest.ToyImportFixtures.Applied.idv.meaning)))
+          x0 := by
+  rw [PolyFunTest.ToyImportFixtures.Applied.inst.meaning_eq]
+  kernel_rfl
+-/
+#guard_msgs in
+#toy_apply Applied.inst
+
+theorem Applied.inst.meaning_apply :
+    ∀
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono
+            (Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat))),
+      (Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.Applied.inst.meaning) x0 =
+        (Examples.ScopedVectors.asHom
+            ((Examples.ScopedVectors.convLazy
+                ((Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat).arrow
+                  (Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat))
+                ((Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat).arrow
+                  (Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat))
+                (Eq.refl
+                  ((Examples.ScopedVectors.TValue.vec 3 Examples.ScopedVectors.TValue.nat).arrow
+                      (Examples.ScopedVectors.TValue.vec 3
+                        Examples.ScopedVectors.TValue.nat)).shape))
+              ((Examples.ScopedVectors.atSize
+                  (fun n ↦
+                    Examples.ScopedVectors.SScheme.mono
+                      ((Examples.ScopedVectors.TValue.vec n Examples.ScopedVectors.TValue.nat).arrow
+                        (Examples.ScopedVectors.TValue.vec n Examples.ScopedVectors.TValue.nat)))
+                  3)
+                PolyFunTest.ToyImportFixtures.Applied.idv.meaning)))
+          x0 := by
+  rw [PolyFunTest.ToyImportFixtures.Applied.inst.meaning_eq]
+  kernel_rfl
+
+-- `use` depends on `one` and `idn`, of different schemes, so the kernel rejects their
+-- environments in the other order; its equation reads `one`, the farther one.
+namespace TwoDeps
+
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/two-deps.json" natives lazy
+
+end TwoDeps
+
+/-- info: 1 -/
+#guard_msgs in
+#eval (show ℕ → ℕ from TwoDeps.use.native) 5
+
+example : Represents _ TwoDeps.use.meaning TwoDeps.use.native :=
+  TwoDeps.use.meaning_represents
+
+/--
+info: theorem TwoDeps.use.meaning_apply :
+    ∀
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono Examples.ScopedVectors.TValue.nat)),
+      (Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.TwoDeps.use.meaning) x0 =
+        (Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.TwoDeps.idn.meaning)
+          PolyFunTest.ToyImportFixtures.TwoDeps.one.meaning := by
+  rw [PolyFunTest.ToyImportFixtures.TwoDeps.use.meaning_eq]
+  kernel_rfl
+-/
+#guard_msgs in
+#toy_apply TwoDeps.use
+
+theorem TwoDeps.use.meaning_apply :
+    ∀
+      (x0 :
+        Examples.ScopedVectors.SDom
+          (Examples.ScopedVectors.SScheme.mono Examples.ScopedVectors.TValue.nat)),
+      (Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.TwoDeps.use.meaning) x0 =
+        (Examples.ScopedVectors.asHom PolyFunTest.ToyImportFixtures.TwoDeps.idn.meaning)
+          PolyFunTest.ToyImportFixtures.TwoDeps.one.meaning := by
+  rw [PolyFunTest.ToyImportFixtures.TwoDeps.use.meaning_eq]
+  kernel_rfl
 
 /-- info: local axioms: [] -/
 #guard_msgs in
