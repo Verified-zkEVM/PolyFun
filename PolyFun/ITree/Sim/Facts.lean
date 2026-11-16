@@ -378,8 +378,7 @@ theorem simulate_id {E : PFunctor.{uEA, uEB}} {α : Type uα}
       refine ⟨query a (fun b => step (simulate (Handler.id E) (c b))),
         query a c, hxx', .refl _, ?_⟩
       refine Match.query a _ _ (shape'_query _ _) (shape'_query _ _) ?_
-      intro b
-      exact Or.inr rfl
+      exact fun b => Or.inr rfl
 
 /-! ### Handler-composition identities -/
 
@@ -495,8 +494,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
                   (bind (simulate h (c b)) (fun a => simulate h (k a))))),
               .refl _, .refl _, ?_⟩
             refine Match.query a_F _ _ (shape'_query _ _) (shape'_query _ _) ?_
-            intro b'
-            exact Or.inr (Or.inr ⟨E.B a_E, c' b', c, rfl, rfl⟩)
+            exact fun b' => Or.inr (Or.inr ⟨E.B a_E, c' b', c, rfl, rfl⟩)
   · -- Auxiliary disjunct: split on `u`.
     rcases hu : ITree.shape' u with ⟨sh, c⟩
     cases sh with
@@ -529,8 +527,7 @@ theorem simulate_bind {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
               (bind (simulate h (f b)) (fun a => simulate h (k a))))),
           .refl _, .refl _, ?_⟩
         refine Match.query a_F _ _ (shape'_query _ _) (shape'_query _ _) ?_
-        intro b'
-        exact Or.inr (Or.inr ⟨γ, c b', f, rfl, rfl⟩)
+        exact fun b' => Or.inr (Or.inr ⟨γ, c b', f, rfl, rfl⟩)
 
 /-! ### Composition of simulation -/
 
@@ -644,9 +641,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
                 refine Match.query q' _ _
                   (dest_bind_query _ (outer a_F) q' cw hw)
                   (dest_bind_query _ (outer a_F) q' cw hw) ?_
-                intro z
-                exact Or.inr (Or.inr
-                  ⟨E.B a, F.B a_F, cw z, cu, c, rfl, rfl⟩)
+                exact fun z => Or.inr (Or.inr ⟨E.B a, F.B a_F, cw z, cu, c, rfl, rfl⟩)
   · rcases hu : ITree.shape' u with ⟨sh, c⟩
     cases sh with
     | pure r =>
@@ -702,8 +697,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
               .refl _, .refl _, ?_⟩
             refine Match.query q' _ _ (dest_bind_query _ (outer a) q' cw hw)
               (dest_bind_query _ (outer a) q' cw hw) ?_
-            intro z
-            exact Or.inr (Or.inr ⟨γ, F.B a, cw z, c, k, rfl, rfl⟩)
+            exact fun z => Or.inr (Or.inr ⟨γ, F.B a, cw z, c, k, rfl, rfl⟩)
   · rcases hw : ITree.shape' w with ⟨sh, c⟩
     cases sh with
     | pure z =>
@@ -734,8 +728,7 @@ theorem simulate_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
           .refl _, .refl _, ?_⟩
         refine Match.query a _ _ (dest_bind_query _ w a c hw)
           (dest_bind_query _ w a c hw) ?_
-        intro z
-        exact Or.inr (Or.inr ⟨γ, δ, c z, q, k, rfl, rfl⟩)
+        exact fun z => Or.inr (Or.inr ⟨γ, δ, c z, q, k, rfl, rfl⟩)
 
 /-- Handler composition is associative pointwise up to weak bisimulation. -/
 theorem Handler.comp_assoc_apply {E : PFunctor.{uEA, uEB}}
@@ -1164,8 +1157,7 @@ theorem simulate_ofLens {E : PFunctor.{uEA, uEB}}
         query (φ.toFunA a) (fun b => mapSpec φ (c (φ.toFunB a b))),
         hxx', .refl _, ?_⟩
       refine Match.query (φ.toFunA a) _ _ (shape'_query _ _) (shape'_query _ _) ?_
-      intro b
-      exact Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩
+      exact fun b => Or.inr ⟨c (φ.toFunB a b), rfl, rfl⟩
 
 open scoped PFunctor in
 /-- Composition of pure-renaming handlers agrees pointwise, up to weak
