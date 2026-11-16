@@ -22,8 +22,9 @@ apply to it:
 * after a call followed by more program, `vcgen` stops at the integral of the call: the remaining
   condition is pinned with `guard_target` on two flips of a fair coin, and the exact `wp` equations
   finish it;
-* with the pointwise rules `Spec.lift_expectation_iInf` and `Spec.liftBind_expectation_iInf`
-  registered locally, `vcgen` descends through every call;
+* with the pointwise rules `Spec.lift_expectation_iInf` and `Spec.liftBind_expectation_iInf`,
+  registered by `open scoped PFunctor.FreeM.Expectation.Pointwise`, `vcgen` descends through every
+  call;
 * under `open scoped PFunctor.FreeM.UpperExpectation`, the dual reading states the upper bound on
   the same two flips, and the triple bounds the integral against the output measure;
 * both readings are exact in their scopes, and a call over answers in `Type 1` is read in its
@@ -153,9 +154,7 @@ end Lower
 
 section Pointwise
 
-open scoped PFunctor.FreeM.Expectation
-
-attribute [local spec high] Spec.lift_expectation_iInf Spec.liftBind_expectation_iInf
+open scoped PFunctor.FreeM.Expectation PFunctor.FreeM.Expectation.Pointwise
 
 variable {P : PFunctor.{0, 0}} [∀ a, MeasurableSpace (P.B a)] [P.AnswerMeasure]
 

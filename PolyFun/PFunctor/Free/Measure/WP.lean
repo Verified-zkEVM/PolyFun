@@ -61,8 +61,7 @@ Under probability answer measures, a lower bound at every answer holds in expect
 pointwise rules `Spec.lift_expectation_iInf` and `Spec.liftBind_expectation_iInf` state that bound
 with core's indexed infimum `Lean.Order.iInf`, which `vcgen` splits into one condition per answer,
 so it descends through every call. They lose the averaging over answers, and suit bounds that hold
-on every path. They are not registered: pass them to `vcgen`, or register them with
-`attribute [local spec high]`.
+on every path. `open scoped PFunctor.FreeM.Expectation.Pointwise` registers them.
 -/
 
 @[expose] public section
@@ -135,8 +134,7 @@ instance instExactWPMonadUpperExpectationWPMonad :
 /-! ### Pointwise rules -/
 
 /-- Under probability answer measures, a lower bound on the postcondition at every answer of a call
-bounds its expectation. Not registered: pass it to `vcgen`, or register it with
-`attribute [local spec high]`. -/
+bounds its expectation. Registered in the scope `PFunctor.FreeM.Expectation.Pointwise`. -/
 theorem Spec.lift_expectation_iInf {P : PFunctor.{uA, 0}} [∀ a, MeasurableSpace (P.B a)]
     (ν : (a : P.A) → Measure (P.B a)) [∀ a, IsProbabilityMeasure (ν a)] (a : P.A)
     (Q : P.B a → ℝ≥0∞) (E : EStack⟨⟩) :
@@ -149,8 +147,8 @@ theorem Spec.lift_expectation_iInf {P : PFunctor.{uA, 0}} [∀ a, MeasurableSpac
     _ ≤ ∫⁻ b, Q b ∂ν a := lintegral_mono fun b => iInf_le Q b
 
 /-- Under probability answer measures, a lower bound on the weakest preconditions of the
-continuations of a node at every answer bounds its expectation. Not registered: pass it to `vcgen`,
-or register it with `attribute [local spec high]`. -/
+continuations of a node at every answer bounds its expectation. Registered in the scope
+`PFunctor.FreeM.Expectation.Pointwise`. -/
 theorem Spec.liftBind_expectation_iInf [∀ a, IsProbabilityMeasure (ν a)] {α : Type} (a : P.A)
     (r : P.B a → FreeM P α) (Q : α → ℝ≥0∞) (E : EStack⟨⟩) :
     @Triple ℝ≥0∞ EStack⟨⟩ (FreeM P α) α _ _ (FreeM.liftBind a r) ((expectationWPMonad ν).toWP _)
@@ -242,6 +240,16 @@ theorem le_lintegral_evalDist_of_triple [∀ a, DiscreteMeasurableSpace (P.B a)]
     pre ≤ ∫⁻ r, post r ∂evalDist x := by
   rw [← wp_eq_lintegral_evalDist x hpost epost]
   exact h.le_wp
+
+/-! `open scoped PFunctor.FreeM.Expectation.Pointwise` registers the pointwise rules, so `vcgen`
+descends through every call, with one condition per answer, at the cost of the averaging over
+answers. -/
+
+namespace Pointwise
+
+attribute [scoped spec high] Spec.lift_expectation_iInf Spec.liftBind_expectation_iInf
+
+end Pointwise
 
 end Expectation
 

@@ -504,8 +504,8 @@ reduced.
 Under probability answer measures, a lower bound at every answer holds in expectation.
 `Spec.lift_expectation_iInf` and `Spec.liftBind_expectation_iInf` state that bound with core's
 indexed infimum, which `vcgen` splits into one condition per answer, so `vcgen` descends through
-every call. They lose the averaging over answers. They are not registered: pass them to `vcgen` or
-register them with `attribute [local spec high]`.
+every call. They lose the averaging over answers.
+`open scoped PFunctor.FreeM.Expectation.Pointwise` registers them.
 
 Under `PFunctor.AnswerMeasure`, the integral of a postcondition against the output measure
 `evalDist` is at most its weakest precondition (`Expectation.lintegral_evalDist_le_wp`), so an
