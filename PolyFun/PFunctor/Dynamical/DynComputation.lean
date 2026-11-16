@@ -265,9 +265,7 @@ theorem behavior_mapResult {γ : Type uγ} (f : β → γ)
     (fun left right => ∃ current : M.State,
       left = (M.mapResult f).toDynSystem.behavior current ∧
       right = Resumption.map f (M.toDynSystem.behavior current))
-  · rintro left right ⟨current, hleft, hright⟩
-    subst left
-    subst right
+  · rintro left right ⟨current, rfl, rfl⟩
     rcases h : M.view current with value | query
     · exact .pure (f value)
         (by rw [dest_behavior_view, mapResult_view, h]; rfl)
@@ -335,9 +333,7 @@ theorem behavior_wrap {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
     (fun left right => ∃ current : M.State,
       left = (M.wrap lens).toDynSystem.behavior current ∧
       right = Resumption.mapLens lens (M.toDynSystem.behavior current))
-  · rintro left right ⟨current, hleft, hright⟩
-    subst left
-    subst right
+  · rintro left right ⟨current, rfl, rfl⟩
     rcases h : M.view current with value | query
     · exact .pure value
         (by rw [dest_behavior_view, wrap_view, h]; rfl)

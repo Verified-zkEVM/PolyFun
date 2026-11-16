@@ -123,7 +123,8 @@ lemmas in cslib's simp normal form, transport of loop combinators along monad mo
 least fixed points, admissible predicates, and discrete, lifted, and disjoint-sum carriers over
 Mathlib's omega-complete partial orders, finite prefix recursion, direct compilation of
 `Fin.cases`, monadic sequencing of `Fin`-indexed families, single-bit overwrites on bitvectors,
-monotonicity of natural-number polynomial evaluation, and polynomial growth against `2 ^ n`.
+monotonicity of natural-number polynomial evaluation, polynomial growth against `2 ^ n`, and,
+under `MeasureTheory` and `Probability`, measure and kernel lemmas in paths that mirror Mathlib's.
 It imports core, cslib, and Mathlib only — never `PolyFun`, a concrete complexity backend, or any
 downstream oracle or cryptographic semantics. `PolyFun` imports the modules it needs explicitly;
 `ComplexityBackends` may do the same.

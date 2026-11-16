@@ -72,8 +72,9 @@ can be deleted. PolyFun remains the correct home for polynomial, interaction,
 qualitative machine structure, and backend-relative quantitative accounting.
 Concrete machine and complexity theory lives in the optional `ComplexityBackends`
 library, one subdirectory per machine model, which bridges a concrete substrate to
-PolyFun realizability without entering the generic umbrella. Probability,
-cryptographic policy, and protocol-specific adequacy claims remain downstream.
+PolyFun realizability without entering the generic umbrella. Measure
+interpretations live in `Measure` companions beside the constructions they interpret,
+and cryptographic policy and protocol-specific adequacy claims remain downstream.
 
 Review the intended upstream abstraction, not just whether a similarly named
 declaration exists. Follow a foundational definition through a real consumer and
@@ -117,8 +118,8 @@ In particular:
   `refl`/`symm`/`trans` attributes, provide a `Trans` instance for `calc`, and keep `cast` and
   `▸` out of statements where a fiber, subtype or `Equiv.cast` formulation exists.
 - **Compatibility:** exercise ordinary imports, independent universes and relevant
-  downstream semantics. Qualitative reachability must not choose VCVio's probability
-  or WP interpretation implicitly. Check the pinned API separately from roadmap
+  downstream semantics. Qualitative reachability must not choose a probability or WP
+  interpretation implicitly. Check the pinned API separately from roadmap
   proposals and newer upstream source.
 
 ## Naming

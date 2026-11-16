@@ -7,7 +7,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Interaction.Concurrent.Fairness
-import Mathlib.Order.Monotone.Basic
 
 /-! # Two finite work queues under an explicit scheduler
 
