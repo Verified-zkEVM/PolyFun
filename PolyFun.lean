@@ -6,6 +6,7 @@ public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
+public import PolyFun.Control.Do.MOfFn
 public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Domain.LazySeq
 public import PolyFun.Control.Domain.Measure

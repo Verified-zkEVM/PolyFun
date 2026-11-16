@@ -54,12 +54,13 @@ meta def specAllowlist : List Name := [
   `PFunctor.FreeM.Spec.bind,
   `PFunctor.FreeM.Spec.lift_ofHandler,
   `PFunctor.FreeM.Spec.lift_upper,
+  -- `PolyFun.Control.Do.MOfFn`: every `WPMonad` on the monad of `Fin.mOfFn`.
+  `Fin.Spec.mOfFn,
   -- `PolyFun.Control.Do.Spec`: every `WPMonad` on the base monad, through core's interpretations
   -- of its own transformers. The registration of core's `Spec.tryCatch_MonadExcept` is here.
   `Std.WP.Spec.tryCatch_MonadExcept,
   `Std.WP.Spec.forM_list,
   `Std.WP.Spec.mapM_list,
-  `Std.WP.Spec.mOfFn_fin,
   `Std.WP.Spec.seqLeft,
   `Std.WP.Spec.seqRight,
   `Std.WP.Spec.failure_OptionT,
@@ -67,13 +68,13 @@ meta def specAllowlist : List Name := [
   `Std.WP.Spec.guard_OptionT,
   `Std.WP.Spec.guard_OptionT_iInf,
   `Std.WP.Spec.mk_OptionT,
-  `Std.WP.Spec.run_OptionT',
+  `Std.WP.Spec.run_OptionT_some_none,
   `Std.WP.Spec.lift_StateT,
   `Std.WP.Spec.mk_StateT,
   `Std.WP.Spec.run'_StateT,
   `Std.WP.Spec.lift_ExceptT,
   `Std.WP.Spec.mk_ExceptT,
-  `Std.WP.Spec.run_ExceptT']
+  `Std.WP.Spec.run_ExceptT_ok_error]
 
 /-- The imported modules whose names start with one of `prefixes`, with their indices. -/
 meta def modulesUnder (env : Environment) (prefixes : Array Name) : Array (Nat × Name) :=

@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Do.Spec
+public import PolyFun.Control.Do.MOfFn
 public import PolyFunTest.Do.Fixtures
 
 /-!
@@ -13,8 +14,9 @@ public import PolyFunTest.Do.Fixtures
 
 The rules of `PolyFun.Control.Do.Spec` for `StateT.mk`, `StateT.lift`, running a `StateT` with
 the state discarded, `OptionT.mk`, `ExceptT.mk`, `ExceptT.lift`, running an `OptionT` or `ExceptT`
-into a postcondition of the returned option or result, `List.mapM` and `Fin.mOfFn` with a loop
-invariant, and the sequence combinators `<*` and `*>`, each over core's `Prop` reading of `Id`,
+into a postcondition of the returned option or result, `List.mapM` with a loop invariant, and the
+sequence combinators `<*` and `*>`, and the rule of `PolyFun.Control.Do.MOfFn` for `Fin.mOfFn`
+with a loop invariant, each over core's `Prop` reading of `Id`,
 where the matcher applies the rule to the constructor, lift or runner before `vcgen` looks inside;
 `Fin.mOfFn` over `StateT`, with a state-passing invariant; and `guard` under a lattice-valued
 reading of a deterministic monad, where `Spec.guard_OptionT_iInf` applies in place of the `Prop`

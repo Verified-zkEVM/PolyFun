@@ -121,8 +121,8 @@ implementations.
 `ToCslib/Data/Fin/MOfFn.lean` defines `Fin.mOfFn`, which runs a `Fin n`-indexed
 family of monadic computations in order and collects the results as a function.
 The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
-version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
-`PolyFun/Control/Do/Spec.lean`, because `ToCslib` imports no `Std.WP` module.
+version belongs beside it. Its `vcgen` rule `Fin.Spec.mOfFn` stays in
+`PolyFun/Control/Do/MOfFn.lean`, because `ToCslib` imports no `Std.WP` module.
 
 `ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
 rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums but not over `Fin`;
