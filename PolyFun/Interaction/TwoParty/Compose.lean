@@ -441,10 +441,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.comp_eq_compFlat_mapOutpu
             (fun strat₂ =>
               StrategyOver.TwoParty.Focal.mapOutput (fun tr₂ x => x) strat₂) <$>
               f ⟨⟩ strat₁ := bind_pure_comp _ _
-        _ = (fun strat₂ => strat₂) <$> f ⟨⟩ strat₁ := by
-          congr 1
-          funext strat₂
-          rw [StrategyOver.TwoParty.Focal.mapOutput_id]
+        _ = (fun strat₂ => strat₂) <$> f ⟨⟩ strat₁ := by simp_all
         _ = f ⟨⟩ strat₁ := LawfulFunctor.id_map _
   | .node X rest, s₂, ⟨.sender, rRest⟩, r₂, Mid, F, strat₁, f => by
       simp only [StrategyOver.TwoParty.Focal.comp, StrategyOver.TwoParty.Focal.compFlat]
