@@ -23,6 +23,12 @@ inputs are related to native representatives and that a representative determine
 output. Totality says that the evaluator returns the representative of the implementation's
 result. `CorrespondsOn.of_liftFun` and `CertifiedMeaning.ofLiftFun` combine the three.
 
+A meaning is often read back by a decoder, for example one that forces a lazy result into a
+result over native values. The fundamental lemma then relates the undecoded meaning, and a native
+representative of an output need only fix what each related undecoded result decodes to.
+`CorrespondsOn.of_liftFun_decode` and `CertifiedMeaning.ofLiftFunDecode` certify the decoded
+meaning from these facts.
+
 A meaning whose results at encoded inputs are all encoded outputs needs no native evaluator.
 `CertifiedMeaning.ofDecode` certifies it, with the meaning read back by a left inverse of the
 output encoding as its implementation.
@@ -37,7 +43,7 @@ public section
 
 namespace Control.Semantics
 
-universe uA uB uC uD uE uF uW uW'
+universe uA uB uC uD uE uF uW uW' uX
 
 variable {A : Type uA} {B : Type uB} {C : Type uC}
   {D : Type uD} {E : Type uE} {F : Type uF} {W : Type uW} {W' : Type uW'}
@@ -150,6 +156,21 @@ theorem of_liftFun {Rin : D → W → Prop} {Rout : E → W' → Prop} {eval : W
   rw [← total x hx]
   exact fundamental (represents x hx)
 
+/-- A meaning read back by `decode` corresponds to an implementation on admissible inputs. The
+premises are those of `of_liftFun` with two changes. The fundamental lemma relates the undecoded
+meaning `inner`, and a native representative of an output fixes only what each related undecoded
+result decodes to (`determines`). -/
+theorem of_liftFun_decode {X : Type uX} {Rin : D → W → Prop} {Rout : X → W' → Prop}
+    {eval : W → W'} {nativeIn : A → W} {nativeOut : B → W'} {inner : D → X} (decode : X → E)
+    (fundamental : Relator.LiftFun Rin Rout inner eval)
+    (represents : ∀ x, valid x → Rin (input x) (nativeIn x))
+    (determines : ∀ y d, Rout d (nativeOut y) → decode d = output y)
+    (total : ∀ x, valid x → eval (nativeIn x) = nativeOut (implementation x)) :
+    CorrespondsOn input output valid (fun d => decode (inner d)) implementation :=
+  of_liftFun (Rout := fun e w => ∃ d, decode d = e ∧ Rout d w)
+    (fun _ _ h => ⟨_, rfl, fundamental h⟩) represents
+    (fun y _ ⟨d, hd, h⟩ => hd ▸ determines y d h) total
+
 end CorrespondsOn
 
 /-- An implementation with an all-input semantic correspondence certificate. -/
@@ -187,6 +208,40 @@ theorem meaning_comp (f : CertifiedMeaning input output) :
   implementation := implementation
   correct x := CorrespondsOn.of_liftFun (valid := fun _ => True) fundamental
     (fun x _ => represents x) determines (fun x _ => total x) x trivial
+
+/-- Certify `decode` after `meaning` from a relation of `meaning` to a native evaluator, as in
+`CorrespondsOn.of_liftFun_decode`, with every input admissible. -/
+@[expose] def ofLiftFunDecode {X : Type uX} {Rin : D → W → Prop} {Rout : X → W' → Prop}
+    {eval : W → W'} {nativeIn : A → W} {nativeOut : B → W'} (meaning : D → X) (decode : X → E)
+    (implementation : A → B) (fundamental : Relator.LiftFun Rin Rout meaning eval)
+    (represents : ∀ x, Rin (input x) (nativeIn x))
+    (determines : ∀ y d, Rout d (nativeOut y) → decode d = output y)
+    (total : ∀ x, eval (nativeIn x) = nativeOut (implementation x)) :
+    CertifiedMeaning input output where
+  meaning d := decode (meaning d)
+  implementation := implementation
+  correct x := CorrespondsOn.of_liftFun_decode (valid := fun _ => True) decode fundamental
+    (fun x _ => represents x) determines (fun x _ => total x) x trivial
+
+@[simp] theorem ofLiftFunDecode_meaning {X : Type uX} {Rin : D → W → Prop}
+    {Rout : X → W' → Prop} {eval : W → W'} {nativeIn : A → W} {nativeOut : B → W'}
+    (meaning : D → X) (decode : X → E) (implementation : A → B)
+    (fundamental : Relator.LiftFun Rin Rout meaning eval)
+    (represents : ∀ x, Rin (input x) (nativeIn x))
+    (determines : ∀ y d, Rout d (nativeOut y) → decode d = output y)
+    (total : ∀ x, eval (nativeIn x) = nativeOut (implementation x)) :
+    (ofLiftFunDecode (input := input) meaning decode implementation fundamental represents
+      determines total).meaning = fun d => decode (meaning d) := rfl
+
+@[simp] theorem ofLiftFunDecode_implementation {X : Type uX} {Rin : D → W → Prop}
+    {Rout : X → W' → Prop} {eval : W → W'} {nativeIn : A → W} {nativeOut : B → W'}
+    (meaning : D → X) (decode : X → E) (implementation : A → B)
+    (fundamental : Relator.LiftFun Rin Rout meaning eval)
+    (represents : ∀ x, Rin (input x) (nativeIn x))
+    (determines : ∀ y d, Rout d (nativeOut y) → decode d = output y)
+    (total : ∀ x, eval (nativeIn x) = nativeOut (implementation x)) :
+    (ofLiftFunDecode (input := input) meaning decode implementation fundamental represents
+      determines total).implementation = implementation := rfl
 
 /-- The certificate whose implementation is what `meaning` computes at an encoded input, read back
 by `decode`, a left inverse of `output`. The premise that every such result is an encoded output

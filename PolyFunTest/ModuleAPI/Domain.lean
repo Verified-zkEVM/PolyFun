@@ -17,7 +17,9 @@ Ordinary imports expose lifted results with distinct errors and bottom, and
 positional relations between continuous environments. A visible algebra may supply a
 lifted value without demanding a continuation; continuous interpretation must
 retain it. Environment values need only an order on each sort, so a family of
-computation types is used directly, without bundling it as pointed domains.
+computation types is used directly, without bundling it as pointed domains. Transport along
+an equation of pointed domains keeps a value up to heterogeneous equality, also inside a
+dependent family, under a fresh suspension, for a continuous map, and at a least fixed point.
 -/
 
 public section
@@ -111,6 +113,35 @@ example {S T : Type} {X : Type} [OmegaCompletePartialOrder X] [OrderBot X] (f : 
       (IPFunctor.ScopedSignature.Env.fixGroup rhs' ζ) :=
   IPFunctor.ScopedSignature.Env.fixGroup_forall₂ f (fun _ => le_rfl)
     (fun _ _ hc => ωSup_le_ωSup_of_le fun n => ⟨n, hc n⟩) rhs rhs' η ζ h
+
+/-! ## Transport between equal domains -/
+
+/-- Transporting every component keeps a dependent family. -/
+example {I : Type} {D E : I → PointedDomain.{0}} (h : ∀ i, D i = E i) (f : (i : I) → D i) :
+    HEq f fun i => PointedDomain.cast (h i) (f i) :=
+  PointedDomain.pi_heq h fun i => (PointedDomain.cast_heq (h i) (f i)).symm
+
+/-- Suspending a value and its transport gives corresponding results. -/
+example {D E : PointedDomain.{0}} (h : D = E) (x : D) :
+    HEq (DomainResult.value x : DomainResult Unit D)
+      (DomainResult.value (PointedDomain.cast h x) : DomainResult Unit E) :=
+  PointedDomain.result_value_heq h (PointedDomain.cast_heq h x).symm
+
+/-- Transporting a continuous map's input and output gives a corresponding map. -/
+example {D E F G : PointedDomain.{0}} (hD : D = E) (hF : F = G) (f : D →𝒄 F) :
+    HEq f ((PointedDomain.cast hF).comp (f.comp (PointedDomain.cast hD.symm))) :=
+  PointedDomain.hom_heq hD hF f _ fun x y hxy => by
+    obtain rfl : x = PointedDomain.cast hD.symm y :=
+      eq_of_heq (hxy.trans (PointedDomain.cast_heq hD.symm y).symm)
+    exact (PointedDomain.cast_heq hF _).symm
+
+/-- Conjugating a recursive body by transport transports its least fixed point. -/
+example {D E : PointedDomain.{0}} (h : D = E) (f : D →𝒄 D) :
+    HEq f.fix ((PointedDomain.cast h).comp (f.comp (PointedDomain.cast h.symm))).fix :=
+  PointedDomain.fix_heq h f _ fun x y hxy => by
+    obtain rfl : x = PointedDomain.cast h.symm y :=
+      eq_of_heq (hxy.trans (PointedDomain.cast_heq h.symm y).symm)
+    exact (PointedDomain.cast_heq h _).symm
 
 /-! ## Recursive groups -/
 

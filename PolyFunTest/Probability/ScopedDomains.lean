@@ -20,6 +20,10 @@ Under any measure on native inputs, the decoded meaning of `addTwo` has the push
 positive, so the decoded `pred` has the pushforward along `(· - 1)` as its values and no failure
 mass. Under a uniform draw from `{0, 1, 2, 3}`, its failure mass is the mass of `0`, where it
 diverges. The output encoding of both, `DomainResult.valueEmbedding`, is measurable by `fun_prop`.
+
+The tutorial's fuel-bounded evaluator certifies the decoded lazy meaning of the recursive `double`
+against `(2 * ·)` (`doubleCertified`). Under a probability measure on native inputs, reading its
+outputs as optional values gives the failure completion of the pushforward along `(2 * ·)`.
 -/
 
 public section
@@ -93,5 +97,14 @@ example : DomainResult.failureMass
       none
     rw [pred_zero]
     rfl
+
+/-- Read as optional values, the decoded `double` under a probability measure is the failure
+completion of the pushforward along `(2 * ·)`. -/
+example (μ : Measure ℕ) [IsProbabilityMeasure μ] :
+    (μ.map (doubleCertified.meaning ∘ natEmbedding)).map DomainResult.toOption =
+      (μ.map (2 * ·)).withFailure := by
+  rw [DomainResult.map_toOption_eq_withFailure,
+    doubleCertified.success_map_meaning Measurable.of_discrete.aemeasurable]
+  rfl
 
 end PolyFunTest.Probability.ScopedDomains

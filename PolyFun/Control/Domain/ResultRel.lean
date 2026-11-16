@@ -24,7 +24,8 @@ fixed point by fixed-point induction.
 `DomainResult.Approx P d r` is the relation for an evaluator that may give up: bottom on the right
 approximates every result, and otherwise `r` is related to `d` by `LiftRel` with equal errors
 (`approx_iff`). `approx_bind` and `approx_bind₂` carry it through the continuous `bind` and
-`bind₂` on the left and `bindPlain` on the right.
+`bind₂` on the left and `bindPlain` on the right, and `approx_applyContinuous` through
+`applyContinuous` on the left and `applyPlain` on the right.
 -/
 
 public section
@@ -253,6 +254,20 @@ theorem approx_bind₂ {Y Z β γ : Type*} [OmegaCompletePartialOrder X]
     | some (.inr v), ⟨b, hb, hbv⟩ =>
       subst hb
       exact hF a b u v hau hbv
+
+/-- Applying an approximated function value gives an approximated result. The function values are
+related by `T`, and applying `T`-related values to `x` and to `y` gives approximated results
+(`happ`). The semantic side demands the function and suspends `x`, and the native side applies a
+returned function with `applyPlain`. When `γ = DomainResult ε α`, the logical relation
+`T fl k := ∀ x' y', Approx P x' y' → Approx Q (fl x') (k y')` gives `happ` from `Approx P x y`. -/
+theorem approx_applyContinuous {Y γ : Type*} [OmegaCompletePartialOrder X]
+    [OmegaCompletePartialOrder Y] {Q : Y → β → Prop}
+    {T : (DomainResult ε X →𝒄 DomainResult ε Y) → (γ → DomainResult ε β) → Prop}
+    {f : DomainResult ε (DomainResult ε X →𝒄 DomainResult ε Y)}
+    {g : DomainResult ε (γ → DomainResult ε β)} {x : DomainResult ε X} {y : γ}
+    (hf : Approx T f g) (happ : ∀ fl k, T fl k → Approx Q (fl x) (k y)) :
+    Approx Q (applyContinuous f x) (applyPlain g y) :=
+  approx_bind (F := ContinuousHom.id.swapArgs x) hf happ
 
 end Approx
 
