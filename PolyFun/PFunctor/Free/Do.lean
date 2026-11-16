@@ -11,22 +11,26 @@ public import Std.Tactic.Do
 /-!
 # Core Program Logic for the Free Monad
 
-The tactic-tier module of the `Std.WP` quarantine for free programs. It registers *scoped*
-core `WPMonad` interpretations of `FreeM P` and the `@[spec]` lemmas that let `vcgen` decompose
-`do` programs over `FreeM P` with uninterpreted operations:
+Scoped core `WPMonad` interpretations of `FreeM P`, and the `@[spec]` lemmas that let `vcgen`
+decompose `do` programs over `FreeM P` with uninterpreted operations:
 
 * under `open scoped PFunctor.FreeM.DemonicWP`, `wp x Q E` is "every possible output of `x`
-  satisfies `Q`" (`MonadAttach.toWPMonadDemonic`); it is conjunctive and sound, and
-  `Spec.lift` demands the postcondition of *every* response to an operation;
+  satisfies `Q`" (`MonadAttach.toWPMonadDemonic`); it is conjunctive and sound, and the scope's
+  rule `Spec.lift` demands the postcondition of *every* response to an operation;
 * under `open scoped PFunctor.FreeM.AngelicWP`, `wp x Q E` is "some possible output of `x`
-  satisfies `Q`" (`MonadAttach.toWPMonadAngelic`), and `Spec.lift_angelic` asks for *some*
-  response;
+  satisfies `Q`" (`MonadAttach.toWPMonadAngelic`), and the scope's rule `Spec.lift_angelic` asks
+  for *some* response;
 * through a handler, `FreeM.wpMonadOfHandler s` installed locally lets `Spec.lift_ofHandler`
   reduce an operation to the handler's `wp`;
 * under the upper-bound reading of a spec, `OpSpec.toUpperWPMonad Φ hΦ` installed locally lets
   `Spec.lift_upper` read an operation as `Φ` in the dual order. For a charge
   (`PolyFun.PFunctor.Free.WP.Charge`) the precondition is the call's charge plus the supremum of
   the continuation, so `vcgen` decomposes the call and leaves the continuation under the supremum.
+
+`Spec.lift`, `Spec.liftBind` and `Spec.lift_angelic` are stated for one reading each, so each is
+registered `scoped` in the scope of its reading. `Spec.bind` holds for every interpretation of
+`FreeM P`, and `Spec.lift_ofHandler` and `Spec.lift_upper` are stated against the construction
+they read, for all its parameters; these three are registered globally.
 
 `vcgen` matches `@[spec]` lemmas structurally, so `Spec.lift`, whose value type is the dependent
 `P.B a`, applies wherever the goal's value type is syntactically `P.B a`: under `bind`, where the
@@ -36,8 +40,7 @@ been normalized to a concrete type, is left as a `wp` goal that rewriting with
 
 The instances are scoped because downstream libraries register their own core interpretations
 on reducible unfoldings of `FreeM` (oracle computations, for one); a global instance here would
-race those registrations. This module imports `Std.Tactic.Do` for the `@[spec]` attribute
-syntax.
+race those registrations.
 -/
 
 @[expose] public section
@@ -116,14 +119,13 @@ section Demonic
 open DemonicWP
 
 /-- An uninterpreted operation, demonically: the weakest precondition of `FreeM.lift a` demands
-the postcondition of every response. -/
-@[spec]
+the postcondition of every response. Registered in the scope `PFunctor.FreeM.DemonicWP`. -/
 theorem lift (a : P.A) (Q : P.B a → Prop) (E : EStack⟨⟩) :
     Triple (FreeM.lift (P := P) a) (∀ b, Q b) Q E :=
   ⟨fun h b _ => h b⟩
 
-/-- A node written with the constructor: every continuation must meet the postcondition. -/
-@[spec]
+/-- A node written with the constructor: every continuation must meet the postcondition.
+Registered in the scope `PFunctor.FreeM.DemonicWP`. -/
 theorem liftBind {α : Type uB} (a : P.A) (r : P.B a → FreeM P α) (Q : α → Prop)
     (E : EStack⟨⟩) :
     Triple (FreeM.liftBind a r) (∀ b, wp (r b) Q E) Q E :=
@@ -135,8 +137,8 @@ section Angelic
 
 open AngelicWP
 
-/-- An uninterpreted operation, angelically: some response meets the postcondition. -/
-@[spec]
+/-- An uninterpreted operation, angelically: some response meets the postcondition. Registered in
+the scope `PFunctor.FreeM.AngelicWP`. -/
 theorem lift_angelic (a : P.A) (Q : P.B a → Prop) (E : EStack⟨⟩) :
     Triple (FreeM.lift (P := P) a) (∃ b, Q b) Q E :=
   ⟨fun ⟨b, hb⟩ => ⟨b, by rw [← mem_support, support_lift]; exact Set.mem_univ b, hb⟩⟩
@@ -183,5 +185,19 @@ theorem lift_upper (Φ : OpSpec P l) (hΦ : Φ.Monotone) (a : P.A) (Q : P.B a �
 end Upper
 
 end Spec
+
+/-! ## Rules of the support readings -/
+
+namespace DemonicWP
+
+attribute [scoped spec] Spec.lift Spec.liftBind
+
+end DemonicWP
+
+namespace AngelicWP
+
+attribute [scoped spec] Spec.lift_angelic
+
+end AngelicWP
 
 end PFunctor.FreeM
