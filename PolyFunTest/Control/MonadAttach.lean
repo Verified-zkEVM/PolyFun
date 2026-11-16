@@ -413,7 +413,7 @@ example : ¬ (∀ {α : Type} (x : SetM α) (p q : α → Prop),
   omega
 
 /-- The demonic reading, by contrast, distributes in both directions — this is what
-`MonadAttach.toWPMonadDemonic_wpConjunctive` proves against core's class. -/
+`MonadAttach.instWPConjunctiveToWPMonadDemonic` proves against core's class. -/
 example {α : Type} (x : SetM α) (p q : α → Prop) :
     (x ⊨ₐ fun a => p a ∧ q a) ↔ (x ⊨ₐ p) ∧ (x ⊨ₐ q) :=
   allOutputs_and p q x

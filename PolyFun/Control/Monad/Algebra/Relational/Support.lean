@@ -76,7 +76,7 @@ theorem relWP_demonic_iff_forall_support {α β : Type} (x : m₁ α) (y : m₂ 
   Iff.rfl
 
 /-- Exact support makes the demonic relational bind law an equality. -/
-theorem strictBindPropDemonic : StrictBind m₁ m₂ Prop := by
+theorem strictBind_mAlgRelOrderedPropDemonic : StrictBind m₁ m₂ Prop := by
   refine { rwp_bind := ?_ }
   intro α β γ δ x y f g post
   apply propext
@@ -91,7 +91,7 @@ theorem strictBindPropDemonic : StrictBind m₁ m₂ Prop := by
 
 /-- The demonic relational support algebra is anchored to the demonic unary support
 reading on both sides. -/
-theorem anchoredPropDemonic : Anchored m₁ m₂ Prop := by
+theorem anchored_mAlgRelOrderedPropDemonic : Anchored m₁ m₂ Prop := by
   refine { rwp_pure_left := ?_, rwp_pure_right := ?_ }
   · intro α β a y post
     apply propext
@@ -118,7 +118,7 @@ theorem relWP_angelic_iff_exists_support {α β : Type} (x : m₁ α) (y : m₂ 
   Iff.rfl
 
 /-- Exact support makes the angelic relational bind law an equality. -/
-theorem strictBindPropAngelic : StrictBind m₁ m₂ Prop := by
+theorem strictBind_mAlgRelOrderedPropAngelic : StrictBind m₁ m₂ Prop := by
   refine { rwp_bind := ?_ }
   intro α β γ δ x y f g post
   apply propext
@@ -133,7 +133,7 @@ theorem strictBindPropAngelic : StrictBind m₁ m₂ Prop := by
 
 /-- The angelic relational support algebra is anchored to the angelic unary support
 reading on both sides. -/
-theorem anchoredPropAngelic : Anchored m₁ m₂ Prop := by
+theorem anchored_mAlgRelOrderedPropAngelic : Anchored m₁ m₂ Prop := by
   refine { rwp_pure_left := ?_, rwp_pure_right := ?_ }
   · intro α β a y post
     apply propext
@@ -148,5 +148,14 @@ theorem anchoredPropAngelic : Anchored m₁ m₂ Prop := by
     exact someOutput_pure (post a) b
 
 end Angelic
+
+@[deprecated (since := "2026-11-16")]
+alias strictBindPropDemonic := strictBind_mAlgRelOrderedPropDemonic
+@[deprecated (since := "2026-11-16")]
+alias anchoredPropDemonic := anchored_mAlgRelOrderedPropDemonic
+@[deprecated (since := "2026-11-16")]
+alias strictBindPropAngelic := strictBind_mAlgRelOrderedPropAngelic
+@[deprecated (since := "2026-11-16")]
+alias anchoredPropAngelic := anchored_mAlgRelOrderedPropAngelic
 
 end MonadAttach

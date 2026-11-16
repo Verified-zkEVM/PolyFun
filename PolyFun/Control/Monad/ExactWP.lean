@@ -6,6 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Hom.IsMonadHom
+public import PolyFun.Control.Monad.WPInstance
 public import Std.WP
 public import ToCslib.Order.LeanOrder
 
@@ -32,7 +33,7 @@ laws read in the order dual, so an exact interpretation is one that is sound on 
 
 The lax and oplax laws together make `wp_pure` and `wp_bind` equations, so the interpretation
 `fun x => WP.wpTrans x` is a monad morphism into `PredTrans Pred EPred` (`isMonadHom`,
-`ofIsMonadHom`). Three uses need exactness: upper bounds through a `bind`, exact values, and a
+`of_isMonadHom`). Three uses need exactness: upper bounds through a `bind`, exact values, and a
 rewriting normal form for `simp`.
 
 ## Automation contract
@@ -146,12 +147,14 @@ theorem isMonadHom :
 end Laws
 
 /-- An interpretation that is a monad morphism into `PredTrans Pred EPred` is exact. -/
-theorem ofIsMonadHom {m : Type u → Type v} {Pred : Type w} {EPred : Type w'} [Monad m]
+theorem of_isMonadHom {m : Type u → Type v} {Pred : Type w} {EPred : Type w'} [Monad m]
     [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
     (h : Cslib.IsMonadHom m (PredTrans Pred EPred) (fun x => WP.wpTrans x)) :
     ExactWPMonad m Pred EPred :=
   of_eq (fun a post epost => congrArg (fun t => PredTrans.apply t post epost) (h.map_pure a))
     (fun x f post epost => congrArg (fun t => PredTrans.apply t post epost) (h.map_bind x f))
+
+@[deprecated (since := "2026-11-16")] alias ofIsMonadHom := of_isMonadHom
 
 /-! ## Exactness as soundness on the dual -/
 
@@ -182,7 +185,7 @@ def dual [ExactWPMonad m Pred EPred] : WPMonad m Predᵒᵈ EPredᵒᵈ where
   bind_le_wp_bind x f post epost := wp_bind_le x f (fun a => ofDual (post a)) (ofDual epost)
 
 /-- The dual reading is exact: its oplax laws are the original interpretation's soundness laws. -/
-instance instExactWPMonadDual [ExactWPMonad m Pred EPred] :
+instance instDual [ExactWPMonad m Pred EPred] :
     @ExactWPMonad m Predᵒᵈ EPredᵒᵈ _ _ _ (dual (m := m) (Pred := Pred) (EPred := EPred)) :=
   @ExactWPMonad.mk m Predᵒᵈ EPredᵒᵈ _ _ _ dual
     (fun a post epost =>

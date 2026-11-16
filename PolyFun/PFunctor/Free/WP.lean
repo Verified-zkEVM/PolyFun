@@ -258,12 +258,15 @@ theorem wpFold_le_wpFold_of_le [Preorder l] {Φ Ψ : OpSpec P l} (hΨ : Ψ.Monot
   | lift_bind a r ih => exact (h a _).trans (hΨ a ih)
 
 /-- **Comparing specs**, with the smaller spec monotone instead of the larger. -/
-theorem wpFold_le_wpFold_of_le' [Preorder l] {Φ Ψ : OpSpec P l} (hΦ : Φ.Monotone)
-    (h : ∀ a k, Φ a k ≤ Ψ a k) (x : FreeM P α) (post : α → l) :
+theorem wpFold_le_wpFold_of_le_of_monotone_left [Preorder l] {Φ Ψ : OpSpec P l}
+    (hΦ : Φ.Monotone) (h : ∀ a k, Φ a k ≤ Ψ a k) (x : FreeM P α) (post : α → l) :
     wpFold Φ x post ≤ wpFold Ψ x post := by
   induction x with
   | pure x => exact le_rfl
   | lift_bind a r ih => exact (hΦ a ih).trans (h a _)
+
+@[deprecated (since := "2026-11-16")]
+alias wpFold_le_wpFold_of_le' := wpFold_le_wpFold_of_le_of_monotone_left
 
 /-- Folding a lifted spec is lifting the fold of the original spec, with the postcondition read
 through `ULift.down`. -/

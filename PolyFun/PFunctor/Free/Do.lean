@@ -15,8 +15,9 @@ Scoped core `WPMonad` interpretations of `FreeM P`, and the `@[spec]` lemmas tha
 decompose `do` programs over `FreeM P` with uninterpreted operations:
 
 * under `open scoped PFunctor.FreeM.DemonicWP`, `wp x Q E` is "every possible output of `x`
-  satisfies `Q`" (`MonadAttach.toWPMonadDemonic`); it is conjunctive and sound, and the scope's
-  rule `Spec.lift` demands the postcondition of *every* response to an operation;
+  satisfies `Q`" (`MonadAttach.toWPMonadDemonic`); it is conjunctive and sound, by the global
+  instances keyed on that construction, and the scope's rule `Spec.lift` demands the
+  postcondition of *every* response to an operation;
 * under `open scoped PFunctor.FreeM.AngelicWP`, `wp x Q E` is "some possible output of `x`
   satisfies `Q`" (`MonadAttach.toWPMonadAngelic`), and the scope's rule `Spec.lift_angelic` asks
   for *some* response;
@@ -36,7 +37,7 @@ they read, for all its parameters; these three are registered globally.
 `P.B a`, applies wherever the goal's value type is syntactically `P.B a`: under `bind`, where the
 type comes from the operation itself. An operation in tail position, after the value type has
 been normalized to a concrete type, is left as a `wp` goal that rewriting with
-`DemonicWP.wp_apply_eq` and `FreeM.allOutputs_lift` finishes.
+`DemonicWP.wp_eq_allOutputs` and `FreeM.allOutputs_lift` finishes.
 
 The instances are scoped because downstream libraries register their own core interpretations
 on reducible unfoldings of `FreeM` (oracle computations, for one); a global instance here would
@@ -57,25 +58,20 @@ variable {P : PFunctor.{uA, uB}}
 namespace DemonicWP
 
 /-- Demonic (all-outputs) core interpretation of free programs with uninterpreted
-operations. -/
-scoped instance instWPMonadAll : WPMonad (FreeM P) Prop EStack⟨⟩ :=
+operations. Its conjunctivity and soundness are the global instances
+`MonadAttach.instWPConjunctiveToWPMonadDemonic` and
+`MonadAttach.instLawfulWPMonadAttachToWPMonadDemonic`. -/
+scoped instance instWPMonad : WPMonad (FreeM P) Prop EStack⟨⟩ :=
   toWPMonadDemonic
-
-/-- The demonic interpretation is sound: a `wp`-provable postcondition holds at every possible
-output. -/
-scoped instance instLawfulWPMonadAttachAll : LawfulWPMonadAttach (FreeM P) Prop EStack⟨⟩ :=
-  toWPMonadDemonic_lawfulWPMonadAttach
-
-/-- The demonic interpretation is conjunctive at every program. -/
-scoped instance instWPConjunctiveAll {α : Type uB} (x : FreeM P α) : WPConjunctive x :=
-  toWPMonadDemonic_wpConjunctive x
 
 variable {α : Type uB}
 
 /-- The demonic `wp` is the "always" judgment. -/
-theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
+theorem wp_eq_allOutputs (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
     wp x post epost = AllOutputs post x :=
   rfl
+
+@[deprecated (since := "2026-11-16")] alias wp_apply_eq := wp_eq_allOutputs
 
 /-- The demonic triple is the guarded "always" judgment. -/
 theorem triple_iff_allOutputs (x : FreeM P α) (pre : Prop) (post : α → Prop)
@@ -89,15 +85,17 @@ namespace AngelicWP
 
 /-- Angelic (some-output) core interpretation of free programs with uninterpreted
 operations. -/
-scoped instance instWPMonadSome : WPMonad (FreeM P) Prop EStack⟨⟩ :=
+scoped instance instWPMonad : WPMonad (FreeM P) Prop EStack⟨⟩ :=
   toWPMonadAngelic
 
 variable {α : Type uB}
 
 /-- The angelic `wp` is the "sometimes" judgment. -/
-theorem wp_apply_eq (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
+theorem wp_eq_someOutput (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
     wp x post epost = SomeOutput post x :=
   rfl
+
+@[deprecated (since := "2026-11-16")] alias wp_apply_eq := wp_eq_someOutput
 
 end AngelicWP
 
@@ -155,11 +153,8 @@ transported interpretation explicitly; it applies once `wpMonadOfHandler s` is i
 @[spec]
 theorem lift_ofHandler (s : Handler n P) (a : P.A) (Q : P.B a → Pred) (E : EPred) :
     @Triple Pred EPred (FreeM P (P.B a)) (P.B a) _ _ (FreeM.lift (P := P) a)
-      ((wpMonadOfHandler s).toWP _) (wp (s a) Q E) Q E := by
-  let inst := wpMonadOfHandler (P := P) s
-  refine ⟨?_⟩
-  change wp (s a) Q E ⊑ wp ((FreeM.lift a).liftM s) Q E
-  rw [FreeM.liftM_lift]
+      ((wpMonadOfHandler s).toWP _) (wp (s a) Q E) Q E :=
+  WP.triple_of_le_wp _ <| by rw [wpMonadOfHandler_wp, FreeM.liftM_lift]
 
 end Handler
 
@@ -175,12 +170,10 @@ theorem lift_upper (Φ : OpSpec P l) (hΦ : Φ.Monotone) (a : P.A) (Q : P.B a �
     (E : EStack⟨⟩ᵒᵈ) :
     @Triple lᵒᵈ EStack⟨⟩ᵒᵈ (FreeM P (P.B a)) (P.B a) _ _ (FreeM.lift (P := P) a)
       ((Φ.toUpperWPMonad hΦ).toWP _)
-      (OrderDual.toDual (Φ a fun b => OrderDual.ofDual (Q b))) Q E := by
-  let inst := Φ.toUpperWPMonad hΦ
-  refine ⟨?_⟩
-  change OrderDual.toDual (Φ a fun b => OrderDual.ofDual (Q b)) ⊑
-    ((Φ.toUpperWPMonad hΦ).toWP _).wp (FreeM.lift (P := P) a) Q E
-  rw [OpSpec.toUpperWPMonad_wp, FreeM.wpFold_lift]
+      (OrderDual.toDual (Φ a fun b => OrderDual.ofDual (Q b))) Q E :=
+  WP.triple_of_le_wp _ <| by
+    rw [OpSpec.toUpperWPMonad_wp, FreeM.wpFold_lift]
+    exact Lean.Order.PartialOrder.rel_refl
 
 end Upper
 

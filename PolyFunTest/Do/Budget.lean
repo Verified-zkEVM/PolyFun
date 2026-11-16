@@ -56,6 +56,10 @@ abbrev coinBudget : WPMonad (FreeM Coin) (ℕ → Prop) EStack⟨⟩ :=
 
 attribute [local instance] coinBudget
 
+/-- The budget reading is exact, by the instance keyed on `OpSpec.toWPMonad`, which instance search
+reaches by unfolding `FreeM.budgetWPMonad`. -/
+example : ExactWPMonad (FreeM Coin) (ℕ → Prop) EStack⟨⟩ := inferInstance
+
 /- Under the budget reading, `vcgen` goes through every call. A `do` block that ends in a call is
 not matched by the call rule, because the elaborator has reduced its value type to `Bool` (see
 `docs/development/troubleshooting.md`), so the program ends in `pure`. -/

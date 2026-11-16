@@ -56,7 +56,7 @@ explicitly because its value type reads `Bool` rather than `coinP.B _`. -/
 example (o : Option Bool) : ⦃ True ⦄ firstOrDefault o ⦃ fun r => r = true ∨ r = false ⦄ := by
   vcgen -errorOnMissingSpec [firstOrDefault]
   · exact Bool.eq_false_or_eq_true _
-  · rw [FreeM.DemonicWP.wp_apply_eq, FreeM.allOutputs_lift (P := coinP)]
+  · rw [FreeM.DemonicWP.wp_eq_allOutputs, FreeM.allOutputs_lift (P := coinP)]
     exact fun b => Bool.eq_false_or_eq_true b
 
 /- With the value type syntactically `P.B a`, a tail-position operation is decomposed by

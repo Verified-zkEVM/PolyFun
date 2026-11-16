@@ -135,11 +135,8 @@ example : ¬ (toWPAngelic (m := SetM) ℕ).wp zeroOne (fun a => a = 0 ∧ a = 1)
 /-- Hence the angelic transformer is not `WPConjunctive` at `zeroOne`. -/
 example : ¬ @WPConjunctive (SetM ℕ) ℕ Prop EStack⟨⟩ _ _ (toWPAngelic (m := SetM) ℕ) zeroOne := by
   intro h
-  let inst := toWPAngelic (m := SetM) ℕ
-  have hc := h.wp_meet_wp_le (· = 0) (· = 1) estack⟨⟩ estack⟨⟩
-  change Lean.Order.meet (SomeOutput _ zeroOne) (SomeOutput _ zeroOne) →
-    SomeOutput (Lean.Order.meet _ _) zeroOne at hc
-  rw [Lean.Order.meet_prop_eq_and] at hc
+  have hc := (WP.wpConjunctive_iff _ zeroOne).mp h (· = 0) (· = 1) estack⟨⟩ estack⟨⟩
+  simp only [toWPAngelic_wp, Lean.Order.meet_prop_eq_and] at hc
   obtain ⟨a, -, ha⟩ := hc ⟨⟨0, Or.inl rfl, rfl⟩, ⟨1, Or.inr rfl, rfl⟩⟩
   rw [Lean.Order.meet_apply, Lean.Order.meet_prop_eq_and] at ha
   exact Nat.zero_ne_one (ha.1.symm.trans ha.2)
@@ -154,14 +151,10 @@ example : (toWPAngelic (m := SetM) ℕ).wp zeroOne (· = 0) estack⟨⟩ ∧
 example :
     ¬ @LawfulWPMonadAttach SetM.{0} Prop EStack⟨⟩ _ _ _ _ _ (toWPMonadAngelic (m := SetM.{0})) := by
   intro h
-  let inst := toWPMonadAngelic (m := SetM.{0})
-  have hwp : Lean.Order.top ⊑ wp zeroOne (fun a => ⌜a = 0⌝) Lean.Order.top := by
-    intro _
-    change SomeOutput (fun a => ⌜a = 0⌝) zeroOne
-    exact ⟨0, Or.inl rfl, (Lean.Order.ofProp_prop_eq _).mpr rfl⟩
   have h₁ : CanReturn zeroOne 1 := Or.inr rfl
-  have h₀ := h.of_canReturn_wp h₁ hwp
-  exact Nat.one_ne_zero h₀
+  refine Nat.one_ne_zero ((WPMonad.lawfulWPMonadAttach_iff _).mp h (P := (· = 0)) h₁ fun _ => ?_)
+  rw [toWPMonadAngelic_wp]
+  exact ⟨0, Or.inl rfl, (Lean.Order.ofProp_prop_eq _).mpr rfl⟩
 
 end Canaries
 

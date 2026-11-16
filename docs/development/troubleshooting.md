@@ -384,7 +384,10 @@ interpretation is a construction (`def`) or a `scoped` instance, because a globa
 `FreeM P` would compete with downstream instances on its reducible unfoldings, such as
 oracle-computation types. Install the provided interpretations `scoped` or `local` downstream. The
 writer interpretations follow the same rule: `WriterT.MonoidWP.instWPMonad` is scoped under
-`WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`.
+`WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`. The
+`Prop`-valued facts of a reading (`ExactWPMonad`, `WPConjunctive`, `LawfulWPMonadAttach`) are
+global instances keyed on its construction, so they apply under a downstream scope that installs
+the same construction.
 
 A `@[spec]` rule stated for one reading is registered in the same scope, so `vcgen` finds
 `FreeM.Spec.lift` only under `open scoped PFunctor.FreeM.DemonicWP`, and the `WriterT` rules only
@@ -410,9 +413,14 @@ registered specification is left as a verification condition with
 `Triple`, `WPConjunctive`, and `LawfulWPMonadAttach` take their `WP` / `WPMonad` as
 instance-implicit parameters. Projecting (`h.le_wp`) or constructing (`⟨h⟩`, `refine ⟨…⟩`) a
 value whose interpretation is a *non-instance* construction (`MAlgOrdered.toWP α`,
-`MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Bind the
-construction first — `let inst := MAlgOrdered.toWP α` — so it is found as a local instance;
-`let`, not `have`, so it stays definitionally the term in the statement.
+`MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Use the lemmas
+of `PolyFun/Control/Monad/WPInstance.lean`, which take the interpretation as an explicit argument
+that the goal or the hypothesis determines: `WP.triple_iff _`, `WP.triple_of_le_wp _ h`,
+`(WP.wpConjunctive_iff _ x).mpr`, and `(WPMonad.lawfulWPMonadAttach_iff _).mpr`, or `.mp` to
+project. The resulting goals state the judgment through `inst.wp`, which the value lemma of the
+construction rewrites. To apply a lemma that expects the interpretation as an instance, bind the
+construction first, `letI := MAlgOrdered.toWP α`, so that it is found as a local instance and
+stays definitionally the term in the statement.
 
 ### `grind =` cannot index `ite`, `dite`, or thunked applicative operands
 
@@ -472,7 +480,7 @@ triple already carries the normalized type (`Bool` for an `abbrev` interface): t
 listed and rejected ("No spec applicable"). Registering the unfolding
 `FreeM.lift a = FreeM.liftBind a pure` as an equation spec does not help, because `Spec.pure`
 then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
-the residual `wp` goal by rewriting with `DemonicWP.wp_apply_eq` and
+the residual `wp` goal by rewriting with `DemonicWP.wp_eq_allOutputs` and
 `FreeM.allOutputs_lift (P := …)`, naming the interface explicitly because its direction type
 has been reduced on the concrete polynomial (see
 [`FreeM` nodes in simp normal form](#freem-nodes-in-simp-normal-form) and

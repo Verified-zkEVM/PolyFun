@@ -24,8 +24,10 @@ under `WriterT.MonoidWP`, and the specialization to logs combined by `++` from `
 `Std.Associative` and `Std.LawfulIdentity` is scoped under `WriterT.AppendWP`, which also supplies
 the writer's `LawfulMonad` instance (`WriterT.lawfulMonad_monad`). Clients opt in with
 `open scoped WriterT.MonoidWP` or `open scoped WriterT.AppendWP`, or install an explicit
-interpretation locally. Importing the module does not choose a writer interpretation.
-The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
+interpretation locally. Importing the module does not choose a writer interpretation. Exactness
+over an exact base is a global instance keyed on `WriterT.wpMonadOf`
+(`WriterT.instExactWPMonadWpMonadOf`), so it holds under either scope and for a local
+interpretation. The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
 live in `PolyFun.Control.Do.Spec`, registered in the same two scopes; the entailments they wrap
 are stated here.
 -/
@@ -36,17 +38,6 @@ universe u v w z
 
 open Std.WP
 open scoped Lean.Order
-
-/-- `WPMonad.map_le_wp_map` with the unmapped program's postcondition given up to an equation, the
-form the `WriterT` proofs below instantiate. -/
-private theorem WPMonad.map_le_wp_map' {m : Type u → Type v} {Pred : Type w} {EPred : Type z}
-    [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] {α β : Type u}
-    (f : α → β) (x : m α) :
-    ∀ post post' epost, post = (fun a => post' (f a)) →
-      wp x post epost ⊑ wp (f <$> x) post' epost := by
-  intro post post' epost h
-  subst h
-  exact WPMonad.map_le_wp_map f x post' epost
 
 namespace WriterT
 
@@ -126,10 +117,11 @@ def wpMonadOf (empty : ω) (append : ω → ω → ω)
             (fun q => post q.1 (append w q.2)) epost
       refine Lean.Order.PartialOrder.rel_trans (WP.wp_consequence x.run _ _ epost fun p => ?_)
         (WPMonad.bind_le_wp_bind x.run _ _ epost)
-      exact WPMonad.map_le_wp_map' _ (f p.1).run _ _ epost (funext fun q => by rw [assoc]) }
+      simpa only [assoc] using WPMonad.map_le_wp_map (fun q : β × ω => (q.1, append p.2 q.2))
+        (f p.1).run (fun q => post q.1 (append w q.2)) epost }
 
 /-- Over an exact base interpretation, the explicit writer interpretation is exact. -/
-theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append : ω → ω → ω)
+instance instExactWPMonadWpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append : ω → ω → ω)
     (right_id : ∀ w, append w empty = w)
     (assoc : ∀ a b c, append (append a b) c = append a (append b c))
     [@LawfulMonad (WriterT ω m) (WriterT.monad empty append)] :
@@ -151,8 +143,11 @@ theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append 
           (fun q => post q.1 (append (append w p.2) q.2)) epost) epost
       simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc])
 
-/-- The explicit writer interpretation exposes its accumulated-log equation. -/
-@[simp]
+@[deprecated (since := "2026-11-16")] alias exactWPMonad_wpMonadOf := instExactWPMonadWpMonadOf
+
+/-- The explicit writer interpretation exposes its accumulated-log equation. Not `@[simp]`: the
+scoped readings state their own equations on core's `wp` (`WriterT.wp_apply_eq`,
+`WriterT.AppendWP.wp_apply_eq`). -/
 theorem wpInstOf_apply_eq (append : ω → ω → ω) (x : WriterT ω m α)
     (post : α → ω → Pred) (epost : EPred) (w : ω) :
     (wpInstOf append).wp x post epost w =
@@ -172,8 +167,10 @@ theorem le_wp_liftTell_of (empty : ω) (append : ω → ω → ω)
     (post : α → ω → Pred) (epost : EPred) :
     (fun w => wp x (fun a => post a w) epost) ⊑
       (wpInstOf append).wp ((WriterT.liftTell empty).monadLift x) post epost :=
-  fun w => WPMonad.map_le_wp_map' (fun a => (a, empty)) x _ _ epost
-    (funext fun a => by simp only [right_id])
+  fun w => by
+    have h := WPMonad.map_le_wp_map (fun a => (a, empty)) x (fun p => post p.1 (append w p.2)) epost
+    simp only [right_id] at h
+    exact h
 
 /-- Starting the accumulated-log interpretation at a left identity gives the base run. -/
 theorem wp_run_eq_of (empty : ω) (append : ω → ω → ω)
@@ -196,11 +193,6 @@ variable [EmptyCollection ω] [Append ω] [Std.Associative (α := ω) (· ++ ·)
 accumulated so far, extended on the right by `++`. -/
 scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
   wpMonadOf ∅ (· ++ ·) Std.LawfulRightIdentity.right_id Std.Associative.assoc
-
-/-- The append-based writer interpretation is exact over an exact base. -/
-scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
-    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
-  exactWPMonad_wpMonadOf ∅ (· ++ ·) Std.LawfulRightIdentity.right_id Std.Associative.assoc
 
 @[simp, grind =]
 theorem wp_apply_eq (x : WriterT ω m α) (post : α → ω → Pred) (epost : EPred) (w : ω) :
@@ -232,21 +224,11 @@ end AppendWP
 
 variable [Monoid ω]
 
-/-- The accumulated-log interpretation for multiplicative monoid logs. -/
-@[expose, instance_reducible]
-def wpInst [WP (m (α × ω)) (α × ω) Pred EPred] :
-    WP (WriterT ω m α) α (ω → Pred) EPred := wpInstOf (· * ·)
-
 namespace MonoidWP
 
 /-- Opt-in writer interpretation for multiplicative monoid logs. -/
 scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
   wpMonadOf 1 (· * ·) mul_one mul_assoc
-
-/-- The multiplicative writer interpretation is exact over an exact base. -/
-scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
-    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
-  exactWPMonad_wpMonadOf 1 (· * ·) mul_one mul_assoc
 
 end MonoidWP
 
@@ -266,8 +248,10 @@ theorem le_wp_tell (out : ω) (post : PUnit → ω → Pred) (epost : EPred) :
 theorem le_wp_monadLift (x : m α) (post : α → ω → Pred) (epost : EPred) :
     (fun w => wp x (fun a => post a w) epost) ⊑
       wp (MonadLift.monadLift x : WriterT ω m α) post epost :=
-  fun w => WPMonad.map_le_wp_map' (fun a => (a, (1 : ω))) x _ _ epost
-    (funext fun a => by simp only [mul_one])
+  fun w => by
+    have h := WPMonad.map_le_wp_map (fun a => (a, (1 : ω))) x (fun p => post p.1 (w * p.2)) epost
+    simp only [mul_one] at h
+    exact h
 
 @[simp, grind =]
 theorem wp_mk_apply_eq (x : m (α × ω)) (post : α → ω → Pred) (epost : EPred) (w : ω) :

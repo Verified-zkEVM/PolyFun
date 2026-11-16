@@ -18,7 +18,8 @@ An ordered monad algebra installed as a `WPMonad` drives core's `vcgen`: the gen
 the identity algebra on the deterministic monad `Det` of `PolyFunTest.Do.Fixtures` at the carrier
 `ℕ∞`, the shape a quantitative carrier takes; the `Prop` carrier is exercised through the support
 layer instead. The monad is a fresh copy of `Id` so that no global core instance competes with
-the one that its scope installs.
+the one that its scope installs. The algebra also preserves binary meets, so its interpretation
+is conjunctive (`MAlgOrdered.wpConjunctive_toWP`) and core's `Triple.and` applies.
 The single `vcgen` call pins the experimental-tactic diagnostic with `#guard_msgs`; the other
 `PolyFunTest/Do/` modules acknowledge it with `set_option experimental.vcgen true` instead.
 -/
@@ -49,3 +50,10 @@ example (x : Det Nat) (pre : ℕ∞) (post : Nat → ℕ∞) :
     Triple x pre post Lean.Order.bot ↔ pre ≤ MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   MAlgOrdered.toWP_triple_iff x pre post Lean.Order.bot
 
+/-- The identity algebra preserves binary meets, so its interpretation is conjunctive at every
+program, and core's `Triple.and` combines two triples about one program. -/
+example (x : Det Nat) (a b : ℕ∞) (p q : Nat → ℕ∞) (h₁ : ⦃ a ⦄ x ⦃ p ⦄) (h₂ : ⦃ b ⦄ x ⦃ q ⦄) :
+    Triple x (Lean.Order.meet a b) (Lean.Order.meet p q)
+      (Lean.Order.meet Lean.Order.bot Lean.Order.bot) :=
+  haveI := MAlgOrdered.wpConjunctive_toWP x fun _ _ => le_rfl
+  Triple.and h₁ h₂
