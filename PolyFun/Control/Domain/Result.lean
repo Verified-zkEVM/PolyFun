@@ -30,14 +30,17 @@ On discrete operands, `strict1` and `strict2` demand one or two operands from le
 
 `valueEmbedding` embeds returned values, and `map` changes them without any order, so a decoder
 into results over native values is a `Control.Semantics.CertifiedMeaning` into
-`valueEmbedding`. `toOption` keeps a returned value and forgets the difference between bottom and
-an error.
+`valueEmbedding`. Through an injective function, `map` is injective (`map_injective`), so a
+result read back as `f x` returned `x` (`map_eq_value_apply_iff`). `toOption` keeps a returned
+value and forgets the difference between bottom and an error.
 
 `bindPlain` and `ifValue` sequence results without any order, beside `map`, so a native evaluator
 can compute with them. `bindPlain` passes bottom and errors through, and `ifValue` gives bottom at
-an error too. `Fin.mOfFn` in the monad of `value` and `bindPlain` (`DomainResult.monad`) collects a
-`Fin`-indexed family from left to right. That monad is not an instance, so `Option`'s monad keeps
-its meaning at the underlying type. On ordered values, `bind` is `bindPlain` (`bind_eq_bindPlain`).
+an error too. `applyPlain` applies a returned function, which may take a suspended argument, as
+`bindPlain` with application. `Fin.mOfFn` in the monad of `value` and `bindPlain`
+(`DomainResult.monad`) collects a `Fin`-indexed family from left to right. That monad is not an
+instance, so `Option`'s monad keeps its meaning at the underlying type. On ordered values, `bind`
+is `bindPlain` (`bind_eq_bindPlain`).
 
 Above a returned value lie only values above it (`value_le_iff`), and above an error only that
 error (`error_le_iff`). A decoder `dec` *decodes above* an encoder `enc` (`DecodesAbove`) when the
@@ -124,6 +127,16 @@ theorem map_eq_value_iff {f : α → β} {d : DomainResult ε α} {y : β} :
       (value_ne_error _ _)⟩
   | value x => simp
 
+/-- Changing returned values by an injective function is injective on results. -/
+theorem map_injective {f : α → β} (hf : Function.Injective f) :
+    Function.Injective (map (ε := ε) f) :=
+  WithBot.map_injective (Function.injective_id.sumMap hf)
+
+/-- Through an injective function, `map f d` returns `f x` exactly when `d` returns `x`. -/
+theorem map_eq_value_apply_iff {f : α → β} (hf : Function.Injective f) {d : DomainResult ε α}
+    {x : α} : map f d = value (f x) ↔ d = value x :=
+  (map_injective hf).eq_iff' (map_value f x)
+
 /-- Keep a value, and send bottom and every error to `none`. -/
 @[expose] def toOption : DomainResult ε α → Option α
   | ⊥ => none
@@ -186,6 +199,22 @@ theorem bindPlain_eq_value_iff {d : DomainResult ε α} {f : α → DomainResult
 theorem map_eq_bindPlain (f : α → β) (d : DomainResult ε α) :
     map f d = bindPlain d (value ∘ f) := by
   induction d using inductionOn <;> rfl
+
+/-- Apply a returned function to an argument; bottom and every error pass through. It needs no
+order, and the argument type is arbitrary, so the function may take a suspended argument, such as
+a result. -/
+@[expose] def applyPlain {γ : Type*} (f : DomainResult ε (γ → DomainResult ε β)) (x : γ) :
+    DomainResult ε β :=
+  bindPlain f fun g => g x
+
+@[simp] theorem applyPlain_bot {γ : Type*} (x : γ) :
+    applyPlain (⊥ : DomainResult ε (γ → DomainResult ε β)) x = ⊥ := rfl
+
+@[simp] theorem applyPlain_error {γ : Type*} (e : ε) (x : γ) :
+    applyPlain (error e : DomainResult ε (γ → DomainResult ε β)) x = error e := rfl
+
+@[simp] theorem applyPlain_value {γ : Type*} (g : γ → DomainResult ε β) (x : γ) :
+    applyPlain (value g) x = g x := rfl
 
 /-- Continue with a returned value, and give bottom otherwise, also at an error. -/
 @[expose] def ifValue (d : DomainResult ε α) (f : α → DomainResult ε β) : DomainResult ε β :=

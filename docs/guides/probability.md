@@ -359,8 +359,8 @@ measure module.
   (`CertifiedMeaning.success_map_meaning`, `CertifiedMeaning.failureMass_map_meaning`, and the
   correspondence forms `CorrespondsOn.success_map_meaning_ae` and
   `CorrespondsOn.failureMass_map_meaning_ae`). These forms need the implementation to be
-  measurable only almost everywhere. The `ScopedDomains` tutorial's decoded `addTwo` and `pred`
-  are their consumers in `PolyFunTest/Probability/ScopedDomains.lean`.
+  measurable only almost everywhere. The `ScopedDomains` tutorial's decoded `addTwo`, `pred` and
+  recursive `double` are their consumers in `PolyFunTest/Probability/ScopedDomains.lean`.
 
 The measure modules keep the names and namespaces of the declarations they took over from VCVio,
 so VCVio can import them without renaming. The coupling predicates and the expectation algebra
