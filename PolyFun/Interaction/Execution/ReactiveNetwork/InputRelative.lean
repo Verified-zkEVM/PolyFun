@@ -43,10 +43,14 @@ namespace Interaction.Execution.ReactiveNetwork
 open PFunctor ReactiveProcess MonadAttach
 
 variable {Node result S : Type} {boundary : PortBoundary}
-  {network : Network Node boundary result} [DecidableEq Node]
-  {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
+  {network : Network Node boundary result}
 
 attribute [local implicit_reducible] signature Response
+
+section
+
+variable [DecidableEq Node]
+  {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
 
 /-- **An input-relative certificate.** Each node's charge is paid by its potential and the credit
 it consumes; what it emits is unconstrained. -/
@@ -74,6 +78,8 @@ certificate. -/
     have := c.step id state next hinv hsched h
     omega
 
+end
+
 /-! ## Exchange rates -/
 
 /-- The credit of a routed packet in its recipient's currency; exports are dropped. -/
@@ -92,7 +98,6 @@ destination, so routing preserves credit exactly. -/
   route_le id packet := by
     rcases network.route id packet with ⟨target, q⟩ | q <;> simp [destCredit, weightedDest]
 
-omit [DecidableEq Node] in
 /-- Re-denominated credit releases the consumed credit at the receiver's rate. -/
 theorem CreditModel.consumed_reweight (credit : CreditModel network) (w : Node → ℕ) (id : Node)
     (state : State network S) :
@@ -119,6 +124,11 @@ charge. -/
       (network.component id).view (state.localState id) = .inr ⟨.send packet, cont⟩ →
         weightedDest credit w (network.route id packet) + charge (.node id) state ≤
           w id * charge (.node id) state
+
+section
+
+variable [DecidableEq Node]
+  {m : Type → Type} [Monad m] [LawfulMonad m] [MonadAttach m] [ExactMonadAttach m]
 
 /-- **Small gain is conservation in a re-denominated currency.** -/
 @[expose] def InputRelative.toConserving
@@ -182,7 +192,8 @@ theorem InputRelative.work_le_initial_of_smallGain [Fintype Node]
       (events.map (credit.reweight w).funded).sum :=
   (r.toConserving w hgain).work_le_initial preserves preserves_input hinit h
 
-omit [DecidableEq Node] in
+end
+
 /-- Uniform rates `2` satisfy the gain law when each emission credits its recipient at most half
 the sender's charge. -/
 theorem smallGain_two {discipline : Discipline} {charge : Charge network S}
@@ -230,7 +241,6 @@ private theorem pow_level_gain (g a b c q : ℕ) (hlt : a < b) (hq : q ≤ g * c
   have h3 : (g + 1) ^ (a + 1) * c ≤ (g + 1) ^ b * c := Nat.mul_le_mul_right _ hpow
   omega
 
-omit [DecidableEq Node] in
 /-- **Acyclic composition.** The rates `(g + 1) ^ level` satisfy the gain law. -/
 theorem Acyclic.smallGain {discipline : Discipline} {charge : Charge network S}
     {credit : CreditModel network} {invariant : State network S → Prop}

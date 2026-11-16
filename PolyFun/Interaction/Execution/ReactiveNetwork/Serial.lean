@@ -27,12 +27,17 @@ open PFunctor ReactiveProcess
 attribute [local implicit_reducible] signature Response
 
 variable {Node result S : Type} {boundary : PortBoundary}
-  {network : Network Node boundary result} [DecidableEq Node]
-  {m : Type → Type} [Monad m] [LawfulMonad m]
+  {network : Network Node boundary result}
 
 /-- Add explicitly accounted administrative work without changing the residual execution. -/
 @[expose] def State.addElapsed (extra : ℕ) (state : State network S) : State network S :=
   { state with elapsed := state.elapsed + extra }
+
+/-- Terminal observations ignore the accumulated administrative counter. -/
+@[simp] theorem outcome_addElapsed (id : Node) (extra : ℕ) (state : State network S) :
+    outcome id (state.addElapsed extra) = outcome id state := rfl
+
+variable [DecidableEq Node] {m : Type → Type} [Monad m] [LawfulMonad m]
 
 /-- A serial FIFO round spends a local activation and one delivery activation. -/
 @[expose] def serialRound
@@ -166,11 +171,6 @@ theorem runSerial_eq_runToken
       simp only [State.addElapsed]
       congr 1
       omega
-
-omit [DecidableEq Node] in
-/-- Terminal observations ignore the accumulated administrative counter. -/
-@[simp] theorem outcome_addElapsed (id : Node) (extra : ℕ) (state : State network S) :
-    outcome id (state.addElapsed extra) = outcome id state := rfl
 
 /-- The serial FIFO policy and token passing have equal terminal observations at
 corresponding horizons, including explicit abort and unfinished execution. -/

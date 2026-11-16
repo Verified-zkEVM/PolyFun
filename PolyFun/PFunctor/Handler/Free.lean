@@ -22,6 +22,10 @@ through `first`, then runs that program through `second : Handler m Q`. With
 it is the precomposition that implements one interface in terms of another and
 then runs the result. `id_comp` is the left-identity law for free handlers;
 `comp_id`, `comp_assoc` and `liftM_comp` hold for any `LawfulMonad m`.
+
+`ofLens l` reads a lens as the free handler that issues one translated request. Interpreting
+through it is `FreeM.mapLens` (`liftM_ofLens`, `liftMHom_ofLens`), and composing a handler with
+it pulls the handler back along the lens (`comp_ofLens`).
 -/
 
 @[expose] public section
@@ -86,6 +90,28 @@ theorem ofLens_comp
     {R : PFunctor.{uA'', u'}}
     (second : Lens Q R) (first : Lens P Q) :
     ofLens (second ∘ₗ first) = (ofLens second).comp (ofLens first) := rfl
+
+/-- Pulling the one-operation handler of a lens back along another lens gives the one-operation
+handler of the composite lens. -/
+theorem comapLens_ofLens
+    {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
+    {R : PFunctor.{uA'', u'}}
+    (second : Lens Q R) (first : Lens P Q) :
+    (ofLens second).comapLens first = ofLens (second ∘ₗ first) := rfl
+
+/-- Composing a handler with the one-operation handler of a lens pulls the handler back along
+the lens. -/
+theorem comp_ofLens {m : Type u → Type v} [Monad m] [LawfulMonad m] {P : PFunctor.{uA, u}}
+    {Q : PFunctor.{uA', u}} (second : Handler m Q) (l : Lens P Q) :
+    second.comp (ofLens l) = second.comapLens l := by
+  funext a
+  exact bind_pure_comp _ _
+
+/-- Bundled form of `liftM_ofLens`: the fold of the one-operation handler of a lens is
+`FreeM.mapLensHom`. -/
+theorem liftMHom_ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} (l : Lens P Q) :
+    FreeM.liftMHom (ofLens l) = FreeM.mapLensHom l :=
+  MonadHom.ext' fun _ x => liftM_ofLens l x
 
 @[simp]
 theorem id_comp {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}

@@ -7,7 +7,6 @@ Authors: Devon Tuma
 module
 
 public import Mathlib.Data.List.Basic
-import Lean.Elab.Tactic.Omega
 
 /-!
 # Membership, calendar dates, and exact voting arithmetic

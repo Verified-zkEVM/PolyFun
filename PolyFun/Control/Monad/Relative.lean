@@ -106,24 +106,21 @@ def monadOfId (M : RelativeMonad C _ (𝟭 _)) : Monad C where
         Functor.id_obj, Functor.id_map]
       calc
         M.μ (M.μ (f ≫ M.η) ≫ M.η) ≫ M.μ (𝟙 (M.T Y))
-            = M.μ ((M.μ (f ≫ M.η) ≫ M.η) ≫ M.μ (𝟙 (M.T Y))) := by
-                symm
-                exact M.assoc (f := M.μ (f ≫ M.η) ≫ M.η) (g := 𝟙 (M.T Y))
+            = M.μ ((M.μ (f ≫ M.η) ≫ M.η) ≫ M.μ (𝟙 (M.T Y))) :=
+                (M.assoc (f := M.μ (f ≫ M.η) ≫ M.η) (g := 𝟙 (M.T Y))).symm
         _ = M.μ (M.μ (f ≫ M.η)) := by
               congr 1
               simp [Category.assoc]
         _ = M.μ (𝟙 (M.T X) ≫ M.μ (f ≫ M.η)) := by simp
-        _ = M.μ (𝟙 (M.T X)) ≫ M.μ (f ≫ M.η) := by
-              exact M.assoc (f := 𝟙 (M.T X)) (g := f ≫ M.η))
-  left_unit X := by
-    exact M.right_unit (f := 𝟙 (M.T X))
+        _ = M.μ (𝟙 (M.T X)) ≫ M.μ (f ≫ M.η) :=
+              M.assoc (f := 𝟙 (M.T X)) (g := f ≫ M.η))
+  left_unit X := M.right_unit (f := 𝟙 (M.T X))
   right_unit X := by
     simp only [Functor.id_obj]
     calc
       M.μ (M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))
-          = M.μ ((M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))) := by
-              symm
-              exact M.assoc (f := M.η ≫ M.η) (g := 𝟙 (M.T X))
+          = M.μ ((M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))) :=
+              (M.assoc (f := M.η ≫ M.η) (g := 𝟙 (M.T X))).symm
       _ = M.μ M.η := by
             congr 1
             simp [Category.assoc]
@@ -131,15 +128,14 @@ def monadOfId (M : RelativeMonad C _ (𝟭 _)) : Monad C where
   assoc X := by
     calc
       M.μ (M.μ (𝟙 (M.T X)) ≫ M.η) ≫ M.μ (𝟙 (M.T X))
-          = M.μ ((M.μ (𝟙 (M.T X)) ≫ M.η) ≫ M.μ (𝟙 (M.T X))) := by
-              symm
-              exact M.assoc (f := M.μ (𝟙 (M.T X)) ≫ M.η) (g := 𝟙 (M.T X))
+          = M.μ ((M.μ (𝟙 (M.T X)) ≫ M.η) ≫ M.μ (𝟙 (M.T X))) :=
+              (M.assoc (f := M.μ (𝟙 (M.T X)) ≫ M.η) (g := 𝟙 (M.T X))).symm
       _ = M.μ (M.μ (𝟙 (M.T X))) := by
             congr 1
             simp [Category.assoc]
       _ = M.μ (𝟙 (M.T (M.T X)) ≫ M.μ (𝟙 (M.T X))) := by simp
-      _ = M.μ (𝟙 (M.T (M.T X))) ≫ M.μ (𝟙 (M.T X)) := by
-            exact M.assoc (f := 𝟙 (M.T (M.T X))) (g := 𝟙 (M.T X))
+      _ = M.μ (𝟙 (M.T (M.T X))) ≫ M.μ (𝟙 (M.T X)) :=
+            M.assoc (f := 𝟙 (M.T (M.T X))) (g := 𝟙 (M.T X))
 
 /-- Transport a relative monad along a natural isomorphism of the underlying functor. -/
 def ofNatIso {J₁ J₂ : C ⥤ D} (φ : J₁ ≅ J₂) (M : RelativeMonad C D J₁) : RelativeMonad C D J₂ where

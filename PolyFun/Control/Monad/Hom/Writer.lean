@@ -5,6 +5,8 @@ Authors: Quang Dao
 -/
 module
 
+public import Mathlib.Algebra.Group.Hom.Defs
+public import Mathlib.Algebra.Group.TypeTags.Basic
 public import Mathlib.Control.Monad.Writer
 public import PolyFun.Control.Monad.Hom
 
@@ -14,6 +16,10 @@ public import PolyFun.Control.Monad.Hom
 This module gives `WriterT ω` its functorial action on PolyFun's bundled `MonadHom`.
 It is separate from `PolyFun.Control.Monad.Hom` so consumers of the base morphism API
 do not acquire Mathlib's Writer dependency unless they use it.
+
+Two more morphisms change the output rather than the base monad: `WriterT.mapOutputHom f` maps
+the accumulated output along a monoid hom `f`, and `WriterT.toStateTHom` reads an additive log
+as the amount added to a running total in `StateT`.
 -/
 
 @[expose] public section
@@ -72,5 +78,50 @@ variable {n' : Type u → Type x} [Monad n'] [LawfulMonad n']
   apply MonadHom.ext'
   intro α x
   rfl
+
+/-! ## Changing the output -/
+
+section mapOutput
+
+variable {M N : Type u} [Monoid M] [Monoid N]
+
+/-- Mapping the accumulated output along a monoid hom is a monad morphism: the computation and its
+returned value are unchanged. -/
+def mapOutputHom (f : M →* N) : WriterT M m →ᵐ WriterT N m where
+  toFun _ x := WriterT.mk (Prod.map _root_.id f <$> x.run)
+  toFun_pure' a := by
+    apply WriterT.ext
+    simp
+  toFun_bind' x y := by
+    apply WriterT.ext
+    simp [map_bind, bind_map_left]
+
+@[simp] lemma run_mapOutputHom (f : M →* N) (x : WriterT M m α) :
+    (mapOutputHom f x).run = Prod.map _root_.id f <$> x.run := rfl
+
+end mapOutput
+
+/-! ## An additive log as a running total -/
+
+section toStateT
+
+variable {κ : Type u} [AddMonoid κ]
+
+/-- Read an additive log as the amount added to a running total: from the total `t`, a writer run
+ends at `t` plus its log, added on the right. This is a monad morphism because addition is
+associative and `0` is a right identity; it does not need commutativity. -/
+def toStateTHom : WriterT (Multiplicative κ) m →ᵐ StateT κ m where
+  toFun _ x := StateT.mk fun t => (fun p => (p.1, t + Multiplicative.toAdd p.2)) <$> x.run
+  toFun_pure' a := by
+    ext t
+    simp
+  toFun_bind' x y := by
+    ext t
+    simp [map_bind, bind_map_left, add_assoc]
+
+@[simp] lemma run_toStateTHom (x : WriterT (Multiplicative κ) m α) (t : κ) :
+    (toStateTHom x).run t = (fun p => (p.1, t + Multiplicative.toAdd p.2)) <$> x.run := rfl
+
+end toStateT
 
 end WriterT
