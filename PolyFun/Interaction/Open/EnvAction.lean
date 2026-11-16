@@ -6,7 +6,7 @@ Authors: Quang Dao
 
 module
 
-import Mathlib.Init
+import Mathlib.Init  -- shake: keep (Mathlib's linters run on this file)
 
 /-!
 # Environment-event reactions
