@@ -83,6 +83,14 @@ Their pins are recorded in the manifest; their README files live under
   lattice-generic weakest-precondition framework `Std.WP`, which `vcgen` uses.
   Core's `Std.Do` framework, which `mvcgen` uses, is a distinct interface that
   PolyFun does not instantiate. See [program logic](../guides/program-logic.md).
+  Material that core could own is stated in core's namespaces and marked with an
+  `upstream candidate` comment: the `@[spec]` rules of
+  `PolyFun/Control/Do/Spec.lean` with the registration of
+  `Spec.tryCatch_MonadExcept`, and the control-flow equations `Std.WP.wp_ite`,
+  `wp_dite`, `wp_option_elim`, and `wp_sum_elim` of
+  `PolyFun/Control/Monad/ExactWP.lean`. The order bridge
+  `ToCslib/Order/LeanOrder.lean`, with its transfer lemmas in the namespace
+  `LeanOrder`, is a candidate for Mathlib.
 - **Measure staging:** the Mathlib lemmas that PolyFun's `Measure` companions need are staged
   under `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's, so
   VCVio's `ToMathlib` modules of the same relative paths can re-export them. See

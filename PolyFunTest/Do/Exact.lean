@@ -187,6 +187,6 @@ example {Prog : Type} {Value : Type} {Pred : Type} {EPred : Type} [Assertion Pre
     (f : γ → Prog) (g : δ → Prog) (post : Value → Pred) (epost : EPred) :
     wp (s.elim f g) post epost =
       s.elim (fun c => wp (f c) post epost) (fun d => wp (g d) post epost) := by
-  simp only [ExactWPMonad.wp_sum_elim]
+  simp only [Std.WP.wp_sum_elim]
 
 end PolyFunTest.Exact
