@@ -62,6 +62,7 @@ The tutorial consumes the public `OpSpec` and `FreeM.wpFold` APIs, without core'
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
 | `PolyFun/Control/Do/Spec.lean` | The `@[spec]` rules listed below for core's monads and transformers: list loops, `try … catch`, sequencing, `OptionT`, and the transformers' constructors, lifts, and runners, each an upstream candidate for core |
 | `PolyFun/Control/Do/MOfFn.lean` | `Fin.Spec.mOfFn`, the `@[spec]` rule for `Fin.mOfFn` (`ToCslib/Data/Fin/MOfFn.lean`), with an invariant `Fin.MOfFnInvariant` over the results collected so far, indexed by their number |
+| `PolyFun/Control/Do/Normalization.lean` | The simp set `wp_norm` (declared in `PolyFun/Control/Do/Normalization/Attr.lean`), which rewrites the assertion vocabulary that `vcgen` leaves into that of the carrier; see [Normalizing verification conditions](#normalizing-verification-conditions) |
 
 `PolyFun/Control/Do/Spec.lean` adds these rules to core's `@[spec]` catalogue, in core's
 namespace `Std.WP`. Each holds for every interpretation it mentions, is registered globally, and is
@@ -278,6 +279,40 @@ transformers' constructors, lifts, and runners are listed under [Layers](#layers
 `Spec.tryCatch_MonadExcept` but, unlike its twin `Spec.throw_MonadExcept`, does not tag it.
 `Do/Spec.lean` registers it, and `PolyFunTest/Do/Except.lean` runs `vcgen` through a
 `try … catch` on `ExceptT String SetM`.
+
+## Normalizing verification conditions
+
+`vcgen` leaves its verification conditions in the assertion vocabulary of core's `Std.WP`. That
+vocabulary consists of the order `⊑`, core's lattice operations (`Lean.Order.meet`, `iInf`, …), and
+the embedding `⌜p⌝`. It also has the postconditions `pushOption` and `pushExcept`, which the
+`OptionT` and `ExceptT` interpretations push to the base monad, and `binderNameHint` markers around
+continuations. The simp set `wp_norm` (`PolyFun/Control/Do/Normalization.lean`) rewrites them into
+the vocabulary of the carrier. Run
+`simp only [wp_norm]` on what `vcgen` leaves, and add the equations of the program's reading, such
+as `ExactWPMonad.wp_bind` or a `_wp` value lemma.
+
+The set contains these lemmas:
+
+- `Lean.Order.rel_eq_le` and the transfer lemmas of the namespace `LeanOrder`, for a carrier whose
+  lattice is Mathlib's through `ToCslib/Order/LeanOrder.lean`. `LeanOrder.ofProp_eq_ite` turns
+  `⌜p⌝` into `if p then ⊤ else ⊥` when `p` is decidable.
+- Core's lemmas for the carrier `Prop` (`Lean.Order.le_prop_eq_imp`, `ofProp_prop_eq`,
+  `meet_prop_eq_and`, …). Core's lattice on `Prop` unifies with the bridge of Mathlib's, so they
+  are registered at high priority, and the result is in `Prop`'s connectives.
+- Core's pointwise lemmas for function carriers (`Lean.Order.meet_apply`, `top_apply`, …), such as
+  the state-passing assertions of `StateT`.
+- `Lean.Order.rel_orderDual` and Mathlib's `OrderDual.toDual_le_toDual`, `ofDual_toDual`, and
+  `toDual_ofDual`, for the order duals of an upper-bound reading.
+- Core's `pushOption` and `pushExcept` equations on constructors, and the unfolding of
+  `binderNameHint`.
+
+Each lemma is an unconditional equation whose right-hand side removes core vocabulary or moves it
+to a smaller carrier, so rewriting with the set terminates. Most are also `simp` lemmas. The set
+lets a proof normalize the residue without the whole `simp` set, which on a concrete interface also
+reduces the value types of calls
+([troubleshooting](../development/troubleshooting.md#vcgen-matches-specs-structurally-so-dependent-value-types-need-care)).
+`PolyFunTest/Do/Normalization.lean` checks each group, and `PolyFunTest/Do/{Charge,FreeM}.lean`
+apply the set to what `vcgen` leaves.
 
 ## Interaction trees
 
