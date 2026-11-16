@@ -9,7 +9,7 @@ upstream README can describe APIs that the pinned revision does not yet supply.
 
 | Project | Existing role | Guidance for PolyFun contributors |
 |---|---|---|
-| [Lean](https://github.com/leanprover/lean4) | Language, module system, basic effects, weakest-precondition infrastructure | Use core monad laws and the pinned `Std.WP` interfaces through the documented quarantine. |
+| [Lean](https://github.com/leanprover/lean4) | Language, module system, basic effects, weakest-precondition infrastructure | Use core monad laws and the pinned `Std.WP` interfaces under the [core program-logic rules](../guides/program-logic.md#core-program-logic-rules). |
 | [Mathlib](https://github.com/leanprover-community/mathlib4) | `PFunctor`, W/M-types, algebra, order and category theory | Extend existing structures, notation, and typeclasses; use its naming and documentation conventions. |
 | [CSLib](https://github.com/leanprover/cslib) | Polynomial and generic free monads, transition systems, temporal and machine foundations | Reuse `PFunctor.FreeM`, `Cslib.FreeM`, relational LTS laws and machine APIs; stage reusable additions in `ToCslib`. |
 | [Batteries](https://github.com/leanprover-community/batteries) | Lean utilities and environment linter driver | Use the existing linter integration rather than a second policy implementation. |
@@ -122,7 +122,7 @@ implementations.
 family of monadic computations in order and collects the results as a function.
 The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
 version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
-`PolyFun/Control/Do/Spec.lean`, inside the `Std.WP` quarantine.
+`PolyFun/Control/Do/Spec.lean`, because `ToCslib` imports no `Std.WP` module.
 
 `ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
 rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums but not over `Fin`;

@@ -20,7 +20,8 @@ For a small application-facing entry point, read
 [UpdatePolicies](../../Examples/Tutorials/UpdatePolicies.lean). A finite proposed update shows
 all-response validation, an explicit permitted-answer policy, exact reachability, and one
 noncompliant handler. An empty policy illustrates why partial correctness alone is not progress.
-The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing the tactic tier.
+The tutorial consumes the public `OpSpec` and `FreeM.wpFold` APIs, without core's `WPMonad` or
+`vcgen`.
 
 ## Layers
 
@@ -34,7 +35,7 @@ The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing 
 | `PolyFun/Control/Monad/Support/Instances.lean` | The `MonadLiftT m SetM` shim, transport along lawful lifts, `MonadAttach` and its lawfulness instances for `SetM` and Mathlib's `WriterT`, a single-universe alias of core's `MonadAttach (ExceptT ε m)`, the exactness instances for `Id`, `Option`, `Except`, `SetM`, `OptionT`, `ExceptT`, and `WriterT`, and per-monad `CanReturn` unfoldings |
 | `PolyFun/Control/Monad/Support/Indexed.lean` | Per-run support of `StateT`/`ReaderT` (`supportFrom`, `supportAt`) with exact laws and the indexed judgments `⊨ₐ[s]`/`⊨ₛ[s]`/`⊭[s]` |
 | `PolyFun/Control/Monad/Support/Structural.lean` | The rest of the `do` fragment for `CanReturn` and the judgments: `<*`, `*>`, `if`, `if h :`, `Option.elim`, `Sum.elim`, `<$>`, `<*>` |
-| `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` under the demonic reading) and `SomeOutput` (angelic) |
+| `PolyFun/Control/Monad/Support/Loops.lean` | Invariant rules for `forIn'`/`forIn`/`foldlM`/`forM` over lists and `PureForIn` containers, for `AllOutputs` (from core's `Spec.*` and `Spec.forM_list` under the demonic reading) and `SomeOutput` (angelic) |
 | `PolyFun/Control/Monad/Support/Charged.lean` | `MonadAttach.chargedFoldlM`: a `List.foldlM` that also accumulates a state-dependent charge per event; induction over its possible results (`chargedFoldlM_induction`) and the potential method (`chargedFoldlM_le`), with a matching lower bound and constant-charge count |
 | `PolyFun/PFunctor/Free/Support.lean` | `MonadAttach`/`ExactMonadAttach` for `FreeM P` with a computable, axiom-free `attach`; structural equations by `rfl`; coherence with `Free/Path.lean` (`support_eq_range_output`) and with the powerset fold (`support_eq_liftM_univ`) |
 | `PolyFun/ITree/Support.lean` | `ITree.CanReturn` (a finite run returns the value) with its equations for `pure`, silent steps, queries, `bind` and `diverge`; `ITree.attach` by corecursion; `MonadAttach` and `ExactMonadAttach` for `ITree F` |
@@ -50,14 +51,14 @@ The tutorial consumes public `OpSpec` and `FreeM.wpFold` APIs without importing 
 | `PolyFun/ITree/WP/Models.lean` | One spec across models: on a finite program both readings are `FreeM.wpFold` (`wpTotal_toITree`, `wpPartial_toITree`); a continuous algebra's `ITree.denote` is its total reading (`denote_eq_wpTotal`, via `ContinuousAlgebra.toOpSpec`), and so is a resumption's denotation; a spec lifted along `ULift` reads as the lifted reading (`wpTotal_ulift`, `wpPartial_ulift`) |
 | `PolyFun/ITree/WP/Upstream.lean` | The readings as exact core interpretations, `ITree.wpMonadTotal`/`wpMonadPartial` (through `MAlgOrdered`), with `_wp` value lemmas; the demonic support reading is the partial demonic interpretation and the angelic one the total angelic interpretation |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
-| `PolyFun/PFunctor/Free/Do.lean` | Tactic tier for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas `Spec.lift`, `Spec.liftBind`, `Spec.bind`, `Spec.lift_angelic`, `Spec.lift_ofHandler`, `Spec.lift_upper` that let `vcgen` decompose free programs with uninterpreted operations |
+| `PolyFun/PFunctor/Free/Do.lean` | `vcgen` for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`), soundness and conjunctivity instances, and the `@[spec]` lemmas that let `vcgen` decompose free programs with uninterpreted operations: `Spec.lift` and `Spec.liftBind` in the scope `DemonicWP`, `Spec.lift_angelic` in the scope `AngelicWP`, and the global `Spec.bind`, `Spec.lift_ofHandler`, and `Spec.lift_upper` |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`, the mixin that makes a core `WPMonad` exact, with its dual reading `ExactWPMonad.dual`, the equational `simp` set on core's `wp` (`wp_pure` to `wp_sum_elim`), and the exactness instances for core's interpretations and transformer lifts (see [Exact interpretations](#exact-interpretations)) |
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as the core `Std.WP.WPMonad m l EStack⟨⟩` with `wp x post = μ (x >>= fun a => pure (post a))` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), its value by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, `wpConjunctiveOf`, and the transfer lemmas `top_eq_top`, `meet_eq_inf`, `join_eq_sup`, `iInf_eq_iInf`, and `iSup_eq_iSup` between core's and Mathlib's lattice operations |
 | `PolyFun/Control/Monad/Support/WP.lean` | `MonadAttach.toWPDemonic` / `toWPAngelic`: the always and sometimes judgments as core `WP` transformers from attachment alone; `toWPMonadDemonic` / `toWPMonadAngelic`: the demonic and angelic readings as `WPMonad m Prop EStack⟨⟩`; conjunctivity of the demonic reading; exactness of both readings over an `ExactMonadAttach`; soundness of the demonic reading in the sense of core's `Std.WP.LawfulWPMonadAttach` (`toWPMonadDemonic_lawfulWPMonadAttach`); `support_subset_of_wp` / `allOutputs_of_wp` |
 | `PolyFun/Control/Monad/Hom/WP.lean` | `MonadHom.transportWPOf` / `transportWPMonadOf` (along cslib's `IsMonadHom`) and the bundled `transportWP` / `transportWPMonad`: pulling a core `WPMonad` back along a monad morphism, preserving exactness |
 | `PolyFun/Control/Monad/WriterT/WP.lean` | `WriterT.wpMonadOf`, the interpretation of `WriterT` with explicit empty and append operations on the log-indexed carrier `ω → Pred`, its multiplicative specialization, scoped under `WriterT.MonoidWP`, and its append-based specialization over core's `Std.Associative (· ++ ·)` and `Std.LawfulIdentity (· ++ ·) ∅`, scoped under `WriterT.AppendWP` with the writer's lawfulness (`WriterT.lawfulMonad_monad`); the equations `WriterT.wp_apply_eq`, `wp_mk_apply_eq`, and `wp_run_eq` and their `WriterT.AppendWP` counterparts; the `tell` and `monadLift` entailments behind the `@[spec]` rules; and exactness over an exact base (`exactWPMonad_wpMonadOf`, scoped `WriterT.MonoidWP.instExactWPMonad` and `WriterT.AppendWP.instExactWPMonad`) |
 | `PolyFun/Control/Monad/Hom/Loops.lean` | A monad morphism between lawful monads commutes with `forIn'`/`forIn`/`forM`/`foldlM`/`mapM` and with `forIn` over `PureForIn` containers (`@[simp, grind =]`), through `MonadHom.isMonadHom` and cslib's `IsMonadHom.map_list*` |
-| `PolyFun/Control/Do/Spec.lean` | Tactic tier: the `@[spec]` rules listed below, for list loops, `Fin.mOfFn`, `try … catch`, sequencing, `WriterT`, `OptionT`, and the transformers' constructors, lifts, and runners |
+| `PolyFun/Control/Do/Spec.lean` | The `@[spec]` rules listed below, for list loops, `Fin.mOfFn`, `try … catch`, sequencing, `WriterT`, `OptionT`, and the transformers' constructors, lifts, and runners |
 
 `PolyFun/Control/Do/Spec.lean` adds these rules to core's `@[spec]` catalogue, in core's
 namespace `Std.WP`:
@@ -71,9 +72,9 @@ namespace `Std.WP`:
   tag it.
 - `Spec.seqLeft` and `Spec.seqRight`, for `<*` and `*>`.
 - `Spec.tell_WriterT`, `Spec.monadLift_WriterT`, `Spec.mk_WriterT`, and `Spec.run_WriterT`, for
-  Mathlib's `WriterT` with a multiplicative log, and `Spec.tell_WriterT_append`,
-  `Spec.monadLift_WriterT_append`, `Spec.mk_WriterT_append`, and `Spec.run_WriterT_append` for an
-  append-based log.
+  Mathlib's `WriterT` with a multiplicative log, in the scope `WriterT.MonoidWP`, and
+  `Spec.tell_WriterT_append`, `Spec.monadLift_WriterT_append`, `Spec.mk_WriterT_append`, and
+  `Spec.run_WriterT_append` for an append-based log, in the scope `WriterT.AppendWP`.
 - `Spec.failure_OptionT` and `Spec.lift_OptionT` for every assertion carrier, `Spec.guard_OptionT`
   for `Prop`-valued readings, and `Spec.guard_OptionT_iInf`, its counterpart for every assertion
   carrier.
@@ -291,28 +292,46 @@ continuations.
   `wpTotal_le_wpPartial` need `Φ.Monotone`. `PolyFunTest/ITree/WPExamples.lean` shows a
   non-monotone spec whose total reading exceeds its partial one.
 
-## The `Std.WP` quarantine
+## Core program-logic rules
 
-Core's weakest-precondition API is fenced in two tiers, and `scripts/check-modules.sh` enforces
-both for every import modifier:
+Four rules govern how PolyFun uses core's weakest-precondition framework. Together they keep every
+reading replaceable: a downstream library chooses the interpretation of its monads, and importing
+PolyFun does not choose it.
 
-- **Definitions**: `Std.WP` (`WP`, `WPMonad`, `Triple`, the `@[spec]` lemmas) and core's
-  `Std.Do` framework, which `mvcgen` uses, may be imported by the program-logic kernel
-  (`PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-  `PolyFun/ITree/Do.lean`, and `PolyFun/ITree/WP/Upstream.lean`) and by `PolyFunTest/Do/`.
-- **Tactics**: `Std.Tactic.Do` (`vcgen`, the deprecated `mvcgen`, and the `@[spec]` attribute
-  syntax) stays in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
-  `PolyFunTest/Do/`.
+1. **No global interpretation instances.** No library declares a global instance of `WP`,
+   `WPMonad`, `MAlgOrdered`, or `MAlgRelOrdered`. A global `WP` instance on `FreeM` would compete
+   with downstream instances on its reducible unfoldings, such as VCVio's `OracleComp`. Every
+   interpretation is a construction (`def`) or a `scoped` instance. The readings that users select
+   by name are scoped instances: the free-monad readings under `PFunctor.FreeM.DemonicWP` and
+   `AngelicWP`, and the writer readings under `WriterT.MonoidWP` and `WriterT.AppendWP`. The
+   bridges of `PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean`, `MAlgOrdered.restrictIic`, and
+   `FreeM.wpMonadOfHandler` are installed `local` or `scoped` where they are intended. The global
+   instances that the program-logic modules declare are `Prop`-valued facts about constructions,
+   such as `ExactWPMonad`.
+2. **Imports.** Any module may import `Std.WP` and `Std.Tactic.Do`, except under `ToCslib/`. That
+   library stages material for CSLib, which uses neither of core's frameworks, so it imports no
+   module of `Std.WP`, `Std.Do`, or `Std.Tactic.Do` directly.
+3. **The rules of a reading are scoped.** A `@[spec]` rule stated for one reading is registered
+   with `scoped spec` in the scope of that reading, so `vcgen` uses it exactly where the reading is
+   installed. `FreeM.Spec.lift` and `FreeM.Spec.liftBind` are registered under `DemonicWP`,
+   `FreeM.Spec.lift_angelic` under `AngelicWP`, and the `WriterT` rules of
+   `PolyFun/Control/Do/Spec.lean` under `WriterT.MonoidWP` and `WriterT.AppendWP`. A rule is
+   registered globally only if it holds for every interpretation it mentions, as the other rules
+   of `PolyFun/Control/Do/Spec.lean` do, or for all parameters of the construction it is stated
+   against, as `FreeM.Spec.lift_ofHandler` and `FreeM.Spec.lift_upper` do. `specAllowlist` in
+   `PolyFunTest/Policy/WP/Check.lean` lists the global rules. A rule that neither a scope nor the
+   allowlist registers, such as the budget rule `FreeM.Spec.lift_budget`, is passed to `vcgen` or
+   registered with `attribute [local spec]`.
+4. **`vcgen` in tests only.** Core marks `vcgen` as experimental: each call prints a warning unless
+   `set_option experimental.vcgen true` acknowledges that status. No proof in the libraries calls
+   `vcgen` or the deprecated `mvcgen`. The calls are in `PolyFunTest/`, whose modules set the
+   option, and `PolyFunTest/Do/Algebra.lean` pins the warning itself with `#guard_msgs`.
 
-`ToCslib/` imports neither tier directly. The quarantine confines the dependency on this
-fast-moving core API. Every interpretation the fenced modules provide is a construction (`def`)
-or a `scoped` instance, never a global instance, because a global `WP` instance on `FreeM` would
-compete with downstream instances on its reducible unfoldings, such as VCVio's `OracleComp`. The
-global instances they do declare are `Prop`-valued `ExactWPMonad` facts about those
-interpretations. The free-monad readings are `scoped` under `PFunctor.FreeM.DemonicWP` and
-`AngelicWP`. The bridges of `PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean`,
-`MAlgOrdered.restrictIic`, and `FreeM.wpMonadOfHandler` are installed `local` or `scoped` where
-they are intended.
+`scripts/check-modules.sh` checks rules 2 and 4. It reads every import modifier, and it ignores
+comments and docstrings when it looks for `vcgen`. `PolyFunTest/Policy/WP.lean` imports the
+libraries with no scope open and checks rules 1 and 3 against the instances and `@[spec]` rules
+that each module registers, by a declaration attribute or by an `attribute` command.
+`PolyFunTest/Policy/WP/Violations.lean` shows that the same checks report planted violations.
 
 The writer interpretation also needs an explicit choice. Either `open scoped WriterT.MonoidWP`
 for multiplicative logs, `open scoped WriterT.AppendWP` for logs combined by `++` from `∅`, or
@@ -325,11 +344,6 @@ search does not re-abstract in the hypotheses of an instance, so a log type need
 instance at the spelling `∅`; the scope provides it for `List`, whose core instance is stated at
 `[]`. `PolyFunTest/Do/WriterAppend.lean` checks ordered accumulation from a nonempty incoming log,
 both with a local interpretation and through `vcgen` under `WriterT.AppendWP`.
-
-Core marks `vcgen` as experimental: each call prints a warning unless
-`set_option experimental.vcgen true` acknowledges that status. No proof in the library calls
-`vcgen`. The calls are in `PolyFunTest/Do/`, whose modules set the option, and
-`PolyFunTest/Do/Algebra.lean` pins the warning itself with `#guard_msgs`.
 
 ## Core's two weakest-precondition frameworks
 
@@ -543,8 +557,7 @@ call by call.
   spent, and its triples are exactly charge bounds (`isChargeBound_iff_triple`). Its call rule
   `FreeM.Spec.lift_budget` is stated with the lattice connectives `⊓` and `⨅`, which `vcgen`
   splits; pass it to `vcgen` or register it with `attribute [local spec]`. The reading fixes `c`
-  and `B`, so install it with `attribute [local instance]`. Neither rule is registered globally or
-  by a scope: `@[spec]` registrations stay in the tactic tier.
+  and `B`, so install it with `attribute [local instance]`. Neither rule is registered.
 
 `PolyFunTest/Do/Budget.lean` checks both: the budget of a two-call program, the spend of a `for`
 loop and of a branching program, and the conversion to completed-path bounds.
@@ -581,7 +594,7 @@ including the output measure `evalDist` of a monadic computation, which VCVio in
 its oracle computations. VCVio keeps its oracle-specific readings and their notation: the `Prob`
 carrier, couplings and pRHL/eRHL over oracle computations, concrete handler specifications, and
 verification tactics specific to those readings. Any dependency on Loom2 or Iris/Bluebell stays
-downstream. PolyFun supplies the generic definitions, the rule lemmas, and the quarantined `vcgen`
+downstream. PolyFun supplies the generic definitions, the rule lemmas, and the `vcgen`
 bridges and specifications described above.
 
 ### Names in VCVio

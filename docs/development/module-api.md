@@ -217,7 +217,7 @@ Mathlib's. All of it is written so that the upstream pull request is a move rath
 - `ToCslib` imports core, cslib, and Mathlib only — never PolyFun or `ComplexityBackends`, and
   never `Std.WP`, `Std.Do`, or `Std.Tactic.Do` directly (`scripts/check-modules.sh`
   enforces both; cslib's `IsMonadHom` module brings core's `Std.Do.WP` classes in
-  transitively, which the fence does not police). The staged measure modules import only
+  transitively, which the check allows). The staged measure modules import only
   Mathlib and each other;
 - PolyFun modules import `ToCslib` modules directly (`public import`) and keep no local copy of
   a lemma that lives there; ordinary-import canaries for the moved lemmas stay in

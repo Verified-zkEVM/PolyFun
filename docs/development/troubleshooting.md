@@ -377,25 +377,23 @@ path. Foundational citations live in
 those keys (`Hancock-Setzer`, `Niu–Spivak`, etc.) rather than copying
 prose.
 
-### `Std.WP` imports are quarantined, in two tiers
+### Readings are scoped, and so are their rules
 
-The definition tier, `Std.WP` (`WP`, `WPMonad`, `Triple`, and the `@[spec]` lemmas) together
-with core's `Std.Do` framework, which `mvcgen` uses, may be imported only by the program-logic
-kernel — `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-`PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean` — and by `PolyFunTest/Do/`. The
-tactic tier, `Std.Tactic.Do` (`vcgen`, the deprecated `mvcgen`, and the `@[spec]` attribute
-syntax), stays in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and `PolyFunTest/Do/`. `ToCslib/` and `ComplexityBackends/`
-import neither tier directly.
+No library declares a global `WP`, `WPMonad`, `MAlgOrdered`, or `MAlgRelOrdered` instance. Every
+interpretation is a construction (`def`) or a `scoped` instance, because a global `WP` instance on
+`FreeM P` would compete with downstream instances on its reducible unfoldings, such as
+oracle-computation types. Install the provided interpretations `scoped` or `local` downstream. The
+writer interpretations follow the same rule: `WriterT.MonoidWP.instWPMonad` is scoped under
+`WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`.
 
-Core's API here is evolving: `vcgen` is experimental and warns on every call unless
-`set_option experimental.vcgen true` acknowledges it, and `mvcgen` is deprecated. The
-dependency therefore stays confined to those files. Every interpretation they export is a
-construction (`def`) or a `scoped` instance, never a global instance, because a global `WP`
-instance on `FreeM P` would compete with downstream instances on its reducible unfoldings, such
-as oracle-computation types. Register the provided interpretations `scoped` or `local`
-downstream. The writer interpretations follow the same rule: `WriterT.MonoidWP.instWPMonad` is
-scoped under `WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`. `scripts/check-modules.sh` enforces both tiers. See
-[`program-logic.md`](../guides/program-logic.md).
+A `@[spec]` rule stated for one reading is registered in the same scope, so `vcgen` finds
+`FreeM.Spec.lift` only under `open scoped PFunctor.FreeM.DemonicWP`, and the `WriterT` rules only
+under the writer scope they are stated for. Without the scope, `vcgen` has no rule for the
+operation: open the scope, or pass the rule to `vcgen`. A new rule is registered globally only
+if it holds for every interpretation it mentions, or for all parameters of the construction it is
+stated against, and then it is added to `specAllowlist` in `PolyFunTest/Policy/WP/Check.lean`.
+`PolyFunTest/Policy/WP.lean` fails when a global instance or an unlisted global rule appears. See
+[`program-logic.md`](../guides/program-logic.md#core-program-logic-rules).
 
 ### `vcgen` finds no spec unless the `Std.WP` root is imported
 

@@ -31,106 +31,114 @@ while IFS= read -r file; do
   fi
 done < <(git ls-files -- 'PolyFun/Interaction/*.lean')
 
-# The `Std.WP` quarantine (AGENTS.md, docs/guides/program-logic.md): core's weakest-precondition
-# API moves fast, so it is fenced in two tiers.
+# Core program-logic rules (AGENTS.md, docs/guides/program-logic.md). Two of the four rules are
+# textual and are checked here. `PolyFunTest/Policy/WP.lean` checks the other two on the elaborated
+# environment: no global `WP`, `WPMonad`, `MAlgOrdered` or `MAlgRelOrdered` instance, and a global
+# `@[spec]` registration only for a rule on its allowlist.
 #
-# * Definitions (`Std.WP`, core's `Std.Do`, and the pre-4.35 `Std.Internal.Do`: `WP`,
-#   `WPMonad`, `Triple`, spec lemmas) may be imported by the program-logic kernel —
-#   `PolyFun/Control/Monad/`, `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/`,
-#   `PolyFun/ITree/Do.lean`, `PolyFun/ITree/WP/Upstream.lean` — and by the `PolyFunTest/Do/`
-#   tests.
-# * Tactics (`Std.Tactic.Do` and, from Lean 4.36, `Std.WP.Tactic`: `vcgen` and the `@[spec]`
-#   attribute syntax) stay in `PolyFun/Control/Do/`, `PolyFun/PFunctor/Free/Do.lean`, and
-#   `PolyFunTest/Do/`.
-#
-# `ToCslib/` stages material for cslib, which uses neither stack, so it may import none of it
-# directly (cslib's `IsMonadHom` module brings core's `Std.Do.WP` classes in transitively;
-# the fence is about direct imports and instances). `ComplexityBackends/` sits above PolyFun and
-# is likewise outside both tiers. Everything the fenced modules export is a
-# construction or a scoped instance, never a global `WP` instance.
-std_do_def_allowed() {
-  case "$1" in
-    PolyFun/Control/Monad/*|PolyFun/Control/Do/*|PolyFun/PFunctor/Free/*|PolyFun/ITree/Do.lean|PolyFun/ITree/WP/Upstream.lean|PolyFunTest/Do/*)
-      return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
-std_do_tactic_allowed() {
-  case "$1" in
-    PolyFun/Control/Do/*|PolyFun/PFunctor/Free/Do.lean|PolyFunTest/Do/*) return 0 ;;
-    *) return 1 ;;
-  esac
-}
-
+# * Imports: `ToCslib/` stages material for cslib, which uses neither of core's weakest-precondition
+#   frameworks, so it imports no module of `Std.WP`, `Std.Do`, the pre-4.35 `Std.Internal.Do`, or
+#   `Std.Tactic.Do` directly. cslib's `IsMonadHom` module brings core's `Std.Do.WP` classes in
+#   transitively; the rule is about direct imports. Every other library may import them.
+# * Tactics: core marks `vcgen` experimental and `mvcgen` deprecated, so only the tests under
+#   `PolyFunTest/` call them or set `experimental.vcgen`. Elsewhere they may appear in comments and
+#   docstrings only.
 import_prefix='^[[:space:]]*(public[[:space:]]+)?(meta[[:space:]]+)?import([[:space:]]+all)?[[:space:]]+'
-std_do_def_pattern="${import_prefix}Std\.((Internal\.)?Do([[:space:]]*$|\.)|WP([[:space:]]*$|\.(Basic|Conjunctive|EStack|Frame|Monad|Triple|Assertion|Gadget)))"
-std_do_tactic_pattern="${import_prefix}Std\.(Tactic\.Do|WP\.Tactic)([[:space:]]*$|\.)"
+core_wp_pattern="${import_prefix}Std\.(WP|Do|Internal\.Do|Tactic\.Do)([[:space:]]|\.|$)"
 
-# Keep every supported import modifier covered: otherwise a valid Lean import form can bypass
-# the quarantine while the repository's existing files still leave this check green.
-for std_do_import in \
-    'import Std.Do' \
-    'import Std.Internal.Do' \
+# Keep every import modifier and every module family covered: otherwise a valid Lean import form
+# could bypass the rule while the repository's existing files still leave this check green.
+for core_wp_import in \
     'import Std.WP' \
     'public import Std.WP.Monad.Basic' \
     'import all Std.WP.Triple' \
-    'public import Std.Internal.Do.WP.Basic' \
+    'import Std.WP.EPostSlot' \
+    'meta import Std.WP.Tactic' \
+    'import Std.WP -- for the triples' \
+    'import Std.Do' \
     'import all Std.Do.Triple' \
     'public import all Std.Do' \
-    'meta import Std.Do' \
-    'public meta import Std.Internal.Do' \
     'meta import all Std.Do' \
-    'public meta import all Std.Do'; do
-  if ! grep -qE "$std_do_def_pattern" <<< "$std_do_import"; then
-    echo "ERROR: Std.Do definition matcher does not recognize: $std_do_import" >&2
-    status=1
-  fi
-done
-
-for std_do_import in \
+    'import Std.Internal.Do' \
+    'public import Std.Internal.Do.WP.Basic' \
+    'public meta import Std.Internal.Do' \
     'public import Std.Tactic.Do' \
     'import Std.Tactic.Do.Syntax' \
-    'meta import Std.WP.Tactic' \
-    'import Std.WP.Tactic.Basic' \
-    'import all Std.Tactic.Do' \
-    'public import all Std.Tactic.Do' \
-    'meta import Std.Tactic.Do' \
-    'public meta import Std.Tactic.Do' \
-    'meta import all Std.Tactic.Do' \
     'public meta import all Std.Tactic.Do'; do
-  if ! grep -qE "$std_do_tactic_pattern" <<< "$std_do_import"; then
-    echo "ERROR: Std.Tactic.Do matcher does not recognize: $std_do_import" >&2
+  if ! grep -qE "$core_wp_pattern" <<< "$core_wp_import"; then
+    echo "ERROR: core program-logic import matcher does not recognize: $core_wp_import" >&2
+    status=1
+  fi
+done
+for other_import in \
+    'import Std.Data.HashMap' \
+    'import Std.Tactic.BVDecide' \
+    'import Std.WPExtra' \
+    'import Std.Doc' \
+    '-- import Std.WP' \
+    'import Mathlib.Std.WP'; do
+  if grep -qE "$core_wp_pattern" <<< "$other_import"; then
+    echo "ERROR: core program-logic import matcher must not classify: $other_import" >&2
     status=1
   fi
 done
 
-if grep -qE "$std_do_def_pattern" <<< 'import Std.Tactic.Do'; then
-  echo "ERROR: Std.Do definition matcher must not classify tactic imports." >&2
-  status=1
-fi
-if grep -qE "$std_do_def_pattern" <<< 'import Std.WP.Tactic'; then
-  echo "ERROR: Std.WP definition matcher must not classify tactic imports." >&2
-  status=1
-fi
-if grep -qE "$std_do_tactic_pattern" <<< 'import Std.Internal.Do'; then
-  echo "ERROR: Std.Tactic.Do matcher must not classify definition imports." >&2
-  status=1
-fi
-
 while IFS= read -r file; do
-  if grep -qE "$std_do_def_pattern" "$file" && ! std_do_def_allowed "$file"; then
-    echo "ERROR: $file imports core Std.WP / Std.Do outside the quarantine." >&2
-    echo "Only the program-logic kernel (PolyFun/Control/Monad/, PolyFun/Control/Do/," >&2
-    echo "PolyFun/PFunctor/Free/, PolyFun/ITree/Do.lean, PolyFun/ITree/WP/Upstream.lean) and" >&2
-    echo "PolyFunTest/Do/ may depend on" >&2
-    echo "it. See AGENTS.md Std.WP quarantine." >&2
+  if grep -qE "$core_wp_pattern" "$file"; then
+    echo "ERROR: $file imports core's Std.WP, Std.Do or Std.Tactic.Do from the ToCslib staging" >&2
+    echo "library. See AGENTS.md, \"Core program-logic rules\"." >&2
     status=1
   fi
-  if grep -qE "$std_do_tactic_pattern" "$file" && ! std_do_tactic_allowed "$file"; then
-    echo "ERROR: $file imports core Std.Tactic.Do / Std.WP.Tactic outside the quarantine." >&2
-    echo "Only PolyFun/Control/Do/, PolyFun/PFunctor/Free/Do.lean, and PolyFunTest/Do/ may" >&2
-    echo "depend on it. See AGENTS.md Std.WP quarantine." >&2
+done < <(git ls-files -- 'ToCslib.lean' 'ToCslib/*.lean')
+
+# Lean code with its comments and docstrings removed: nested `/- … -/` blocks, innermost first,
+# then `--` line comments. String literals are not parsed.
+lean_code() {
+  perl -0777 -pe '1 while s{/-(?:(?!/-|-/).)*-/}{}gs; s{--[^\n]*}{}g'
+}
+vcgen_pattern='(^|[^[:alnum:]_])m?vcgen([^[:alnum:]_]|$)'
+
+# Whether the Lean source on standard input calls `vcgen` or `mvcgen` or sets
+# `experimental.vcgen`. The code is captured first so that `grep -q` cannot cut the pipe short.
+uses_vcgen() {
+  local code
+  code="$(lean_code)"
+  grep -qE "$vcgen_pattern" <<< "$code"
+}
+
+for vcgen_use in \
+    $'example : True := by\n  vcgen [logPair]' \
+    '  vcgen -errorOnMissingSpec [prog] <;> simp_all' \
+    '  · vcgen?' \
+    '  mvcgen' \
+    'set_option experimental.vcgen true in' \
+    $'/-- A triple. -/\ntheorem t : True := by vcgen'; do
+  if ! uses_vcgen <<< "$vcgen_use"; then
+    echo "ERROR: vcgen matcher does not recognize: $vcgen_use" >&2
+    status=1
+  fi
+done
+for vcgen_mention in \
+    '-- vcgen [logPair]' \
+    '/-- Rules that let `vcgen` decompose free programs. -/' \
+    $'/-!\n# Rules for `vcgen`\n\n`mvcgen` is deprecated.\n-/' \
+    '/- outer /- inner -/ then `vcgen` -/' \
+    'theorem t : True := trivial -- not by `vcgen`' \
+    'attribute [vcgen_simp] foo' \
+    'open Lean.Elab.Tactic.VCGen' \
+    'def vcgenRules := 0'; do
+  if uses_vcgen <<< "$vcgen_mention"; then
+    echo "ERROR: vcgen matcher must not classify: $vcgen_mention" >&2
+    status=1
+  fi
+done
+
+while IFS= read -r file; do
+  case "$file" in PolyFunTest/*) continue ;; esac
+  if uses_vcgen < "$file"; then
+    echo "ERROR: $file calls vcgen or mvcgen, or sets experimental.vcgen, outside PolyFunTest/." >&2
+    echo "Prove library lemmas from the spec lemmas directly. See AGENTS.md, \"Core program-logic" >&2
+    echo "rules\"." >&2
     status=1
   fi
 done < <(lean_sources)
@@ -141,8 +149,8 @@ done < <(lean_sources)
 # `Constructions`, which holds the lawful monad instance on `PMF`, brings in most of Mathlib's
 # analysis. A bridge is a module `<M>/PMF.lean` beside a tracked module `<M>.lean`, by convention
 # the measure module whose construction it relates to `PMF`; the check does not read `<M>.lean`.
-# Like the Std.WP rules, these checks read direct imports only: a Mathlib module that imports
-# `Constructions`, such as `Mathlib.Probability.Distributions.Uniform`, passes them.
+# Like the core program-logic import rule, these checks read direct imports only: a Mathlib module
+# that imports `Constructions`, such as `Mathlib.Probability.Distributions.Uniform`, passes them.
 pmf_bridge_path() {
   case "$1" in
     */*/PMF.lean) return 0 ;;
