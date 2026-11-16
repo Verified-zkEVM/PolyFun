@@ -50,8 +50,22 @@ bodies, as a downstream importer would.
   declarations fails acceptance, and neither the bundle declarations, nor the two declarations
   before it, nor any fallback axiom remains. A compilation error rolls the import back as well:
   the kernel accepts `opaque` in `reject-compile.json`, written through `uncompiled`, and after
-  the code generator's error nothing of it remains. The elaborator rejects an unbound variable,
-  and the budget must be positive and at most the ambient `maxHeartbeats`.
+  the code generator's error nothing of it remains. The elaborator rejects an unbound variable at
+  its path in the declaration, and the budget must be positive and at most the ambient
+  `maxHeartbeats`.
+* A decoding error names the file and the path to the offending value: a literal deep inside
+  `malformed.json`, a missing field, a header of another version, and an argument to a constructor
+  that takes none. Nothing of the file remains. A dependency declared later in the file is refused
+  at its path.
+* `toy_import P from` imports under the prefix `P` and declares `P.manifest`, which records the
+  file's header, and the settings `natives` and `equations`. Importing the same file again under
+  `P` adds nothing; importing it whole after `only ["twice"]` adds the rest. Another file under `P`,
+  other settings, a hand-written `Q.twice` where a new prefix's import would put `twice`, a
+  hand-written `W.idv` where the rest of the file would go, and a declaration named `manifest` are
+  refused. `only` reaches the dependencies of the declarations it names. `only` and
+  `equations except` refuse a name that the file does not declare, and `equations except` leaves
+  out the equation lemmas of the declarations it names. On reuse, the registry gives only the
+  bundle declarations whose names do not exist yet.
 -/
 
 public section
@@ -461,7 +475,7 @@ error: failed to compile definition, consider marking it as 'noncomputable' beca
 #guard_msgs in
 toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/reject-compile.json"
 
-/-- error: toy: variable 1 is not in scope -/
+/-- error: badScope at body/lam/body: variable 1 is not in scope -/
 #guard_msgs in
 toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/reject-scope.json"
 
@@ -490,6 +504,163 @@ end Committed
 /-- info: PolyFunTest.ToyImportFixtures.Committed.opaque: false -/
 #guard_msgs in
 #declared PolyFunTest.ToyImportFixtures.Committed.opaque
+
+/-! ## Malformed input -/
+
+namespace Malformed
+
+/--
+error: PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed.json at decls/[1]/body/lam/body/app/[1]/lit: expected a natural number
+-/
+#guard_msgs in
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed.json"
+
+/-- error: PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed-field.json at decls/[0]: missing field `scheme` -/
+#guard_msgs in
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed-field.json"
+
+/--
+error: PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed-header.json: polyfun-toy-decls version 2, where this importer reads version 1
+-/
+#guard_msgs in
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed-header.json"
+
+/--
+error: PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed-payload.json at decls/[0]/body/lam/arg: unknown type `nat` with an argument
+-/
+#guard_msgs in
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/malformed-payload.json"
+
+-- A dependency must come earlier in the file.
+/-- error: early at deps/[0]: late is not declared before early -/
+#guard_msgs in
+toy_import "PolyFunTest/IPFunctor/Scoped/Import/fixtures/reject-deps.json"
+
+end Malformed
+
+/-- info: PolyFunTest.ToyImportFixtures.Malformed.one: false -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Malformed.one
+
+/-! ## Imports under a prefix -/
+
+namespace Prefixed
+
+toy_import P from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+
+-- Importing the same file again under `P` adds nothing.
+#guard_msgs in
+toy_import P from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+
+/-- error: `P` already names an import of another input -/
+#guard_msgs in
+toy_import P from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/meaning.json"
+
+/-- A hand-written declaration where an import under `Q` would put `twice`. -/
+def Q.twice : ℕ := 0
+
+/--
+error: `PolyFunTest.ToyImportFixtures.Prefixed.Q.twice` exists, and is not this import's declaration
+-/
+#guard_msgs in
+toy_import Q from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+
+/--
+error: `R.manifest` is the name of a bundle declaration of `R`, so no imported declaration can take it
+-/
+#guard_msgs in
+toy_import R from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/reserved.json"
+
+/-- error: `equations except` names `nope`, which is not a declaration of this import -/
+#guard_msgs in
+toy_import E from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+  equations except ["nope"]
+
+toy_import E from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+  equations except ["twice"]
+
+-- The prefix records the settings, and a later import under it must keep them.
+/--
+error: `P` was imported with natives = false, where this import has natives = true; an import under the same prefix keeps its settings
+-/
+#guard_msgs in
+toy_import P from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" natives
+
+/--
+error: `E` was imported with equations = except [twice], where this import has equations = all; an import under the same prefix keeps its settings
+-/
+#guard_msgs in
+toy_import E from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+
+-- Part of a file, then the whole file: the second import adds the rest.
+toy_import S from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" only ["twice"]
+
+/-- info: PolyFunTest.ToyImportFixtures.Prefixed.S.idv: false -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Prefixed.S.idv
+
+toy_import S from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+
+/-- info: PolyFunTest.ToyImportFixtures.Prefixed.S.inst.accepted: true -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Prefixed.S.inst.accepted
+
+-- `only` reaches the declarations that those named depend on.
+toy_import D from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" only ["idv"]
+
+/-- info: PolyFunTest.ToyImportFixtures.Prefixed.D.twice: true -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Prefixed.D.twice
+
+/-- error: `only` names `nope`, which is not a declaration of this import -/
+#guard_msgs in
+toy_import O from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" only ["nope"]
+
+-- The same input, but a declaration under the prefix that is not this import's.
+toy_import W from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json" only ["twice"]
+
+/-- A hand-written declaration where the rest of the file would put `idv`. -/
+def W.idv : ℕ := 0
+
+/--
+error: `PolyFunTest.ToyImportFixtures.Prefixed.W.idv` exists, and is not this import's declaration
+-/
+#guard_msgs in
+toy_import W from "PolyFunTest/IPFunctor/Scoped/Import/fixtures/accept.json"
+
+end Prefixed
+
+-- On reuse, the registry gives the bundle declarations whose names do not exist yet.
+/-- info: [Prefixed.P.extra] -/
+#guard_msgs in
+run_meta do
+  let registry : IPFunctor.Import.Registry := { pfx := `Prefixed.P, manifest := ⟨"", 0, [], 0⟩ }
+  let decls := #[IPFunctor.Import.BundleDecl.defn `Prefixed.P.declNames (mkConst ``Nat)
+      (mkNatLit 0), .defn `Prefixed.P.extra (mkConst ``Nat) (mkNatLit 0)]
+  let bundle ← registry.bundle { reuse := true, todo := (#[] : Array Unit) } decls
+  logInfo m!"{bundle.map (·.base)}"
+
+/-- The manifest records the file's format, version and producer. -/
+example : Prefixed.P.manifest.format = "polyfun-toy-decls" ∧ Prefixed.P.manifest.version = 1 ∧
+    Prefixed.P.manifest.provenance = [("producer", "hand-written")] :=
+  ⟨rfl, rfl, rfl⟩
+
+example : erase Prefixed.P.inst = Prefixed.P.inst.source :=
+  Prefixed.P.inst.accepted
+
+/-- info: PolyFunTest.ToyImportFixtures.Prefixed.P.twice.evaluate_eq: true -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Prefixed.P.twice.evaluate_eq
+
+-- A refused import leaves nothing.
+/-- info: PolyFunTest.ToyImportFixtures.Prefixed.Q.manifest: false -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Prefixed.Q.manifest
+
+-- `equations except ["twice"]` leaves out `twice`'s equation lemma.
+/-- info: PolyFunTest.ToyImportFixtures.Prefixed.E.twice.evaluate_eq: false -/
+#guard_msgs in
+#declared PolyFunTest.ToyImportFixtures.Prefixed.E.twice.evaluate_eq
 
 /-- info: local axioms: [] -/
 #guard_msgs in

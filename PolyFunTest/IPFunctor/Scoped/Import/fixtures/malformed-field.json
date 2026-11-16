@@ -1,0 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
+[
+  {"name": "noScheme", "body": {"lit": 1}}
+]}

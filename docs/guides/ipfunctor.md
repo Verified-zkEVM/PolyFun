@@ -887,6 +887,31 @@ import` of the mirror's module. Lake does not track the JSON files a frontend re
 with an `input_file` or `input_dir` target in the library's `needs` when they change between
 builds.
 
+[`Import/Json.lean`](../../PolyFun/IPFunctor/Scoped/Import/Json.lean) gives a frontend located
+errors and a JSON decoder. A `Located` error has a `Location`: an origin, such as a file or a
+declaration, and the path from there to the offending value. It renders as
+`origin at a/b/c: message`. `JsonM σ` decodes with a state `σ`. Its combinators add to the path as
+they descend: `field` adds its key, and `elems` and `pair` add the position `[i]` of each element.
+`variant` reads a constructor written as a string or as an object with one field, and `unknown`
+refuses one that the decoder does not know, with or without an argument. `checkHeader` checks the
+format and version an input declares and reads its provenance fields. An elaborator keeps a
+`Location` as it descends (`Location.into`) and fails at it (`Location.fail`, or `Location.check`
+around a translation step), so decoding and elaboration errors point into the source with the same
+segments.
+
+[`Import/Registry.lean`](../../PolyFun/IPFunctor/Scoped/Import/Registry.lean) makes a prefix a
+registry. An import under `P` declares `P.manifest : Import.Manifest`, which records its input's
+format, version, provenance pairs and fingerprint, and records each frontend setting that shapes
+its declarations as `P.settings.k`. `Registry.plan` runs before the import adds anything. It
+refuses another input under `P`, a setting other than the recorded one, a declaration that would
+take the name of a bundle declaration, and an existing name that is not this import's declaration,
+as a witness constant such as its `source` shows. It skips the declarations of the same input that
+exist already, so importing the same input again adds nothing, and an import that reaches more of
+it adds the rest. On reuse, `Registry.bundle` gives the bundle declarations whose names do not
+exist yet, such as a table entry that only the later import reaches. `Select` chooses declarations
+by name, such as those that get equation lemmas, and refuses a name in `only` or `except` that is
+not a declaration of the import.
+
 The [toy JSON frontend](../../PolyFunTest/IPFunctor/Scoped/Import/Toy.lean) imports the
 [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean)'s language, inserting a coercion
 after each size instantiation. Its [fixtures](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean)
@@ -894,8 +919,11 @@ cover acceptance by both proofs, auxiliary and bundle declarations, a compiled a
 definition that compiled code runs, equation lemmas, one of them on an auxiliary definition, a
 theorem whose proof term only the kernel checks, a wrong proof of that theorem, a wrong scheme and a
 mismatched source rejected in check mode, budgets that the kernel or the elaboration exhausts, a
-bundle that fits only with per-declaration scopes, and generated declarations that `#lint` skips
-beside a hand-written one it reports. In commit mode, neither a rejection in the middle of a
-bundle, nor a wrong proof of a theorem, nor a declaration that the kernel accepts and the code
-generator cannot compile leaves a declaration or an axiom behind. The
+bundle that fits only with per-declaration scopes, generated declarations that `#lint` skips
+beside a hand-written one it reports, and decoding and elaboration errors at their paths. They
+cover the registry: a repeated import that adds nothing, an import of the whole file after part of
+it, and the refusals of another file, of other settings, of a hand-written declaration under the
+prefix, and of a declaration named like a bundle declaration. In commit mode, neither a rejection
+in the middle of a bundle, nor a wrong proof of a theorem, nor a declaration that the kernel
+accepts and the code generator cannot compile leaves a declaration or an axiom behind. The
 validation wrapper's axiom sweep includes both modules.
