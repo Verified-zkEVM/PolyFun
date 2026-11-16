@@ -232,9 +232,7 @@ theorem mem_support_bind {x : m α} {f : α → m β} {b : β} :
 
 @[simp]
 theorem support_map (g : α → β) (x : m α) : support (g <$> x) = g '' support x := by
-  rw [← bind_pure_comp, support_bind]
-  ext b
-  simp [eq_comm]
+  grind
 
 @[simp]
 theorem support_seq (f : m (α → β)) (x : m α) :
