@@ -6,19 +6,35 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Domain.Result
+public import PolyFun.Control.Domain.LazySeq
 public import ToCslib.Order.PrefixRecursion
 
 /-!
-# Recursively generated partial arrays
+# Recursively generated partial arrays and streams
 
 A lazy language can define a sequence by recursion on itself, with each entry
-reading earlier ones. This module computes the meaning of such a definition.
+reading earlier ones. This module computes the meaning of such a definition,
+for finite arrays indexed by `Fin n` and for lazy sequences of any length `n : ℕ∞`.
+Both rest on `Function.UsesPrefix`: equations in which each coordinate reads only
+earlier ones have at most one solution, even when entries are bottom or errors.
 
 A generator exposes an array constructor before its elements are demanded.
 If every element uses only the strict prefix, its least fixed point agrees
-with finite prefix recursion. This holds even when individual entries are
-bottom or errors. Exposing the constructor is an explicit hypothesis.
+with finite prefix recursion. Exposing the constructor is an explicit hypothesis.
+
+A recursive lazy sequence is a fixed point `X = mk n fun i => step i fun j => index j X`
+in stream form. Its step is *productive* below `n` (`LazySeq.Productive`) when, at each position
+below `n`, it reads only earlier elements. The masked stream equations then use only the strict
+prefix (`LazySeq.Productive.usesPrefix_mask`), so the fixed point is determined element by
+element, at any length, `⊤` included:
+
+* `LazySeq.eq_mk_of_productive`: a stream that satisfies the step below `n`, masked at `n`, is the
+  fixed point;
+* `LazySeq.eq_encList_of_productive`: at a finite length, the fixed point is the encoding of the
+  native sequence;
+* `LazySeq.eq_of_productive`: two fixed points agree;
+* `LazySeq.fix_eq_mk_of_productive` and `LazySeq.fix_eq_encList_of_productive` treat the least
+  fixed point of a continuous map on sequences.
 -/
 
 public section
@@ -67,3 +83,90 @@ theorem generateStep_fix_eq_prefixRecursion
   exact hx.trans (congrArg value heq)
 
 end DomainResult
+
+namespace LazySeq
+
+variable {ε X : Type*} [OmegaCompletePartialOrder X]
+
+/-- A stream step is productive below `n` when, at every position `i` below `n`, it returns the
+same element for any two streams that agree at the positions before `i`. -/
+@[expose] def Productive (n : ℕ∞) (step : ℕ → (ℕ → DomainResult ε X) → DomainResult ε X) :
+    Prop :=
+  ∀ i, below n i → ∀ p q, (∀ j < i, p j = q j) → step i p = step i q
+
+variable {n : ℕ∞} {step : ℕ → (ℕ → DomainResult ε X) → DomainResult ε X}
+
+/-- The masked stream equations of a productive step depend only on earlier elements. -/
+theorem Productive.usesPrefix_mask (hstep : Productive n step) :
+    Function.UsesPrefix fun xs => mask n fun i => step i xs := by
+  intro i p q hpq
+  simp only [mask_apply]
+  split
+  · exact hstep i ‹_› p q hpq
+  · rfl
+
+/-- The elements of a sequence in the stream form of `step` solve the masked stream equations. -/
+theorem index_eq_mask_of_eq_mk {Xs : LazySeq ε X}
+    (hX : Xs = mk n fun i => step i fun j => index j Xs) :
+    (fun j => index j Xs) = mask n fun i => step i fun j => index j Xs :=
+  funext fun j => (congrArg (index j) hX).trans rfl
+
+/-- A sequence in stream form returns its elements. -/
+theorem eq_value_of_eq_mk {Xs : LazySeq ε X}
+    (hX : Xs = mk n fun i => step i fun j => index j Xs) :
+    Xs = DomainResult.value fun j => index j Xs :=
+  hX.trans (congrArg DomainResult.value (index_eq_mask_of_eq_mk hX).symm)
+
+/-- Any two fixed points of a productive step agree. -/
+theorem eq_of_productive (hstep : Productive n step) {Xs Ys : LazySeq ε X}
+    (hX : Xs = mk n fun i => step i fun j => index j Xs)
+    (hY : Ys = mk n fun i => step i fun j => index j Ys) : Xs = Ys := by
+  rw [eq_value_of_eq_mk hX, eq_value_of_eq_mk hY, hstep.usesPrefix_mask.fixedPoint_unique
+    (index_eq_mask_of_eq_mk hX).symm (index_eq_mask_of_eq_mk hY).symm]
+
+/-- A fixed point of a productive step is any stream that satisfies the step below the length,
+masked at that length. -/
+theorem eq_mk_of_productive (hstep : Productive n step) {ws : ℕ → DomainResult ε X}
+    (hw : ∀ i, below n i → step i ws = ws i) {Xs : LazySeq ε X}
+    (hX : Xs = mk n fun i => step i fun j => index j Xs) : Xs = mk n ws := by
+  have hws : (mask n fun i => step i (mask n ws)) = mask n ws := by
+    funext i
+    simp only [mask_apply]
+    split
+    · rename_i hi
+      rw [hstep i hi _ ws fun j hj => by simp [mask_apply, below_of_lt hi hj], hw i hi]
+    · rfl
+  rw [eq_value_of_eq_mk hX,
+    hstep.usesPrefix_mask.fixedPoint_unique (index_eq_mask_of_eq_mk hX).symm hws]
+  rfl
+
+/-- At a finite length, a fixed point of a productive step is the encoding of the native
+recursion `w`. -/
+theorem eq_encList_of_productive {N : Type*} {m : ℕ} (hstep : Productive m step)
+    {enc : N → DomainResult ε X} {w : ℕ → N}
+    (hw : ∀ i < m, step i (fun j => enc (w j)) = enc (w i)) {Xs : LazySeq ε X}
+    (hX : Xs = mk m fun i => step i fun j => index j Xs) :
+    Xs = encList enc (List.ofFn fun i : Fin m => w i) := by
+  rw [eq_mk_of_productive hstep (ws := fun j => enc (w j)) (fun i hi => hw i (by simpa using hi))
+    hX, mk_apply, encList]
+  congr 1
+  funext i
+  by_cases hi : i < m <;> simp [hi]
+
+/-- The least fixed point of a productive map is any stream that satisfies the step below the
+length. Only the map's equation at the least fixed point is needed. -/
+theorem fix_eq_mk_of_productive {F : LazySeq ε X →𝒄 LazySeq ε X}
+    (hF : F F.fix = mk n fun i => step i fun j => index j F.fix) (hstep : Productive n step)
+    {ws : ℕ → DomainResult ε X} (hw : ∀ i, below n i → step i ws = ws i) : F.fix = mk n ws :=
+  eq_mk_of_productive hstep hw ((ContinuousHom.map_fix F).symm.trans hF)
+
+/-- At a finite length, the least fixed point of a productive map is the encoding of the native
+recursion `w`. -/
+theorem fix_eq_encList_of_productive {N : Type*} {m : ℕ} {F : LazySeq ε X →𝒄 LazySeq ε X}
+    (hF : F F.fix = mk m fun i => step i fun j => index j F.fix) (hstep : Productive m step)
+    {enc : N → DomainResult ε X} {w : ℕ → N}
+    (hw : ∀ i < m, step i (fun j => enc (w j)) = enc (w i)) :
+    F.fix = encList enc (List.ofFn fun i : Fin m => w i) :=
+  eq_encList_of_productive hstep hw ((ContinuousHom.map_fix F).symm.trans hF)
+
+end LazySeq

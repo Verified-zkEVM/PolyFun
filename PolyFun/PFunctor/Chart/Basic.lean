@@ -70,9 +70,7 @@ theorem ext {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} (c₁ c�
   rcases c₂ with ⟨toFunA₂, toFunB₂⟩
   have h : toFunA₁ = toFunA₂ := funext h₁
   subst h
-  have hB : toFunB₁ = toFunB₂ := by
-    funext a
-    simpa using h₂ a
+  have hB : toFunB₁ = toFunB₂ := funext fun a => by simpa using h₂ a
   subst hB
   rfl
 

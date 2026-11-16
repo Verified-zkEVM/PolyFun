@@ -301,9 +301,7 @@ theorem ext_of_step_eq {Δ : PortBoundary} {Proc : Type v}
     (OpenProcess.mk Proc step₁ stepSampler₁ :
       OpenProcess.{u, v, w, w'} m Party Δ) =
       OpenProcess.mk Proc step₂ stepSampler₂ := by
-  subst hstep
-  cases hsampler
-  rfl
+  grind
 
 /-- Derive step equality (as a function) from a `ProcessOver` equality
 between two processes on the same residual state space. -/

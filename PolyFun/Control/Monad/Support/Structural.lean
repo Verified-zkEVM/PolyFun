@@ -163,15 +163,13 @@ theorem someOutput_seq (p : β → Prop) (f : m (α → β)) (x : m α) :
 theorem canReturn_seqLeft_iff {x : m α} {y : m β} {a : α} :
     CanReturn (x <* y) a ↔ CanReturn x a ∧ ∃ b, CanReturn y b := by
   rw [seqLeft_eq_bind]
-  simp only [canReturn_bind_iff, canReturn_pure_iff]
-  exact ⟨fun ⟨_, ha, b, hb, hab⟩ => hab ▸ ⟨ha, b, hb⟩, fun ⟨ha, b, hb⟩ => ⟨a, ha, b, hb, rfl⟩⟩
+  grind
 
 @[simp]
 theorem canReturn_seqRight_iff {x : m α} {y : m β} {b : β} :
     CanReturn (x *> y) b ↔ (∃ a, CanReturn x a) ∧ CanReturn y b := by
   rw [seqRight_eq_bind]
-  simp only [canReturn_bind_iff]
-  exact ⟨fun ⟨a, ha, hb⟩ => ⟨⟨a, ha⟩, hb⟩, fun ⟨⟨a, ha⟩, hb⟩ => ⟨a, ha, hb⟩⟩
+  grind
 
 @[simp]
 theorem support_seqLeft (x : m α) (y : m β) :

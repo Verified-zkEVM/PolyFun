@@ -219,15 +219,9 @@ named `ITree.bind` remains more universe-polymorphic than this typeclass
 instance. -/
 instance instLawfulMonad : LawfulMonad (ITree F) :=
   LawfulMonad.mk' _
-    (fun t => by
-      change bind t pure = t
-      exact bind_pure_right t)
-    (fun r k => by
-      change bind (pure r) k = k r
-      exact bind_pure_left r k)
-    (fun t k k' => by
-      change bind (bind t k) k' = bind t (fun r => bind (k r) k')
-      exact bind_assoc t k k')
+    (fun t => bind_pure_right t)
+    (fun r k => bind_pure_left r k)
+    (fun t k k' => bind_assoc t k k')
 
 /-! ### `iter` unfolding and interaction with `bind` -/
 
@@ -265,9 +259,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
                     .mk (.pure (.inl j)) PEmpty.elim from shape'_pure _]
               rfl
             · rw [bind_pure_left]
-              change ITree.shape' (kk (.inl j)) = .mk .step (fun _ => iter body j)
-              rw [hkk]
-              exact shape'_step _
+              simp_all
         | inr r =>
             have ht : t = pure (.inr r) := eq_pure_of_dest h
             clear h
@@ -280,8 +272,7 @@ theorem iter_unfold (body : β → ITree F (β ⊕ α)) (init : β) :
               funext z
               exact z.elim
             · rw [bind_pure_left]
-              rw [hkk]
-              exact shape'_pure r
+              simp_all
     | step =>
         refine ⟨.step,
           fun _ => ITree.corec (iterStep body) (c PUnit.unit),
@@ -607,8 +598,7 @@ theorem bind_weakBisimRel {RR : α → β → Prop} {SS : γ → δ → Prop}
         refine ⟨bind u' f, bind v' g, hu.bind f, hv.bind g, ?_⟩
         refine MatchRel.query a (fun b => bind (c b) f) (fun b => bind (c' b) g)
           (dest_bind_query f u' a c hu') (dest_bind_query g v' a c' hv') ?_
-        intro b
-        exact Or.inl ⟨c b, c' b, hcc b, rfl, rfl⟩
+        exact fun b => Or.inl ⟨c b, c' b, hcc b, rfl, rfl⟩
     | tau cu cv hu' hv' hcc =>
         refine ⟨bind u' f, bind v' g, hu.bind f, hv.bind g, ?_⟩
         refine MatchRel.tau (fun _ => bind (cu PUnit.unit) f)

@@ -334,9 +334,8 @@ theorem step_absorb_right {eventRel : EventSignatureRel E F} {resultRel : α →
     rcases TauSteps.step_cases c' hstep' hs with hs_eq | hs_strict
     · subst hs_eq
       cases M with
-      | pure _ _ _ _ hs_bad => rw [hstep'] at hs_bad; cases hs_bad
-      | query _ _ _ _ _ _ hs_bad _ =>
-          rw [hstep'] at hs_bad; cases hs_bad
+      | pure _ _ _ _ hs_bad => simp_all
+      | query _ _ _ _ _ _ hs_bad _ => simp_all
       | tau ct cs ht_a hs_a hr =>
           have hcc : cs = c' := TauSteps.cont_eq hs_a hstep'
           subst hcc
@@ -483,8 +482,7 @@ theorem matchRel_to_identity_headMatch
       refine .query a a rfl ct cs ht hs ?_
       intro x y hxy
       change HEq x y at hxy
-      obtain rfl := eq_of_heq hxy
-      exact hcont x
+      grind
   | tau ct cs ht hs hcont => exact .tau ct cs ht hs hcont
 
 /-- `CrossSignatureWeakBisim` specializes exactly to `WeakBisimRel` for the
@@ -552,8 +550,7 @@ theorem bind {resultRel : α → β → Prop} {outputRel : γ → δ → Prop}
         refine CrossSignatureWeakBisim.HeadMatch.query a b hab (fun x => ITree.bind (cu x) f)
           (fun y => ITree.bind (cv y) g)
           (dest_bind_query f u' a cu hu') (dest_bind_query g v' b cv hv') ?_
-        intro x y hxy
-        exact Or.inl ⟨cu x, cv y, hcont x y hxy, rfl, rfl⟩
+        exact fun x y hxy => Or.inl ⟨cu x, cv y, hcont x y hxy, rfl, rfl⟩
     | tau cu cv hu' hv' hcont =>
         refine ⟨ITree.bind u' f, ITree.bind v' g, hu.bind f, hv.bind g, ?_⟩
         refine CrossSignatureWeakBisim.HeadMatch.tau (fun _ => ITree.bind (cu PUnit.unit) f)

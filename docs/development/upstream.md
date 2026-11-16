@@ -143,7 +143,8 @@ PolyFun's core does not import the reals.
 
 `ToCslib/Order/` extends Mathlib’s omega-CPO API with continuous currying,
 least fixed points, admissibility, discrete, lifted, and disjoint-sum orders,
-and finite prefix recursion. Order-only results are candidates for Mathlib or
+finite prefix recursion, and uniqueness for prefix-dependent equations over any well-founded
+order of coordinates. Order-only results are candidates for Mathlib or
 CSLib; remove superseded local instances before upgrading their owning
 dependency. The pinned Mathlib has no omega-CPO instance for `WithBot` or for
 disjoint sums, and no equality-ordered wrapper; `DiscreteOrder` leaves the

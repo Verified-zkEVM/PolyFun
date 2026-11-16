@@ -277,12 +277,8 @@ def prodSigmaDistrib : (P * sigma F : PFunctor.{max uA₁ uA₂ v, max uB₁ uB�
   equivA := {
     toFun := fun ⟨pa, ⟨i, fa⟩⟩ => ⟨i, ⟨pa, fa⟩⟩
     invFun := fun ⟨i, ⟨pa, fa⟩⟩ => ⟨pa, ⟨i, fa⟩⟩
-    left_inv := by
-      rintro ⟨pa, ⟨i, fa⟩⟩
-      rfl
-    right_inv := by
-      rintro ⟨i, ⟨pa, fa⟩⟩
-      rfl
+    left_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
+    right_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
   }
   equivB := fun a => by
     rcases a with ⟨pa, ⟨i, fa⟩⟩
@@ -294,12 +290,8 @@ def sigmaProdDistrib : (sigma F * P : PFunctor.{max uA₁ uA₂ v, max uB₁ uB�
   equivA := {
     toFun := fun ⟨⟨i, fa⟩, pa⟩ => ⟨i, ⟨fa, pa⟩⟩
     invFun := fun ⟨i, ⟨fa, pa⟩⟩ => ⟨⟨i, fa⟩, pa⟩
-    left_inv := by
-      rintro ⟨⟨i, fa⟩, pa⟩
-      rfl
-    right_inv := by
-      rintro ⟨i, ⟨fa, pa⟩⟩
-      rfl
+    left_inv := fun ⟨⟨_, _⟩, _⟩ => rfl
+    right_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
   }
   equivB := fun a => by
     rcases a with ⟨⟨i, fa⟩, pa⟩
@@ -311,12 +303,8 @@ def tensorSigmaDistrib :
   equivA := {
     toFun := fun ⟨pa, ⟨i, fa⟩⟩ => ⟨i, ⟨pa, fa⟩⟩
     invFun := fun ⟨i, ⟨pa, fa⟩⟩ => ⟨pa, ⟨i, fa⟩⟩
-    left_inv := by
-      rintro ⟨pa, ⟨i, fa⟩⟩
-      rfl
-    right_inv := by
-      rintro ⟨i, ⟨pa, fa⟩⟩
-      rfl
+    left_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
+    right_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
   }
   equivB := fun a => by
     rcases a with ⟨pa, ⟨i, fa⟩⟩
@@ -328,12 +316,8 @@ def sigmaTensorDistrib {I : Type v} (F : I → PFunctor.{uA₁, uB₁}) (P : PFu
   equivA := {
     toFun := fun ⟨⟨i, fa⟩, pa⟩ => ⟨i, ⟨fa, pa⟩⟩
     invFun := fun ⟨i, ⟨fa, pa⟩⟩ => ⟨⟨i, fa⟩, pa⟩
-    left_inv := by
-      rintro ⟨⟨i, fa⟩, pa⟩
-      rfl
-    right_inv := by
-      rintro ⟨i, ⟨fa, pa⟩⟩
-      rfl
+    left_inv := fun ⟨⟨_, _⟩, _⟩ => rfl
+    right_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
   }
   equivB := fun a => by
     rcases a with ⟨⟨i, fa⟩, pa⟩
@@ -345,12 +329,8 @@ def sigmaCompDistrib {I : Type v} (F : I → PFunctor.{uA₁, uB₁}) (P : PFunc
   equivA := {
     toFun := fun ⟨⟨i, fa⟩, pf⟩ => ⟨i, ⟨fa, pf⟩⟩
     invFun := fun ⟨i, ⟨fa, pf⟩⟩ => ⟨⟨i, fa⟩, pf⟩
-    left_inv := by
-      rintro ⟨⟨i, fa⟩, pf⟩
-      rfl
-    right_inv := by
-      rintro ⟨i, ⟨fa, pf⟩⟩
-      rfl
+    left_inv := fun ⟨⟨_, _⟩, _⟩ => rfl
+    right_inv := fun ⟨_, ⟨_, _⟩⟩ => rfl
   }
   equivB := fun a => by
     rcases a with ⟨⟨i, fa⟩, pf⟩
@@ -570,9 +550,7 @@ def compAssoc : (P ◃ Q) ◃ R ≃ₚ P ◃ (Q ◃ R) where
       simp [comp]
     right_inv := by
       rintro ⟨pa, g⟩
-      simp only [comp]
-      apply Sigma.ext rfl
-      grind
+      simp_all
   }
   equivB := fun ⟨⟨pa, qf⟩, rf⟩ =>
     _root_.Equiv.sigmaAssoc (fun pb qb => R.B (rf ⟨pb, qb⟩))

@@ -230,9 +230,7 @@ private theorem unfoldDirection_heq (lens : Lens C.carrier P)
     (hvertex : vertex ≍ vertex') :
     unfoldDirection C lens object vertex ≍
       unfoldDirection C lens object' vertex' := by
-  subst object'
-  cases hvertex
-  rfl
+  grind
 
 private theorem unfoldDirection_cast_object (lens : Lens C.carrier P)
     {object object' : C.carrier.A} (hobject : object = object')
@@ -254,9 +252,7 @@ theorem subtree_unfoldShape (lens : Lens C.carrier P) :
         unfoldShape C lens
           (Comonoid.target C object
             (unfoldDirection C lens object vertex))
-  | object, .root _ => by
-      rw [unfoldDirection_root, Comonoid.target_identity]
-      rfl
+  | object, .root _ => by simp_all
   | object, .child direction next => by
       let first := unfoldRootDirection C lens object direction
       let childEq := children_unfoldShape C lens object direction
@@ -305,9 +301,7 @@ private theorem compose_heq (object : C.carrier.A)
     (hsecond : second ≍ second') :
     Comonoid.compose C object first second =
       Comonoid.compose C object first' second' := by
-  cases hfirst
-  cases hsecond
-  rfl
+  grind
 
 /-- Pulling back a concatenated cofree vertex composes the arrows represented
 by its prefix and suffix, in outer-then-inner path order. The suffix is
@@ -361,10 +355,7 @@ theorem unfoldDirection_append (lens : Lens C.carrier P) :
               (unfoldDirection C lens identityTarget canonicalVertex) :=
         compose_heq C object (heq_of_eq hdirection) htail
       simp only [M.Vertex.root_append]
-      exact (hcompose.trans (by
-        rw [hcanonical]
-        exact Comonoid.identity_compose C object
-          (unfoldDirection C lens object suffix))).symm
+      exact (hcompose.trans (by simp_all)).symm
   | object, .child direction next, suffix => by
       let first := unfoldRootDirection C lens object direction
       let childEq :
@@ -514,11 +505,7 @@ def extend
     (C : Comonoid.{max uA uB, max uA uB})
     (lens : Lens C.carrier P) : Comonoid.Hom C (comonoid P) :=
   Comonoid.Hom.ofCategoryLaws (unfoldLens C lens)
-    (fun object => by
-      change unfoldDirection C lens object
-          (.root (unfoldShape C lens object)) =
-        Comonoid.identity C object
-      exact unfoldDirection_root C lens object)
+    (fun object => by simp_all)
     (fun object vertex => by
       change unfoldShape C lens
           (Comonoid.target C object
@@ -633,9 +620,7 @@ private theorem homDirection_heq
     (hvertex : vertex ≍ vertex') :
     hom.toLens.toFunB object vertex ≍
       hom.toLens.toFunB object' vertex' := by
-  subst object'
-  cases hvertex
-  rfl
+  grind
 
 /-- Pulling a coiterated vertex back through the restricted generator lens
 recovers the original retrofunctor's pullback of the corresponding vertex. -/
@@ -733,14 +718,8 @@ private theorem unfoldDirection_restrict
             hom.map_compose object firstVertex mappedNext
         have hrawVertices : rawNext ≍ homNext :=
           (cast_heq _ mappedNext).trans (cast_heq _ mappedNext).symm
-        have hrawDirections :
-            hom.toLens.toFunB
-                (Comonoid.target C object
-                  (hom.toLens.toFunB object firstVertex)) rawNext ≍
-              hom.toLens.toFunB homNextObject homNext :=
-          homDirection_heq C hom rfl hrawVertices
         exact hraw.trans
-          (compose_heq C object (heq_of_eq rfl) hrawDirections)
+          (compose_heq C object (heq_of_eq rfl) (homDirection_heq C hom rfl hrawVertices))
       have hmappedVertex :
           M.Vertex.castEquiv shapeEq (.child direction next) =
             M.Vertex.append firstVertex mappedNext := by
@@ -790,11 +769,7 @@ theorem extend_restrict
       (cast_eq_iff_heq).2 hvertex
     subst vertex'
     exact heq_of_eq (unfoldDirection_restrict C hom object vertex)
-  have htransport :
-      (hA object ▸ hom.toLens.toFunB object) ≍
-        hom.toLens.toFunB object :=
-    eqRec_heq_self _ _
-  exact hraw.trans htransport.symm
+  grind
 
 /-- The cofree polynomial comonoid's universal property as an equivalence
 between retrofunctors into it and lenses into its generator polynomial. -/

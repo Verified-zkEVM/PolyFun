@@ -514,8 +514,7 @@ theorem ext {left right : Terminal program}
     (cursor_eq : left.cursor = right.cursor)
     (output_eq : left.output = right.output) : left = right := by
   cases left
-  cases right
-  grind
+  simp_all
 
 /-- A terminal cursor satisfies `Cursor.IsTerminal`. -/
 theorem isTerminal (terminal : Terminal program) : terminal.cursor.IsTerminal :=

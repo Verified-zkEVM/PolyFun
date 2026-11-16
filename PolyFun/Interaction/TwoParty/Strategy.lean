@@ -285,8 +285,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Focal.mapOutput_id
       simp only [StrategyOver.TwoParty.Focal.mapOutput, ShapeOver.mapOutput,
         ShapeOver.TwoParty.pairedTypeTree, ShapeOver.TwoParty.paired, PFunctor.Lens.id]
       change F <$> σ = σ
-      rw [hpair]
-      exact LawfulFunctor.id_map σ
+      simp_all
   | .node _ rest, ⟨.receiver, rRest⟩ =>
       funext x
       have hid : ∀ s : StrategyOver (SyntaxOver.TwoParty.pairedTypeTree m) Participant.focal
@@ -458,8 +457,7 @@ theorem _root_.Interaction.StrategyOver.TwoParty.Counterpart.mapOutput_id
       simp only [StrategyOver.TwoParty.Counterpart.mapOutput, ShapeOver.mapOutput,
         ShapeOver.TwoParty.pairedTypeTree, ShapeOver.TwoParty.paired, PFunctor.Lens.id]
       change F <$> c = c
-      rw [hpair]
-      exact LawfulFunctor.id_map c
+      simp_all
 
 /-- Lift a deterministic counterpart into any monad.
 
@@ -891,9 +889,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.toConstantMonadsHom
           (fun dx : (d : (PFunctor.Lens.id TypeTree.basePFunctor).toFunA X) × A d =>
             Sigma.mk dx.1 (g₁ dx.1 (f₁ dx.1 dx.2))) =
           (fun dx : (d : (PFunctor.Lens.id TypeTree.basePFunctor).toFunA X) × A d =>
-            Sigma.mk dx.1 (g₂ dx.1 (f₂ dx.1 dx.2))) := by
-          funext dx
-          exact Sigma.ext rfl (heq_of_eq (comm dx.1 dx.2))
+            Sigma.mk dx.1 (g₂ dx.1 (f₂ dx.1 dx.2))) := by grind
       simpa [ShapeOver.TwoParty.Focal.monadicTypeTree, SyntaxOver.TwoParty.Focal.monadicTypeTree,
         ShapeOver.comap, SyntaxOver.comap, ShapeOver.forAgent, SyntaxOver.forAgent,
         ShapeOver.TwoParty.pairedTypeTree, ShapeOver.TwoParty.paired,
@@ -904,9 +900,7 @@ def _root_.Interaction.StrategyOver.TwoParty.Focal.toConstantMonadsHom
         Functor.map_map]
         using congrArg (fun h => h <$> node) hfun
     · funext x
-      have hfun : (fun y : A x => g₁ x (f₁ x y)) = (fun y : A x => g₂ x (f₂ x y)) := by
-        funext y
-        exact comm x y
+      have hfun : (fun y : A x => g₁ x (f₁ x y)) = (fun y : A x => g₂ x (f₂ x y)) := by grind
       simpa [ShapeOver.TwoParty.Focal.monadicTypeTree, SyntaxOver.TwoParty.Focal.monadicTypeTree,
         ShapeOver.comap, SyntaxOver.comap, ShapeOver.forAgent, SyntaxOver.forAgent,
         ShapeOver.TwoParty.pairedTypeTree, ShapeOver.TwoParty.paired,

@@ -25,6 +25,8 @@ continuation. The other operations fix an evaluation order: `force` demands only
 an outer constructor, `bind₂` demands two results from left to right, and
 `applyContinuous` demands a function but suspends its argument. `elim` eliminates
 into any pointed domain, so a family of meanings needs no further suspension.
+On discrete operands, `strict1` and `strict2` demand one or two operands from left to right, and
+`condContinuous` demands a Boolean condition and then only the branch it selects.
 
 `valueEmbedding` embeds returned values, and `map` changes them without any order, so a decoder
 into results over native values is a `Control.Semantics.CertifiedMeaning` into
@@ -42,7 +44,10 @@ error (`error_le_iff`). A decoder `dec` *decodes above* an encoder `enc` (`Decod
 computations that decode to `x` are exactly those above `enc x`. Then decoding is stable upward,
 and a monotone map acts on every computation that decodes to `x` as it acts on `enc x`
 (`DecodesAbove.dec_apply_eq_of_monotone`). So a fact proved at encodings transfers to
-computations that only decode to a value. No order on the decoded type is assumed.
+computations that only decode to a value, also through a fold of monotone steps
+(`DecodesAbove.dec_foldl_eq_of_monotone`). No order on the decoded type is assumed. Decoders
+compose behind a suspension (`DecodesAbove.bindPlain`) and componentwise on pairs
+(`DecodesAbove.prod`, with `decodeProd`).
 -/
 
 public section
@@ -265,6 +270,20 @@ theorem error_le_iff {e : ε} {r : DomainResult ε α} : error e ≤ r ↔ r = e
   | value y => exact ⟨fun h => absurd h (by simp [error, value]), fun h => absurd h
       (value_ne_error _ _)⟩
 
+@[simp] theorem value_le_value_iff (x y : α) :
+    value (ε := ε) x ≤ value y ↔ x ≤ y := by
+  simp [value]
+
+@[simp] theorem error_le_error_iff (e e' : ε) :
+    error (α := α) e ≤ error e' ↔ e = e' := by
+  simp [error, DiscreteOrder.mk.injEq]
+
+@[simp] theorem not_error_le_value (e : ε) (x : α) : ¬error e ≤ value x := by
+  simp [error, value]
+
+@[simp] theorem not_value_le_error (e : ε) (x : α) : ¬value x ≤ error e := by
+  simp [error, value]
+
 end Order
 
 /-- Over a discrete type, a returned value has only itself above it. -/
@@ -278,6 +297,12 @@ theorem map_value_eq_value_iff {d : DomainResult ε (DiscreteOrder β)} {x : β}
     map DiscreteOrder.value d = value x ↔ value ⟨x⟩ ≤ d := by
   rw [value_le_iff_eq, map_eq_value_iff]
   exact ⟨fun ⟨_, h, hx⟩ => hx ▸ h, fun h => ⟨_, h, rfl⟩⟩
+
+/-- Decode a pair componentwise, the first component first; the first error or divergence is the
+result. -/
+@[expose] def decodeProd {D₁ D₂ N₁ N₂ : Type*} (dec₁ : D₁ → DomainResult ε N₁)
+    (dec₂ : D₂ → DomainResult ε N₂) (p : D₁ × D₂) : DomainResult ε (N₁ × N₂) :=
+  bindPlain (dec₁ p.1) fun x => map (Prod.mk x) (dec₂ p.2)
 
 /-- `dec` decodes above `enc` when the computations that decode to the value `x` are exactly those
 above `enc x`. No order on the decoded type is assumed. -/
@@ -310,6 +335,42 @@ theorem dec_apply_eq_of_monotone {D' N' : Type*} [Preorder D'] {enc' : N' → D'
     {F : D → D'} (hF : Monotone F) {x : N} {y : N'} (hFx : dec' (F (enc x)) = value y) {d : D}
     (hd : dec d = value x) : dec' (F d) = value y :=
   h'.dec_eq_of_le (hF (h.enc_le_of_dec_eq hd)) hFx
+
+/-- Folding monotone steps that decode correctly at encodings decodes to the native fold, from a
+start that only decodes to its native value. No accumulator needs to be an encoding. -/
+theorem dec_foldl_eq_of_monotone {β : Type*} (h : DecodesAbove enc dec) {F : D → β → D}
+    {g : N → β → N} {ys : List β} (hF : ∀ y ∈ ys, Monotone fun d => F d y)
+    (hFg : ∀ x, ∀ y ∈ ys, dec (F (enc x) y) = value (g x y)) {z : D} {x : N}
+    (hz : dec z = value x) : dec (ys.foldl F z) = value (ys.foldl g x) := by
+  induction ys generalizing z x with
+  | nil => exact hz
+  | cons y ys ih =>
+    exact ih (fun y' hy' => hF y' (List.mem_cons_of_mem y hy'))
+      (fun x' y' hy' => hFg x' y' (List.mem_cons_of_mem y hy'))
+      (h.dec_apply_eq_of_monotone h (hF y List.mem_cons_self) (hFg x y List.mem_cons_self) hz)
+
+/-- Behind one suspension, demanding the outer constructor and then decoding the value decodes
+above the returned encoding. -/
+theorem bindPlain (h : DecodesAbove enc dec) :
+    DecodesAbove (fun x => (value (enc x) : DomainResult ε D))
+      (fun d => DomainResult.bindPlain d dec) := by
+  intro d x
+  rw [bindPlain_eq_value_iff, value_le_iff]
+  exact exists_congr fun y => and_congr_right fun _ => h y x
+
+/-- Decoding a pair componentwise decodes above the componentwise encoding. -/
+theorem prod {D' N' : Type*} [Preorder D'] {enc' : N' → D'} {dec' : D' → DomainResult ε N'}
+    (h : DecodesAbove enc dec) (h' : DecodesAbove enc' dec') :
+    DecodesAbove (Prod.map enc enc') (decodeProd dec dec') := by
+  intro p x
+  constructor
+  · intro hp
+    obtain ⟨y, hy, hrest⟩ := bindPlain_eq_value_iff.mp hp
+    obtain ⟨z, hz, rfl⟩ := map_eq_value_iff.mp hrest
+    exact Prod.le_def.mpr ⟨(h _ _).mp hy, (h' _ _).mp hz⟩
+  · intro hle
+    obtain ⟨h₁, h₂⟩ := Prod.le_def.mp hle
+    exact bindPlain_eq_value_iff.mpr ⟨x.1, (h _ _).mpr h₁, by rw [(h' _ _).mpr h₂, map_value]⟩
 
 end DecodesAbove
 
@@ -436,18 +497,70 @@ as a suspended computation. -/
 @[simp] theorem applyContinuous_bot (x : DomainResult ε α) :
     applyContinuous (β := β) ⊥ x = ⊥ := rfl
 
-@[simp] theorem value_le_value_iff (x y : α) :
-    value (ε := ε) x ≤ value y ↔ x ≤ y := by
-  simp [value]
+end DomainResult
 
-@[simp] theorem error_le_error_iff (e e' : ε) :
-    error (α := α) e ≤ error e' ↔ e = e' := by
-  simp [error, DiscreteOrder.mk.injEq]
+/-! ## Strict operations and conditionals -/
 
-@[simp] theorem not_error_le_value (e : ε) (x : α) : ¬error e ≤ value x := by
-  simp [error, value]
+namespace DomainResult
 
-@[simp] theorem not_value_le_error (e : ε) (x : α) : ¬value x ≤ error e := by
-  simp [error, value]
+variable {ε α β : Type*} {X : Type*} [OmegaCompletePartialOrder X]
+
+/-- Demand a discrete operand, then continue with its value. -/
+@[expose] noncomputable def strict1 (f : α → DomainResult ε X) :
+    DomainResult ε (DiscreteOrder α) →𝒄 DomainResult ε X :=
+  bind (DiscreteOrder.continuousMap f)
+
+@[simp] theorem strict1_value (f : α → DomainResult ε X) (a : α) :
+    strict1 f (value ⟨a⟩) = f a := rfl
+
+@[simp] theorem strict1_error (f : α → DomainResult ε X) (e : ε) :
+    strict1 f (error e) = error e := rfl
+
+@[simp] theorem strict1_bot (f : α → DomainResult ε X) : strict1 f ⊥ = ⊥ := rfl
+
+/-- Demand the left discrete operand, then the right one, then combine their values. -/
+@[expose] noncomputable def strict2 (f : α → β → DomainResult ε X) :
+    DomainResult ε (DiscreteOrder α) →𝒄 DomainResult ε (DiscreteOrder β) →𝒄 DomainResult ε X :=
+  bind₂ (DiscreteOrder.continuousMap fun x => DiscreteOrder.continuousMap (f x))
+
+@[simp] theorem strict2_value_value (f : α → β → DomainResult ε X) (a : α) (b : β) :
+    strict2 f (value ⟨a⟩) (value ⟨b⟩) = f a b := rfl
+
+@[simp] theorem strict2_value_error (f : α → β → DomainResult ε X) (a : α) (e : ε) :
+    strict2 f (value ⟨a⟩) (error e) = error e := rfl
+
+@[simp] theorem strict2_value_bot (f : α → β → DomainResult ε X) (a : α) :
+    strict2 f (value ⟨a⟩) ⊥ = ⊥ := rfl
+
+/-- The left operand is demanded first: its error is the result whatever the right one is. -/
+@[simp] theorem strict2_error (f : α → β → DomainResult ε X) (e : ε)
+    (b : DomainResult ε (DiscreteOrder β)) : strict2 f (error e) b = error e := rfl
+
+@[simp] theorem strict2_bot (f : α → β → DomainResult ε X)
+    (b : DomainResult ε (DiscreteOrder β)) : strict2 f ⊥ b = ⊥ := rfl
+
+/-- The conditional as a continuous map: `condContinuous (t, e) c` demands the condition `c`,
+then returns only the branch it selects. It takes the pair of branches first and the condition
+second, and is continuous in both. -/
+@[expose] noncomputable def condContinuous :
+    (DomainResult ε X × DomainResult ε X) →𝒄
+      (DomainResult ε (DiscreteOrder Bool) →𝒄 DomainResult ε X) :=
+  .ofFun (fun p => bind (DiscreteOrder.continuousMap fun b : Bool => if b then p.1 else p.2)) (by
+    apply (ωScottContinuous_bind (ε := ε) (α := DiscreteOrder Bool) (β := X)).comp
+    apply ContinuousHom.ωScottContinuous_of_apply
+    rintro ⟨_ | _⟩
+    · exact Prod.ωScottContinuous_snd
+    · exact Prod.ωScottContinuous_fst)
+
+@[simp] theorem condContinuous_value_true (t e : DomainResult ε X) :
+    condContinuous (t, e) (value ⟨true⟩) = t := rfl
+
+@[simp] theorem condContinuous_value_false (t e : DomainResult ε X) :
+    condContinuous (t, e) (value ⟨false⟩) = e := rfl
+
+@[simp] theorem condContinuous_error (t e : DomainResult ε X) (err : ε) :
+    condContinuous (t, e) (error err) = error err := rfl
+
+@[simp] theorem condContinuous_bot (t e : DomainResult ε X) : condContinuous (t, e) ⊥ = ⊥ := rfl
 
 end DomainResult
