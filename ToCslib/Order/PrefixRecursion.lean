@@ -7,22 +7,23 @@ Authors: Devon Tuma
 module
 
 public import ToCslib.Order.OmegaCompletePartialOrder
-public import Mathlib.Data.Fin.Basic
+public import Mathlib.Order.Fin.Basic
 
 /-!
-# Finite recurrences depending on earlier coordinates
+# Recurrences depending on earlier coordinates
 
-Each coordinate may inspect only its strict prefix. Such equations have a
-unique solution, computed by well-founded recursion. When the coordinate
-operations are continuous, this solution is also their least fixed point.
-The values may themselves contain partial information or errors.
+Each coordinate may inspect only its strict prefix. Over a well-founded order of coordinates,
+such equations have at most one solution (`Function.UsesPrefix.fixedPoint_unique`); the
+coordinates can be `Fin n`, or `ℕ` for a stream. Over `Fin n` the solution is computed by
+well-founded recursion. When the coordinate operations are continuous, this solution is also
+their least fixed point. The values may themselves contain partial information or errors.
 -/
 
 public section
 
 namespace Function
 
-variable {n : Nat} {α : Type*}
+variable {n : Nat} {ι α : Type*}
 
 /-- Compute a finite recurrence using only already computed coordinates. -/
 @[expose] def prefixRecursion (step : (i : Fin n) → (Fin i.val → α) → α) (i : Fin n) : α :=
@@ -36,21 +37,18 @@ theorem prefixRecursion_apply (step : (i : Fin n) → (Fin i.val → α) → α)
   rw [prefixRecursion]
 
 /-- Coordinate `i` depends only on coordinates strictly before `i`. -/
-@[expose] def UsesPrefix (f : (Fin n → α) → Fin n → α) : Prop :=
-  ∀ (i : Fin n) (x y : Fin n → α), (∀ j, j < i → x j = y j) → f x i = f y i
+@[expose] def UsesPrefix [LT ι] (f : (ι → α) → ι → α) : Prop :=
+  ∀ (i : ι) (x y : ι → α), (∀ j, j < i → x j = y j) → f x i = f y i
 
-/-- A prefix-dependent system has at most one solution, even with partial values. -/
-theorem UsesPrefix.fixedPoint_unique {f : (Fin n → α) → Fin n → α} (hf : UsesPrefix f)
-    {x y : Fin n → α} (hx : f x = x) (hy : f y = y) : x = y := by
+/-- A prefix-dependent system over well-founded coordinates has at most one solution, even with
+partial values. -/
+theorem UsesPrefix.fixedPoint_unique [LT ι] [WellFoundedLT ι] {f : (ι → α) → ι → α}
+    (hf : UsesPrefix f) {x y : ι → α} (hx : f x = x) (hy : f y = y) : x = y := by
   funext i
-  have eq_at : ∀ k (hk : k < n), x ⟨k, hk⟩ = y ⟨k, hk⟩ := by
-    intro k
-    induction k using Nat.strong_induction_on with
-    | h k ih =>
-        intro hk
-        rw [← congrFun hx ⟨k, hk⟩, ← congrFun hy ⟨k, hk⟩]
-        exact hf ⟨k, hk⟩ x y (fun j hj => ih j.val hj j.isLt)
-  exact eq_at i.val i.isLt
+  induction i using WellFoundedLT.induction with
+  | _ i ih =>
+    rw [← congrFun hx i, ← congrFun hy i]
+    exact hf i x y ih
 
 end Function
 
