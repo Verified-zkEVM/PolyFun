@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Quantitative.Counting
-public import ToCslib.Algebra.Polynomial
+public import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # Polynomial backends and families of realizers
@@ -156,7 +156,7 @@ theorem mem_realizableLE (X : M.FamRealizer PB a b f) (n : ℕ) :
   wit n := Q.identity (a n)
   time := PB.idTime
   time_le n k :=
-    (PB.timeOf_identity_le (a n) k).trans (Polynomial.eval_le_eval (Nat.le_add_left k n))
+    (PB.timeOf_identity_le (a n) k).trans (Polynomial.eval_mono _ (Nat.le_add_left k n))
   desc := .C PB.idDesc
   desc_le n := by simpa using PB.descSize_identity_le (a n)
 
@@ -185,7 +185,7 @@ additive description bound. Exposed so that its projection laws hold by reflexiv
     have henv := PB.envelope_le n (X.time_le n) k
     have hy : (PB.timeOf (Y.wit n)).eval ((PB.envelope (PB.timeOf (X.wit n))).eval k) ≤
         Y.time.eval (n + k + (PB.envelope X.time).eval (n + k)) :=
-      (Y.time_le n _).trans (Polynomial.eval_le_eval (by omega))
+      (Y.time_le n _).trans (Polynomial.eval_mono _ (by omega))
     have hov := PB.overhead_le n (X.time_le n) (Y.time_le n) k
     simp only [Polynomial.eval_add, Polynomial.eval_comp, Polynomial.eval_X]
     omega
@@ -247,7 +247,7 @@ Exposed so that its projection law holds by reflexivity downstream. -/
   time := Polynomial.X + lenOut + .C 1
   time_le n k := by
     have h := T.time_table_le (a n) (ha n) (b n) (f n) (hlenOut n) k
-    have : lenOut.eval n ≤ lenOut.eval (n + k) := Polynomial.eval_le_eval (Nat.le_add_right n k)
+    have : lenOut.eval n ≤ lenOut.eval (n + k) := Polynomial.eval_mono _ (Nat.le_add_right n k)
     simp only [Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]
     omega
   desc := cardIn * (lenIn + .C 1 + lenOut) + .C 1

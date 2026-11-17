@@ -164,7 +164,7 @@ noncomputable def UniformPureWitness.toFam (w : UniformPureWitness p posEnc f) :
   time_le n k := by
     change (w.toRealizer n).time.eval k ≤ _
     rw [w.time_toRealizer]
-    exact Polynomial.eval_le_eval (Nat.le_add_left k n)
+    exact Polynomial.eval_mono _ (Nat.le_add_left k n)
   desc := .C (w.initCode.size + w.headCode.size)
   desc_le n := by
     change (w.toRealizer n).size ≤ _

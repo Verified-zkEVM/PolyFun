@@ -7,7 +7,8 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Complexity.SecondOrderPolynomial
-public import ToCslib.Algebra.Polynomial
+public import Cslib.Foundations.Data.Polynomial.Monotone
+import Mathlib.Algebra.Order.Ring.Nat
 
 /-!
 # Ordinary polynomial bounds for second-order polynomials
@@ -81,6 +82,6 @@ theorem eval_le_toNatPolynomial (bounds : ι → Polynomial ℕ) (length : ι �
       exact Nat.mul_le_mul ihl ihr
   | oracle interface argument ih =>
       simp only [eval_oracle, toNatPolynomial, Polynomial.eval_comp]
-      exact (hlength interface _).trans (Polynomial.eval_le_eval ih)
+      exact (hlength interface _).trans (Polynomial.eval_mono _ ih)
 
 end Complexity.SecondOrderPolynomial
