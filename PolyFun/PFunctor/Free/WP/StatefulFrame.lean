@@ -24,7 +24,8 @@ The core `Std.WP.WP.Frames` laws use `frameFst` and `frameSnd`. These operators 
 existentially hide the old spectator component of an assertion, then impose the frame on
 the current spectator. On assertions independent of that component they are ordinary
 conjunction with the frame. This gives an operator on full-state assertions, as required
-by core's frame machinery, without requiring an exact or conjunctive WP interpretation.
+by core's frame machinery. The laws hold under every guard. The exception postcondition
+belongs to the base monad, so its companion is core's `FrameOp.ignore`.
 These operators have no identity on arbitrary full-state assertions. Their frame closures
 need not equal the original weakest precondition.
 -/
@@ -149,10 +150,12 @@ instance instPreservesSupFrameSnd (F : S → Prop) : PreservesSup (frameSnd (T :
 
 /-- The left-summand program frames right-component predicates through `frameFst`. -/
 theorem frames_sum_inl (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM P α)
-    (F : T → Prop) : WP.Frames frameFst ((x.mapLens Lens.inl).liftM (sum f g)) F := by
+    (F : T → Prop) (guard : S × T → Prop := Lean.Order.top) :
+    WP.Frames frameFst (opE := FrameOp.ignore) ((x.mapLens Lens.inl).liftM (sum f g)) F guard := by
   rw [Handler.liftM_mapLens_inl_eq_of_apply _ _ (fun _ => rfl) x]
   constructor
   intro post epost
+  apply PartialOrder.rel_trans (meet_le_right _ _)
   exact wp_run_frame_of_apply_map_eq (fun a => sum f g (.inl a))
     (fun a => sum f g (.inl a)) (fun t st => (st.1, t))
     (fun _ _ _ => by
@@ -167,10 +170,12 @@ theorem frames_sum_inl (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM P α
 
 /-- The right-summand program frames left-component predicates through `frameSnd`. -/
 theorem frames_sum_inr (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM Q α)
-    (F : S → Prop) : WP.Frames frameSnd ((x.mapLens Lens.inr).liftM (sum f g)) F := by
+    (F : S → Prop) (guard : S × T → Prop := Lean.Order.top) :
+    WP.Frames frameSnd (opE := FrameOp.ignore) ((x.mapLens Lens.inr).liftM (sum f g)) F guard := by
   rw [Handler.liftM_mapLens_inr_eq_of_apply _ _ (fun _ => rfl) x]
   constructor
   intro post epost
+  apply PartialOrder.rel_trans (meet_le_right _ _)
   exact wp_run_frame_of_apply_map_eq (fun a => sum f g (.inr a))
     (fun a => sum f g (.inr a)) (fun s st => (s, st.2))
     (fun _ _ _ => by

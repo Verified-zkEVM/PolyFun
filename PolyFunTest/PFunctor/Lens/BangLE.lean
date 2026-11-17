@@ -35,7 +35,7 @@ example : Lens.bangLECounit (bangLE 3 P₀) ∘ₗ Lens.bangLEComult 1 3 P₀ =
 
 /-- Coassociativity at concrete grades. -/
 example : Lens.bangLEComult 2 3 (bangLE 4 P₀) ∘ₗ Lens.bangLEComult (2 * 3) 4 P₀ =
-    Lens.bangLEMap 2 (Lens.bangLEComult 3 4 P₀) ∘ₗ Lens.bangLEComult 2 (3 * 4) P₀ ∘ₗ
+    (Lens.bangLEMap 2 (Lens.bangLEComult 3 4 P₀) ∘ₗ Lens.bangLEComult 2 (3 * 4) P₀) ∘ₗ
       Lens.bangLESub (mul_assoc 2 3 4).ge P₀ :=
   Lens.bangLEComult_coassoc 2 3 4 P₀
 
@@ -46,7 +46,7 @@ example : (Lens.Equiv.tensorComm (bangLE 1 P₀) (bangLE 2 P₀)).toLens ∘ₗ
 
 /-- The graded comultiplication is the comultiplication of the exponential. -/
 example : Lens.bangLEComult 2 2 P₀ ∘ₗ Lens.bangLEIncl (2 * 2) P₀ =
-    Lens.bangLEMap 2 (Lens.bangLEIncl 2 P₀) ∘ₗ Lens.bangLEIncl 2 (bang P₀) ∘ₗ
+    (Lens.bangLEMap 2 (Lens.bangLEIncl 2 P₀) ∘ₗ Lens.bangLEIncl 2 (bang P₀)) ∘ₗ
       Lens.bangComult P₀ :=
   Lens.bangLEComult_incl 2 2 P₀
 

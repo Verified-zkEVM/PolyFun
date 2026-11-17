@@ -43,7 +43,7 @@ git = "https://github.com/leanprover-community/mathlib4"
 rev = "69552756cd8a2d2d48763cf7279fd814d6a1224d"
 
 # Warnings are errors in this package's own modules only. PolyFun's modules compile here on
-# cslib-frontier's newer toolchain, where a deprecation in them is not this package's failure.
+# cslib-frontier's pinned toolchain, where a deprecation in them is not this package's failure.
 [[lean_lib]]
 name = "PolyFunFrontier"
 leanOptions = {warningAsError = true}

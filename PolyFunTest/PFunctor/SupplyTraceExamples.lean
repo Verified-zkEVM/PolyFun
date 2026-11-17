@@ -33,7 +33,7 @@ example : Supply.run nestedProgram exampleSupply
   Supply.run_eq_map_runPath nestedProgram exampleSupply
 
 /-- Its trace: one `noise` event and two `target` events. -/
-example : Path.trace nestedProgram nestedTrueTruePath
+example : (Path.trace nestedProgram nestedTrueTruePath).toList
     = [(⟨ExampleOp.noise, noiseOne⟩ : ExampleQuery.Idx),
       ⟨ExampleOp.target, true⟩, ⟨ExampleOp.target, true⟩] := rfl
 

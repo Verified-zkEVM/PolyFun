@@ -36,7 +36,7 @@ example {ω : Type w} [Monoid ω] :
 /-- The trace predicate accepts genuinely dependent direction fibers without
 requiring decidable equality on positions. -/
 example (allowed : (a : P.A) → Set (P.B a)) (a : P.A) (b : P.B a) (tail : TraceList P) :
-    TraceList.DirectionsWithin allowed (⟨a, b⟩ :: tail) ↔
+    TraceList.DirectionsWithin allowed (FreeMonoid.of (α := P.Idx) ⟨a, b⟩ * tail) ↔
       b ∈ allowed a ∧ TraceList.DirectionsWithin allowed tail := by
   simp
 
