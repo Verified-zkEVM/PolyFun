@@ -6,21 +6,22 @@ Authors: Devon Tuma
 
 module
 
-public import Mathlib.Algebra.Polynomial.Eval.Degree
+public import Cslib.Foundations.Data.Polynomial.Monotone
+public import Mathlib.Algebra.Order.Ring.Nat
 
 /-!
 # Monotonicity of Natural-Number Polynomial Evaluation
 
-Evaluation of a polynomial with natural-number coefficients is monotone in its argument:
-every term `c * x ^ i` is monotone in `x`. Mathlib does not state this for `Polynomial ℕ`, so
-the lemma is staged here for upstreaming. Polynomial time envelopes in the complexity backends
-use it to compare bounds at different input lengths.
+Evaluation of a polynomial with natural-number coefficients is monotone in its argument. CSLib
+states this for every canonically ordered semiring as `Polynomial.eval_mono` and
+`Polynomial.monotone_eval`. `Polynomial.eval_le_eval` is the deprecated `ℕ` case of
+`Polynomial.eval_mono`.
 -/
 
 public section
 
 /-- Evaluation of a natural-number polynomial is monotone in the argument. -/
+@[deprecated Polynomial.eval_mono +typeChanged (since := "2026-11-17")]
 theorem Polynomial.eval_le_eval {p : Polynomial ℕ} {m n : ℕ} (h : m ≤ n) :
-    p.eval m ≤ p.eval n := by
-  rw [p.eval_eq_sum_range, p.eval_eq_sum_range]
-  exact Finset.sum_le_sum fun i _ => Nat.mul_le_mul_left _ (Nat.pow_le_pow_left h i)
+    p.eval m ≤ p.eval n :=
+  p.eval_mono h
