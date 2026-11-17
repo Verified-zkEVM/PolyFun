@@ -444,7 +444,7 @@ noncomputable def comp {f : (n : ℕ) → α n → β n} {g : (n : ℕ) → β n
         h'.time.eval (n + (1 + k + ((h.wit n).time).eval k)) := h'.time_le n _
     have h3 : h'.time.eval (n + (1 + k + ((h.wit n).time).eval k)) ≤
         h'.time.eval (1 + (n + k) + h.time.eval (n + k)) :=
-      Polynomial.eval_le_eval (by omega)
+      Polynomial.eval_mono _ (by omega)
     simp only [Polynomial.eval_add, Polynomial.eval_comp, Polynomial.eval_X,
       Polynomial.eval_C]
     omega
@@ -464,7 +464,7 @@ noncomputable def const (ea : (n : ℕ) → α n → List Bool)
   time := .X + B + .C 2
   time_le n k := by
     have hlen := hB n
-    have hmono : B.eval n ≤ B.eval (n + k) := Polynomial.eval_le_eval (Nat.le_add_right n k)
+    have hmono : B.eval n ≤ B.eval (n + k) := Polynomial.eval_mono _ (Nat.le_add_right n k)
     rw [EncPolyTime.time_const]
     simp only [Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]
     omega
@@ -488,7 +488,7 @@ noncomputable def ofFintype [∀ n, Fintype (α n)] {ea : (n : ℕ) → α n →
   time := .X + lenOut + .C 1
   time_le n k := by
     refine (EncPolyTime.time_ofFintype_eval_le (hea n) (hlenOut n) k).trans ?_
-    have : lenOut.eval n ≤ lenOut.eval (n + k) := Polynomial.eval_le_eval (Nat.le_add_right n k)
+    have : lenOut.eval n ≤ lenOut.eval (n + k) := Polynomial.eval_mono _ (Nat.le_add_right n k)
     simp only [Polynomial.eval_add, Polynomial.eval_X, Polynomial.eval_C]; omega
   size := cardIn * (lenIn + .C 1 + lenOut) + .C 1
   size_le n := by
