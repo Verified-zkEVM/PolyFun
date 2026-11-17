@@ -68,9 +68,9 @@ def suffixPath : Path (suffix truePath) := ⟨PUnit.unit, ⟨⟩⟩
 
 example : leftJoined.length = 1 := rfl
 
-example : leftJoined.trace = [⟨Command.choose, true⟩] := rfl
+example : leftJoined.trace = FreeMonoid.ofList [⟨Command.choose, true⟩] := rfl
 
-example : rightJoined.trace =
+example : rightJoined.trace = FreeMonoid.ofList
     [⟨Command.choose, true⟩, ⟨Command.index, selectedIndex⟩,
       ⟨Command.finish, PUnit.unit⟩] := rfl
 

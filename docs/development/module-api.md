@@ -156,7 +156,7 @@ equations to observe traces. Use `TraceList.mapPartial_mapPartial` and
 `Trace.mapPartial_mapPartial` to reason about filtering and wiring. A consumer that
 needs list operations should cross the boundary explicitly with
 `FreeMonoid.toList`; `TraceList.toList_mapPartial` exposes the filtered list.
-Induct on a generic trace with `FreeMonoid.recOn`, whose cases are `one` and
+Induct on a generic trace with `FreeMonoid.inductionOn'`, whose cases are `one` and
 `of_mul`, to keep the induction hypothesis on the monoid carrier.
 
 When constructing a generator from a dependent position/answer pair, specify

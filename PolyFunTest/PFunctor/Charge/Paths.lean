@@ -179,8 +179,9 @@ abbrev Keys : PFunctor.{0, 0} := ⟨ℕ, fun _ => Bool⟩
 /-- Querying keys `1, 2, 1` charges two distinct keys, while the additive charge is three. -/
 example :
     TraceList.freshCharge (fun _ => (1 : ℕ)) ∅
-        ([⟨1, true⟩, ⟨2, true⟩, ⟨1, false⟩] : TraceList Keys) = 2 ∧
-      TraceList.charge (fun _ => (1 : ℕ)) ([⟨1, true⟩, ⟨2, true⟩, ⟨1, false⟩] : TraceList Keys) =
+        (FreeMonoid.ofList [⟨1, true⟩, ⟨2, true⟩, ⟨1, false⟩] : TraceList Keys) = 2 ∧
+      TraceList.charge (fun _ => (1 : ℕ))
+        (FreeMonoid.ofList [⟨1, true⟩, ⟨2, true⟩, ⟨1, false⟩] : TraceList Keys) =
         3 := by
   decide
 

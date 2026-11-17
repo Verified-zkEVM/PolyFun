@@ -34,7 +34,7 @@ example : Supply.run nestedProgram exampleSupply
 
 /-- Its trace: one `noise` event and two `target` events. -/
 example : Path.trace nestedProgram nestedTrueTruePath
-    = [(⟨ExampleOp.noise, noiseOne⟩ : ExampleQuery.Idx),
+    = FreeMonoid.ofList [(⟨ExampleOp.noise, noiseOne⟩ : ExampleQuery.Idx),
       ⟨ExampleOp.target, true⟩, ⟨ExampleOp.target, true⟩] := rfl
 
 example : PFunctor.TraceList.occurrences ExampleOp.target

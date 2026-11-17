@@ -147,12 +147,16 @@ instance instPreservesSupFrameSnd (F : S → Prop) : PreservesSup (frameSnd (T :
     · rintro ⟨_, ⟨A, hc, rfl⟩, hF, s, hA⟩
       exact ⟨hF, s, A, hc, hA⟩
 
-/-- The left-summand program frames right-component predicates through `frameFst`. -/
+/-- The left-summand program frames right-component predicates through `frameFst`, under
+every guard. The exception postcondition does not mention the state, so the frame leaves it
+unchanged (core's `FrameOp.ignore` companion). -/
 theorem frames_sum_inl (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM P α)
-    (F : T → Prop) : WP.Frames frameFst ((x.mapLens Lens.inl).liftM (sum f g)) F := by
+    (F : T → Prop) {guard : S × T → Prop} :
+    WP.Frames frameFst ((x.mapLens Lens.inl).liftM (sum f g)) F guard := by
   rw [Handler.liftM_mapLens_inl_eq_of_apply _ _ (fun _ => rfl) x]
   constructor
   intro post epost
+  refine PartialOrder.rel_trans (meet_le_right _ _) ?_
   exact wp_run_frame_of_apply_map_eq (fun a => sum f g (.inl a))
     (fun a => sum f g (.inl a)) (fun t st => (st.1, t))
     (fun _ _ _ => by
@@ -165,12 +169,16 @@ theorem frames_sum_inl (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM P α
       exact ⟨(st.1, t), st.2, rfl, hA, hF⟩)
     (fun _ _ st _ hA hF => ⟨⟨st.2, hA⟩, hF⟩) x post epost F
 
-/-- The right-summand program frames left-component predicates through `frameSnd`. -/
+/-- The right-summand program frames left-component predicates through `frameSnd`, under
+every guard. The exception postcondition does not mention the state, so the frame leaves it
+unchanged (core's `FrameOp.ignore` companion). -/
 theorem frames_sum_inr (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM Q α)
-    (F : S → Prop) : WP.Frames frameSnd ((x.mapLens Lens.inr).liftM (sum f g)) F := by
+    (F : S → Prop) {guard : S × T → Prop} :
+    WP.Frames frameSnd ((x.mapLens Lens.inr).liftM (sum f g)) F guard := by
   rw [Handler.liftM_mapLens_inr_eq_of_apply _ _ (fun _ => rfl) x]
   constructor
   intro post epost
+  refine PartialOrder.rel_trans (meet_le_right _ _) ?_
   exact wp_run_frame_of_apply_map_eq (fun a => sum f g (.inr a))
     (fun a => sum f g (.inr a)) (fun s st => (s, st.2))
     (fun _ _ _ => by

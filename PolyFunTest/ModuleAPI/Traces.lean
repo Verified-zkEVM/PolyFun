@@ -57,7 +57,7 @@ example {P : PFunctor.{uA, uB}} {α : Type v} (a : P.A)
     (next : P.B a → FreeM P α) (answer : P.B a) (tail : FreeM.Path (next answer)) :
     FreeM.Path.trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
       FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * FreeM.Path.trace (next answer) tail :=
-  FreeM.Path.trace_liftBind_eq_mul a next answer tail
+  FreeM.Path.trace_liftBind a next answer tail
 
 example {P : PFunctor.{uA, uB}} [DecidableEq P.A] {α : Type v}
     (program : FreeM P α) {s s' : Supply P} {path : FreeM.Path program}

@@ -196,14 +196,14 @@ theorem locateAt?_isSome_iff_lt_occurrences [DecidableEq P.A] (target : P.A)
       · subst a
         cases n with
         | zero =>
-            rw [locateAt?_liftBind_same_zero]
+            rw [locateAt?_liftBind_same_zero, occurrences_cons_self]
             change (true = true) ↔ _
             simp
         | succ n =>
-            rw [locateAt?_liftBind_same_succ, Option.isSome_map]
+            rw [locateAt?_liftBind_same_succ, Option.isSome_map, occurrences_cons_self]
             simpa using ih answer suffix n
-      · rw [locateAt?_liftBind_other h, Option.isSome_map]
-        simpa [h] using ih answer suffix n
+      · rw [locateAt?_liftBind_other h, Option.isSome_map, occurrences_cons_of_ne h]
+        exact ih answer suffix n
 
 namespace Located
 

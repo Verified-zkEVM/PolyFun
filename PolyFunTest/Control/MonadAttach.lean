@@ -137,7 +137,7 @@ example : support (.error () : Except Unit Bool) = ∅ := by
   simp [support, CanReturn]
 
 /-- `SetM` support preserves every member rather than selecting one. -/
-def bothBools : SetM Bool := fun _ => True
+def bothBools : SetM Bool := {_b | True}
 
 example : support bothBools = Set.univ :=
   rfl

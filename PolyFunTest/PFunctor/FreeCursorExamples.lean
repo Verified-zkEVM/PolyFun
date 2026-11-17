@@ -15,11 +15,11 @@ universe uA uB v
 
 namespace PFunctor.FreeM.CursorExamples
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the cursor examples below unfold these constants there, and the trace
-examples cross the `TraceList` carrier (reducibly `FreeMonoid (Idx _)`). -/
+/- Lean compares assigned metavariable types at implicit transparency; the
+cursor examples below unfold these constants there, and the trace examples build
+`FreeMonoid (Idx _)` values from dependent position/answer pairs. -/
 attribute [local implicit_reducible] FreeM.Cursor.plug FreeM.Cursor.trace
-  FreeM.Path.trace FreeMonoid PFunctor.Idx
+  FreeM.Path.trace PFunctor.Idx
 
 /-- Cursor construction keeps all three relevant universes independent. -/
 example {P : PFunctor.{uA, uB}} {α : Type v} (program : FreeM P α) :
@@ -61,7 +61,7 @@ example : internal.residual = afterChoice true := rfl
 
 example : internal.length = 1 := rfl
 
-example : internal.trace = [⟨Command.choose, true⟩] := rfl
+example : internal.trace = FreeMonoid.ofList [⟨Command.choose, true⟩] := rfl
 
 /-- A second edge selects an answer within the `Fin 2` branch. -/
 def indexEdge : Cursor.Edge internal.residual :=
@@ -86,7 +86,7 @@ example : trueLeaf.residual = FreeM.pure 11 := rfl
 
 example : trueLeaf.length = 3 := rfl
 
-example : trueLeaf.trace =
+example : trueLeaf.trace = FreeMonoid.ofList
     [⟨Command.choose, true⟩, ⟨Command.select true, selectedIndex⟩,
       ⟨Command.select false, PUnit.unit⟩] := rfl
 
@@ -151,8 +151,7 @@ example : trueLeaf.length = internal.length + indexEdge.toCursor.length +
   simp only [trueLeaf, afterIndexCursor, Cursor.length_comp]
 
 example : trueLeaf.trace =
-    List.append (List.append internal.trace indexEdge.toCursor.trace)
-      unitEdge.toCursor.trace := by
+    internal.trace * indexEdge.toCursor.trace * unitEdge.toCursor.trace := by
   simp only [trueLeaf, afterIndexCursor, Cursor.trace_comp]
 
 example (path : Path unitEdge.residual) :
@@ -160,7 +159,7 @@ example (path : Path unitEdge.residual) :
       afterIndexCursor.plug (unitEdge.toCursor.plug path) :=
   Cursor.plug_comp afterIndexCursor unitEdge.toCursor path
 
-example : trueLeaf.length = FreeMonoid.length trueLeaf.trace :=
+example : trueLeaf.length = trueLeaf.trace.toList.length :=
   Cursor.length_eq_length_trace trueLeaf
 
 /-- The witness retains the continuation, rather than merely comparing lengths. -/
@@ -192,7 +191,7 @@ example : trueLeaf.length = internal.length +
 example : internal.length ≤ trueLeaf.length :=
   extendsInternalComposed.length_le
 
-example : trueLeaf.trace = List.append internal.trace
+example : trueLeaf.trace = internal.trace *
     extendsInternalComposed.continuation.trace :=
   extendsInternalComposed.trace_eq
 

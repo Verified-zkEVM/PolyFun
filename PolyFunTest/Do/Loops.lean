@@ -40,7 +40,7 @@ theorem countTrue_le (n : Nat) : ⦃ True ⦄ countTrue n ⦃ fun r => r ≤ n �
   vcgen [countTrue] invariants
     · fun pref _ k => k ≤ pref.length
   all_goals simp_all
-  all_goals omega
+  omega
 
 /-- `if let` over an optional query result. -/
 def firstOrDefault (o : Option Bool) : FreeM coinP Bool := do
@@ -50,21 +50,18 @@ def firstOrDefault (o : Option Bool) : FreeM coinP Bool := do
     FreeM.lift (P := coinP) PUnit.unit
 
 /- The `else` branch puts an operation in tail position with the value type already
-normalized to `Bool`, where `vcgen`'s structural matcher cannot apply `Spec.lift` (stated at
-`P.B a`); the residual `wp` goal is finished by the judgment equations, naming the interface
-explicitly because its value type reads `Bool` rather than `coinP.B _`. -/
+normalized to `Bool`. `vcgen` still decomposes it through `Spec.lift`, leaving the postcondition
+at every answer. -/
 example (o : Option Bool) : ⦃ True ⦄ firstOrDefault o ⦃ fun r => r = true ∨ r = false ⦄ := by
-  vcgen -errorOnMissingSpec [firstOrDefault]
-  · exact Bool.eq_false_or_eq_true _
-  · rw [FreeM.DemonicWP.wp_apply_eq, FreeM.allOutputs_lift (P := coinP)]
-    exact fun b => Bool.eq_false_or_eq_true b
+  vcgen [firstOrDefault]
+  all_goals exact Bool.eq_false_or_eq_true _
 
 /- With the value type syntactically `P.B a`, a tail-position operation is decomposed by
 `Spec.lift` directly. -/
 example {P : PFunctor.{0, 0}} (a : P.A) (q : P.B a → Prop) (h : ∀ b, q b) :
     ⦃ True ⦄ FreeM.lift (P := P) a ⦃ q ⦄ := by
   vcgen
-  all_goals apply h
+  apply h
 
 /-- State over the free monad: a counter advanced once per query. -/
 def tick (n : Nat) : StateT Nat (FreeM coinP) Unit := do

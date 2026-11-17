@@ -56,13 +56,16 @@ example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) (F : Bool → P
     frameFst F (wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take)) post E) ⊑
       wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take))
         (fun a => frameFst F (post a)) E :=
-  (frames_sum_inl tick take twoTicks F).op_wp_le_wp_op post E
+  PartialOrder.rel_trans (le_meet _ _ _ (fun _ _ => trivial) PartialOrder.rel_refl)
+    ((frames_sum_inl tick take twoTicks F (guard := fun _ => True)).op_wp_le_wp_op post E)
 
 example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) :
     wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take)) post E ⊑
       ((WP.trans ((twoTicks.mapLens Lens.inl).liftM (sum tick take))).frameClosure frameFst).apply
         post E := by
-  exact WP.Frames.le_frameClosure frameFst (frames_sum_inl tick take twoTicks)
+  exact PredTrans.le_frameClosure frameFst _
+    (fun F Q' => PartialOrder.rel_trans (le_meet _ _ _ (fun _ _ => trivial) PartialOrder.rel_refl)
+      ((frames_sum_inl tick take twoTicks F (guard := fun _ => True)).op_wp_le_wp_op Q' E))
     PartialOrder.rel_refl
 
 /--

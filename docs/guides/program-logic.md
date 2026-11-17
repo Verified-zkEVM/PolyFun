@@ -479,7 +479,9 @@ they hold without an exact or conjunctive interpretation. The engine is
 `wp_run_frame_of_apply_map_eq`, which transports predicates along a family of state maps
 that commutes with every request.
 
-`frames_sum_inl` and `frames_sum_inr` state the same facts as core `Std.WP.WP.Frames` laws.
+`frames_sum_inl` and `frames_sum_inr` state the same facts as core `Std.WP.WP.Frames` laws,
+under every guard. The exception postcondition does not mention the state, so its frame
+companion is core's `FrameOp.ignore`, which leaves it unchanged.
 Core's frame laws need an operator on full-state assertions, so `frameFst` and `frameSnd`
 first hide the spectator component of an assertion existentially and then conjoin the frame
 on the current spectator. On assertions that do not mention the spectator component they

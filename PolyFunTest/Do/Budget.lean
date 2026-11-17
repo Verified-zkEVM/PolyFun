@@ -86,7 +86,7 @@ theorem chargedLoop_spec (n : ℕ) :
   vcgen [chargedLoop, Handler.id] invariants
     · fun pref _ _ s => s = 2 * pref.length
   all_goals simp_all
-  all_goals omega
+  omega
 
 variable {P : PFunctor.{0, 0}}
 

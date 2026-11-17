@@ -41,7 +41,7 @@ example : firstLeaf.path = secondLeaf.path := rfl
 
 example : output nestedProgram firstLeaf.path = 210 := rfl
 
-example : Path.trace nestedProgram firstLeaf.path =
+example : Path.trace nestedProgram firstLeaf.path = FreeMonoid.ofList
     [⟨ExampleOp.noise, noiseOne⟩, ⟨ExampleOp.target, true⟩, ⟨ExampleOp.target, false⟩] := rfl
 
 example : output nestedProgram firstLeaf.path = firstLeaf.result := firstLeaf.output_path
@@ -133,7 +133,7 @@ theorem example_output (setup : Bool) (i : Fin 2)
 
 theorem example_trace (setup : Bool) (i : Fin 2)
     (j : Fin (childArity (firstAnswer i))) :
-    Path.trace program (exampleLeaf setup i j).path =
+    Path.trace program (exampleLeaf setup i j).path = FreeMonoid.ofList
       [⟨Operation.setup, setup⟩, ⟨Operation.first, firstAnswer i⟩,
        ⟨Operation.second, secondAnswer (firstAnswer i) j⟩] := rfl
 

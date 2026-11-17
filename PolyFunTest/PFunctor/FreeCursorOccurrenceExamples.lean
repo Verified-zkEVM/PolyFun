@@ -72,7 +72,7 @@ example : nestedOccurrence.toCursor.residual =
     FreeM.liftBind ExampleOp.target nestedOccurrence.resume := rfl
 
 example : nestedOccurrence.before =
-    [(⟨ExampleOp.noise, noiseOne⟩ : ExampleQuery.Idx)] := rfl
+    FreeMonoid.ofList [(⟨ExampleOp.noise, noiseOne⟩ : ExampleQuery.Idx)] := rfl
 
 example : nestedOccurrence.plug false ⟨⟩ = nestedFalsePath := rfl
 

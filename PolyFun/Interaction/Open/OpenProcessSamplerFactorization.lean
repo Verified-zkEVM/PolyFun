@@ -59,9 +59,9 @@ positions, so no packet exists and both traces are the empty word. -/
 theorem traceList_interface_empty_eq
     (x y : PFunctor.TraceList Interface.empty) : x = y :=
   match x, y with
-  | [], [] => rfl
-  | ⟨a, _⟩ :: _, _ => a.elim
-  | [], ⟨a, _⟩ :: _ => a.elim
+  | ⟨[]⟩, ⟨[]⟩ => rfl
+  | ⟨⟨a, _⟩ :: _⟩, _ => a.elim
+  | ⟨[]⟩, ⟨⟨a, _⟩ :: _⟩ => a.elim
 
 /-! ## Scheduler draws for the factorization reassociations -/
 
