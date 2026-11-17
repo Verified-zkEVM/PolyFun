@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Lens.BangW
+public import Mathlib.Analysis.Calculus.FDeriv.Basic
 public import Mathlib.Analysis.Calculus.FDeriv.Linear
 public import Mathlib.Analysis.InnerProductSpace.Adjoint
 public import Mathlib.Analysis.InnerProductSpace.PiL2
