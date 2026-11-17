@@ -70,6 +70,14 @@ the shape of input/output transformers and of proof-system context lenses, are
 built with `Lens.ofMonomial`, `monomialMapFst`, and `monomialMapSnd` in
 [`Lens/Monomial.lean`](../../PolyFun/PFunctor/Lens/Monomial.lean).
 
+A lens can also carry weights backward. For each output direction with nonzero weight,
+`Lens.bangWMap` adds that weight to the input direction selected by the lens. The input and
+output direction types can be infinite because each weighting has finite support. For weights
+in an additive commutative monoid, `Lens.liftAddHom_bangWMap` identifies the sum obtained by
+evaluating additive labels on those input weights with the sum obtained by transporting the
+labels forward with `Lens.mapObj` and evaluating them on the output weights.
+[Weighted directions](../../PolyFun/PFunctor/Lens/BangW.lean)
+
 ## Representables, Yoneda, and natural transformations
 
 `Lens.fromPurePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
