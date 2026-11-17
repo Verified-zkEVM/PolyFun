@@ -212,8 +212,8 @@ noncomputable def withFailure (μ : Measure α) : Measure (Option α) :=
 @[simp]
 theorem withFailure_apply_univ (μ : Measure α) (hμ : μ Set.univ ≤ 1) :
     withFailure μ Set.univ = 1 := by
-  rw [withFailure, Measure.add_apply, Measure.map_apply Option.measurable_some MeasurableSet.univ,
-    Measure.smul_apply, Measure.dirac_apply' none MeasurableSet.univ]
+  rw [withFailure, add_apply, Measure.map_apply Option.measurable_some MeasurableSet.univ,
+    smul_apply, Measure.dirac_apply' none MeasurableSet.univ]
   simp only [Set.preimage_univ, Set.indicator_of_mem (Set.mem_univ none), Pi.one_apply,
     smul_eq_mul, mul_one]
   simpa [add_comm] using tsub_add_cancel_of_le hμ
@@ -232,9 +232,9 @@ instance withFailure.instIsProbabilityMeasure (μ : Measure α) [IsSubprobabilit
 /-- The mass of the explicit failure outcome is exactly the missing mass. -/
 theorem withFailure_apply_none (μ : Measure α) :
     withFailure μ {none} = 1 - μ Set.univ := by
-  rw [withFailure, Measure.add_apply,
+  rw [withFailure, add_apply,
     Measure.map_apply Option.measurable_some Option.measurableSet_none,
-    Measure.smul_apply, Measure.dirac_apply' none Option.measurableSet_none]
+    smul_apply, Measure.dirac_apply' none Option.measurableSet_none]
   rw [show some ⁻¹' ({none} : Set (Option α)) = ∅ by ext y; simp]
   rw [Set.indicator_of_mem (Set.mem_singleton none)]
   simp only [measure_empty, Pi.one_apply, smul_eq_mul, zero_add, mul_one]
@@ -242,9 +242,9 @@ theorem withFailure_apply_none (μ : Measure α) :
 /-- Failure completion preserves the mass of every successful singleton. -/
 theorem withFailure_apply_some [MeasurableSingletonClass α] (μ : Measure α) (x : α) :
     withFailure μ {some x} = μ {x} := by
-  rw [withFailure, Measure.add_apply,
+  rw [withFailure, add_apply,
     Measure.map_apply Option.measurable_some (measurableSet_singleton (some x)),
-    Measure.smul_apply, Measure.dirac_apply' none (measurableSet_singleton (some x))]
+    smul_apply, Measure.dirac_apply' none (measurableSet_singleton (some x))]
   rw [show some ⁻¹' ({some x} : Set (Option α)) = {x} by ext y; simp]
   rw [Set.indicator_of_notMem (by simp)]
   simp only [smul_zero, add_zero]
@@ -253,7 +253,7 @@ theorem withFailure_apply_some [MeasurableSingletonClass α] (μ : Measure α) (
 @[simp]
 theorem dropNone_withFailure (μ : Measure α) : μ.withFailure.dropNone = μ := by
   ext s hs
-  rw [dropNone_apply _ hs, withFailure, Measure.add_apply, Measure.smul_apply,
+  rw [dropNone_apply _ hs, withFailure, add_apply, smul_apply,
     Option.measurableEmbedding_some.map_apply,
     Set.preimage_image_eq s (fun _ _ h => Option.some.inj h),
     Measure.dirac_apply' none (Option.measurableSet_some_image.2 hs)]

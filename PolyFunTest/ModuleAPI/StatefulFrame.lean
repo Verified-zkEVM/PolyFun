@@ -60,7 +60,7 @@ example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) (F : Bool → P
 
 example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) :
     wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take)) post E ⊑
-      ((WP.wpTrans ((twoTicks.mapLens Lens.inl).liftM (sum tick take))).frameClosure frameFst).apply
+      ((WP.trans ((twoTicks.mapLens Lens.inl).liftM (sum tick take))).frameClosure frameFst).apply
         post E := by
   exact WP.Frames.le_frameClosure frameFst (frames_sum_inl tick take twoTicks)
     PartialOrder.rel_refl

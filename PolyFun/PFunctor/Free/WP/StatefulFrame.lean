@@ -57,7 +57,7 @@ theorem wp_run_frame_of_apply_map_eq {S S' : Type u} {T : Type uT}
   change wp (h'.run x (emb t s)) (fun r => sep (post r.1) F r.2) epost
   rw [← run_map_eq_of_apply_map_eq h h' (emb t) (hemb t) x s]
   have hc : wp (h.run x s) (fun r => sep (post r.1) F (emb t r.2)) epost :=
-    (show _ → _ from WP.wp_consequence (h.run x s) _ _ epost
+    (show _ → _ from WP.wp_monotone_post (x := h.run x s)
       (fun r hr => hsep_intro _ _ _ _ hr hF)) hA
   exact (show _ → _ from WPMonad.map_le_wp_map (Prod.map _root_.id (emb t))
     (h.run x s) (fun r => sep (post r.1) F r.2) epost) hc

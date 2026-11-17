@@ -30,7 +30,7 @@ name = "cslib-frontier"
 git = "https://github.com/cslib-community/cslib-frontier"
 rev = "f1b10c2fcaa297d1df3849febd723c301ffd9297"
 
-# Declared last, so these pins win over PolyFun's `v4.35.0` tags: Lake resolves the root's
+# Declared last, so these pins win over PolyFun's `v4.36.0` tags: Lake resolves the root's
 # requirements first, in reverse declaration order.
 [[require]]
 name = "cslib"
