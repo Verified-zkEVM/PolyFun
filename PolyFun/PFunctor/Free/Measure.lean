@@ -107,7 +107,7 @@ theorem measureFold_apply_univ_le_one [∀ a, IsSubprobabilityMeasure (μ a)] [M
         calc (∫⁻ b, measureFold μ (cont b) Set.univ ∂μ a) ≤ ∫⁻ _b, 1 ∂μ a := lintegral_mono ih
           _ = μ a Set.univ := by simp
           _ ≤ 1 := measure_univ_le (μ a)
-      · simp only [measureFold_liftBind_of_not_aemeasurable μ a cont h, Measure.coe_zero,
+      · simp only [measureFold_liftBind_of_not_aemeasurable μ a cont h, FunLike.coe_zero,
           Pi.zero_apply, zero_le]
 
 instance isSubprobabilityMeasure_measureFold [∀ a, IsSubprobabilityMeasure (μ a)]

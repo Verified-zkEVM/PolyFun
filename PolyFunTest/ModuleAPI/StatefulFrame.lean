@@ -55,15 +55,24 @@ example : Triple (((FreeM.lift (P := flag) ()).mapLens (Lens.inr (P := counter))
 example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) (F : Bool → Prop) :
     frameFst F (wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take)) post E) ⊑
       wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take))
-        (fun a => frameFst F (post a)) E :=
-  (frames_sum_inl tick take twoTicks F).op_wp_le_wp_op post E
+        (fun a => frameFst F (post a)) E := by
+  simpa only [top_meet] using (frames_sum_inl tick take twoTicks F).op_wp_le_wp_op post E
+
+/-- Throwing in the base monad uses the original exception predicate under any guard. -/
+example (f : Handler.Stateful (Except String) Nat counter)
+    (g : Handler.Stateful (Except String) Bool flag) (F : Nat → Prop)
+    (guard : Nat × Bool → Prop) (post : Bool → Nat × Bool → Prop) (E : String → Prop) :
+    let x := ((FreeM.lift (P := flag) ()).mapLens Lens.inr).liftM (sum f g)
+    Lean.Order.meet guard (frameSnd F (wp x post E)) ⊑ wp x (fun a => frameSnd F (post a)) E :=
+  (frames_sum_inr f g (FreeM.lift ()) F guard).op_wp_le_wp_op post E
 
 example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) :
     wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take)) post E ⊑
-      ((WP.wpTrans ((twoTicks.mapLens Lens.inl).liftM (sum tick take))).frameClosure frameFst).apply
+      ((WP.trans ((twoTicks.mapLens Lens.inl).liftM (sum tick take))).frameClosure frameFst).apply
         post E := by
-  exact WP.Frames.le_frameClosure frameFst (frames_sum_inl tick take twoTicks)
-    PartialOrder.rel_refl
+  apply (PredTrans.le_frameClosure_iff frameFst _).mpr
+  intro F
+  simpa only [top_meet, WP.wp] using (frames_sum_inl tick take twoTicks F).op_wp_le_wp_op post E
 
 /--
 info: 'PFunctor.Handler.Stateful.triple_sum_inl_frame' depends on axioms:

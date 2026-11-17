@@ -204,8 +204,8 @@ theorem liftM_id
               (Handler.id S)) using 1
         -- The transported node goal simplifies to a reflexive `Iff`, which
         -- `congr` does not close.
-        all_goals simp only [FreeM.liftBind_eq, FreeM.bind_eq_bind, FreeM.pure_bind]
-        all_goals exact Iff.rfl
+        simp only [FreeM.liftBind_eq, FreeM.bind_eq_bind, FreeM.pure_bind]
+        exact Iff.rfl
       rw [htransport]
       congr
       funext b e

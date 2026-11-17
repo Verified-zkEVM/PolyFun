@@ -14,15 +14,15 @@ import ToCslib.Probability.Kernel.Subprobability
 Regression tests for the staged subprobability classes: the instances that let a failing
 computation's measure and kernel interpretations keep total mass at most one. They also check that
 the generic `zero_apply`, a `simp` and `grind` lemma, evaluates the zero measure through
-`Measure.instIsZeroApply`.
+Mathlib's `IsZeroApply (Measure α)` instance.
 -/
 
 open MeasureTheory ProbabilityTheory
 
 namespace PolyFunTest.Probability
 
-/-- The generic `zero_apply` evaluates the zero measure through `Measure.instIsZeroApply`, as a
-term, under `simp only` and under `grind only`. -/
+/-- The generic `zero_apply` evaluates the zero measure through Mathlib's `IsZeroApply` instance,
+as a term, under `simp only` and under `grind only`. -/
 example (s : Set ℕ) : (0 : Measure ℕ) s = 0 := _root_.zero_apply s
 
 example (s : Set ℕ) : (0 : Measure ℕ) s = 0 := by simp only [_root_.zero_apply]
@@ -36,7 +36,7 @@ example (μ : Measure Bool) [IsProbabilityMeasure μ] : IsSubprobabilityMeasure 
 
 /-- Scaling a probability measure by one half leaves half its mass missing. -/
 example : (((1 / 2 : ENNReal) • Measure.dirac true) : Measure Bool) Set.univ ≤ 1 := by
-  simp only [Measure.smul_apply, measure_univ, smul_eq_mul, mul_one]
+  simp only [smul_apply, measure_univ, smul_eq_mul, mul_one]
   norm_num
 
 /-- Composing subprobability kernels gives a subprobability kernel. -/

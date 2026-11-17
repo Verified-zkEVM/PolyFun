@@ -551,7 +551,7 @@ noncomputable def exceptTRight (ε : Type u) :
       by
         convert MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
           x y.run f gRun collapse using 1
-        all_goals rfl
+        rfl
 
 /-- Left `ExceptT` lift (interpreting exceptions as `⊥`). Explicit rather
 than global to avoid left/right transformer diamonds. -/
@@ -595,7 +595,7 @@ noncomputable def exceptTLeft (ε : Type u) :
       by
         convert MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
           x.run y fRun g collapse using 1
-        all_goals rfl
+        rfl
 
 end FailureInstances
 

@@ -1,8 +1,7 @@
 name: Frontier
 
 # Builds PolyFunFrontier, the nested package that adds cslib-frontier (PolyFunFrontier/README.md).
-# It runs on cslib-frontier's toolchain and pins, which are newer than PolyFun's stable tags, so it
-# is a separate workflow: a cslib-frontier change that breaks it never blocks PolyFun's own checks.
+# It runs on cslib-frontier's toolchain and pins. Its CI is a separate workflow: a cslib-frontier change that breaks it never blocks PolyFun's own checks.
 # Make `Frontier` a required check only for pull requests that touch PolyFunFrontier/.
 
 on:

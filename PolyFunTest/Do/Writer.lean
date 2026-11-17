@@ -47,13 +47,13 @@ def logTwo (a b : Nat) : WriterT (FreeMonoid Nat) Id Nat := do
 example (a b : Nat) :
     ⦃ fun w => w = 1 ⦄ logTwo a b ⦃ fun r w => r = a + b ∧ w.toList = [a, b] ⦄ := by
   vcgen [logTwo]
-  simp_all
+  all_goals simp_all
 
 /- `run` starts from the empty log. -/
 example (a b : Nat) :
     ⦃ True ⦄ (logTwo a b).run ⦃ fun p => p.1 = a + b ∧ p.2.toList = [a, b] ⦄ := by
   vcgen [logTwo]
-  simp_all
+  all_goals simp_all
 
 /-- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
 local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=

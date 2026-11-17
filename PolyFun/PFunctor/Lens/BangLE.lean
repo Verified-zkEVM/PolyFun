@@ -207,7 +207,7 @@ theorem bangLEMap_counit_comult (n : ℕ∞) (P : PFunctor.{uA, uB}) :
 `m * (n * k)`. -/
 theorem bangLEComult_coassoc (m n k : ℕ∞) (P : PFunctor.{uA, uB}) :
     bangLEComult m n (bangLE k P) ∘ₗ bangLEComult (m * n) k P =
-      bangLEMap m (bangLEComult n k P) ∘ₗ bangLEComult m (n * k) P ∘ₗ
+      (bangLEMap m (bangLEComult n k P) ∘ₗ bangLEComult m (n * k) P) ∘ₗ
         bangLESub (mul_assoc m n k).ge P :=
   Lens.ext _ _ (fun _ => rfl) fun _ => funext fun _ => Subtype.ext (by
     dsimp only [Lens.comp, bangLEMap, bangLEComult, bangLESub, Function.comp]
@@ -221,7 +221,7 @@ theorem bangLECounit_incl (P : PFunctor.{uA, uB}) :
 /-- The graded comultiplication is the comultiplication of the exponential. -/
 theorem bangLEComult_incl (m n : ℕ∞) (P : PFunctor.{uA, uB}) :
     bangLEComult m n P ∘ₗ bangLEIncl (m * n) P =
-      bangLEMap m (bangLEIncl n P) ∘ₗ bangLEIncl m (bang P) ∘ₗ bangComult P :=
+      (bangLEMap m (bangLEIncl n P) ∘ₗ bangLEIncl m (bang P)) ∘ₗ bangComult P :=
   Lens.ext _ _ (fun _ => rfl) fun _ => funext fun _ => by
     dsimp only [Lens.comp, bangLEComult, bangLEIncl, bangLEMap, bangComult, Function.comp]
     simp [Multiset.bind]
@@ -267,8 +267,8 @@ theorem bangLEContr_comm (m n : ℕ∞) (P : PFunctor.{uA, uB}) :
 /-- Contraction is coassociative, up to the inclusion of `k + (m + n)` in `k + m + n`. -/
 theorem bangLEContr_assoc (k m n : ℕ∞) (P : PFunctor.{uA, uB}) :
     (Lens.id (bangLE k P) ⊗ₗ bangLEContr m n P) ∘ₗ bangLEContr k (m + n) P =
-      Lens.Equiv.tensorAssoc.toLens ∘ₗ (bangLEContr k m P ⊗ₗ Lens.id (bangLE n P)) ∘ₗ
-        bangLEContr (k + m) n P ∘ₗ bangLESub (add_assoc k m n).le P :=
+      ((Lens.Equiv.tensorAssoc.toLens ∘ₗ (bangLEContr k m P ⊗ₗ Lens.id (bangLE n P))) ∘ₗ
+        bangLEContr (k + m) n P) ∘ₗ bangLESub (add_assoc k m n).le P :=
   Lens.ext _ _ (fun _ => rfl) fun _ => funext fun _ => Subtype.ext (add_assoc _ _ _).symm
 
 /-- Graded contraction is the contraction of the exponential. -/
@@ -307,7 +307,7 @@ variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 and `f : bang P ⇆ Q` sends a direction of `R` to the sum of the demands of `f` at the directions
 that `g` demands. -/
 def bangComp (g : Lens (bang Q) R) (f : Lens (bang P) Q) : Lens (bang P) R :=
-  g ∘ₗ bangMap f ∘ₗ bangComult P
+  (g ∘ₗ bangMap f) ∘ₗ bangComult P
 
 /-- The backward map of a co-Kleisli composite is the bind of the backward maps. -/
 @[simp]

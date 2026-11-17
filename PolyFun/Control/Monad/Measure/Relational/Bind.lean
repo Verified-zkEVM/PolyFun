@@ -137,7 +137,7 @@ theorem CouplingPost.bind_of_countable_of_ae_mem {γ : Type x} {δ : Type y}
     (hstep : ∀ a ∈ s, ∀ b ∈ t, R a b → CouplingPost (k a) (l b) S) :
     CouplingPost (μ.bind k) (ν.bind l) S := by
   have hpost : MeasurableSet {z : γ × δ | (z.1 ∈ p ∧ z.2 ∈ q) ∧ S z.1 z.2} :=
-    ((hp.prod hq).mono fun _ hz ↦ hz.1).measurableSet
+    Set.Countable.measurableSet ((hp.prod hq).mono fun _ hz ↦ hz.1)
   have hstep' : ∀ a ∈ s, ∀ b ∈ t, R a b →
       CouplingPost (k a) (l b) (fun x y ↦ (x ∈ p ∧ y ∈ q) ∧ S x y) := by
     intro a ha b hb hR

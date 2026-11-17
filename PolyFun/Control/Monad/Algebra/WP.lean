@@ -116,8 +116,8 @@ algebra of the program with its outputs mapped through the postcondition, ignori
 exception postcondition. -/
 @[expose, instance_reducible]
 def toWP (α : Type u) : WP (m α) α l EStack⟨⟩ where
-  wpTrans x := ⟨fun post _ => MAlgOrdered.μ (x >>= fun a => pure (post a))⟩
-  wp_trans_monotone x _ _ _ _ _ hpost := μ_bind_pure_mono x hpost
+  trans x := ⟨fun post _ => MAlgOrdered.μ (x >>= fun a => pure (post a))⟩
+  trans_monotone x _ _ _ _ _ hpost := μ_bind_pure_mono x hpost
 
 theorem toWP_wp {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
     (toWP (m := m) (l := l) α).wp x post epost = MAlgOrdered.μ (x >>= fun a => pure (post a)) :=

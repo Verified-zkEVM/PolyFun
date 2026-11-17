@@ -114,7 +114,7 @@ def monadOfId (M : RelativeMonad C _ (𝟭 _)) : Monad C where
               M.assoc (f := 𝟙 (M.T X)) (g := f ≫ M.η))
   left_unit X := M.right_unit (f := 𝟙 (M.T X))
   right_unit X := by
-    simp only [Functor.id_obj]
+    simp only
     calc
       M.μ (M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))
           = M.μ ((M.η ≫ M.η) ≫ M.μ (𝟙 (M.T X))) :=

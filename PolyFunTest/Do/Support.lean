@@ -126,7 +126,7 @@ example : AllOutputs (fun r => r = 2 ∨ r = 3) choose12 := by
   have := toWPMonadDemonic_lawfulWPMonadAttach (m := SetM)
   refine allOutputs_of_wp ?_
   intro _
-  simpa only [Lean.Order.ofProp_prop_eq] using choose12_spec.le_wp trivial
+  simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using choose12_spec.le_wp trivial
 
 /-- A `let mut` accumulator over a `for` loop. -/
 def sumList (xs : List Nat) : SetM Nat := do
@@ -147,7 +147,7 @@ example (xs : List Nat) : AllOutputs (fun r => r = xs.sum) (sumList xs) := by
   have := toWPMonadDemonic_lawfulWPMonadAttach (m := SetM)
   refine allOutputs_of_wp ?_
   intro _
-  simpa only [Lean.Order.ofProp_prop_eq] using (sumList_spec xs).le_wp trivial
+  simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using (sumList_spec xs).le_wp trivial
 
 /-- A `forM` loop whose body is a nondeterministic choice constrained by the element. -/
 def checkAll (xs : List Nat) : SetM PUnit :=
@@ -159,7 +159,7 @@ nondeterministic body has no registered specification and is left as a support f
 theorem checkAll_spec (xs : List Nat) : ⦃ True ⦄ checkAll xs ⦃ fun _ => True ⦄ := by
   vcgen -errorOnMissingSpec [checkAll] invariants
     · fun _ _ _ => True
-  all_goals simp
+  simp
 
 /-- The same loop through the function `List.forM`. -/
 def checkAll' (xs : List Nat) : SetM PUnit :=
@@ -170,7 +170,7 @@ spelling reaches it through `List.forM_eq_forM` in the unfolding list. -/
 theorem checkAll'_spec (xs : List Nat) : ⦃ True ⦄ checkAll' xs ⦃ fun _ => True ⦄ := by
   vcgen -errorOnMissingSpec [checkAll', List.forM_eq_forM] invariants
     · fun _ _ _ => True
-  all_goals simp
+  simp
 
 /-- The demonic interpretation is conjunctive. -/
 example (x : SetM Nat) :
