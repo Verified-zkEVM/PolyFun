@@ -581,6 +581,14 @@ for program-tree signatures.
 
 Used in: `PolyFun/PFunctor/Free/Code.lean`.
 
+### Gavranović, *TensorType*
+
+In Bruno Gavranović's TensorType, a tensor's shape determines the indices of its entries.
+Its Idris 2 morphism `BinTree.inorder` visits leaves and internal nodes in left–root–right order.
+The Lean tutorial models this order with a polynomial lens and proves that each lookup in the
+vector built by its recursive traversal returns the entry selected by the lens. [TensorType morphisms](https://github.com/bgavran/TensorType/blob/7715491df8a38e121489187f0a2383523af69d47/src/Data/Container/Base/Morphism/Instances.idr)
+and [Lean traversal](Examples/Tutorials/TreeTensorTraversal.lean).
+
 ## Distributive-category citations
 
 The closure structure a step class needs — finite products, finite coproducts, and
