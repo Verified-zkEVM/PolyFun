@@ -24,6 +24,19 @@ namespace PolyFunTest.ModuleAPI.Traces
 
 open PFunctor
 
+example {P : PFunctor.{uA, uB}} (event : P.Idx) :
+    TraceList.positions (FreeMonoid.of event : TraceList P) = [event.1] := by
+  simp
+
+example {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) (event : P.Idx) :
+    TraceList.occurrences target (FreeMonoid.of event : TraceList P) =
+      if event.1 = target then 1 else 0 := by
+  simp
+
+example {P : PFunctor.{uA, uB}} (event : P.Idx) (tail : TraceList P) :
+    TraceList.positions (FreeMonoid.of event * tail) = event.1 :: TraceList.positions tail := by
+  simp
+
 example {P : PFunctor.{uA, uB}} (first second : TraceList P) :
     TraceList.positions (first * second) =
       TraceList.positions first ++ TraceList.positions second := by

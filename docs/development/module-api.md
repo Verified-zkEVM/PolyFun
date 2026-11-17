@@ -151,8 +151,9 @@ structural replay consumers used downstream.
 
 ### Monoid traces and dependent events
 
+For a single event, `simp` uses `TraceList.positions_of` and `TraceList.occurrences_of`.
 Use `TraceList.positions_mul`, `occurrences_mul`, and the generator lookup
-equations to observe traces. Use `TraceList.mapPartial_mapPartial` and
+equations to observe longer traces. Use `TraceList.mapPartial_mapPartial` and
 `Trace.mapPartial_mapPartial` to reason about filtering and wiring. A consumer that
 needs list operations should cross the boundary explicitly with
 `FreeMonoid.toList`; `TraceList.toList_mapPartial` exposes the filtered list.

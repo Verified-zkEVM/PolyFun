@@ -82,7 +82,6 @@ namespace TraceList
 def positions {P : PFunctor.{uA, uB}} (events : TraceList P) : List P.A :=
   List.map (fun event : P.Idx => event.1) events.toList
 
-@[simp]
 theorem positions_cons {P : PFunctor.{uA, uB}} (event : P.Idx) (events : TraceList P) :
     positions (FreeMonoid.of event * events) = event.1 :: positions events := rfl
 
@@ -94,6 +93,10 @@ theorem length_positions {P : PFunctor.{uA, uB}} (events : TraceList P) :
 theorem positions_one {P : PFunctor.{uA, uB}} : positions (1 : TraceList P) = [] := rfl
 
 @[deprecated (since := "2026-11-17")] alias positions_nil := positions_one
+
+@[simp]
+theorem positions_of {P : PFunctor.{uA, uB}} (event : P.Idx) :
+    positions (FreeMonoid.of event : TraceList P) = [event.1] := rfl
 
 /-- Concatenating traces preserves the order and multiplicity of positions. -/
 @[simp]
@@ -132,6 +135,13 @@ theorem occurrences_one {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A)
     occurrences target (1 : TraceList P) = 0 := rfl
 
 @[deprecated (since := "2026-11-17")] alias occurrences_nil := occurrences_one
+
+/-- A single event counts once exactly when it sits at the target. -/
+@[simp]
+theorem occurrences_of {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (event : P.Idx) :
+    occurrences target (FreeMonoid.of event : TraceList P) = if event.1 = target then 1 else 0 := by
+  simp [occurrences, List.countP_singleton]
 
 /-- Prepending an answer at the target adds one occurrence. -/
 theorem occurrences_cons_self {P : PFunctor.{uA, uB}} [DecidableEq P.A]
