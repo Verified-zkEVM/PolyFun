@@ -68,23 +68,23 @@ example : runState stateExternal 4 =
       (fun n => ITree.pure (F := External) (4, n)) := by
   simp [stateExternal]
 
-def throws : ITree (ExceptE String + External) Nat :=
+def throwBoom : ITree (ExceptE String + External) Nat :=
   ITree.query (F := ExceptE String + External) (Sum.inl "boom") PEmpty.elim
 
-example : runExcept throws =
+example : runExcept throwBoom =
     ITree.pure (F := External) (Except.error "boom") := by
-  simp [throws]
+  simp [throwBoom]
 
 /-- The exception bind law bypasses a continuation after the first error. -/
 example : interpExcept
-    (ITree.bind throws fun n =>
+    (ITree.bind throwBoom fun n =>
       ITree.pure (F := ExceptE String + External) (n + 1)) =
     ITree.pure (F := External) (Except.error "boom") := by
   rw [interpExcept_bind]
   simp only [interpExcept_pure]
-  rw [show interpExcept throws =
+  rw [show interpExcept throwBoom =
     ITree.pure (F := External) (Except.error "boom") by
-      simp [throws]]
+      simp [throwBoom]]
   rw [bind_pure_left]
 
 def succeeds : ITree (ExceptE String + External) Nat :=

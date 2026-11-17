@@ -71,7 +71,7 @@ def nestedFork : ForkView ExampleOp.target nestedProgram 0 where
 example : nestedOccurrence.toCursor.residual =
     FreeM.liftBind ExampleOp.target nestedOccurrence.resume := rfl
 
-example : nestedOccurrence.before =
+example : nestedOccurrence.before.toList =
     [(⟨ExampleOp.noise, noiseOne⟩ : ExampleQuery.Idx)] := rfl
 
 example : nestedOccurrence.plug false ⟨⟩ = nestedFalsePath := rfl

@@ -70,13 +70,10 @@ variable [AddMonoid ω] (e : P.Idx → ω)
 theorem charge_one : charge e (1 : TraceList P) = 0 :=
   rfl
 
-@[simp]
-theorem charge_nil : charge e ([] : TraceList P) = 0 :=
-  rfl
+@[deprecated (since := "2026-11-17")] alias charge_nil := charge_one
 
-@[simp]
 theorem charge_cons (i : P.Idx) (t : TraceList P) :
-    charge e ((i :: t : List P.Idx) : TraceList P) = e i + charge e t :=
+    charge e (FreeMonoid.of i * t) = e i + charge e t :=
   List.sum_cons
 
 @[simp]

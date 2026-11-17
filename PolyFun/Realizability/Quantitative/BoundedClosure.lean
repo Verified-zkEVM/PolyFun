@@ -95,7 +95,7 @@ theorem resolvesInUnder (certificate : RankedRunCertificate R allows) (state : R
     R.machine.ResolvesInUnder allows (certificate.rank state) state := by
   generalize hrank : certificate.rank state = rank
   induction rank using Nat.strong_induction_on generalizing state with
-  | h rank ih =>
+  | ind rank ih =>
     cases rank with
     | zero =>
       obtain ⟨value, hview⟩ := certificate.returns_of_rank_zero state hrank
