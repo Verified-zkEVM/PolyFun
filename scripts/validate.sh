@@ -87,7 +87,7 @@ if (( run_lint )); then
     Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
     Examples.Tutorials.ScopedDomains \
     Examples.Tutorials.ScopedVectors \
-    Examples.Tutorials.TreeTensorTraversal Examples.Tutorials.TreeTensorScatter Examples.Tutorials.TreeTensorReshape \
+    Examples.Tutorials.TreeTensorTraversal Examples.Tutorials.TreeTensorScatter Examples.Tutorials.TreeTensorReshape Examples.Tutorials.TreeTensorEuclidean \
     Examples.Parliament PolyFunParliamentMain
 fi
 
@@ -125,7 +125,7 @@ if (( run_axioms )); then
     --root Examples.Tutorials.ScopedDomains \
     --root Examples.Tutorials.ScopedVectors \
     --root Examples.Tutorials.TreeTensorTraversal --root Examples.Tutorials.TreeTensorScatter \
-    --root Examples.Tutorials.TreeTensorReshape \
+    --root Examples.Tutorials.TreeTensorReshape --root Examples.Tutorials.TreeTensorEuclidean \
     --root Examples.IO.Console --root Examples.IO.Storage --root Examples.Parliament \
     --root PolyFunTest.IPFunctor.Scoped.Import.Toy \
     --root PolyFunTest.IPFunctor.Scoped.Import.ToyImport \
