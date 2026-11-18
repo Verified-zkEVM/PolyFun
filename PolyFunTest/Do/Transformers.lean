@@ -6,8 +6,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Do.Spec
-public import PolyFun.Control.Monad.Algebra.WP
-public import Mathlib.Data.ENat.Lattice
+public import PolyFunTest.Do.Fixtures
 
 /-!
 # The transformers' constructors, lifts, runners and loops on core's `vcgen`
@@ -111,28 +110,13 @@ example : ⦃ True ⦄ ((pure 0 : Id Nat) *> (pure true : Id Bool)) ⦃ fun b =>
 
 /-! ## `guard` under a lattice-valued reading
 
-A deterministic monad with no global weakest-precondition instance, read at the extended
-naturals through a local ordered algebra, as `PolyFunTest.Do.Exact` sets up; the `Prop` rule
-for `guard` does not apply there, and `Spec.guard_OptionT_iInf` does. -/
+The deterministic monad `Det` of `PolyFunTest.Do.Fixtures`, read at the extended naturals through
+its identity ordered algebra; the `Prop` rule for `guard` does not apply there, and
+`Spec.guard_OptionT_iInf` does. -/
 
-/-- A deterministic monad with no global weakest-precondition instance. -/
-@[expose]
-def Det (α : Type) : Type := α
+section Lattice
 
-instance : Monad Det where
-  pure a := a
-  bind x f := f x
-
-instance : LawfulMonad Det :=
-  LawfulMonad.mk' Det (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl)
-
-noncomputable local instance instMAlgOrderedDetENat : MAlgOrdered Det ℕ∞ where
-  μ x := x
-  μ_pure _ := rfl
-  μ_bind_mono _ _ h x := h x
-
-noncomputable local instance instWPMonadDetENat : WPMonad Det ℕ∞ EStack⟨⟩ :=
-  MAlgOrdered.toWPMonad
+open scoped PolyFunTest.Det.ENatWP
 
 /- `guard` on a true condition continues, through `Spec.guard_OptionT_iInf`: the branch for the
 false condition is ruled out by `decide`. -/
@@ -141,5 +125,7 @@ example : ⦃ (3 : ℕ∞) ⦄ (do guard (1 < 2); OptionT.lift (pure 3 : Det ℕ
   vcgen
   rename_i h
   exact absurd h.down (by decide)
+
+end Lattice
 
 end PolyFunTest.Transformers

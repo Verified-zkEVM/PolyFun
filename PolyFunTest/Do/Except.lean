@@ -6,8 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Monad.Support.WP
-public import PolyFun.Control.Monad.Support.Instances
+public import PolyFunTest.Do.Fixtures
 public import PolyFun.Control.Do.Spec
 
 /-!
@@ -28,9 +27,8 @@ open Std.WP MonadAttach
 
 set_option experimental.vcgen true
 
-/-- The demonic interpretation of `SetM`, installed locally; core lifts it to `ExceptT`. -/
-local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=
-  toWPMonadDemonic
+/- The demonic interpretation of `SetM`, which core lifts to `ExceptT`. -/
+open scoped PolyFunTest.SetMDemonicWP
 
 /-- Division that throws on a zero divisor. -/
 def safeDiv (a b : Nat) : ExceptT String SetM Nat := do

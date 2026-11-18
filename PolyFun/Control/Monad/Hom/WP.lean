@@ -22,7 +22,8 @@ of a handler (`FreeM.liftM` is a monad morphism), and how any monad interpreting
 interpretation is the composite of two monad morphisms.
 
 Nothing here is an instance: register the transported structure scoped or local at the
-carrier where it is intended.
+carrier where it is intended. The value lemmas `transportWPOf_wp` and `transportWP_wp` are not
+`@[simp]`, so core's `wp` stays the normal form.
 -/
 
 public section
@@ -45,7 +46,8 @@ def transportWPOf (F : ∀ {α : Type u}, m α → n α) (α : Type u) [WP (n α
   trans x := WP.trans (F x)
   trans_monotone x := WP.trans_monotone (F x)
 
-@[simp]
+/-- The transported `wp` is the target's `wp` of the image. Not `@[simp]`: core's `wp` is the
+normal form. -/
 theorem transportWPOf_wp (F : ∀ {α : Type u}, m α → n α) {α : Type u} [WP (n α) α Pred EPred]
     (x : m α) (post : α → Pred) (epost : EPred) :
     (transportWPOf F α).wp x post epost = wp (F x) post epost :=
@@ -61,7 +63,7 @@ variable {m : Type u → Type v} {n : Type u → Type w} [Monad m] [Monad n]
 def transportWP (F : m →ᵐ n) (α : Type u) [WP (n α) α Pred EPred] : WP (m α) α Pred EPred :=
   transportWPOf (fun x => F x) α
 
-@[simp]
+/-- The bundled form of `transportWPOf_wp`. Not `@[simp]`. -/
 theorem transportWP_wp (F : m →ᵐ n) {α : Type u} [WP (n α) α Pred EPred] (x : m α)
     (post : α → Pred) (epost : EPred) :
     (F.transportWP α).wp x post epost = wp (F x) post epost :=

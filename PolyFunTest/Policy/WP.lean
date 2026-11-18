@@ -35,11 +35,11 @@ checks the other two rules, on imports and on `vcgen`.
 /-! ## Readings register their rules in their scopes -/
 
 /--
-info: PFunctor.FreeM.DemonicWP.instWPMonadAll:
+info: PFunctor.FreeM.DemonicWP.instWPMonad:
   instance scoped in PFunctor.FreeM.DemonicWP, from PolyFun.PFunctor.Free.Do
 -/
 #guard_msgs in
-#wp_registrations PFunctor.FreeM.DemonicWP.instWPMonadAll
+#wp_registrations PFunctor.FreeM.DemonicWP.instWPMonad
 
 /--
 info: PFunctor.FreeM.Spec.lift:

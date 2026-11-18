@@ -119,6 +119,7 @@ def toWP (α : Type u) : WP (m α) α l EStack⟨⟩ where
   trans x := ⟨fun post _ => MAlgOrdered.μ (x >>= fun a => pure (post a))⟩
   trans_monotone x _ _ _ _ _ hpost := μ_bind_pure_mono x hpost
 
+/-- The value of the derived transformer. Not `@[simp]`, like `toWPMonad_wp`. -/
 theorem toWP_wp {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩) :
     (toWP (m := m) (l := l) α).wp x post epost = MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
   rfl
@@ -126,9 +127,8 @@ theorem toWP_wp {α : Type u} (x : m α) (post : α → l) (epost : EStack⟨⟩
 /-- Core's triple through the derived interpretation is Mathlib's order on the algebra. -/
 theorem toWP_triple_iff {α : Type u} (x : m α) (pre : l) (post : α → l) (epost : EStack⟨⟩) :
     @Std.WP.Triple l EStack⟨⟩ (m α) α _ _ x (toWP α) pre post epost ↔
-      pre ≤ MAlgOrdered.μ (x >>= fun a => pure (post a)) := by
-  let inst := toWP (m := m) (l := l) α
-  exact Std.WP.Triple.iff
+      pre ≤ MAlgOrdered.μ (x >>= fun a => pure (post a)) :=
+  WP.triple_iff _
 
 /-- An ordered monad algebra is a core weakest-precondition monad, with its soundness laws
 holding as equations (`instExactWPMonadToWPMonad`). Not an instance. -/
@@ -157,18 +157,16 @@ instance instExactWPMonadToWPMonad [LawfulMonad m] :
 
 /-- The derived interpretation is conjunctive at `x` whenever the algebra of the mapped program
 preserves binary meets of postconditions. -/
-theorem wpConjunctiveOf {α : Type u} (x : m α)
+theorem wpConjunctive_toWP {α : Type u} (x : m α)
     (h : ∀ Q₁ Q₂ : α → l,
       MAlgOrdered.μ (x >>= fun a => pure (Q₁ a)) ⊓ MAlgOrdered.μ (x >>= fun a => pure (Q₂ a)) ≤
         MAlgOrdered.μ (x >>= fun a => pure (Q₁ a ⊓ Q₂ a))) :
-    @WPConjunctive (m α) α l EStack⟨⟩ _ _ (toWP α) x := by
-  let inst := toWP (m := m) (l := l) α
-  refine ⟨fun Q₁ Q₂ _ _ => ?_⟩
-  change Lean.Order.meet (MAlgOrdered.μ (x >>= fun a => pure (Q₁ a)))
-      (MAlgOrdered.μ (x >>= fun a => pure (Q₂ a))) ≤
-    MAlgOrdered.μ (x >>= fun a => pure (Lean.Order.meet Q₁ Q₂ a))
-  rw [meet_eq_inf]
-  refine _root_.le_trans (h Q₁ Q₂) (μ_bind_pure_mono x fun a => ?_)
-  rw [Lean.Order.meet_apply, meet_eq_inf]
+    @WPConjunctive (m α) α l EStack⟨⟩ _ _ (toWP α) x :=
+  (WP.wpConjunctive_iff _ x).mpr fun Q₁ Q₂ _ _ => by
+    rw [toWP_wp, toWP_wp, toWP_wp, meet_eq_inf]
+    refine _root_.le_trans (h Q₁ Q₂) (μ_bind_pure_mono x fun a => ?_)
+    rw [Lean.Order.meet_apply, meet_eq_inf]
+
+@[deprecated (since := "2026-11-16")] alias wpConjunctiveOf := wpConjunctive_toWP
 
 end MAlgOrdered

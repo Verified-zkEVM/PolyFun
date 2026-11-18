@@ -66,6 +66,7 @@ public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Control.Monad.Support.Loops
 public import PolyFun.Control.Monad.Support.Structural
 public import PolyFun.Control.Monad.Support.WP
+public import PolyFun.Control.Monad.WPInstance
 public import PolyFun.Control.Monad.WriterT.WP
 public import PolyFun.Control.Semantics.Correspondence
 public import PolyFun.Control.Semantics.Measure

@@ -7,8 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Do.Spec
-public import PolyFun.Control.Monad.Support.WP
-public import PolyFun.Control.Monad.Support.Instances
+public import PolyFunTest.Do.Fixtures
 public import Mathlib.Algebra.FreeMonoid.Basic
 
 /-!
@@ -55,9 +54,8 @@ example (a b : Nat) :
   vcgen [logTwo]
   all_goals simp_all
 
-/-- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
-local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=
-  toWPMonadDemonic
+/- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
+open scoped PolyFunTest.SetMDemonicWP
 
 /-- A nondeterministic choice between an element and its successor. -/
 def choose (x : Nat) : SetM Nat := ({x, x + 1} : Set Nat)
