@@ -38,7 +38,8 @@ expectation algebras of the measure semantics of free programs (`ExpectationWP.a
 `ExpectationWP.algebraULift_freeM`).
 
 All of these algebras are definitions. `open scoped PFunctor.FreeM.Expectation` installs the
-expectation algebra of `PFunctor.AnswerMeasure` as an instance.
+expectation algebra of `PFunctor.AnswerMeasure` as an instance, together with its
+weakest-precondition reading from `PolyFun.PFunctor.Free.Measure.WP`.
 -/
 
 @[expose] public section

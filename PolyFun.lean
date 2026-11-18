@@ -394,6 +394,7 @@ public import PolyFun.PFunctor.Free.Measure.Lintegral
 public import PolyFun.PFunctor.Free.Measure.Path
 public import PolyFun.PFunctor.Free.Measure.Support
 public import PolyFun.PFunctor.Free.Measure.Uniform
+public import PolyFun.PFunctor.Free.Measure.WP
 public import PolyFun.PFunctor.Free.Parallel
 public import PolyFun.PFunctor.Free.Path
 public import PolyFun.PFunctor.Free.Path.AppendAlong
