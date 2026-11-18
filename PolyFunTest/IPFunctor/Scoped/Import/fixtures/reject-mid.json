@@ -1,3 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
 [
   {
     "name": "first",
@@ -21,4 +22,4 @@
     "scheme": "nat",
     "body": {"lit": 7}
   }
-]
+]}
