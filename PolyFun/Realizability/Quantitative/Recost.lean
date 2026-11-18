@@ -192,7 +192,7 @@ theorem ExecutionTrace.cost_recost_traffic {R : QuantitativeRealization Q bd}
         ExecutionCost.traffic_ofWork, ExecutionCost.traffic_observe, ExecutionCost.traffic_query,
         QuantitativeStepClass.recost_size,
         recost_state, recost_headCode, recost_updateCode, ih]
-      all_goals rfl
+      rfl
 
 theorem ExecutionTrace.cost_recost_peakStateSize {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
@@ -204,7 +204,7 @@ theorem ExecutionTrace.cost_recost_peakStateSize {R : QuantitativeRealization Q 
         ExecutionCost.peakStateSize_observe, ExecutionCost.ofWork, ExecutionCost.query,
         QuantitativeStepClass.recost_size,
         recost_state, recost_headCode, recost_updateCode, ih]
-      all_goals rfl
+      rfl
 
 theorem ExecutionTrace.cost_recost_peakHeadSize {R : QuantitativeRealization Q bd}
     {start finish : R.machine.State} (trace : R.ExecutionTrace start finish) :
@@ -216,7 +216,7 @@ theorem ExecutionTrace.cost_recost_peakHeadSize {R : QuantitativeRealization Q b
         ExecutionCost.peakHeadSize_observe, ExecutionCost.ofWork, ExecutionCost.query,
         QuantitativeStepClass.recost_size,
         recost_state, recost_headCode, recost_updateCode, ih]
-      all_goals rfl
+      rfl
 
 variable (R : QuantitativeRealization Q bd) (input : α) {finish : R.machine.State}
   (trace : R.ExecutionTrace (R.machine.init input) finish)
@@ -253,7 +253,7 @@ theorem executionCost_recost_peakStateSize :
     ExecutionTrace.cost_recost_peakStateSize trace
   simp only [executionCost, ExecutionCost.peakStateSize_add, ExecutionCost.peakStateSize_observe,
     ExecutionCost.ofWork, h]
-  all_goals rfl
+  rfl
 
 /-- Peak head size does not see the cost function. -/
 theorem executionCost_recost_peakHeadSize :
@@ -264,7 +264,7 @@ theorem executionCost_recost_peakHeadSize :
     ExecutionTrace.cost_recost_peakHeadSize trace
   simp only [executionCost, ExecutionCost.peakHeadSize_add, ExecutionCost.peakHeadSize_observe,
     ExecutionCost.ofWork, h]
-  all_goals rfl
+  rfl
 
 /-- Only work moves: under the zero charge every prefix charges zero work. -/
 theorem ExecutionTrace.cost_recost_zero_work {R : QuantitativeRealization Q bd}
@@ -276,7 +276,7 @@ theorem ExecutionTrace.cost_recost_zero_work {R : QuantitativeRealization Q bd}
       simp only [ExecutionTrace.recost, ExecutionTrace.cost, ExecutionCost.work_add,
         ExecutionCost.work_ofWork, ExecutionCost.work_observe, ExecutionCost.work_query,
         recost_headCode, recost_updateCode, ih]
-      all_goals rfl
+      rfl
 
 theorem executionCost_recost_zero_work :
     ((R.recost fun _ _ ↦ 0).executionCost input
@@ -286,7 +286,7 @@ theorem executionCost_recost_zero_work :
   simp only [executionCost, ExecutionCost.work_add, ExecutionCost.work_ofWork,
     ExecutionCost.work_observe, recost_initCode,
     recost_headCode, h]
-  all_goals rfl
+  rfl
 
 /-- Restore the original charge annotations on a trace. -/
 @[expose] def ExecutionTrace.restore {R : QuantitativeRealization Q bd} :

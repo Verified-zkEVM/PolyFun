@@ -113,10 +113,10 @@ theorem apply_eq_drop_occurrences : ∀ (program : FreeM P α) {s s' : Supply P}
           have hih := apply_eq_drop_occurrences (next u) hrec b
           by_cases hb : b = a
           · subst hb
-            rw [hih, update_apply_self, FreeM.Path.trace_liftBind_eq_mul,
+            rw [hih, update_apply_self, FreeM.Path.trace_liftBind,
               TraceList.occurrences_of_mul]
             simp [hs]
-          · rw [hih, update_apply_of_ne _ _ _ hb, FreeM.Path.trace_liftBind_eq_mul,
+          · rw [hih, update_apply_of_ne _ _ _ hb, FreeM.Path.trace_liftBind,
               TraceList.occurrences_of_mul]
             simp [Ne.symm hb]
 
@@ -150,7 +150,7 @@ theorem getAt?_trace_runPath (program : FreeM P α) : ∀ (b : P.A) (n : Nat) (s
           obtain ⟨tail, s''⟩ := r
           simp only at heq
           obtain ⟨rfl, rfl⟩ := heq
-          rw [FreeM.Path.trace_liftBind_eq_mul] at hn ⊢
+          rw [FreeM.Path.trace_liftBind] at hn ⊢
           by_cases hb : b = a
           · subst hb
             cases n with

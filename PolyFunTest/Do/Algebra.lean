@@ -7,7 +7,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Monad.Algebra.WP
-public import Std.Tactic.Do
 public import Mathlib.Data.ENat.Lattice
 
 /-!

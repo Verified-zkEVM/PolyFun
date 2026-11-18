@@ -103,7 +103,7 @@ theorem trace_liftAppend {program residual : FreeM P α}
   induction spine with
   | root => rfl
   | down answer tail ih =>
-      exact congrArg (List.cons ⟨_, answer⟩)
+      exact congrArg ((FreeMonoid.of (α := P.Idx) ⟨_, answer⟩ * ·))
         (ih (fun path => suffix ⟨answer, path⟩))
 
 /-- Follow a complete prefix path before a cursor spine in its selected suffix. -/
@@ -134,10 +134,10 @@ theorem trace_joinRight : (program : FreeM P α) →
     (path : Path program) → {residual : FreeM P β} →
     (spine : Spine (suffix path) residual) →
     (spine.joinRight program suffix path).trace =
-      List.append (Path.trace program path) spine.trace
+      Path.trace program path * spine.trace
   | .pure _, _, ⟨⟩, _, _ => rfl
   | .liftBind _ next, suffix, ⟨answer, path⟩, _, spine => by
-      exact congrArg (List.cons ⟨_, answer⟩)
+      exact congrArg ((FreeMonoid.of (α := P.Idx) ⟨_, answer⟩ * ·))
         (trace_joinRight (next answer) (fun tail => suffix ⟨answer, tail⟩)
           path spine)
 
@@ -276,7 +276,7 @@ theorem trace_joinRight : (program : FreeM P α) →
     (suffix : Path program → FreeM P β) →
     (path : Path program) → (cursor : Cursor (suffix path)) →
     (joinRight program suffix path cursor).trace =
-      List.append (Path.trace program path) cursor.trace
+      Path.trace program path * cursor.trace
   | program, suffix, path, cursor =>
       Spine.trace_joinRight program suffix path cursor.spine
 

@@ -24,6 +24,19 @@ namespace PolyFunTest.ModuleAPI.Traces
 
 open PFunctor
 
+example {P : PFunctor.{uA, uB}} (event : P.Idx) :
+    TraceList.positions (FreeMonoid.of event : TraceList P) = [event.1] := by
+  simp
+
+example {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) (event : P.Idx) :
+    TraceList.occurrences target (FreeMonoid.of event : TraceList P) =
+      if event.1 = target then 1 else 0 := by
+  simp
+
+example {P : PFunctor.{uA, uB}} (event : P.Idx) (tail : TraceList P) :
+    TraceList.positions (FreeMonoid.of event * tail) = event.1 :: TraceList.positions tail := by
+  simp
+
 example {P : PFunctor.{uA, uB}} (first second : TraceList P) :
     TraceList.positions (first * second) =
       TraceList.positions first ++ TraceList.positions second := by
@@ -57,7 +70,7 @@ example {P : PFunctor.{uA, uB}} {α : Type v} (a : P.A)
     (next : P.B a → FreeM P α) (answer : P.B a) (tail : FreeM.Path (next answer)) :
     FreeM.Path.trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
       FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * FreeM.Path.trace (next answer) tail :=
-  FreeM.Path.trace_liftBind_eq_mul a next answer tail
+  FreeM.Path.trace_liftBind a next answer tail
 
 example {P : PFunctor.{uA, uB}} [DecidableEq P.A] {α : Type v}
     (program : FreeM P α) {s s' : Supply P} {path : FreeM.Path program}

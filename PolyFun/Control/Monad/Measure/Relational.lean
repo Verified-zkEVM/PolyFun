@@ -145,7 +145,7 @@ theorem couplingPost_refl_of_ae_mem_countable [MeasurableSingletonClass α]
     (μ : Measure α) {s : Set α} (hs : s.Countable) (hμ : ∀ᵐ a ∂μ, a ∈ s) :
     CouplingPost μ μ (· = ·) := by
   have hevent : MeasurableSet {z : α × α | (z.1 ∈ s ∧ z.2 ∈ s) ∧ z.1 = z.2} :=
-    ((hs.prod hs).mono fun _ hz ↦ hz.1).measurableSet
+    Set.Countable.measurableSet ((hs.prod hs).mono fun _ hz ↦ hz.1)
   refine ⟨Measure.Coupling.refl μ, ?_⟩
   rw [Measure.Coupling.refl_joint]
   exact ((ae_map_iff (μ := μ) (measurable_id.prodMk measurable_id).aemeasurable

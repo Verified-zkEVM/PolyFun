@@ -6,7 +6,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.WP.Upstream
-public import Std.Tactic.Do
 
 /-!
 # Core Program Logic for the Free Monad
@@ -37,12 +36,6 @@ decompose `do` programs over `FreeM P` with uninterpreted operations:
 registered `scoped` in the scope of its reading. `Spec.bind` holds for every interpretation of
 `FreeM P`, and `Spec.lift_ofHandler` and `Spec.lift_upper` are stated against the construction
 they read, for all its parameters; these three are registered globally.
-
-`vcgen` matches `@[spec]` lemmas structurally, so `Spec.lift`, whose value type is the dependent
-`P.B a`, applies wherever the goal's value type is syntactically `P.B a`: under `bind`, where the
-type comes from the operation itself. An operation in tail position, after the value type has
-been normalized to a concrete type, is left as a `wp` goal that rewriting with
-`DemonicWP.wp_apply_eq` and `FreeM.allOutputs_lift` finishes.
 
 The instances are scoped because downstream libraries register their own core interpretations
 on reducible unfoldings of `FreeM` (oracle computations, for one); a global instance here would

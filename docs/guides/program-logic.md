@@ -44,7 +44,7 @@ The tutorial consumes the public `OpSpec` and `FreeM.wpFold` APIs, without core'
 | `PolyFun/PFunctor/Free/WP/Upstream.lean` | `OpSpec.toWPMonad` (the syntactic fold as a core `WPMonad`) and its upper-bound reading `OpSpec.toUpperWPMonad` over the order duals, `FreeM.wpMonadOfHandler` (transport along `liftMHom`), all exact when their source is; `wpFold_le_wp_liftM`, soundness of op-specs against any core `WPMonad`, and `wpFold_eq_wp_liftM` over an exact one; `allOutputs_liftM_of_wpFold` / `allOutputs_liftM_of_allOutputs` for the support of the interpreted program |
 | `PolyFun/PFunctor/Free/WP/Charge.lean` | The `ℕ∞` charge fold (`OpSpec.charge` and `handlerCost` live in `Free/Cost/Value.lean`): budgets as charge bounds (`isRollBound_iff_wpFold_charge`), simulation overhead (`wpFold_charge_liftM_le`); ranked simulation triples over any roll budget or charge bound (`triple_liftM_of_isRollBound`, `triple_liftM_of_isChargeBound`, with `triple_liftM_ranked` and `triple_liftM_ranked_total` for natural-number budgets) and the invariant rule `triple_liftM_invariant` |
 | `PolyFun/PFunctor/Free/WP/Budget.lean` | Charge bounds for `vcgen`: the budget reading `budgetWPMonad` with `isChargeBound_iff_triple` and the call rule `Spec.lift_budget`; instrumented calls as state updates (`Handler.withCharge_eq_modify`) and the completed-path reading of their triples (`Handler.triple_liftM_id_withCharge_iff`) |
-| `PolyFun/PFunctor/Free/WP/StatefulFrame.lean` | Frame rules for `Handler.Stateful.sum`: `triple_sum_inl_frame` / `triple_sum_inr_frame` (a triple under one summand extends to the sum with a predicate on the other state component conjoined), the transport lemma `wp_run_frame_of_apply_map_eq`, and core `Std.WP.WP.Frames` instances `frames_sum_inl` / `frames_sum_inr` through the operators `frameFst` / `frameSnd` |
+| `PolyFun/PFunctor/Free/WP/StatefulFrame.lean` | Frame rules for `Handler.Stateful.sum`: `triple_sum_inl_frame` / `triple_sum_inr_frame` (a triple under one summand extends to the sum with a predicate on the other state component conjoined), the transport lemma `wp_run_frame_of_apply_map_eq`, and core `Std.WP.WP.Frames` laws `frames_sum_inl` / `frames_sum_inr` through the operators `frameFst` / `frameSnd` |
 | `PolyFun/ITree/WP/Basic.lean` | `OpSpec` readings on interaction trees: `ITree.wpTotal` (least fixed point, total correctness; silent divergence reads `⊥`) and `ITree.wpPartial` (greatest fixed point, partial correctness; divergence reads `⊤`), with their one-step equations, induction and coinduction, the sandwich `wpTotal_le_le_wpPartial` (every solution of the equations lies between them), and bounds along `corec` |
 | `PolyFun/ITree/WP/Bind.lean` | Exact `bind` laws for both readings, `map`, loop rules for `ITree.iter` (a partial-correctness invariant rule, a total upper bound, a total variant rule), relabelling along a lens (`wpTotal_mapSpec`), and soundness of `ITree.simulate` for per-operation specs |
 | `PolyFun/ITree/WP/Bisim.lean` | Both readings are invariant under `TauSteps` and weak bisimulation, in a relational form for trees with different return types |
@@ -252,7 +252,7 @@ with no PolyFun proof.
 | Construct | core `wp` / `Triple` (`vcgen`) | `AllOutputs` / `SomeOutput` / `support` | exact core `wp` (`simp`) | `MonadHom` | `wpFold` |
 |---|---|---|---|---|---|
 | `pure`, `>>=`, `<$>`, `<*>` | free | `Support.lean`, `Support/Structural.lean` | `ExactWP.lean` | `Hom.lean` | `Free/WP.lean` |
-| `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`); an operation in tail position is finished with `wp_apply_eq` ([troubleshooting](../development/troubleshooting.md#vcgen-matches-specs-structurally-so-dependent-value-types-need-care)). Under the expectation readings, `Spec.lift_lower`/`Spec.liftBind_lower` and `Spec.lift_upper`/`Spec.liftBind_upper` state the integral against the answer measure, and `vcgen` stops at it ([expectation readings](#expectation-readings-of-free-programs)) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toWPMonad`; `Expectation.wp_lift`/`wp_liftBind` and `UpperExpectation.wp_lift`/`wp_liftBind` (`Free/Measure/WP.lean`) | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
+| `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`). Under the expectation readings, `Spec.lift_lower`/`Spec.liftBind_lower` and `Spec.lift_upper`/`Spec.liftBind_upper` state the integral against the answer measure, and `vcgen` stops at it ([expectation readings](#expectation-readings-of-free-programs)) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toWPMonad`; `Expectation.wp_lift`/`wp_liftBind` and `UpperExpectation.wp_lift`/`wp_liftBind` (`Free/Measure/WP.lean`) | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
 | `<*`, `*>` | `Spec.seqLeft`/`Spec.seqRight` in `Do/Spec.lean` | `Support/Structural.lean` | `ExactWP.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
 | `if`, `if h :` | `vcgen` splits | `Support/Structural.lean` | `wp_ite`/`wp_dite` | `mmap_ite`/`mmap_dite` | `wpFold_ite`/`wpFold_dite` |
 | `match` on `Option`/`Sum` | `vcgen` splits | `*_option_elim`/`*_sum_elim` | `wp_option_elim`/`wp_sum_elim` | `mmap_option_elim`/`mmap_sum_elim` | `wpFold_option_elim`/`wpFold_sum_elim` |
@@ -356,7 +356,7 @@ both with a local interpretation and through `vcgen` under `WriterT.AppendWP`.
 
 Core ships **two** complete weakest-precondition frameworks: the lattice-generic `Std.WP`, which
 `vcgen` uses, and `Std.Do`, built on `SPred`, which `mvcgen` uses. PolyFun builds on `Std.WP`,
-and nothing in PolyFun instantiates `Std.Do`.
+whose root module exports the tactic syntax and the standard `@[spec]` rules.
 
 | | `Std/WP/` (canonical here) | `Std/Do/` (not used) |
 |---|---|---|
@@ -446,12 +446,6 @@ Four practical rules for writing against `Std.WP`:
 - Naming a theorem `Lean.Order.foo` elaborates it inside that namespace, activating core's
   scoped `⊤` / `⊓` / `⊔` and shadowing Mathlib's `le_top` / `le_inf`; keep transfer lemmas in
   a PolyFun namespace and qualify core's names.
-- `vcgen` matches `@[spec]` lemmas structurally on the program and its value type, so a spec
-  at a dependent value type (`Spec.lift` at `P.B a`) applies under `bind` but not to an
-  operation in tail position once the goal carries the normalized type. Finish such goals
-  with `DemonicWP.wp_apply_eq` and `FreeM.allOutputs_lift`, as the
-  [troubleshooting guide](../development/troubleshooting.md) explains under "`vcgen` matches
-  specs structurally".
 
 Core names in this guide are those of the pinned toolchain. Check them again whenever
 `lean-toolchain` changes.
@@ -529,6 +523,8 @@ they hold without an exact or conjunctive interpretation. The engine is
 that commutes with every request.
 
 `frames_sum_inl` and `frames_sum_inr` state the same facts as core `Std.WP.WP.Frames` laws.
+Both hold under every guard, with `⊤` as the default. The exception postcondition lives in the base
+monad, so core’s `FrameOp.ignore` carries it through unchanged.
 Core's frame laws need an operator on full-state assertions, so `frameFst` and `frameSnd`
 first hide the spectator component of an assertion existentially and then conjoin the frame
 on the current spectator. On assertions that do not mention the spectator component they

@@ -104,7 +104,7 @@ behavior match the consumer.
 
 `ToCslib/Data/Fin/Cases.lean` proves compiler simplifications for core's
 `Fin.cases` and Mathlib's `Fin.cons`/`Matrix.vecCons` wrappers. At the pinned
-v4.35.0, strict evaluation of the induction-based definition computes
+v4.36.0, strict evaluation of the induction-based definition computes
 discarded recursive results; nested vector lookup compounds that work, so
 compiled code reads entry `i` of a chain of `Fin.cons` in time exponential in
 `i`. The replacement selects the underlying natural-number case directly,
