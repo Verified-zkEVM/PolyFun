@@ -396,6 +396,7 @@ public import PolyFun.PFunctor.Free.Measure.Kernel.Handler
 public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
 public import PolyFun.PFunctor.Free.Measure.Lintegral
 public import PolyFun.PFunctor.Free.Measure.Path
+public import PolyFun.PFunctor.Free.Measure.StatefulExpectedCharge
 public import PolyFun.PFunctor.Free.Measure.Support
 public import PolyFun.PFunctor.Free.Measure.Uniform
 public import PolyFun.PFunctor.Free.Measure.WP
