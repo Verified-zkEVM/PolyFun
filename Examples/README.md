@@ -11,6 +11,7 @@ lake env lean Examples/Tutorials/Requests.lean
 |---|---|
 | [Requests](Tutorials/Requests.lean) | The same dependent sequence of requests interpreted by two handlers |
 | [Ferry crossing](Tutorials/FerryCrossing.lean) | [How much the tide signal must reveal](../docs/tutorials/ferry-crossing.md), with a decoder or a replayable obstruction |
+| [Replay conflicts](Tutorials/HintColoring.lean) and [matroid circuits](Tutorials/MatroidColoring.lean) | [Which states can share a signal?](../docs/tutorials/weak-vertex-coloring.md) characterizes valid hints and independent color classes by weak vertex coloring |
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |

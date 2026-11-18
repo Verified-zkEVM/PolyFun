@@ -17,6 +17,7 @@ lintDriverArgs = [
   "Examples.Tutorials.ScopedFamily", "Examples.Tutorials.ScopedDomains", "Examples.Tutorials.ScopedVectors",
   "Examples.Tutorials.LazyLanguages",
   "Examples.Tutorials.MoveTranslation", "Examples.Tutorials.MinimumHint", "Examples.Tutorials.FerryCrossing",
+  "Examples.Tutorials.HintColoring", "Examples.Tutorials.MatroidColoring",
   "Examples.IO.Console", "Examples.IO.Storage",
   "Examples.Parliament", "PolyFunParliamentMain"
 ]
