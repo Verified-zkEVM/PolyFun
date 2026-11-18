@@ -1,0 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
+[
+  {"name": "manifest", "scheme": "nat", "body": {"lit": 0}}
+]}

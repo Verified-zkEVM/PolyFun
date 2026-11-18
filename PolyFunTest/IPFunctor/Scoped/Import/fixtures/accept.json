@@ -1,3 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
 [
   {
     "name": "twice",
@@ -19,4 +20,4 @@
     "body": {"lam": {"arg": {"vec": [{"lit": 3}, "nat"]}, "body":
       {"app": [{"sapp": {"fun": {"var": 1}, "size": {"lit": 3}}}, {"var": 0}]}}}
   }
-]
+]}
