@@ -10,6 +10,7 @@ lake env lean Examples/Tutorials/Requests.lean
 | Module | What to explore |
 |---|---|
 | [Requests](Tutorials/Requests.lean) | The same dependent sequence of requests interpreted by two handlers |
+| [Ferry crossing](Tutorials/FerryCrossing.lean) | [How much the tide signal must reveal](../docs/tutorials/ferry-crossing.md), with a decoder or a replayable obstruction |
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |
