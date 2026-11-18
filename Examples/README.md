@@ -11,7 +11,7 @@ lake env lean Examples/Tutorials/Requests.lean
 |---|---|
 | [Requests](Tutorials/Requests.lean) | The same dependent sequence of requests interpreted by two handlers |
 | [Ferry crossing](Tutorials/FerryCrossing.lean) | [How much the tide signal must reveal](../docs/tutorials/ferry-crossing.md), with a decoder or a replayable obstruction |
-| [Five lighthouses](Tutorials/LighthouseCounting.lean) | [Two sightings in one message](../docs/tutorials/lighthouse.md), with a decoder and a proof of the minimum alphabet size |
+| [Five lighthouses](../docs/tutorials/lighthouse.md) | Two sightings take five joint labels or nine separate label pairs. [Run the decoder and check optimality](Tutorials/Lighthouse/Coding.lean). |
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |

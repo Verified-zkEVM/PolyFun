@@ -84,7 +84,7 @@ if (( run_lint )); then
     Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
     Examples.Tutorials.BoundedController Examples.Tutorials.LazyLanguages \
     Examples.Tutorials.MoveTranslation Examples.Tutorials.MinimumHint Examples.Tutorials.FerryCrossing \
-    Examples.Tutorials.Lighthouse Examples.Tutorials.LighthouseCounting \
+    Examples.Tutorials.Lighthouse.Coding Examples.Tutorials.Lighthouse Examples.Tutorials.LighthouseCounting \
     Examples.IO.Console Examples.IO.Storage \
     Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
     Examples.Tutorials.ScopedDomains \
@@ -123,7 +123,7 @@ if (( run_axioms )); then
     --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
     --root Examples.Tutorials.BoundedController --root Examples.Tutorials.LazyLanguages \
     --root Examples.Tutorials.MoveTranslation --root Examples.Tutorials.MinimumHint --root Examples.Tutorials.FerryCrossing \
-    --root Examples.Tutorials.Lighthouse --root Examples.Tutorials.LighthouseCounting \
+    --root Examples.Tutorials.Lighthouse.Coding --root Examples.Tutorials.Lighthouse --root Examples.Tutorials.LighthouseCounting \
     --root Examples.Tutorials.ScopedPrograms --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
     --root Examples.Tutorials.ScopedDomains \
     --root Examples.Tutorials.ScopedVectors \

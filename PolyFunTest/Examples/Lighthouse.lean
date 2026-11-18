@@ -8,23 +8,12 @@ module
 
 public import Examples.Tutorials.LighthouseCounting
 
-/-! # Two sightings, five signals, and recovery on all legal clues -/
+/-! # Ferry certificates and the single-sighting coloring -/
 
 namespace PolyFunTest.Lighthouse
 
 open PolyFunExamples.Bargaining.Replay.Lighthouse
 open PolyFunExamples.Bargaining.Replay (minimumHint)
-
-/-- Generate the endpoints directly from the navigator's clues, including the wraparound edge.
-The decoder must recover all four ordered sightings for each of the 25 clue pairs. -/
-private def decodedSightings : List Bool := do
-  let i ← List.finRange 5
-  let j ← List.finRange 5
-  let x ← [i, i + 1]
-  let y ← [j, j + 1]
-  return jointDecoder (jointHint (x, y)) (i, j) == (x, y)
-
-example : decodedSightings.length = 100 ∧ decodedSightings.all id = true := by decide
 
 example : (do
     let joint ← (minimumHint .gain jointBoard).size?

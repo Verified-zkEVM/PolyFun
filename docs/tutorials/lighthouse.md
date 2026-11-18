@@ -1,17 +1,36 @@
-# Five lighthouses and two sightings
+# Two lighthouse sightings in five signals
 
-Five lighthouses stand on a ring, numbered 0 through 4. The sender sees which lighthouse flashed. The receiver sees a clue naming two neighboring lighthouses, one of which flashed. A message must identify the lighthouse for every legal clue. Neighbors need different messages, so alternating two labels around the ring fails where the ends meet. The labels `0, 1, 0, 1, 2` show that three suffice. The proof identifies these confusable pairs with Mathlib’s five-cycle and uses its chromatic number. [Odd-cycle theorem](https://github.com/leanprover-community/mathlib4/blob/fc4f59e577feb1a4956671bc04ac18aaaf8cd842/Mathlib/Combinatorics/SimpleGraph/Coloring/Constructions.lean#L122-L124)
+Five lighthouses stand on a ring. A lookout sees which one flashes. A navigator gets a clue naming two neighboring lighthouses, one of which flashed. Only the navigator sees the clue. What can the lookout send so the navigator always identifies the flash?
 
-The recovery board gives the opening observation when the clue excludes the true lighthouse. On a legal clue it reveals the sighting, which the target must reproduce. Gain validity therefore asks for correct recovery on exactly the legal inputs. Two distinct sightings must have different signals whenever the receiver could get the same clue for both. These pairs form a simple graph. A fixed signal admits a decoder exactly when it is a proper Mathlib coloring of that graph.
+One sighting needs three labels, so sending separate labels for two sightings gives nine possible pairs. If the lookout encodes the two sightings together, **five labels suffice, and five are necessary**.
 
-Now the sender sees two flashes and the receiver gets a clue for each. Two separate three-label messages have nine possible values. A joint message needs only five. For flashes at `(x, y)`, send `x + 2*y` modulo five. The four pairs allowed by the receiver's clues have different residues. For example, clues `{4, 0}` and `{0, 1}` allow four pairs. Only `(4, 1)` gives residue 1. [Encoder and decoder](../../Examples/Tutorials/Lighthouse.lean)
+## Decode a pair
 
-To see why four messages cannot suffice, arrange the 25 pairs in five rows. Among any two neighboring rows, a message can occur at most twice. Two occurrences in the same or neighboring columns would share both clues, and the five-cycle has room for at most two pairwise non-neighboring columns. Summing over the five neighboring row pairs counts each cell twice. Each message therefore covers at most five of the 25 cells. The counting bound and the five-signal decoder certify the minimum directly. The executable test separately replays all 100 legal sighting and clue combinations. This is a finite example of zero-error coding with side information at the decoder. [Counting proof](../../Examples/Tutorials/LighthouseCounting.lean) · [Decoder tests](../../PolyFunTest/Examples/Lighthouse.lean) · [Coding reference](../../REFERENCES.md#zero-error-coding)
+Number the lighthouses 0 through 4. For one flash, neighboring lighthouses must have different labels because they share a possible clue. Alternating two labels fails when the ring closes. The labels `0, 1, 0, 1, 2` work. In Lean, the graph of pairs that can share a clue is Mathlib’s five-cycle. [Odd-cycle theorem](https://github.com/leanprover-community/mathlib4/blob/fc4f59e577feb1a4956671bc04ac18aaaf8cd842/Mathlib/Combinatorics/SimpleGraph/Coloring/Constructions.lean#L122-L124)
+
+For flashes at `(x, y)`, send `x + 2*y` modulo five. Suppose the navigator’s clues are `{4, 0}` and `{0, 1}`. The four possibilities give four different signals.
+
+| Sightings | (4, 0) | (4, 1) | (0, 0) | (0, 1) |
+|---|---:|---:|---:|---:|
+| Signal | 4 | 1 | 0 | 2 |
+
+Receiving 1 identifies `(4, 1)`. The same rule works for every clue pair. Starting at the first endpoint of each clue, advancing along the first edge adds one to the signal and advancing along the second adds two. The four offsets are 0, 1, 2, and 3, all distinct modulo five.
 
 ```lean
-import Examples.Tutorials.LighthouseCounting
-open PolyFunExamples.Bargaining.Replay.Lighthouse
-#eval jointDecoder (jointHint (4, 1)) (4, 0)
-#check minimum_single
-#check minimum_joint
+import Examples.Tutorials.Lighthouse.Coding
+open PolyFunExamples.Lighthouse
+
+#eval jointDecoder 1 (4, 0)  -- (4, 1)
+#check single_optimal
+#check joint_optimal
 ```
+
+## Why four labels fail
+
+Lay out the 25 ordered pairs in five rows. Consider two neighboring rows. Within those rows, two distinct cells with the same label must lie in distinct, non-neighboring columns. Otherwise the navigator could receive the same two clues for both cells. Only two pairwise non-neighboring columns fit on a ring of five. A label therefore appears at most twice in each neighboring row pair. Summing over all five row pairs counts each cell twice, so a label covers at most five cells. Covering all 25 takes at least five labels. [Encoder, decoder, and optimality proofs](../../Examples/Tutorials/Lighthouse/Coding.lean) · [Coding reference](../../REFERENCES.md#zero-error-coding)
+
+The two optimality theorems quantify over encoders and decoders that recover the sighting on every legal clue. The executable regression checks all 100 legal combinations of two clues and two sightings. [Decoder tests](../../PolyFunTest/Examples/LighthouseCoding.lean)
+
+## Certify the ferry solver’s answer
+
+The [ferry solver](ferry-crossing.md) also accepts this puzzle as a recovery board. On a legal clue, preserving the board’s gain means reproducing the sighting. An illegal clue imposes no recovery requirement. The adapter uses the encoders and lower bounds above to certify the solver’s answers of three and five without enumerating partitions of the 25 pairs. [Single-sighting certificate](../../Examples/Tutorials/Lighthouse.lean) · [Joint certificate](../../Examples/Tutorials/LighthouseCounting.lean)
