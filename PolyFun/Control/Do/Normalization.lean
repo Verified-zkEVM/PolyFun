@@ -51,7 +51,7 @@ Core's lattice on `Prop` unifies with the bridge of Mathlib's, so the bridge lem
 `Prop`. The `Prop` lemmas take priority, so that the result is in `Prop`'s connectives rather than
 in Mathlib's lattice operations on `Prop`. -/
 
-attribute [wp_norm high] Lean.Order.le_prop_eq_imp Lean.Order.ofProp_prop_eq
+attribute [wp_norm high] Lean.Order.le_prop_eq_imp Lean.Order.CompleteLattice.ofProp_prop_eq
   Lean.Order.meet_prop_eq_and Lean.Order.join_prop_eq_or Lean.Order.himp_prop_eq_imp
   Lean.Order.top_prop_eq Lean.Order.bot_prop_eq Lean.Order.iInf_prop_eq_forall
   Lean.Order.iSup_prop_eq_exists
