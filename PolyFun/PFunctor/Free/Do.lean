@@ -22,10 +22,16 @@ decompose `do` programs over `FreeM P` with uninterpreted operations:
   for *some* response;
 * through a handler, `FreeM.wpMonadOfHandler s` installed locally lets `Spec.lift_ofHandler`
   reduce an operation to the handler's `wp`;
+* under the reading of a spec, `OpSpec.toWPMonad Φ hΦ`, `Spec.lift_lower` reads an operation as
+  `Φ` applied to the postcondition. It is registered at low priority, below rules for particular
+  specs such as `Spec.lift_budget`. Under the expectation reading
+  (`PolyFun.PFunctor.Free.Measure.WP`), whose spec is the integral against the answer measure, the
+  precondition is that integral, and `vcgen` leaves the continuation under it;
 * under the upper-bound reading of a spec, `OpSpec.toUpperWPMonad Φ hΦ` installed locally lets
   `Spec.lift_upper` read an operation as `Φ` in the dual order. For a charge
   (`PolyFun.PFunctor.Free.WP.Charge`) the precondition is the call's charge plus the supremum of
   the continuation, so `vcgen` decomposes the call and leaves the continuation under the supremum.
+  `Spec.liftBind_lower` and `Spec.liftBind_upper` are the rules for the constructor spelling.
 
 `Spec.lift`, `Spec.liftBind` and `Spec.lift_angelic` are stated for one reading each, so each is
 registered `scoped` in the scope of its reading. `Spec.bind` holds for every interpretation of
@@ -151,6 +157,39 @@ theorem lift_ofHandler (s : Handler n P) (a : P.A) (Q : P.B a → Pred) (E : EPr
 
 end Handler
 
+section Lower
+
+/-- Under the reading of a spec, an operation's weakest precondition is the spec's transformer
+applied to the postcondition. Stated against the explicit interpretation; it applies once
+`OpSpec.toWPMonad Φ hΦ` is installed, or a reading defined as one, such as the expectation reading
+of `PolyFun.PFunctor.Free.Measure.WP`. Registered at low priority, so that a rule for a particular
+spec, such as `Spec.lift_budget`, takes precedence when it is registered or passed to `vcgen`. -/
+@[spec low]
+theorem lift_lower {l : Type uB} [CompleteLattice l] (Φ : OpSpec P l) (hΦ : Φ.Monotone)
+    (a : P.A) (Q : P.B a → l) (E : EStack⟨⟩) :
+    @Triple l EStack⟨⟩ (FreeM P (P.B a)) (P.B a) _ _ (FreeM.lift (P := P) a)
+      ((Φ.toWPMonad hΦ).toWP _) (Φ a Q) Q E := by
+  let inst := Φ.toWPMonad hΦ
+  refine ⟨?_⟩
+  change Φ a Q ⊑ ((Φ.toWPMonad hΦ).toWP _).wp (FreeM.lift (P := P) a) Q E
+  rw [OpSpec.toWPMonad_wp, FreeM.wpFold_lift]
+
+/-- Under the reading of a spec, a node in constructor spelling applies the spec's transformer to
+the weakest preconditions of its continuations. Registered at low priority, as `Spec.lift_lower`
+is. -/
+@[spec low]
+theorem liftBind_lower {α : Type v} {l : Type v} [CompleteLattice l] (Φ : OpSpec P l)
+    (hΦ : Φ.Monotone) (a : P.A) (r : P.B a → FreeM P α) (Q : α → l) (E : EStack⟨⟩) :
+    @Triple l EStack⟨⟩ (FreeM P α) α _ _ (FreeM.liftBind a r) ((Φ.toWPMonad hΦ).toWP α)
+      (Φ a fun b => ((Φ.toWPMonad hΦ).toWP α).wp (r b) Q E) Q E := by
+  let inst := Φ.toWPMonad hΦ
+  refine ⟨?_⟩
+  change _ ⊑ ((Φ.toWPMonad hΦ).toWP α).wp (FreeM.liftBind a r) Q E
+  simp only [OpSpec.toWPMonad_wp]
+  exact Lean.Order.PartialOrder.rel_refl
+
+end Lower
+
 section Upper
 
 variable {l : Type uB} [CompleteLattice l]
@@ -169,6 +208,20 @@ theorem lift_upper (Φ : OpSpec P l) (hΦ : Φ.Monotone) (a : P.A) (Q : P.B a �
     exact Lean.Order.PartialOrder.rel_refl
 
 end Upper
+
+/-- Under the upper-bound reading of a spec, a node in constructor spelling applies the spec's
+transformer, in the dual order, to the weakest preconditions of its continuations. -/
+@[spec]
+theorem liftBind_upper {α : Type v} {l : Type v} [CompleteLattice l] (Φ : OpSpec P l)
+    (hΦ : Φ.Monotone) (a : P.A) (r : P.B a → FreeM P α) (Q : α → lᵒᵈ) (E : EStack⟨⟩ᵒᵈ) :
+    @Triple lᵒᵈ EStack⟨⟩ᵒᵈ (FreeM P α) α _ _ (FreeM.liftBind a r) ((Φ.toUpperWPMonad hΦ).toWP α)
+      (OrderDual.toDual
+        (Φ a fun b => OrderDual.ofDual (((Φ.toUpperWPMonad hΦ).toWP α).wp (r b) Q E))) Q E := by
+  let inst := Φ.toUpperWPMonad hΦ
+  refine ⟨?_⟩
+  change _ ⊑ ((Φ.toUpperWPMonad hΦ).toWP α).wp (FreeM.liftBind a r) Q E
+  simp only [OpSpec.toUpperWPMonad_wp, OrderDual.ofDual_toDual]
+  exact Lean.Order.PartialOrder.rel_refl
 
 end Spec
 

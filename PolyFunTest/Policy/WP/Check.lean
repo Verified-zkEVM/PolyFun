@@ -50,10 +50,13 @@ every interpretation that it mentions, or is stated against a construction for a
 construction's parameters, so it applies only where that construction is installed. -/
 meta def specAllowlist : List Name := [
   -- `PolyFun.PFunctor.Free.Do`: every interpretation of `FreeM P`; the interpretation through a
-  -- handler, for every handler; the upper-bound reading of a spec, for every spec.
+  -- handler, for every handler; the reading of a spec and its upper-bound reading, for every spec.
   `PFunctor.FreeM.Spec.bind,
   `PFunctor.FreeM.Spec.lift_ofHandler,
+  `PFunctor.FreeM.Spec.lift_lower,
+  `PFunctor.FreeM.Spec.liftBind_lower,
   `PFunctor.FreeM.Spec.lift_upper,
+  `PFunctor.FreeM.Spec.liftBind_upper,
   -- `PolyFun.Control.Do.MOfFn`: every `WPMonad` on the monad of `Fin.mOfFn`.
   `Fin.Spec.mOfFn,
   -- `PolyFun.Control.Do.Spec`: every `WPMonad` on the base monad, through core's interpretations

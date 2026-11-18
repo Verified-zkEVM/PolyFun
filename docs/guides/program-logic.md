@@ -12,8 +12,9 @@ every possible output, and the *angelic* reading (`MonadAttach.toWPMonadAngelic`
 possible output. Together they are the *support readings*. The *dual* reading of an exact
 interpretation (`ExactWPMonad.dual`) states upper bounds. An *expectation* reading takes
 postconditions valued in `ℝ≥0∞` and gives their expected values. A measure interpretation of a
-program, such as those in PolyFun's measure companions, determines one. VCVio, which
-builds on PolyFun, supplies the expectation reading of its oracle computations.
+program, such as those in PolyFun's measure companions, determines one. On free programs, the
+expectation reading and its dual under the answer measures of `PFunctor.AnswerMeasure` are scoped
+instances (see [Expectation readings of free programs](#expectation-readings-of-free-programs)).
 [Names in VCVio](#names-in-vcvio) lists VCVio's names for these readings.
 
 For a small application-facing entry point, read
@@ -51,7 +52,8 @@ The tutorial consumes the public `OpSpec` and `FreeM.wpFold` APIs, without core'
 | `PolyFun/ITree/WP/Models.lean` | One spec across models: on a finite program both readings are `FreeM.wpFold` (`wpTotal_toITree`, `wpPartial_toITree`); a continuous algebra's `ITree.denote` is its total reading (`denote_eq_wpTotal`, via `ContinuousAlgebra.toOpSpec`), and so is a resumption's denotation; a spec lifted along `ULift` reads as the lifted reading (`wpTotal_ulift`, `wpPartial_ulift`) |
 | `PolyFun/ITree/WP/Upstream.lean` | The readings as exact core interpretations, `ITree.wpMonadTotal`/`wpMonadPartial` (through `MAlgOrdered`), with `_wp` value lemmas; the demonic support reading is the partial demonic interpretation and the angelic one the total angelic interpretation |
 | `PolyFun/ITree/Do.lean` | Productive `while` for interaction trees: `forInLoop`, the scoped `ForIn` instance, and `forInLoop_weakBisim_of_invariant` — an invariant-scoped `WeakBisim` congruence because `iter` is lawful only up to weak bisimulation |
-| `PolyFun/PFunctor/Free/Do.lean` | `vcgen` for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`, each `instWPMonad`), whose `Prop`-valued facts are the global instances of the support readings, the value lemmas `DemonicWP.wp_eq_allOutputs` and `AngelicWP.wp_eq_someOutput`, and the `@[spec]` lemmas that let `vcgen` decompose free programs with uninterpreted operations: `Spec.lift` and `Spec.liftBind` in the scope `DemonicWP`, `Spec.lift_angelic` in the scope `AngelicWP`, and the global `Spec.bind`, `Spec.lift_ofHandler`, and `Spec.lift_upper` |
+| `PolyFun/PFunctor/Free/Do.lean` | `vcgen` for free programs: scoped demonic and angelic `WPMonad` instances (`open scoped PFunctor.FreeM.DemonicWP` / `AngelicWP`, each `instWPMonad`), whose `Prop`-valued facts are the global instances of the support readings, the value lemmas `DemonicWP.wp_eq_allOutputs` and `AngelicWP.wp_eq_someOutput`, and the `@[spec]` lemmas that let `vcgen` decompose free programs with uninterpreted operations: `Spec.lift` and `Spec.liftBind` in the scope `DemonicWP`, `Spec.lift_angelic` in the scope `AngelicWP`, and the global `Spec.bind`, `Spec.lift_ofHandler`, `Spec.lift_lower` / `Spec.liftBind_lower` for the reading of any spec (registered at low priority, below rules for particular specs), and `Spec.lift_upper` / `Spec.liftBind_upper` for its upper-bound reading |
+| `PolyFun/PFunctor/Free/Measure/WP.lean` | The measure companion of the free-program readings: the expectation reading `expectationWPMonad ν` (the fold of `OpSpec.lintegral ν`) and its dual `upperExpectationWPMonad ν`, both exact; the scoped readings under `PFunctor.AnswerMeasure` (`open scoped PFunctor.FreeM.Expectation` / `UpperExpectation`) with `wp_lift`, `wp_liftBind`, `wp_eq_wpFold` and `triple_iff`; their relation to `evalDist`; the pointwise rules `Spec.lift_expectation_iInf` / `Spec.liftBind_expectation_iInf`, registered in the scope `PFunctor.FreeM.Expectation.Pointwise` (see [Expectation readings of free programs](#expectation-readings-of-free-programs)) |
 | `PolyFun/Control/Monad/ExactWP.lean` | `ExactWPMonad m Pred EPred`, the mixin that makes a core `WPMonad` exact, with its dual reading `ExactWPMonad.dual`, the equational `simp` set on core's `wp` (`wp_pure` to `wp_seqRight`, with the control-flow equations `Std.WP.wp_ite`, `wp_dite`, `wp_option_elim`, and `wp_sum_elim`, which hold for every `WP` interpretation), and the exactness instances for core's interpretations and transformer lifts (see [Exact interpretations](#exact-interpretations)) |
 | `PolyFun/Control/Monad/WPInstance.lean` | Core's judgments at an interpretation given explicitly, for proofs about a construction that is not an instance: `WP.triple_iff` and `WP.triple_of_le_wp` for `Triple`, `WP.wpConjunctive_iff` for `WPConjunctive`, and `WPMonad.lawfulWPMonadAttach_iff` for `LawfulWPMonadAttach`, each stated through `inst.wp` (upstream candidates for core) |
 | `PolyFun/Control/Monad/Algebra/WP.lean` | `MAlgOrdered.toWP` / `toWPMonad`: an ordered monad algebra as the core `Std.WP.WPMonad m l EStack⟨⟩` with `wp x post = μ (x >>= fun a => pure (post a))` (through the `ToCslib.Order.LeanOrder` bridge), exact (`instExactWPMonadToWPMonad`), its value by `rfl` (`toWPMonad_wp`, not `@[simp]`), `toWP_triple_iff`, and conjunctivity from meet preservation (`wpConjunctive_toWP`) |
@@ -103,8 +105,10 @@ Worked examples:
   handler-relative interpretation), `PolyFunTest/Do/{Algebra,Support,Except}.lean` (an ordered
   algebra, the demonic reading of `SetM` with `for` and `forM` loops, and `try … catch` on
   `ExceptT`, each installed through a scope of the shared fixtures
-  `PolyFunTest/Do/Fixtures.lean`), and `PolyFunTest/Do/{OptionT,Transformers}.lean` (the `OptionT`
-  rules and the transformers' constructors, lifts, and runners).
+  `PolyFunTest/Do/Fixtures.lean`), `PolyFunTest/Do/{OptionT,Transformers}.lean` (the `OptionT`
+  rules and the transformers' constructors, lifts, and runners), and
+  `PolyFunTest/Do/Expectation.lean` (the expectation readings of free programs, where `vcgen` stops
+  under them, and `StateT` stacks over free programs).
 
 ## Relation to core `MonadAttach`
 
@@ -257,7 +261,7 @@ with no PolyFun proof.
 | Construct | core `wp` / `Triple` (`vcgen`) | `AllOutputs` / `SomeOutput` / `support` | exact core `wp` (`simp`) | `MonadHom` | `wpFold` |
 |---|---|---|---|---|---|
 | `pure`, `>>=`, `<$>`, `<*>` | free | `Support.lean`, `Support/Structural.lean` | `ExactWP.lean` | `Hom.lean` | `Free/WP.lean` |
-| `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toWPMonad` | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
+| `FreeM.lift a`, `FreeM.liftBind a r`, `(FreeM.lift a).bind r` | `Spec.lift`/`Spec.liftBind`/`Spec.bind` (`Free/Do.lean`). Under the expectation readings, `Spec.lift_lower`/`Spec.liftBind_lower` and `Spec.lift_upper`/`Spec.liftBind_upper` state the integral against the answer measure, and `vcgen` stops at it ([expectation readings](#expectation-readings-of-free-programs)) | `Free/Support.lean` (`allOutputs_lift`, `allOutputs_bind`, `allOutputs_liftBind`) | via `OpSpec.toWPMonad`; `Expectation.wp_lift`/`wp_liftBind` and `UpperExpectation.wp_lift`/`wp_liftBind` (`Free/Measure/WP.lean`) | — | `wpFold_lift` / `wpFold_bind` / `wpFold_liftBind` |
 | `<*`, `*>` | `Spec.seqLeft`/`Spec.seqRight` in `Do/Spec.lean` | `Support/Structural.lean` | `ExactWP.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
 | `if`, `if h :` | `vcgen` splits | `Support/Structural.lean` | `Std.WP.wp_ite`/`wp_dite`, for every interpretation | `mmap_ite`/`mmap_dite` | `wpFold_ite`/`wpFold_dite` |
 | `match` on `Option`/`Sum` | `vcgen` splits | `*_option_elim`/`*_sum_elim` | `Std.WP.wp_option_elim`/`wp_sum_elim`, for every interpretation | `mmap_option_elim`/`mmap_sum_elim` | `wpFold_option_elim`/`wpFold_sum_elim` |
@@ -339,13 +343,14 @@ Four rules govern how PolyFun uses core's weakest-precondition framework. Togeth
 reading replaceable: a downstream library chooses the interpretation of its monads, and importing
 PolyFun does not choose it.
 
-1. **No global interpretation instances.** No library declares a global instance of `WP`,
-   `WPMonad`, `MAlgOrdered`, or `MAlgRelOrdered`. A global `WP` instance on `FreeM` would compete
-   with downstream instances on its reducible unfoldings, such as VCVio's `OracleComp`. Every
+1. **No global interpretation instances.** No library declares a global instance of `WP`, `WPMonad`,
+   `MAlgOrdered`, or `MAlgRelOrdered`. A global `WP` instance on `FreeM` would compete with
+   downstream instances on its reducible unfoldings, such as VCVio's `OracleComp`. Every
    interpretation is a construction (`def`) or a `scoped` instance. The readings that users select
-   by name are scoped instances: the free-monad readings under `PFunctor.FreeM.DemonicWP` and
-   `AngelicWP`, and the writer readings under `WriterT.MonoidWP` and `WriterT.AppendWP`. The
-   bridges of `PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean`, `MAlgOrdered.restrictIic`, and
+   by name are scoped instances: the free-monad readings under `PFunctor.FreeM.DemonicWP`,
+   `AngelicWP`, `Expectation`, and `UpperExpectation`, and the writer readings under
+   `WriterT.MonoidWP` and `WriterT.AppendWP`. The bridges of
+   `PolyFun/Control/Monad/{Algebra,Support,Hom}/WP.lean`, `MAlgOrdered.restrictIic`, and
    `FreeM.wpMonadOfHandler` are installed `local` or `scoped` where they are intended. The global
    instances that the program-logic modules declare are `Prop`-valued facts about constructions:
    `ExactWPMonad`, `WPConjunctive`, and `LawfulWPMonadAttach` (see
@@ -353,14 +358,17 @@ PolyFun does not choose it.
 2. **Imports.** Any module may import `Std.WP` and `Std.Tactic.Do`, except under `ToCslib/`. That
    library stages material for CSLib, which uses neither of core's frameworks, so it imports no
    module of `Std.WP`, `Std.Do`, or `Std.Tactic.Do` directly.
-3. **The rules of a reading are scoped.** A `@[spec]` rule stated for one reading is registered
-   with `scoped spec` in the scope of that reading, so `vcgen` uses it exactly where the reading is
+3. **The rules of a reading are scoped.** A `@[spec]` rule stated for one reading is registered with
+   `scoped spec` in the scope of that reading, so `vcgen` uses it exactly where the reading is
    installed. `FreeM.Spec.lift` and `FreeM.Spec.liftBind` are registered under `DemonicWP`,
-   `FreeM.Spec.lift_angelic` under `AngelicWP`, and the `WriterT` rules of
-   `PolyFun/Control/Monad/WriterT/WP.lean` under `WriterT.MonoidWP` and `WriterT.AppendWP`. A rule
-   is registered globally only if it holds for every interpretation it mentions, as the rules of
+   `FreeM.Spec.lift_angelic` under `AngelicWP`, the `WriterT` rules of
+   `PolyFun/Control/Monad/WriterT/WP.lean` under `WriterT.MonoidWP` and `WriterT.AppendWP`, and the
+   pointwise expectation rules `FreeM.Spec.lift_expectation_iInf` and
+   `FreeM.Spec.liftBind_expectation_iInf` under `PFunctor.FreeM.Expectation.Pointwise`. A rule is
+   registered globally only if it holds for every interpretation it mentions, as the rules of
    `PolyFun/Control/Do/{Spec,MOfFn}.lean` do, or for all parameters of the construction it is stated
-   against, as `FreeM.Spec.lift_ofHandler` and `FreeM.Spec.lift_upper` do. `specAllowlist` in
+   against, as `FreeM.Spec.lift_ofHandler`, `lift_lower`, `liftBind_lower`, `lift_upper`, and
+   `liftBind_upper` do. `specAllowlist` in
    `PolyFunTest/Policy/WP/Check.lean` lists the global rules. A rule that neither a scope nor the
    allowlist registers, such as the budget rule `FreeM.Spec.lift_budget`, is passed to `vcgen` or
    registered with `attribute [local spec]`.
@@ -476,7 +484,7 @@ transparency, with the bridge of Mathlib's own dual order.
 
 Every construction in this guide that can be exact is exact: `MAlgOrdered.toWPMonad`, both
 support readings over an `ExactMonadAttach`, transport along a monad morphism,
-`OpSpec.toWPMonad` and `OpSpec.toUpperWPMonad`, `FreeM.wpMonadOfHandler` into an exact target, core's `Id`, `Option`,
+`OpSpec.toWPMonad` and `OpSpec.toUpperWPMonad`, the expectation readings of free programs, `FreeM.wpMonadOfHandler` into an exact target, core's `Id`, `Option`,
 `Except`, and `EStateM` interpretations, and core's transformer lifts and the `WriterT`
 interpretation over an exact base. Exactness is a mixin rather than a stronger class, so each of
 these remains a plain core `WPMonad`, installed in the usual way, and a separation-logic or
@@ -536,6 +544,48 @@ the integration spec `OpSpec.lintegral ν`, which specifies a call by the integr
 of its continuation under the answer measure `ν a`. Its algebra is `expectationAlgebra ν`, and
 its lifted algebra `expectationAlgebraULift ν` applies to values in any universe. See
 [probability](probability.md).
+
+## Expectation readings of free programs
+
+`PolyFun/PFunctor/Free/Measure/WP.lean` gives free programs two readings over `ℝ≥0∞`.
+`expectationWPMonad ν` is the interpretation of `expectationAlgebra ν`: the weakest precondition of
+a postcondition is the fold `wpFold (OpSpec.lintegral ν) x post`, its expectation under the answer
+measures `ν`, taken one call at a time. Its triples state lower bounds. `upperExpectationWPMonad ν`
+is its dual reading (`ExactWPMonad.dual`), whose triples state upper bounds. Both readings are
+exact, and both are constructions. Under the answer measures of `PFunctor.AnswerMeasure`,
+`open scoped PFunctor.FreeM.Expectation` installs the expectation reading, and
+`open scoped PFunctor.FreeM.UpperExpectation` installs the dual. Open one of the two scopes at a
+time: core's assertion types are output parameters, so instance search finds one reading of
+`FreeM P` and never tries the other. The carrier `ℝ≥0∞` lies in `Type`, so the readings interpret
+programs with values in `Type`. A call `FreeM.lift a` is such a program only when its answers lie
+in `Type`. Over answers in another universe, write the call as `FreeM.liftBind`.
+
+The readings write the integration spec out as the integral `fun a k => ∫⁻ b, k b ∂ν a`. The rules
+of `Free/Do.lean` for the reading of any spec therefore state the precondition of a call as that
+integral. `Spec.lift_lower` gives `∫⁻ b, Q b ∂ν a ⊑ wp (FreeM.lift a) Q`, and `Spec.lift_upper`
+gives the same integral in the dual order. These rules are exact, and `Spec.liftBind_lower` and
+`Spec.liftBind_upper` are their forms for the constructor spelling. `vcgen` does not descend under
+the integral. After a call followed by more program, it leaves the condition
+`pre ⊑ ∫⁻ b, wp (rest b) post ⊥ ∂ν a`. The exact equations finish it: `ExactWPMonad.wp_bind`,
+`wp_pure` and `wp_ite`, core's `StateT` equations for a `StateT` stack, and the call equations
+`Expectation.wp_lift` and `UpperExpectation.wp_lift`. On a concrete interface, name the interface
+in the call equation, as in `Expectation.wp_lift (P := Coin)`, because its answer type has been
+reduced.
+
+Under probability answer measures, a lower bound at every answer holds in expectation.
+`Spec.lift_expectation_iInf` and `Spec.liftBind_expectation_iInf` state that bound with core's
+indexed infimum, which `vcgen` splits into one condition per answer, so `vcgen` descends through
+every call. They lose the averaging over answers.
+`open scoped PFunctor.FreeM.Expectation.Pointwise` registers them.
+
+Under `PFunctor.AnswerMeasure`, the integral of a postcondition against the output measure
+`evalDist` is at most its weakest precondition (`Expectation.lintegral_evalDist_le_wp`), so an
+upper-bound triple bounds the integral (`UpperExpectation.lintegral_evalDist_le_of_triple`). Over
+discrete answers, the weakest precondition of a measurable postcondition is the integral
+(`Expectation.wp_eq_lintegral_evalDist`), and the expectation reading is the interpretation of the
+expectation algebra of the measure semantics (`ExpectationWP.toWPMonad_algebra_freeM`).
+`PolyFunTest/Do/Expectation.lean` checks the rules, pins the condition at which `vcgen` stops, and
+bounds an event's probability from above through the dual reading.
 
 ## Frame rules for sums of stateful handlers
 
@@ -676,8 +726,8 @@ VCVio, which builds on PolyFun, has its own names for the readings of its oracle
 
 | This guide | VCVio |
 |---|---|
-| the demonic reading (`MonadAttach.toWPMonadDemonic`) | the *necessary* reading (`OracleComp.Necessary`) |
-| the angelic reading (`MonadAttach.toWPMonadAngelic`) | the *possible* reading (`OracleComp.Possible`) |
-| the expectation reading, whose triples state lower bounds | the *lower* reading (`OracleComp.Lower`) |
-| the dual reading (`ExactWPMonad.dual`) of the expectation reading, whose triples state upper bounds | the *upper* reading (`OracleComp.Upper`) |
+| the demonic reading (`MonadAttach.toWPMonadDemonic`; on free programs, `PFunctor.FreeM.DemonicWP`) | the *necessary* reading (`OracleComp.Necessary`) |
+| the angelic reading (`MonadAttach.toWPMonadAngelic`; on free programs, `PFunctor.FreeM.AngelicWP`) | the *possible* reading (`OracleComp.Possible`) |
+| the expectation reading, whose triples state lower bounds (on free programs, `PFunctor.FreeM.Expectation`) | the *lower* reading (`OracleComp.Lower`) |
+| the dual reading (`ExactWPMonad.dual`) of the expectation reading, whose triples state upper bounds (on free programs, `PFunctor.FreeM.UpperExpectation`) | the *upper* reading (`OracleComp.Upper`) |
 | the output measure (`evalDist`) | the *successful-output measure* (PolyFun's `evalDist`) |
