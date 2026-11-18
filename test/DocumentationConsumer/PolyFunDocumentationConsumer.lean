@@ -6,6 +6,7 @@ Authors: Devon Tuma
 
 module
 
+import PolyFun.PFunctor.Handler.Hint
 import Examples.Tutorials.Requests
 import Examples.Tutorials.Machines
 import Examples.Tutorials.IndexedPrograms
@@ -189,3 +190,11 @@ example {Γ Δ Θ : List Examples.ScopedPrograms.Ty} {a : Examples.ScopedProgram
       e.denote Examples.ScopedPrograms.algebra
         (IPFunctor.ScopedSignature.Env.rename (IPFunctor.ScopedSignature.Env.rename ρ τ) η) := by
   rw [IPFunctor.ScopedSignature.Term.rename_rename, IPFunctor.ScopedSignature.Term.denote_rename]
+
+/-- No answer is required of the hidden states here, yet a total decoder still owes an answer
+on the unused hint. -/
+example : ¬ ∃ d : Unit → Unit → Empty,
+    PFunctor.Handler.Hint.Valid (fun (_ : Empty) (_ : Unit) (_ : Empty) => True)
+      (fun _ => ()) d := by
+  rintro ⟨d, _⟩
+  exact (d () ()).elim

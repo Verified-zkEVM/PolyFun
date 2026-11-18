@@ -59,6 +59,14 @@ run frames that state. Charging `p` in a writer logs the charge of the one path
 the program follows, the path of any total choice of answers that extends `p`
 (`run_liftM_withChargeW_eq_of_liftM_eq_some`).
 
+Suppose a hidden state chooses a partial handler, and a public hint must select a replacement.
+One replacement per hint preserves every settled result of every adaptive program exactly when
+any two states with that hint agree on each request they both answer. A replacement may supply
+an answer where one of those states had none. For exact replay, the states must also agree on
+which requests lack answers. Testing single-request programs gives the converse in both cases.
+The relation used by the decoder admits request-dependent response types.
+[Uniform decoding and settled runs](../../PolyFun/PFunctor/Handler/Hint.lean)
+
 `Handler.comp second first`
 ([`Handler/Free.lean`](../../PolyFun/PFunctor/Handler/Free.lean)) implements
 each request of `P` as a free program over `Q` and runs that program through
