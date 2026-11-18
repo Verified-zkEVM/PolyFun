@@ -5,7 +5,6 @@ Authors: Devon Tuma
 -/
 module
 
-public import Std.Tactic.Do
 public import Std.WP
 public import PolyFun.Control.Monad.WriterT.WP
 public import ToCslib.Data.Fin.MOfFn

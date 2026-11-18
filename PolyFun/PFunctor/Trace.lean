@@ -20,7 +20,7 @@ together with the abstract `Control.Trace` machinery from
 ## Main definitions
 
 * `PFunctor.TraceList P` — the carrier `FreeMonoid (Idx P)`,
-  definitionally `List (Σ a, P.B a)`.
+  with list projection `FreeMonoid.toList`.
 * `PFunctor.Trace P X` — the type of `X`-indexed `P`-event traces,
   i.e. `X → TraceList P`, with monoid structure inherited pointwise.
 * `PFunctor.Trace.mapPartial`, `mapChart`,
@@ -71,9 +71,7 @@ API, or consistently named event values, removes the mixed `Idx`/Sigma applicati
 attribute [local implicit_reducible] PFunctor.Idx
 
 /--
-The free monoid on `P`-events.  Definitionally `FreeMonoid (Idx P)`, which
-in turn is reducibly `List (Idx P)`.  This is the universal carrier for
-"finite ordered logs of `P`-events".
+The free monoid on typed events. Its list projection gives the events in order.
 -/
 abbrev TraceList (P : PFunctor.{uA, uB}) : Type max uA uB :=
   FreeMonoid (Idx P)
@@ -84,19 +82,21 @@ namespace TraceList
 def positions {P : PFunctor.{uA, uB}} (events : TraceList P) : List P.A :=
   List.map (fun event : P.Idx => event.1) events.toList
 
-@[simp]
-theorem positions_nil {P : PFunctor.{uA, uB}} : positions ([] : TraceList P) = [] := rfl
-
-@[simp]
 theorem positions_cons {P : PFunctor.{uA, uB}} (event : P.Idx) (events : TraceList P) :
-    positions (event :: events) = event.1 :: positions events := rfl
+    positions (FreeMonoid.of event * events) = event.1 :: positions events := rfl
 
 @[simp]
 theorem length_positions {P : PFunctor.{uA, uB}} (events : TraceList P) :
-    (positions events).length = events.length := List.length_map ..
+    (positions events).length = events.toList.length := List.length_map ..
 
 @[simp]
 theorem positions_one {P : PFunctor.{uA, uB}} : positions (1 : TraceList P) = [] := rfl
+
+@[deprecated (since := "2026-11-17")] alias positions_nil := positions_one
+
+@[simp]
+theorem positions_of {P : PFunctor.{uA, uB}} (event : P.Idx) :
+    positions (FreeMonoid.of event : TraceList P) = [event.1] := rfl
 
 /-- Concatenating traces preserves the order and multiplicity of positions. -/
 @[simp]
@@ -111,17 +111,17 @@ uses `allowed a`, so no equality casts or decidable equality on positions are
 needed. -/
 def DirectionsWithin {P : PFunctor.{uA, uB}}
     (allowed : (a : P.A) → Set (P.B a)) (events : TraceList P) : Prop :=
-  ∀ event ∈ events, event.2 ∈ allowed event.1
+  ∀ event ∈ events.toList, event.2 ∈ allowed event.1
 
 @[simp]
 theorem directionsWithin_nil {P : PFunctor.{uA, uB}} (allowed : (a : P.A) → Set (P.B a)) :
-    DirectionsWithin allowed ([] : TraceList P) :=
+    DirectionsWithin allowed (1 : TraceList P) :=
   fun _ event_mem => absurd event_mem List.not_mem_nil
 
 @[simp]
 theorem directionsWithin_cons {P : PFunctor.{uA, uB}}
     (allowed : (a : P.A) → Set (P.B a)) (event : P.Idx) (events : TraceList P) :
-    DirectionsWithin allowed (event :: events) ↔
+    DirectionsWithin allowed (FreeMonoid.of event * events) ↔
       event.2 ∈ allowed event.1 ∧ DirectionsWithin allowed events :=
   List.forall_mem_cons
 
@@ -131,29 +131,30 @@ def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
   events.toList.countP fun (event : P.Idx) => event.1 = target
 
 @[simp]
-theorem occurrences_nil {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) :
-    occurrences target ([] : TraceList P) = 0 := rfl
-
-@[simp]
 theorem occurrences_one {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) :
     occurrences target (1 : TraceList P) = 0 := rfl
 
-/-- Prepending an answer at the target adds one occurrence. -/
+@[deprecated (since := "2026-11-17")] alias occurrences_nil := occurrences_one
+
+/-- A single event counts once exactly when it sits at the target. -/
 @[simp]
+theorem occurrences_of {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (target : P.A) (event : P.Idx) :
+    occurrences target (FreeMonoid.of event : TraceList P) = if event.1 = target then 1 else 0 := by
+  simp [occurrences, List.countP_singleton]
+
+/-- Prepending an answer at the target adds one occurrence. -/
 theorem occurrences_cons_self {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (answer : P.B target) (tail : TraceList P) :
-    occurrences target ((⟨target, answer⟩ : P.Idx) :: tail) =
+    occurrences target (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * tail) =
       occurrences target tail + 1 := by
-  change occurrences target (FreeMonoid.of ⟨target, answer⟩ * tail) = _
   simp [occurrences]
 
 /-- An event at a different position does not contribute to the count. -/
-@[simp]
 theorem occurrences_cons_of_ne {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     {a target : P.A} (hne : a ≠ target) (answer : P.B a) (tail : TraceList P) :
-    occurrences target ((⟨a, answer⟩ : P.Idx) :: tail) =
+    occurrences target (FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * tail) =
       occurrences target tail := by
-  change occurrences target (FreeMonoid.of ⟨a, answer⟩ * tail) = _
   simp [occurrences, hne]
 
 /-- Occurrence counts add under trace concatenation. -/
@@ -172,46 +173,54 @@ theorem occurrences_of_mul {P : PFunctor.{uA, uB}} [DecidableEq P.A]
   simp only [occurrences, FreeMonoid.toList_of_mul, List.countP_cons, decide_eq_true_eq]
 
 /-- The answer carried by the `n`-th event at `target`, if that occurrence exists. -/
-def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A] :
-    (events : TraceList P) → (target : P.A) → Nat → Option (P.B target)
-  | [], _, _ => none
-  | ⟨a, answer⟩ :: tail, target, 0 =>
-      if h : a = target then some (h ▸ answer) else getAt? tail target 0
-  | ⟨a, _⟩ :: tail, target, n + 1 =>
-      if a = target then getAt? tail target n else getAt? tail target (n + 1)
+def getAt? {P : PFunctor.{uA, uB}} [DecidableEq P.A]
+    (events : TraceList P) (target : P.A) : Nat → Option (P.B target) :=
+  go events.toList
+where
+  /-- Scan the list of events until the requested occurrence is reached. -/
+  go : List P.Idx → Nat → Option (P.B target)
+    | [], _ => none
+    | ⟨a, answer⟩ :: rest, n =>
+      if h : a = target then
+        match n with
+        | 0 => some (h ▸ answer)
+        | k + 1 => go rest k
+      else go rest n
 
 theorem getAt?_cons_zero {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (event : P.Idx) (tail : TraceList P) (target : P.A) :
-    getAt? (event :: tail) target 0 =
+    getAt? (FreeMonoid.of event * tail) target 0 =
       if h : event.1 = target then some (h ▸ event.2) else getAt? tail target 0 := by
   rcases event with ⟨a, answer⟩
   rfl
 
 theorem getAt?_cons_succ {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (event : P.Idx) (tail : TraceList P) (target : P.A) (n : Nat) :
-    getAt? (event :: tail) target (n + 1) =
+    getAt? (FreeMonoid.of event * tail) target (n + 1) =
       if event.1 = target then getAt? tail target n else getAt? tail target (n + 1) := by
   rcases event with ⟨a, answer⟩
   rfl
 
 @[simp] theorem getAt?_nil {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) (n : Nat) :
-    getAt? ([] : TraceList P) target n = none := rfl
+    getAt? (1 : TraceList P) target n = none := rfl
 
 @[simp] theorem getAt?_cons_self_zero {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (answer : P.B target) (tail : TraceList P) :
-    getAt? (⟨target, answer⟩ :: tail) target 0 = some answer := by
-  simp [getAt?]
+    getAt? (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * tail) target 0 = some answer := by
+  rw [getAt?_cons_zero]
+  simp
 
 @[simp] theorem getAt?_cons_self_succ {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (target : P.A) (answer : P.B target) (tail : TraceList P) (n : Nat) :
-    getAt? (⟨target, answer⟩ :: tail) target (n + 1) =
+    getAt? (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * tail) target (n + 1) =
       getAt? tail target n := by
-  simp [getAt?]
+  rw [getAt?_cons_succ]
+  simp
 
 @[simp] theorem getAt?_cons_of_ne {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     {a target : P.A} (hne : a ≠ target) (answer : P.B a) (tail : TraceList P) (n : Nat) :
-    getAt? (⟨a, answer⟩ :: tail) target n = getAt? tail target n := by
-  cases n <;> simp [getAt?, hne]
+    getAt? (FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * tail) target n = getAt? tail target n := by
+  cases n <;> simp [getAt?_cons_zero, getAt?_cons_succ, hne]
 
 /-- Inspect the first event through the free-monoid constructor. -/
 theorem getAt?_of_mul {P : PFunctor.{uA, uB}} [DecidableEq P.A]
@@ -229,7 +238,7 @@ theorem getAt?_of_mul {P : PFunctor.{uA, uB}} [DecidableEq P.A]
 @[simp] theorem getAt?_isSome_iff_lt_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (events : TraceList P) (target : P.A) (n : Nat) :
     (getAt? events target n).isSome ↔ n < occurrences target events := by
-  induction events using FreeMonoid.recOn generalizing n with
+  induction events using FreeMonoid.mulRecOn generalizing n with
   | one =>
       change false = true ↔ n < 0
       simp
@@ -242,18 +251,14 @@ theorem getAt?_mul_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
     (before after : TraceList P) (target : P.A) (answer : P.B target) :
     getAt? (before * (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * after)) target
       (occurrences target before) = some answer := by
-  induction before using FreeMonoid.recOn with
+  induction before using FreeMonoid.mulRecOn with
   | one => simp only [one_mul, occurrences_one, getAt?_of_mul, ↓reduceDIte]
   | of_mul event before ih =>
       rw [mul_assoc, getAt?_of_mul, occurrences_of_mul]
       by_cases h : event.1 = target <;> simpa [h] using ih
 
-/-- The event following a prefix is found at the prefix's occurrence count. -/
-theorem getAt?_append_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
-    (before after : TraceList P) (target : P.A) (answer : P.B target) :
-    getAt? (List.append before (⟨target, answer⟩ :: after)) target
-      (occurrences target before) = some answer :=
-  getAt?_mul_self_occurrences before after target answer
+@[deprecated (since := "2026-11-17")] alias getAt?_append_self_occurrences :=
+  getAt?_mul_self_occurrences
 
 /-- Relabel-and-filter the events of a trace list along a partial map of
 indices: `List.filterMap` with the monoid structure of `TraceList` made
@@ -276,19 +281,19 @@ theorem toList_mapPartial {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB
 theorem mapPartial_mul {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (f : Idx P → Option (Idx Q)) (a b : TraceList P) :
     mapPartial f (a * b) = mapPartial f a * mapPartial f b := by
-  apply FreeMonoid.toList.injective
+  apply FreeMonoid.ext
   simp only [toList_mapPartial, FreeMonoid.toList_mul, List.filterMap_append]
 
 @[simp]
 theorem mapPartial_some {P : PFunctor.{uA, uB}} (t : TraceList P) :
     mapPartial (fun i => some i) t = t := by
-  apply FreeMonoid.toList.injective
+  apply FreeMonoid.ext
   simp only [toList_mapPartial, List.filterMap_some]
 
 @[simp]
 theorem mapPartial_none {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
     (t : TraceList P) : mapPartial (Q := Q) (fun _ => none) t = 1 := by
-  apply FreeMonoid.toList.injective
+  apply FreeMonoid.ext
   simp
 
 /-- Partial event maps compose by binding their optional outputs. -/
@@ -296,7 +301,7 @@ theorem mapPartial_mapPartial {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂
     {R : PFunctor.{uA₃, uB₃}} (g : Idx Q → Option (Idx R))
     (f : Idx P → Option (Idx Q)) (t : TraceList P) :
     mapPartial g (mapPartial f t) = mapPartial (fun i => (f i).bind g) t := by
-  apply FreeMonoid.toList.injective
+  apply FreeMonoid.ext
   simp only [toList_mapPartial, List.filterMap_filterMap]
 
 @[deprecated (since := "2026-10-19")] alias mapPartial_comp := mapPartial_mapPartial
@@ -343,10 +348,11 @@ def toMonoid {ω : Type w} [Monoid ω] (φ : Idx P → ω) : Trace P X → Contr
 /-! ### Pointwise behaviour -/
 
 @[simp] theorem mapPartial_apply (f : Idx P → Option (Idx Q)) (t : Trace P X) (x : X) :
-    mapPartial f t x = List.filterMap f (t x) := rfl
+    (mapPartial f t x).toList = List.filterMap f (t x).toList := rfl
 
 @[simp] theorem mapChart_apply (φ : Chart P Q) (t : Trace P X) (x : X) :
-    mapChart φ t x = (t x).filterMap (fun i => some (Chart.mapIdx φ i)) := rfl
+    (mapChart φ t x).toList = (t x).toList.map (Chart.mapIdx φ) :=
+  congrFun (List.filterMap_eq_map (f := Chart.mapIdx φ)) _
 
 @[simp] theorem toMonoid_apply {ω : Type w} [Monoid ω] (φ : Idx P → ω) (t : Trace P X) (x : X) :
     toMonoid φ t x = FreeMonoid.lift φ (t x) := rfl
@@ -384,7 +390,7 @@ theorem mapPartial_none (t : Trace P X) : mapPartial (Q := Q) (fun _ => none) t 
 
 /-! ### Trivial-trace lemmas
 
-The unit trace `1 : Trace P X = fun _ => []` is annihilated by all relabel /
+The unit trace `1 : Trace P X = fun _ => 1` is annihilated by all relabel /
 filter operations.  These are needed downstream to reason about
 boundary actions whose default emission is the empty trace. -/
 

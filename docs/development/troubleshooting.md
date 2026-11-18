@@ -469,34 +469,16 @@ find an occurrence" on such a term even though `exact` / `refine` (default trans
 it. Give the literal a `SetM`-typed name (`def choose (x : Nat) : SetM Nat := {x, x + 1}`), or
 apply the lemma by term (`refine (allOutputs_bind _ _ _).mpr ?_`).
 
-### `vcgen` matches specs structurally, so dependent value types need care
+### Verifying concrete free-program calls with `vcgen`
 
-`vcgen` applies an `@[spec]` lemma by matching its `wp` pattern against the goal with a
-structural matcher (`Lean.Meta.Sym`); only instance arguments are compared with `isDefEq`. A
-spec whose value type is dependent, such as `PFunctor.FreeM.Spec.lift` at `P.B a`, therefore
-applies wherever the goal's value type is syntactically `P.B a` — under `bind`, where the type
-comes from the operation — but not to an operation in tail position, where the elaborated
-triple already carries the normalized type (`Bool` for an `abbrev` interface): the candidate is
-listed and rejected ("No spec applicable"). Registering the unfolding
-`FreeM.lift a = FreeM.liftBind a pure` as an equation spec does not help, because `Spec.pure`
-then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
-the residual `wp` goal by rewriting with `DemonicWP.wp_eq_allOutputs` and
-`FreeM.allOutputs_lift (P := …)`, naming the interface explicitly because its direction type
-has been reduced on the concrete polynomial (see
-[`FreeM` nodes in simp normal form](#freem-nodes-in-simp-normal-form) and
-`PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
-stays `P.B a`. Downstream interfaces whose `P.B a` reduces to their own type (an oracle spec's
-range, say) need their own `Spec.query`-style rule at that type for the same reason.
+Open the scope of the reading used by the triple. For example,
+`open scoped PFunctor.FreeM.DemonicWP` selects the universal reading of a free program
+and its call rule. In `PolyFunTest/Do/Loops.lean`, `vcgen` applies this rule both to a generic
+request returning `P.B a` and to a tail call whose response type reduces to `Bool`.
 
-The mismatch is in core's matching, not in PolyFun's rules: a `do` block that ends in a call over a
-reducible structure instance fails the same way with no PolyFun rule involved. Ending the block in
-`pure`, or ascribing the last call with `show FreeM P β from …`, also avoids it.
-
-On a concrete interface, a `simp` pass before `vcgen` causes the same mismatch: it reduces the
-value type of each call, so rules such as `Handler.withCharge_eq_modify` no longer match. Pass the
-rewriting equations (`FreeM.liftM_lift_bind'`, `FreeM.liftM_ite`, `FreeM.liftM_dite`,
-`FreeM.liftM_pure`) to `vcgen` as rules instead. Over a generic interface the value type stays
-`P.B a`, and a `simp` pass is harmless.
+To verify an instrumented handler on a concrete interface, pass the interpretation equations
+(`FreeM.liftM_lift_bind'`, `FreeM.liftM_ite`, `FreeM.liftM_dite`, and `FreeM.liftM_pure`)
+directly to `vcgen`. This keeps the request and its response type together during rewriting.
 
 A `WP` reading that a proof installs with `letI` is not used when `vcgen` builds rules from
 `Triple` specifications (`failed to synthesize WP`); install it with `attribute [local instance]`,

@@ -57,11 +57,9 @@ open Concurrent
 /-- Any two traces over the empty interface are equal: the interface has no
 positions, so no packet exists and both traces are the empty word. -/
 theorem traceList_interface_empty_eq
-    (x y : PFunctor.TraceList Interface.empty) : x = y :=
-  match x, y with
-  | [], [] => rfl
-  | ⟨a, _⟩ :: _, _ => a.elim
-  | [], ⟨a, _⟩ :: _ => a.elim
+    (x y : PFunctor.TraceList Interface.empty) : x = y := by
+  let : IsEmpty Interface.empty.Idx := ⟨fun event => event.1.elim⟩
+  exact Subsingleton.elim x y
 
 /-! ## Scheduler draws for the factorization reassociations -/
 

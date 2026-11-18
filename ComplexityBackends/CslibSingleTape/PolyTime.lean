@@ -8,7 +8,7 @@ module
 
 public import Cslib.Computability.Machines.Turing.SingleTape.Deterministic
 public import Mathlib.Algebra.Polynomial.Eval.Degree
-public import ToCslib.Algebra.Polynomial
+public import Cslib.Foundations.Data.Polynomial.Monotone
 
 /-!
 # Encoded Polynomial-Time Computability
@@ -57,7 +57,7 @@ def PolyTimeComputable.normalize {f : List Symbol → List Symbol}
 
 theorem PolyTimeComputable.monotone_normalize_timeBound {f : List Symbol → List Symbol}
     (h : PolyTimeComputable f) : Monotone h.normalize.timeBound :=
-  fun _ _ hmn => Polynomial.eval_le_eval hmn
+  Polynomial.monotone_eval _
 
 /-- The description size of a machine witness over the two-symbol tape alphabet: its
 number of states. Over the fixed `Bool` alphabet the transition table has exactly three

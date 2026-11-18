@@ -7,7 +7,7 @@ Authors: Devon Tuma
 module
 
 public import ToCslib.Order.LeanOrder
-public import Std.Internal.Order.PropLattice
+public import Std.Internal.Order.Basic
 public import Mathlib.Data.ENat.Lattice
 public import Mathlib.Order.SetNotation
 
@@ -17,7 +17,7 @@ public import Mathlib.Order.SetNotation
 Mathlib complete lattices instantiate core's `Lean.Order.CompleteLattice`, the bridged relation
 is Mathlib's `≤` definitionally, and predicate-indexed suprema are `sSup` of the carved-out set.
 
-Core ships its own `Lean.Order` instances on `Prop` (`Std.Internal.Order.PropLattice`, scoped
+Core ships its own `Lean.Order` instances on `Prop` (`Std.Internal.Order.Basic`, scoped
 there and re-scoped under `Std.WP`) and on function types (`Init.Internal.Order.Basic`); the
 bridged Mathlib instances must compute the same order relation and the same suprema
 definitionally, so that lemmas stated over either route apply to goals stated over the other.

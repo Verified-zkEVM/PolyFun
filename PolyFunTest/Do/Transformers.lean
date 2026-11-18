@@ -99,7 +99,7 @@ def countSteps (n : Nat) : StateT Nat Id (Fin n → Nat) :=
 example (n : Nat) : ⦃ fun s => s = 0 ⦄ countSteps n ⦃ fun _ s => s = n ⦄ := by
   vcgen [countSteps] invariants
     · fun k _ s => s = k
-  all_goals simp_all
+  simp_all
 
 /- The sequence combinators keep the first, respectively the second, value. -/
 example : ⦃ True ⦄ ((pure true : Id Bool) <* (pure 0 : Id Nat)) ⦃ fun b => b = true ⦄ := by
