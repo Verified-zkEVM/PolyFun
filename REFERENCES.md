@@ -4,6 +4,11 @@ This file centralizes the public external references cited in module
 docstrings across `PolyFun/`. When adding a new citation in shared docs,
 prefer linking here instead of duplicating partial citations inline.
 
+## Compositional game theory
+
+Neil Ghani, Jules Hedges, Viktor Winschel and Philipp Zahn. *Compositional Game Theory*, LICS 2018.
+The bargaining example uses sequential open games to relate the payoff context of each player to unilateral deviations. [Paper](https://arxiv.org/abs/1603.04641v3) · [Bargaining example](docs/tutorials/pirate-bargaining.md)
+
 ## Foundational citations
 
 ### HS00 — Hancock and Setzer, *Interactive programs in dependent type theory*
