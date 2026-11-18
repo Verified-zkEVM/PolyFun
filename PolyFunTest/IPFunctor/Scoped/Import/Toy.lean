@@ -7,7 +7,9 @@ Authors: Devon Tuma
 module
 
 public import Examples.Tutorials.ScopedVectors
-public meta import PolyFun.IPFunctor.Scoped.Import.Driver
+public meta import PolyFun.IPFunctor.Scoped.Import.Apply
+public meta import PolyFun.IPFunctor.Scoped.Import.Json
+public meta import PolyFun.IPFunctor.Scoped.Import.Registry
 public meta import Lean.Elab.Command
 
 /-!
@@ -15,32 +17,53 @@ public meta import Lean.Elab.Command
 
 A frontend of the import machinery for the language of the `ScopedVectors` tutorial. Its source
 is a small typed AST in JSON: variables as de Bruijn positions, numbers, abstractions with their
-argument types, applications, size abstractions and size instantiations. Each declaration lists
-the earlier declarations it uses; they form its value context, nearest first.
+argument types, applications, size abstractions and size instantiations. A file is an object
+`{"format": "polyfun-toy-decls", "version": 1, "producer": p, "decls": [...]}`. Each declaration
+lists the earlier declarations it uses; they form its value context, nearest first.
 
 * The kernel side is the mirror `Src` of the source and `erase : Tm Θ Γ s → Src.Expr`, an exposed
   fold. Erasure keeps every abstraction's argument type and every instantiation's size, and drops
   the coercions the elaborator inserts.
-* The meta side decodes JSON into the mirror and elaborates each declaration. It infers the
-  annotations every head needs from the mirror's types and inserts a coercion after each
-  instantiation, from the type substitution computes to the written type. It checks scopes, and
-  leaves typing to the kernel. Its JSON decoders and its elaborator are `partial`, with no
-  termination proof: the decoded mirror is the source that acceptance states, and the kernel
-  checks every term the elaborator builds.
+* The meta side decodes JSON into the mirror with `JsonM` and elaborates each declaration. It
+  infers the annotations every head needs from the mirror's types and inserts a coercion after
+  each instantiation, from the type substitution computes to the written type. It checks scopes,
+  and leaves typing to the kernel. A decoding error names the file and the path to the offending
+  value; an elaboration error names the declaration and the path to the offending subterm, in the
+  same segments. Its JSON decoders and its elaborator are `partial`, with no termination proof:
+  the decoded mirror is the source that acceptance states, and the kernel checks every term the
+  elaborator builds.
 
 `toy_import "path.json"` adds the bundle declarations `declNames` and `declNames_length`, then
 each declaration `d` with its decoded source `d.source`, its acceptance theorem
-`d.accepted : erase d = d.source`, and for a closed declaration its lazy meaning `d.meaning`. A
-closed monomorphic declaration also gets the equation lemma `d.evaluate_eq`, whose right side is
-the native meaning written without syntax, and a closed numeric one `d.meaning_eq`, which states
-its lazy meaning `d.meaning` as a number. Options: `budget n` sets the per-declaration budget,
-`check` only reports the kernel's verdicts, `decide` proves acceptance by evaluating decidable
-equality instead of by `Eq.refl`, and `natives` gives each closed declaration its total evaluation
-`d.native`, compiled, and the theorem `d.meaning_represents : Rep _ d.meaning d.native`, whose proof
-term the frontend assembles and only the kernel checks. With `nolint`, each declaration and its
-auxiliary definitions are marked `@[nolint defsWithUnderscore]` and its equation lemmas
-`@[nolint checkType]`, as a frontend marks names its source dictates. `misrepresent` replaces the
-proof of `d.meaning_represents` by `True.intro`, which the kernel rejects.
+`d.accepted : erase d = d.source`, and its lazy meaning `d.meaning`, `meaningIn d η` at the
+environment `η` of its dependencies' meanings (`Import.Env`). A closed monomorphic declaration also
+gets the equation lemma `d.evaluate_eq`, whose right side is the native meaning written without
+syntax, and a closed numeric one `d.meaning_eq`, which states its lazy meaning `d.meaning` as a
+number. Options: `budget n` sets the per-declaration budget, `check` only reports the kernel's
+verdicts, `decide` proves acceptance by evaluating decidable equality instead of by `Eq.refl`, and
+`natives` gives each declaration its total evaluation `d.native` at its dependencies' native
+values, compiled, and the theorem `d.meaning_represents : Represents _ d.meaning d.native`. Its
+proof term, `meaningIn_represents` at the dependencies' theorems, is assembled by the frontend and
+checked only by the kernel. With `nolint`, each declaration and its auxiliary definitions are
+marked `@[nolint defsWithUnderscore]` and its equation lemmas `@[nolint checkType]`, as a frontend
+marks names its source dictates. `misrepresent` replaces the proof of `d.meaning_represents` by
+`True.intro`, which the kernel rejects. `lazy` gives a declaration whose size abstractions and
+abstractions are outermost the equation `d.meaning_eq`, its lazy meaning written without syntax.
+`equations off` leaves out every equation lemma, `equations only ["d", …]` keeps those of the
+declarations named, and `equations except ["d", …]` leaves out theirs. `only ["d", …]` imports the
+declarations named and those they depend on. A dependency must come earlier in the file.
+
+`#toy_apply d` prints the application equation of `d` from `d.meaning_eq` (`Import.Apply`), as a
+theorem to paste, proved by `kernel_rfl`, after a rewrite by `d.meaning_eq` when its right side
+wraps a dependency.
+
+`toy_import P from "path.json"` imports under the prefix `P`: each declaration `d` becomes `P.d`,
+and the bundle declarations start with `P.manifest`, which records the file's format, version,
+producer and fingerprint, and the settings `P.settings.natives`, `P.settings.lazy` and
+`P.settings.equations`. The
+prefix is a registry (`Import.Registry`). Importing the same file again under `P` adds only the
+declarations that do not exist yet. Another file under `P` is refused, as are other settings, and a
+declaration whose name exists but is not this import's or is taken by a bundle declaration.
 
 A declaration marked `"uncompiled": true` is written through `uncompiled`, a `noncomputable`
 identity on terms. The kernel accepts it, and the code generator cannot compile it, so it tests
@@ -156,6 +179,35 @@ declaration written through it. -/
     (s : TySig.Term Θ .scheme) (t : Tm Θ Γ s) : Tm Θ Γ s :=
   t
 
+/-! ## Meanings at the meanings of dependencies -/
+
+/-- Lazy meanings at a closed scheme. -/
+abbrev Carrier (s : TyTerm [] .scheme) : Type := SDom (s.denote tyAlg Env.empty)
+
+/-- Native values at a closed scheme. -/
+abbrev NativeCarrier (s : TyTerm [] .scheme) : Type := SNative (s.denote tyAlg Env.empty)
+
+/-- A lazy meaning represents a native value at a closed scheme. -/
+abbrev Represents (s : TyTerm [] .scheme) : Carrier s → NativeCarrier s → Prop :=
+  Rep (s.denote tyAlg Env.empty)
+
+/-- The lazy meaning of a declaration at the meanings `η` of its dependencies. -/
+@[expose] noncomputable def meaningIn {Γ : List (TyTerm [] .scheme)} {s : TyTerm [] .scheme}
+    (t : Tm [] Γ s) (η : Env Carrier Γ) : Carrier s :=
+  model.denoteDomain SDom lazy t Env.empty η
+
+/-- The total evaluation of a declaration at the native values `ζ` of its dependencies. -/
+@[expose] def evaluateIn {Γ : List (TyTerm [] .scheme)} {s : TyTerm [] .scheme} (t : Tm [] Γ s)
+    (ζ : Env NativeCarrier Γ) : NativeCarrier s :=
+  model.denote SNative native t Env.empty ζ
+
+/-- At dependencies whose meanings represent their native values, a declaration's meaning
+represents its native value. -/
+theorem meaningIn_represents {Γ : List (TyTerm [] .scheme)} {s : TyTerm [] .scheme}
+    (t : Tm [] Γ s) {η : Env Carrier Γ} {ζ : Env NativeCarrier Γ}
+    (h : Env.LiftRel Represents η ζ) : Represents s (meaningIn t η) (evaluateIn t ζ) :=
+  model.denoteDomain_related lazy_related t Env.empty h
+
 end PolyFunTest.ToyImport
 
 /-! ## The importer -/
@@ -248,38 +300,39 @@ def convEvidence (depth : ℕ) (t : Lean.Expr) : MetaM Lean.Expr := do
 abbrev Entry := Src.Scheme × ℕ
 
 /-- Elaborate a source expression at `depth` size parameters in context `Γ`, nearest first:
-the tree of its typed term and its scheme. -/
-partial def elabExpr (depth : ℕ) (Γ : List Entry) : Src.Expr → MetaM (Tree × Src.Scheme)
+the tree of its typed term and its scheme. An error is reported at `loc`, the expression's place
+in its declaration, whose segments follow the JSON encoding. -/
+partial def elabExpr (loc : Location) (depth : ℕ) (Γ : List Entry) :
+    Src.Expr → MetaM (Tree × Src.Scheme)
   | .var i => do
-    let some (s, bound) := Γ[i]? | throwError "toy: variable {i} is not in scope"
+    let some (s, bound) := Γ[i]? | loc.fail s!"variable {i} is not in scope"
     unless bound == depth do
-      throwError "toy: variable {i} is used below a size abstraction around its binding site, \
+      loc.fail s!"variable {i} is used below a size abstraction around its binding site, \
         which this frontend does not support"
     return (.var i, s)
   | .lit k => return (.node (.const ``litT (pre := #[mkNatLit k])) #[], .mono .nat)
-  | .rep => throwError "toy: the primitive `rep` is not supported"
+  | .rep => loc.fail "the primitive `rep` is not supported"
   | .lam a body => do
-    let (tb, sb) ← elabExpr depth ((.mono a, depth) :: Γ) body
-    let .mono b := sb | throwError "toy: a function body must be monomorphic"
+    let (tb, sb) ← elabExpr ((loc.into "lam").into "body") depth ((.mono a, depth) :: Γ) body
+    let .mono b := sb | loc.fail "a function body must be monomorphic"
     let aE ← quoteTree depth (tyTree a)
     let bE ← quoteTree depth (tyTree b)
     let monoA ← quoteTree depth (schemeTree (.mono a))
     return (.node (.const ``lamT (pre := #[aE, bE])) #[(.keep [monoA], tb)], .mono (.arrow a b))
   | .app f x => do
-    let (tf, sf) ← elabExpr depth Γ f
-    let (tx, _) ← elabExpr depth Γ x
-    let .mono (.arrow a b) := sf | throwError "toy: applying a term that is not a function"
+    let (tf, sf) ← elabExpr ((loc.into "app").into "[0]") depth Γ f
+    let (tx, _) ← elabExpr ((loc.into "app").into "[1]") depth Γ x
+    let .mono (.arrow a b) := sf | loc.fail "applying a term that is not a function"
     let aE ← quoteTree depth (tyTree a)
     let bE ← quoteTree depth (tyTree b)
     return (.node (.const ``appT (pre := #[aE, bE])) #[(.keep [], tf), (.keep [], tx)], .mono b)
   | .sabs e => do
-    let (te, se) ← elabExpr (depth + 1) (Γ.map fun (s, d) => (s.shift, d)) e
+    let (te, se) ← elabExpr (loc.into "sabs") (depth + 1) (Γ.map fun (s, d) => (s.shift, d)) e
     let bodyE ← quoteTree (depth + 1) (schemeTree se)
     return (.node (.const ``sabsT (pre := #[bodyE])) #[(.enter [sizeKind] [], te)], .all se)
   | .sapp e n => do
-    let (te, se) ← elabExpr depth Γ e
-    let .all (.mono x) := se
-      | throwError "toy: instantiating a term whose scheme is not `∀ n, t`"
+    let (te, se) ← elabExpr ((loc.into "sapp").into "fun") depth Γ e
+    let .all (.mono x) := se | loc.fail "instantiating a term whose scheme is not `∀ n, t`"
     let bodyE ← quoteTree (depth + 1) (schemeTree (.mono x))
     let xE ← quoteTree (depth + 1) (tyTree x)
     let nE ← quoteTree depth (sizeTree n)
@@ -328,75 +381,263 @@ structure Decl where
   compareWith : Option Src.Expr
   /-- A test hook: write the term through `uncompiled`. -/
   uncompiled : Bool
+  /-- Its position in the file. -/
+  position : ℕ := 0
+
+/-- The source that acceptance compares against. -/
+def Decl.source (d : Decl) : Src.Expr :=
+  d.compareWith.getD d.body
+
+/-- The declaration named `dep` that `d` depends on, which must come before `d` in the file. -/
+def Decl.dependency (d : Decl) (decls : Array Decl) (dep : String) : Except String Decl :=
+  match (decls.extract 0 d.position).find? (·.name == dep) with
+  | some e => .ok e
+  | none => .error <| if decls.any (·.name == dep) then s!"{dep} is not declared before {d.name}"
+      else s!"unknown dependency {dep}"
+
+/-- The declarations named `names` and those they depend on, in the order of the file. -/
+def Decl.closure (decls : Array Decl) (names : Array String) : Array Decl := Id.run do
+  let mut wanted := names
+  for d in decls.reverse do
+    if wanted.contains d.name then wanted := wanted ++ d.deps
+  return decls.filter (wanted.contains ·.name)
 
 /-! ### Decoding -/
 
+section Decoding
+
+open JsonM
+
 /-- Decode a size. -/
-partial def decodeSize (j : Json) : Except String Src.Size := do
-  if let .ok n := j.getObjValAs? ℕ "lit" then return .lit n
-  if let .ok i := j.getObjValAs? ℕ "svar" then return .var i
-  if let .ok (.arr #[m, n]) := j.getObjVal? "add" then
-    return .add (← decodeSize m) (← decodeSize n)
-  throw s!"not a size: {j.compress}"
+partial def decodeSize (j : Json) : JsonM Unit Src.Size := do
+  match ← variant j with
+  | ("lit", some v) => return .lit (← inside "lit" (nat v))
+  | ("svar", some v) => return .var (← inside "svar" (nat v))
+  | ("add", some v) =>
+    let (m, n) ← inside "add" (pair v decodeSize decodeSize)
+    return .add m n
+  | c => unknown "size" c
 
 /-- Decode a type. -/
-partial def decodeTy (j : Json) : Except String Src.Ty := do
-  if j == "nat" then return .nat
-  if let .ok (.arr #[n, a]) := j.getObjVal? "vec" then return .vec (← decodeSize n) (← decodeTy a)
-  if let .ok (.arr #[a, b]) := j.getObjVal? "arrow" then
-    return .arrow (← decodeTy a) (← decodeTy b)
-  throw s!"not a type: {j.compress}"
+partial def decodeTy (j : Json) : JsonM Unit Src.Ty := do
+  match ← variant j with
+  | ("nat", none) => return .nat
+  | ("vec", some v) =>
+    let (n, a) ← inside "vec" (pair v decodeSize decodeTy)
+    return .vec n a
+  | ("arrow", some v) =>
+    let (a, b) ← inside "arrow" (pair v decodeTy decodeTy)
+    return .arrow a b
+  | c => unknown "type" c
 
-/-- Decode a scheme. -/
-partial def decodeScheme (j : Json) : Except String Src.Scheme := do
-  if let .ok s := j.getObjVal? "all" then return .all (← decodeScheme s)
-  return .mono (← decodeTy j)
+/-- Decode a scheme: `{"all": s}` or a type. -/
+partial def decodeScheme (j : Json) : JsonM Unit Src.Scheme := do
+  match ← variant j with
+  | ("all", some s) => return .all (← inside "all" (decodeScheme s))
+  | _ => return .mono (← decodeTy j)
 
 /-- Decode an expression. -/
-partial def decodeExpr (j : Json) : Except String Src.Expr := do
-  if let .ok i := j.getObjValAs? ℕ "var" then return .var i
-  if let .ok k := j.getObjValAs? ℕ "lit" then return .lit k
-  if j == "rep" then return .rep
-  if let .ok l := j.getObjVal? "lam" then
-    return .lam (← decodeTy (← l.getObjVal? "arg")) (← decodeExpr (← l.getObjVal? "body"))
-  if let .ok (.arr #[f, x]) := j.getObjVal? "app" then
-    return .app (← decodeExpr f) (← decodeExpr x)
-  if let .ok e := j.getObjVal? "sabs" then return .sabs (← decodeExpr e)
-  if let .ok a := j.getObjVal? "sapp" then
-    return .sapp (← decodeExpr (← a.getObjVal? "fun")) (← decodeSize (← a.getObjVal? "size"))
-  throw s!"not an expression: {j.compress}"
+partial def decodeExpr (j : Json) : JsonM Unit Src.Expr := do
+  match ← variant j with
+  | ("var", some v) => return .var (← inside "var" (nat v))
+  | ("lit", some v) => return .lit (← inside "lit" (nat v))
+  | ("rep", none) => return .rep
+  | ("lam", some v) =>
+    inside "lam" do return .lam (← field v "arg" decodeTy) (← field v "body" decodeExpr)
+  | ("app", some v) =>
+    let (f, x) ← inside "app" (pair v decodeExpr decodeExpr)
+    return .app f x
+  | ("sabs", some v) => return .sabs (← inside "sabs" (decodeExpr v))
+  | ("sapp", some v) =>
+    inside "sapp" do return .sapp (← field v "fun" decodeExpr) (← field v "size" decodeSize)
+  | c => unknown "expression" c
 
 /-- Decode a declaration. -/
-def decodeDecl (j : Json) : Except String Decl := do
-  let name ← j.getObjValAs? String "name"
-  let deps := (j.getObjValAs? (Array String) "deps").toOption.getD #[]
-  let scheme ← decodeScheme (← j.getObjVal? "scheme")
-  let body ← decodeExpr (← j.getObjVal? "body")
-  let compareWith ← match j.getObjVal? "compareWith" with
-    | .ok c => some <$> decodeExpr c
-    | .error _ => pure none
-  let uncompiled := (j.getObjValAs? Bool "uncompiled").toOption.getD false
-  return { name, deps, scheme, body, compareWith, uncompiled }
+def decodeDecl (j : Json) : JsonM Unit Decl := do
+  return {
+    name := ← field j "name" str
+    deps := (← optField j "deps" (elems · str)).getD #[]
+    scheme := ← field j "scheme" decodeScheme
+    body := ← field j "body" decodeExpr
+    compareWith := ← optField j "compareWith" decodeExpr
+    uncompiled := (← optField j "uncompiled" bool).getD false }
+
+/-- The format of the toy's files. -/
+def toyFormat : String := "polyfun-toy-decls"
+
+/-- A decoded file: what the import read, and the declarations. -/
+structure File where
+  /-- The manifest: format, version, producer and fingerprint. -/
+  manifest : Manifest
+  /-- The declarations, in order. -/
+  decls : Array Decl
+
+/-- Read a file whose path is relative to the package root. -/
+def readFile (path : String) : MetaM File := do
+  let json ← readJsonFile path
+  let decoder : JsonM Unit _ := do
+    let provenance ← checkHeader json toyFormat 1 #["producer"]
+    let decls ← field json "decls" (elems · decodeDecl)
+    return (provenance, decls.mapIdx fun i d => { d with position := i })
+  let ((provenance, decls), _) ← decoder.decode () path
+  return { manifest := { format := toyFormat, version := 1, provenance := provenance.toList
+                         fingerprint := Manifest.fingerprintOf json }
+           decls }
+
+end Decoding
+
+/-! ### Lazy meanings without syntax
+
+A declaration `Λ n₀ … Λ nⱼ₋₁, λ x₀ … λ xₖ₋₁, e` of a scheme `∀ n₀ … nⱼ₋₁, t`, whose body `e` has no
+abstraction, has its lazy meaning written without syntax. Each size abstraction is a function of
+its size, as the meaning of a scheme `∀ n, s` is; each abstraction is `ContinuousHom.ofFun` of its
+body at the variable; and `e` is written from variables, literals, applications `asHom f x`, and
+instantiations of a dependency `atSize`, followed by the coercion the elaborator inserts. A
+dependency is read from the environment `η` of the dependencies' meanings, so that the kernel
+meets the same lookup on both sides. Annotations stay type-level syntax, `Term.denote tyAlg t ρ`
+at the size variables. The continuity proof of the abstraction at `xᵢ` is that of the meaning
+applied to the earlier variables, since the kernel compares two continuous maps by their
+functions. -/
+
+/-- Apply a continuous map `hom` to `x`, through `DFunLike.coe`. -/
+def mkCoeApp (hom x : Lean.Expr) : MetaM Lean.Expr := do
+  let homType ← whnfR (← inferType hom)
+  let #[α, β, _, _] := homType.getAppArgs | throwError "not a continuous map{indentExpr hom}"
+  let βf := Lean.mkLambda `_ .default α β
+  let inst ← synthInstance (← mkAppM ``DFunLike #[homType, α, βf])
+  let levels := [← getLevel homType, ← getLevel α, ← getLevel β]
+  return mkAppN (mkConst ``DFunLike.coe levels) #[homType, α, βf, inst, hom, x]
+
+/-- `Term.denote tyAlg t ρ` of the type-level tree `t` at `depth` size parameters. -/
+def denoteAt (depth : ℕ) (t : Tree) (ρ : Lean.Expr) : MetaM Lean.Expr := do
+  mkAppM ``ScopedSignature.Term.denote #[mkConst ``tyAlg, ← quoteTree depth t, ρ]
+
+/-- The empty assignment of sizes. -/
+def noSizes : MetaM Lean.Expr :=
+  mkAppOptM ``ScopedSignature.Env.empty #[some (mkConst ``Kind), some (mkConst ``Den)]
+
+/-- Where a lazy meaning is written. -/
+structure LazyCtx where
+  /-- The declaration's scope. -/
+  scope : IPFunctor.Import.Scope
+  /-- The environment of the dependencies' meanings. -/
+  η : Lean.Expr
+  /-- The dependencies' schemes, nearest first. -/
+  deps : Array Src.Scheme
+  /-- The variables of the enclosing size abstractions, nearest first. -/
+  sizes : List Lean.Expr := []
+  /-- The variables of the enclosing abstractions with their types, nearest first. -/
+  binders : List (Lean.Expr × Src.Ty) := []
+
+namespace LazyCtx
+
+variable (cx : LazyCtx)
+
+/-- `Term.denote tyAlg t ρ` of the type-level tree `t` at the size variables. -/
+def denote (t : Tree) : MetaM Lean.Expr := do
+  let ρ ← cx.sizes.foldrM (init := ← noSizes) fun n ρ =>
+    mkAppOptM ``ScopedSignature.Env.cons
+      #[some (mkConst ``Kind), some (mkConst ``Den), none, some sizeKind, some n, some ρ]
+  denoteAt cx.sizes.length t ρ
+
+/-- The shape of a type. -/
+def shapeOf (t : Src.Ty) : MetaM Lean.Expr := do
+  return mkApp (mkConst ``TValue.shape) (← cx.denote (tyTree t))
+
+/-- The lazy values of a type. -/
+def carrierOf (t : Src.Ty) : MetaM Lean.Expr := do
+  return mkApp (mkConst ``SDom) (← cx.denote (schemeTree (.mono t)))
+
+/-- The order on the lazy values of a type. -/
+def instOf (t : Src.Ty) : MetaM Lean.Expr := do
+  return mkApp (mkConst ``instSDom) (← cx.denote (schemeTree (.mono t)))
+
+/-- The lazy meaning of an abstraction-free expression, written without syntax, with its type. A
+dependency is read from `η` outside size abstractions only, as the elaborator requires. -/
+partial def expr : Src.Expr → MetaM (Option (Lean.Expr × Src.Ty))
+  | .var i => do
+    if h : i < cx.binders.length then return some cx.binders[i]
+    unless cx.sizes.isEmpty do return none
+    let j := i - cx.binders.length
+    let some (.mono t) := cx.deps[j]? | return none
+    return some (mkApp2 cx.η cx.scope.sorts[j]! (← cx.scope.scopedVar j), t)
+  | .lit k => do
+    let value ← mkAppOptM ``DomainResult.value
+      #[some (mkConst ``Empty), none, some (← mkAppM ``DiscreteOrder.mk #[mkNatLit k])]
+    return some (value, .nat)
+  | .app f x => do
+    let some (f', .arrow a b) ← expr f | return none
+    let some (x', _) ← expr x | return none
+    let hom := mkApp3 (mkConst ``asHom) (← cx.shapeOf a) (← cx.shapeOf b) f'
+    return some (← mkCoeApp hom x', b)
+  | .sapp (.var i) n => do
+    unless cx.sizes.isEmpty && cx.binders.length ≤ i do return none
+    let j := i - cx.binders.length
+    let some (.all (.mono x)) := cx.deps[j]? | return none
+    let family ← withLocalDeclD `n (mkConst ``Nat) fun m => do
+      let single ← mkAppOptM ``ScopedSignature.Env.single
+        #[some (mkConst ``Kind), some (mkConst ``Den), some sizeKind, some m]
+      mkLambdaFVars #[m] (← denoteAt 1 (schemeTree (.mono x)) single)
+    let size ← denoteAt 0 (sizeTree n) (← noSizes)
+    let dep := mkApp2 cx.η cx.scope.sorts[j]! (← cx.scope.scopedVar j)
+    let instantiated ← mkCoeApp (mkApp2 (mkConst ``atSize) family size) dep
+    let written := Src.Ty.inst n x
+    let t ← denoteAt 0 (tyTree written) (← noSizes)
+    let refl ← mkEqRefl (mkApp (mkConst ``TValue.shape) t)
+    return some (← mkCoeApp (mkApp3 (mkConst ``convLazy) t t refl) instantiated, written)
+  | _ => return none
+
+end LazyCtx
+
+/-- The lazy meaning of a declaration of scheme `s` whose abstractions are outermost, written
+without syntax. `self` is the meaning applied to the variables bound so far. -/
+partial def LazyCtx.meaning (cx : LazyCtx) (self : Lean.Expr) (s : Src.Scheme) :
+    Src.Expr → MetaM (Option Lean.Expr)
+  | .sabs body => do
+    let .all s := s | return none
+    withLocalDeclD `n (mkConst ``Nat) fun n => do
+      let cx' := { cx with sizes := n :: cx.sizes }
+      let some inner ← cx'.meaning (mkApp self n) s body | return none
+      return some (← mkLambdaFVars #[n] inner)
+  | .lam a body => do
+    let .mono (.arrow _ b) := s | return none
+    let hom := mkApp3 (mkConst ``asHom) (← cx.shapeOf a) (← cx.shapeOf b) self
+    withLocalDeclD `x (← cx.carrierOf a) fun x => do
+      let cx' := { cx with binders := (x, a) :: cx.binders }
+      let some inner ← cx'.meaning (← mkCoeApp hom x) (.mono b) body | return none
+      let h ← mkAppOptM ``OmegaCompletePartialOrder.ContinuousHom.ωScottContinuous
+        #[none, none, none, none, some hom]
+      return some (mkAppN (mkConst ``OmegaCompletePartialOrder.ContinuousHom.ofFun [0, 0])
+        #[← cx.carrierOf a, ← cx.carrierOf b, ← cx.instOf a, ← cx.instOf b,
+          ← mkLambdaFVars #[x] inner, h])
+  | e => do
+    unless s matches .mono _ do return none
+    return (← cx.expr e).map (·.1)
 
 /-! ### The frontend -/
 
 /-- The frontend for a list of declarations, each elaborated in the context of its
-dependencies' schemes. With `natives`, a closed declaration also gets its compiled total
-evaluation and the theorem that its lazy meaning represents it; with `misrepresent`, that
-theorem's proof is wrong. With `nolint`, the definitions and equation lemmas carry linters that
-skip them. -/
-def frontend (decls : Array Decl) (natives : Bool := false) (nolint : Bool := false)
-    (misrepresent : Bool := false) : MetaM (Frontend Decl) := do
+dependencies' schemes and named under the prefix `pfx`. Each declaration gets its lazy meaning at
+its dependencies' meanings. With `natives`, it also gets its compiled total evaluation at its
+dependencies' native values, and the theorem that its lazy meaning represents it, from its
+dependencies' theorems; with `misrepresent`, that theorem's proof is wrong. With `nolint`, the
+definitions and equation lemmas carry linters that skip them. With `lazy`, a declaration whose
+size abstractions and abstractions are outermost gets the equation `d.meaning_eq`, its lazy
+meaning written without syntax. Only the declarations that `equations` selects get equation
+lemmas. -/
+def frontend (decls : Array Decl) (pfx : Name := .anonymous) (natives : Bool := false)
+    (nolint : Bool := false) (misrepresent : Bool := false) (equations : Select := .all)
+    (lazy : Bool := false) : MetaM (Frontend Decl) := do
   let defNolint := if nolint then #[`defsWithUnderscore] else #[]
   let valSyn ← Syntax.ofStacked (mkConst ``lang)
   let none := (listSuffixes (mkConst ``Kind) 0 #[])[0]!
   return { elaborate := fun d => do
+    let loc : Location := { origin := d.name }
     let mut Γ : List Entry := []
-    for dep in d.deps do
-      let some e := decls.find? (·.name == dep)
-        | throwError "toy {d.name}: unknown dependency {dep}"
+    for h : k in [0:d.deps.size] do
+      let e ← ((loc.into "deps").into s!"[{k}]").check (d.dependency decls d.deps[k])
       Γ := (e.scheme, 0) :: Γ
-    let (tree, _) ← elabExpr 0 Γ d.body
+    let (tree, _) ← elabExpr (loc.into "body") 0 Γ d.body
     let sorts ← Γ.toArray.mapM fun (s, _) => quoteTree 0 (schemeTree s)
     let scope ← valSyn.scope #[] sorts
     let schemeE ← quoteTree 0 (schemeTree d.scheme)
@@ -405,8 +646,16 @@ def frontend (decls : Array Decl) (natives : Bool := false) (nolint : Bool := fa
       else tree
     let type := mkApp3 (mkConst ``Tm) none scope.ctx schemeE
     let closed := d.deps.isEmpty
+    -- The dependencies, nearest first, and the environments of their meanings and native values.
+    let ns ← getCurrNamespace
+    let deps := d.deps.reverse.map fun dep => ns ++ pfx ++ dep.toName
+    let depsAt (suffix : Name) := deps.map (mkConst <| · ++ suffix)
+    let carrier := mkConst ``Carrier
+    let nativeCarrier := mkConst ``NativeCarrier
+    let η ← scope.env carrier (depsAt `meaning)
+    let ζ ← scope.env nativeCarrier (depsAt `native)
     return {
-      base := d.name.toName
+      base := pfx ++ d.name.toName
       doc := s!"The imported declaration `{d.name}`."
       syn := valSyn, scope, type, tree
       nolint := defNolint
@@ -415,80 +664,112 @@ def frontend (decls : Array Decl) (natives : Bool := false) (nolint : Bool := fa
         let source : Extra :=
           { suffix := `source
             type := mkConst ``Src.Expr
-            value := toExpr (d.compareWith.getD d.body)
+            value := toExpr d.source
             doc := s!"The decoded source of `{d.name}`."
             nolint := defNolint }
-        unless closed do return #[source]
-        let meaning := mkApp2 (mkConst ``Examples.ScopedVectors.meaning) schemeE c
-        let meaningX : Extra :=
-          { suffix := `meaning, type := ← inferType meaning, value := meaning
-            doc := s!"The lazy meaning of `{d.name}`.", nolint := defNolint }
-        unless natives do return #[source, meaningX]
-        let native := mkApp2 (mkConst ``evaluate) schemeE c
-        return #[source, meaningX,
-          { suffix := `native, type := ← inferType native, value := native, compile := true
-            doc := s!"The total evaluation of `{d.name}`, compiled.", nolint := defNolint }]
+        let meaning : Extra :=
+          { suffix := `meaning, type := mkApp carrier schemeE
+            value := mkAppN (mkConst ``meaningIn) #[scope.ctx, schemeE, c, η]
+            doc := s!"The lazy meaning of `{d.name}` at the meanings of its dependencies."
+            nolint := defNolint }
+        unless natives do return #[source, meaning]
+        return #[source, meaning,
+          { suffix := `native, type := mkApp nativeCarrier schemeE
+            value := mkAppN (mkConst ``evaluateIn) #[scope.ctx, schemeE, c, ζ], compile := true
+            doc := s!"The total evaluation of `{d.name}` at the native values of its \
+              dependencies, compiled."
+            nolint := defNolint }]
       acceptance := fun c =>
         return (mkApp4 (mkConst ``erase) none scope.ctx schemeE c,
           mkConst (c.constName! ++ `source))
       equations := fun c => do
-        unless closed && d.scheme matches .mono _ do return #[]
-        let some rhs ← nativeExpr [] d.body | return #[]
-        let evaluateEq := (`evaluate_eq, mkApp2 (mkConst ``evaluate) schemeE c, rhs)
-        unless d.scheme matches .mono .nat do return #[evaluateEq]
-        -- The left side is the auxiliary definition `d.meaning`, not yet added.
-        let number ← mkAppOptM ``DomainResult.value
-          #[some (mkConst ``Empty), Option.none, some (← mkAppM ``DiscreteOrder.mk #[rhs])]
-        return #[evaluateEq, (`meaning_eq, mkConst (c.constName! ++ `meaning), number)]
+        unless equations.includes d.name do return #[]
+        -- The left side of `meaning_eq` is the auxiliary definition `d.meaning`, not yet added.
+        let meaning := mkConst (c.constName! ++ `meaning)
+        let mut eqs := #[]
+        if let .mono t := d.scheme then
+          if closed then if let some rhs ← nativeExpr [] d.body then
+            eqs := eqs.push (`evaluate_eq, mkApp2 (mkConst ``evaluate) schemeE c, rhs)
+            if t matches .nat then
+              let number ← mkAppOptM ``DomainResult.value
+                #[some (mkConst ``Empty), Option.none, some (← mkAppM ``DiscreteOrder.mk #[rhs])]
+              eqs := eqs.push (`meaning_eq, meaning, number)
+        if lazy && !eqs.any (·.1 == `meaning_eq) then
+          let cx : LazyCtx := { scope, η, deps := Γ.toArray.map (·.1) }
+          if let some rhs ← cx.meaning meaning d.scheme d.body then
+            eqs := eqs.push (`meaning_eq, meaning, rhs)
+        return eqs
       theorems := fun c => do
-        unless natives && closed do return #[]
+        unless natives do return #[]
         -- The statement names `d.meaning` and `d.native`, which are not yet added.
-        let meaning := mkApp2 (mkConst ``Examples.ScopedVectors.meaning) schemeE c
-        let scheme := (← inferType meaning).appArg!
-        let type := mkApp3 (mkConst ``Rep) scheme (mkConst (c.constName! ++ `meaning))
+        let type := mkApp3 (mkConst ``Represents) schemeE (mkConst (c.constName! ++ `meaning))
           (mkConst (c.constName! ++ `native))
-        let proof := if misrepresent then mkConst ``True.intro
-          else mkApp2 (mkConst ``meaning_represents) schemeE c
+        let proof ← if misrepresent then pure (mkConst ``True.intro) else do
+          let hη ← scope.liftRel carrier nativeCarrier (mkConst ``Represents) (depsAt `meaning)
+            (depsAt `native) (depsAt `meaning_represents)
+          pure (mkAppN (mkConst ``meaningIn_represents) #[scope.ctx, schemeE, c, η, ζ, hη])
         return #[{ suffix := `meaning_represents, type, proof
                    doc := s!"The lazy meaning of `{d.name}` represents its total evaluation." }] } }
 
-/-- The declarations of a JSON file whose path is relative to the package root. -/
-def readDecls (path : String) : MetaM (Array Decl) := do
-  let .ok items := (← readJsonFile path).getArr? | throwError "{path}: expected an array"
-  match items.mapM decodeDecl with
-  | .ok decls => return decls
-  | .error err => throwError "{path}: {err}"
-
-/-- The bundle declarations: `declNames`, the names the file declares, and `declNames_length`,
-their number, proved by evaluation in the kernel. -/
-def bundleOf (decls : Array Decl) : MetaM (Array BundleDecl) := do
-  let names := mkConst ((← getCurrNamespace) ++ `declNames)
+/-- The bundle declarations under the prefix `pfx`: `pfx.declNames`, the names the file declares,
+and `pfx.declNames_length`, their number, proved by evaluation in the kernel. -/
+def bundleOf (decls : Array Decl) (pfx : Name := .anonymous) : MetaM (Array BundleDecl) := do
+  let names := mkConst ((← getCurrNamespace) ++ pfx ++ `declNames)
   let length := mkApp2 (mkConst ``List.length [0]) (mkConst ``String) names
   let listType ← mkAppM ``List #[mkConst ``String]
-  return #[.defn `declNames listType (toExpr (decls.map (·.name)).toList)
+  return #[.defn (pfx ++ `declNames) listType (toExpr (decls.map (·.name)).toList)
       "The names of the imported declarations.",
-    .decide `declNames_length (← mkEq length (mkNatLit decls.size))]
+    .decide (pfx ++ `declNames_length) (← mkEq length (mkNatLit decls.size))]
 
-/-- `toy_import "path.json" (budget n)? (check)? (decide)? (natives)? (nolint)? (misrepresent)?`
-imports the declarations of a JSON file whose path is relative to the package root. -/
+/-- `toy_import (P from)? "path.json" (only [d, …])? (budget n)? (check)? (decide)? (natives)?
+(nolint)? (misrepresent)? (lazy)? (equations (off | only [d, …] | except [d, …]))?` imports the
+declarations of a JSON file whose path is relative to the package root, under the prefix `P` if
+one is given: those named after `only` and the declarations they depend on, or all of them. -/
 syntax (name := toyImport)
-  "toy_import " str (&" budget " num)? (&" check")? (&" decide")? (&" natives")? (&" nolint")?
-    (&" misrepresent")? : command
+  "toy_import " (ident " from ")? str (&" only" " [" str,* "]")? (&" budget " num)? (&" check")?
+    (&" decide")? (&" natives")? (&" nolint")? (&" misrepresent")? (&" lazy")?
+    (&" equations" importSelect)? : command
 
-/-- Elaborate `toy_import`. -/
+/-- Elaborate `toy_import`. Under a prefix, the import goes through the registry: it declares
+the manifest, the settings `natives`, `lazy` and `equations`, and the other bundle declarations, and
+`Registry.plan` chooses the declarations to add. -/
 @[command_elab toyImport] def elabToyImport : CommandElab
-  | `(toy_import $path:str $[budget $n:num]? $[check%$c]? $[decide%$dec]? $[natives%$nat]?
-      $[nolint%$nl]? $[misrepresent%$mis]?) =>
+  | `(toy_import $[$p:ident from]? $path:str $[only [$only,*]]? $[budget $n:num]? $[check%$c]?
+      $[decide%$dec]? $[natives%$nat]? $[nolint%$nl]? $[misrepresent%$mis]? $[lazy%$lz]?
+      $[equations $sel]?) =>
     liftTermElabM do
-      let decls ← readDecls path.getString
+      let file ← readFile path.getString
+      let names := file.decls.map (·.name)
+      let decls ← match only with
+        | some only =>
+          let only := only.getElems.map (·.getString)
+          (Select.only only).validate "" names
+          pure (Decl.closure file.decls only)
+        | none => pure file.decls
+      let equations ← match sel with
+        | some sel => Select.ofSyntax sel
+        | none => pure .all
+      equations.validate "equations" names
       let budget ← match n with
         | some n => pure ⟨n.getNat⟩
         | none => Budget.ambient
-      importDecls (← frontend decls nat.isSome nl.isSome mis.isSome) decls
-        (bundle := ← bundleOf decls)
+      let cfg : IPFunctor.Import.Config :=
         { budget
           mode := if c.isSome then .check else .commit
           acceptBy := if dec.isSome then .decide else .refl }
+      let pfx := (p.map (·.getId)).getD .anonymous
+      let fe ← frontend file.decls pfx nat.isSome nl.isSome mis.isSome equations lz.isSome
+      let bundle ← bundleOf file.decls pfx
+      if p.isNone then
+        return ← importDecls fe decls cfg (bundle := bundle)
+      let registry : Registry :=
+        { pfx, manifest := file.manifest
+          settings := [("natives", toString nat.isSome), ("lazy", toString lz.isSome),
+            ("equations", toString equations)]
+          reserved := fun b => bundle.any (·.base == b) }
+      let base (d : Decl) : Name := pfx ++ d.name.toName
+      let plan ← registry.plan decls base fun d => (base d ++ `source, toExpr d.source)
+      importDecls fe plan.todo cfg (bundle := ← registry.bundle plan bundle)
   | _ => throwUnsupportedSyntax
 
 /-- `toy_import_unscoped "path.json"` commits the declarations in one `atomically` block without
@@ -499,12 +780,88 @@ syntax (name := toyImportUnscoped) "toy_import_unscoped " str : command
 /-- Elaborate `toy_import_unscoped`. -/
 @[command_elab toyImportUnscoped] def elabToyImportUnscoped : CommandElab
   | `(toy_import_unscoped $path:str) => liftTermElabM do
-    let decls ← readDecls path.getString
+    let decls := (← readFile path.getString).decls
     let fe ← frontend decls
     let cfg : IPFunctor.Import.Config := { budget := ← Budget.ambient }
     atomically do
       for d in decls do
         commitDecl cfg (← fe.elaborate d)
+  | _ => throwUnsupportedSyntax
+
+/-! ### Application equations -/
+
+/-- Evaluate a type-level term at the values of its size variables, nearest first, as `tyAlg`
+does: sizes to numbers, types to `TValue` and schemes to `SScheme`. -/
+partial def evalTyTerm (t : Lean.Expr) (env : Array Lean.Expr) : MetaM (Option Lean.Expr) := do
+  let t := t.headBeta
+  let args := t.getAppArgs
+  let ev (i : ℕ) := evalTyTerm args[i]! env
+  let both (i : ℕ) (k : Lean.Expr → Lean.Expr → Lean.Expr) : MetaM (Option Lean.Expr) := do
+    let some x ← ev i | return none
+    let some y ← ev (i + 1) | return none
+    return some (k x y)
+  match t.getAppFn.constName? with
+  | some ``ScopedSignature.Term.var => return (EnvReader.varIndex? args.back!).bind (env[·]?)
+  | some ``TyTerm.lit => return args[1]?
+  | some ``TyTerm.add => both 1 mkNatAdd
+  | some ``TyTerm.nat => return some (mkConst ``TValue.nat)
+  | some ``TyTerm.vec => both 1 (mkApp2 (mkConst ``TValue.vec))
+  | some ``TyTerm.arrow => both 1 (mkApp2 (mkConst ``TValue.arrow))
+  | some ``TyTerm.mono => return (← ev 1).map (mkApp (mkConst ``SScheme.mono))
+  | some ``TyTerm.all => withLocalDeclD `n (mkConst ``Nat) fun n => do
+    let some body ← evalTyTerm args[1]! (#[n] ++ env) | return none
+    return some (mkApp (mkConst ``SScheme.all) (← mkLambdaFVars #[n] body))
+  | _ => return none
+
+/-- Fresh variables `x₀, x₁, …` for the arguments of an evaluated function type. -/
+partial def withArgs {α : Type} (t : Lean.Expr) (xs : Array Lean.Expr)
+    (k : Array Lean.Expr → MetaM α) : MetaM α := do
+  if t.isAppOfArity ``TValue.arrow 2 then
+    let type := mkApp (mkConst ``SDom) (mkApp (mkConst ``SScheme.mono) (t.getArg! 0))
+    withLocalDeclD (.mkSimple s!"x{xs.size}") type fun x => withArgs (t.getArg! 1) (xs.push x) k
+  else k xs
+
+/-- Fresh size variables for the quantifiers of an evaluated scheme, named by `names` as far as
+they go, and its monomorphic type. -/
+partial def withSizes {α : Type} (s : Lean.Expr) (names : List Name) (ns : Array Lean.Expr)
+    (k : Array Lean.Expr → Lean.Expr → MetaM α) : MetaM α := do
+  if s.isAppOfArity ``SScheme.all 1 then
+    withLocalDeclD (names.headD `n) (mkConst ``Nat) fun n =>
+      withSizes ((s.getArg! 0).beta #[n]) names.tail (ns.push n) k
+  else if s.isAppOfArity ``SScheme.mono 1 then k ns (s.getArg! 0)
+  else throwError "#toy_apply: not an evaluated scheme{indentExpr s}"
+
+/-- Whether a right side is a wrapper: below applications `asHom f x`, coercions `convLazy` and
+instantiations `atSize`, the meaning of a dependency. -/
+partial def isWrapper (e : Lean.Expr) : Bool :=
+  if e.isAppOfArity ``DFunLike.coe 6 then
+    let hom := e.getArg! 4
+    if hom.isAppOfArity ``asHom 3 then isWrapper (hom.getArg! 2)
+    else if hom.isAppOfArity ``convLazy 3 || hom.isAppOfArity ``atSize 2 then
+      isWrapper (e.getArg! 5)
+    else false
+  else match e with
+    | .const (.str _ "meaning") _ => true
+    | _ => false
+
+/-- How the toy prints application equations: a size quantifier is a size variable, and an
+application is `asHom f x`. -/
+def applyPrinter : ApplyPrinter where
+  command := "#toy_apply"
+  evalTerm := evalTyTerm
+  telescope s names k := withSizes s names #[] fun ns t => withArgs t #[] (k ns)
+  apply f xs := xs.foldlM (fun f x => do mkCoeApp (← mkAppM ``asHom #[f]) x) f
+  isWrapper := isWrapper
+
+/-- `#toy_apply d` prints the application equation of the imported declaration `d`, read from
+`d.meaning_eq`, as a theorem whose proof is `kernel_rfl`. -/
+syntax (name := toyApply) "#toy_apply " ident : command
+
+/-- Elaborate `#toy_apply`. -/
+@[command_elab toyApply] def elabToyApply : CommandElab
+  | `(#toy_apply $id:ident) => do
+    let decl ← liftCoreM <| realizeGlobalConstNoOverloadWithInfo id
+    liftTermElabM (applyPrinter.logApplyEquation decl)
   | _ => throwUnsupportedSyntax
 
 end PolyFunTest.ToyImport
