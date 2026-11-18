@@ -77,23 +77,19 @@ namespace Path
 
 /-- Erase a typed path to the universal list of polynomial events. -/
 def trace : (program : FreeM P α) → Path program → PFunctor.TraceList P
-  | .pure _, _ => []
+  | .pure _, _ => 1
   | .liftBind a next, ⟨answer, tail⟩ =>
-      ⟨a, answer⟩ :: trace (next answer) tail
+      FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * trace (next answer) tail
 
 @[simp] theorem trace_pure (x : α) (path : Path (pure x : FreeM P α)) :
-    trace (pure x) path = [] := rfl
+    trace (pure x) path = 1 := rfl
 
 theorem trace_liftBind (a : P.A) (next : P.B a → FreeM P α)
     (answer : P.B a) (tail : Path (next answer)) :
     trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
-      ⟨a, answer⟩ :: trace (next answer) tail := rfl
-
-/-- A node prepends one generator to the monoid-valued execution trace. -/
-theorem trace_liftBind_eq_mul (a : P.A) (next : P.B a → FreeM P α)
-    (answer : P.B a) (tail : Path (next answer)) :
-    trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
       FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * trace (next answer) tail := rfl
+
+@[deprecated (since := "2026-11-17")] alias trace_liftBind_eq_mul := trace_liftBind
 
 /-- The visited input positions of a typed execution path, preserving their order and repeats. -/
 def positions (program : FreeM P α) (path : Path program) : List P.A :=
@@ -153,13 +149,13 @@ path pulled back to the source program. -/
 
 /-- The typed path length agrees with the length of its erased event trace. -/
 theorem length_eq_length_trace (program : FreeM P α) (path : Path program) :
-    length program path = (trace program path).length := by
+    length program path = (trace program path).toList.length := by
   induction program with
   | pure x => rfl
   | lift_bind a next ih =>
       rcases path with ⟨answer, tail⟩
       change length (next answer) tail + 1 =
-        (trace (next answer) tail).length + 1
+        (trace (next answer) tail).toList.length + 1
       exact congrArg (fun n => n + 1) (ih answer tail)
 
 @[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
@@ -168,7 +164,7 @@ theorem length_eq_length_trace (program : FreeM P α) (path : Path program) :
 typed path. The alternative handler may differ arbitrarily on unvisited operations. -/
 theorem ofHandler_eq_of_agree_trace (choose choose' : (a : P.A) → P.B a)
     (program : FreeM P α)
-    (h : ∀ a ∈ (trace program (ofHandler choose program)).map Sigma.fst,
+    (h : ∀ a ∈ (trace program (ofHandler choose program)).toList.map Sigma.fst,
       choose' a = choose a) :
     ofHandler choose' program = ofHandler choose program := by
   apply ofHandler_eq_of_agree_positions

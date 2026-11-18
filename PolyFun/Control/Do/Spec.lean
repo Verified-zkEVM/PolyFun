@@ -5,7 +5,6 @@ Authors: Devon Tuma
 -/
 module
 
-public import Std.Tactic.Do
 public import Std.WP
 import Batteries.Tactic.Alias
 

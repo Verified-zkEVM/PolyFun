@@ -7,7 +7,6 @@ Authors: Devon Tuma
 module
 
 public import PolyFunTest.Do.Fixtures
-public import Std.Tactic.Do
 
 /-!
 # Ordered monad algebras on core's `vcgen`

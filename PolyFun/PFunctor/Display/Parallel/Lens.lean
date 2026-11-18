@@ -734,19 +734,18 @@ theorem parallelSumAssoc_pentagon_totalEq
         (parallelSumAssoc (Display.parallelSum S T) U W)) := by
   apply PFunctor.Lens.ext_mapObj
   rintro ⟨operation, contract⟩
-  all_goals
-    cases operation with
-    | left pqr =>
-        cases pqr with
-        | left pq => cases pq <;> rfl
-        | right _ => rfl
-        | both pq _ => cases pq <;> rfl
-    | right _ => rfl
-    | both pqr _ =>
-        cases pqr with
-        | left pq => cases pq <;> rfl
-        | right _ => rfl
-        | both pq _ => cases pq <;> rfl
+  cases operation with
+  | left pqr =>
+      cases pqr with
+      | left pq => cases pq <;> rfl
+      | right _ => rfl
+      | both pq _ => cases pq <;> rfl
+  | right _ => rfl
+  | both pqr _ =>
+      cases pqr with
+      | left pq => cases pq <;> rfl
+      | right _ => rfl
+      | both pq _ => cases pq <;> rfl
 
 @[deprecated (since := "2026-10-19")] alias parallelSumAssoc_pentagon_total :=
   parallelSumAssoc_pentagon_totalEq

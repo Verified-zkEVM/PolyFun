@@ -147,7 +147,7 @@ theorem prEvent_congr_ae
     (hp : Measurable p) (hq : Measurable q) (h : ∀ᵐ x ∂evalDist mx, p x ↔ q x) :
     prEvent (p <$> mx) = prEvent (q <$> mx) := by
   rw [prEvent_eq_evalDist mx p hp, prEvent_eq_evalDist mx q hq]
-  exact measure_congr (h.mono fun _ hx ↦ propext hx)
+  exact measure_congr (h.mono fun _ hx ↦ hx)
 
 /-- An event that never occurs has probability zero. -/
 theorem prEvent_eq_zero_of_forall_not
@@ -443,7 +443,7 @@ theorem prEvent_bind_const
   let : MeasurableSpace α := ⊤
   rw [prEvent_true_eq_evalDist_apply_univ]
   change evalDist (mx >>= fun _ ↦ my) {True} = evalDist mx Set.univ * evalDist my {True}
-  rw [evalDist_bind_const, Measure.smul_apply, smul_eq_mul]
+  rw [evalDist_bind_const, smul_apply, smul_eq_mul]
 
 /-- A true constant event after a lossless draw has probability one. -/
 theorem prEvent_const_of_lossless

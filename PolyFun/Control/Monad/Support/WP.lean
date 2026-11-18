@@ -87,8 +87,8 @@ attachment alone: `wp x post` holds when every possible output of `x` satisfies 
 instance. -/
 @[expose, instance_reducible]
 def toWPDemonic (α : Type u) : WP (m α) α Prop EStack⟨⟩ where
-  wpTrans x := ⟨fun post _ => AllOutputs post x⟩
-  wp_trans_monotone _ _ _ _ _ _ hpost := allOutputs_mono hpost
+  trans x := ⟨fun post _ => AllOutputs post x⟩
+  trans_monotone _ _ _ _ _ _ hpost := allOutputs_mono hpost
 
 /-- The value of the demonic transformer. Not `@[simp]`: core's `wp` is the normal form. -/
 theorem toWPDemonic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
@@ -100,8 +100,8 @@ attachment alone: `wp x post` holds when some possible output of `x` satisfies `
 instance, and deliberately without `WPConjunctive` or `LawfulWPMonadAttach` companions. -/
 @[expose, instance_reducible]
 def toWPAngelic (α : Type u) : WP (m α) α Prop EStack⟨⟩ where
-  wpTrans x := ⟨fun post _ => SomeOutput post x⟩
-  wp_trans_monotone _ _ _ _ _ _ hpost := someOutput_mono hpost
+  trans x := ⟨fun post _ => SomeOutput post x⟩
+  trans_monotone _ _ _ _ _ _ hpost := someOutput_mono hpost
 
 /-- The value of the angelic transformer. Not `@[simp]`: core's `wp` is the normal form. -/
 theorem toWPAngelic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
@@ -158,7 +158,7 @@ instance instLawfulWPMonadAttachToWPMonadDemonic :
     @LawfulWPMonadAttach m Prop EStack⟨⟩ _ _ _ _ _ (toWPMonadDemonic (m := m)) :=
   (WPMonad.lawfulWPMonadAttach_iff _).mpr fun {_ x P a} hcan hwp => by
     have h : AllOutputs (fun a => ⌜P a⌝) x := Lean.Order.of_top_le_prop hwp
-    simpa only [Lean.Order.ofProp_prop_eq] using h a hcan
+    simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using h a hcan
 
 @[deprecated (since := "2026-11-16")]
 alias toWPMonadDemonic_wpConjunctive := instWPConjunctiveToWPMonadDemonic

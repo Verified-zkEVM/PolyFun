@@ -87,7 +87,7 @@ example (a b : Nat) :
     ⦃ fun log => log = [99] ⦄ logPair a b
       ⦃ fun result log => result = a + b ∧ log = [99, a, b] ⦄ := by
   vcgen [logPair]
-  simp_all
+  all_goals simp_all
 
 /- `run` starts from the empty log. -/
 example (a b : Nat) : ⦃ True ⦄ (logPair a b).run ⦃ fun p => p = (a + b, [a, b]) ⦄ := by
