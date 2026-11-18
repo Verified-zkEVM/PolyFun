@@ -8,6 +8,10 @@ prefer linking here instead of duplicating partial citations inline.
 
 Mathlib supplies the finite partition type, its finite universe, and the recurrence for Stirling numbers of the second kind. The local enumeration proves that the partitions of `Fin n` into `k` parts have this cardinality. [Finpartitions](https://github.com/leanprover-community/mathlib4/blob/fc4f59e577feb1a4956671bc04ac18aaaf8cd842/Mathlib/Order/Partition/Finpartition.lean) · [Stirling numbers](https://github.com/leanprover-community/mathlib4/blob/fc4f59e577feb1a4956671bc04ac18aaaf8cd842/Mathlib/Combinatorics/Enumerative/Stirling.lean)
 
+## Zero-error coding
+
+Jayanth Nayak, Ertem Tuncel and Kenneth Rose. *Zero-Error Source–Channel Coding With Side Information*, IEEE Transactions on Information Theory 52(10), 2006. Section II-C relates a decoder's side information to graph coloring for one or several jointly encoded source symbols. [Paper](https://scl.ece.ucsb.edu/sites/default/files/publications/d06_3_0.pdf) · [Lighthouse example](docs/tutorials/lighthouse.md)
+
 ## Foundational citations
 
 ### HS00 — Hancock and Setzer, *Interactive programs in dependent type theory*
