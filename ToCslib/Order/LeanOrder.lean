@@ -148,10 +148,10 @@ and `⊥` otherwise. It is not a `simp` lemma, since its right-hand side needs `
 theorem ofProp_eq_ite (p : Prop) [Decidable p] :
     (Lean.Order.CompleteLattice.ofProp p : α) = if p then ⊤ else ⊥ := by
   by_cases hp : p
-  · rw [Lean.Order.ofProp_eq_top hp, top_eq_top]
+  · rw [Lean.Order.CompleteLattice.ofProp_eq_top hp, top_eq_top]
     simp only [hp, ↓reduceIte]
-  · rw [Lean.Order.ofProp_congr (iff_false_intro hp), Lean.Order.CompleteLattice.ofProp_false,
-      bot_eq_bot]
+  · rw [Lean.Order.CompleteLattice.ofProp_congr (iff_false_intro hp),
+      Lean.Order.CompleteLattice.ofProp_false, bot_eq_bot]
     simp only [hp, ↓reduceIte]
 
 end CompleteLattice
@@ -164,7 +164,7 @@ theorem himp_eq_himp {α : Type u} [Order.Frame α] (x y : α) : Lean.Order.himp
   · change Lean.Order.CompleteLattice.sup _ ≤ _
     rw [Lean.Order.sup_eq_sSup]
     exact sSup_le fun z hz => le_himp_iff.2 (by rw [inf_comm, ← meet_eq_inf]; exact hz)
-  · exact Lean.Order.le_himp (α := α) (a := x) (b := y) (x := x ⇨ y)
+  · exact Lean.Order.le_himp_of_meet_le_left (a := x) (b := y) (x := x ⇨ y)
       (show Lean.Order.meet x (x ⇨ y) ≤ y by rw [meet_eq_inf]; exact inf_himp_le)
 
 end LeanOrder
