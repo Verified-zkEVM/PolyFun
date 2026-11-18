@@ -1,0 +1,9 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
+[
+  {"name": "one", "scheme": "nat", "body": {"lit": 1}},
+  {
+    "name": "broken",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"app": [{"var": 0}, {"lit": "7"}]}}}
+  }
+]}

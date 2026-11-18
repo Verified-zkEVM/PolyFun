@@ -1,0 +1,15 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
+[
+  {"name": "one", "scheme": "nat", "body": {"lit": 1}},
+  {
+    "name": "idn",
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"var": 0}}}
+  },
+  {
+    "name": "use",
+    "deps": ["one", "idn"],
+    "scheme": {"arrow": ["nat", "nat"]},
+    "body": {"lam": {"arg": "nat", "body": {"app": [{"var": 1}, {"var": 2}]}}}
+  }
+]}
