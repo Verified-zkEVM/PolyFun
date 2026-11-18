@@ -265,15 +265,15 @@ with no PolyFun proof.
 | `<*`, `*>` | `Spec.seqLeft`/`Spec.seqRight` in `Do/Spec.lean` | `Support/Structural.lean` | `ExactWP.lean` (`wp_seqLeft`/`wp_seqRight`) | `Hom.lean` | `Free/WP.lean` |
 | `if`, `if h :` | `vcgen` splits | `Support/Structural.lean` | `Std.WP.wp_ite`/`wp_dite`, for every interpretation | `mmap_ite`/`mmap_dite` | `wpFold_ite`/`wpFold_dite` |
 | `match` on `Option`/`Sum` | `vcgen` splits | `*_option_elim`/`*_sum_elim` | `Std.WP.wp_option_elim`/`wp_sum_elim`, for every interpretation | `mmap_option_elim`/`mmap_sum_elim` | `wpFold_option_elim`/`wpFold_sum_elim` |
-| `for` over `List`/`Array`/ranges/`Option`/`Vector` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (`Free/WP/Upstream.lean`) |
+| `for` over `List`/`Array`/ranges/`Option`/`Vector`/`ByteArray` | free (`Spec.forIn'_list`, `forIn_pure` + `PureForIn`) | `Support/Loops.lean`; in `Id`, `Support/IdLoops.lean` | via the instance | `Hom/Loops.lean` | via `OpSpec.toWPMonad` (`Free/WP/Upstream.lean`) |
 | `forM`, `foldlM` | `Spec.foldlM_list` free, `Spec.forM_list` in `Do/Spec.lean` | `Support/Loops.lean` | via the instance | `Hom/Loops.lean` | — |
 | `mapM` | `Spec.mapM_list` in `Do/Spec.lean`, with an invariant over the elements consumed, the elements remaining and the outputs so far | — | — | `Hom/Loops.lean` | — |
 | `Fin.mOfFn` | `Fin.Spec.mOfFn` in `Do/MOfFn.lean`, with an invariant over the results collected so far | — | — | — | — |
-| early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance | — | — | — |
+| early `return`/`break`/`continue` | `Invariant.withEarlyReturnNewDo` (core) | via the instance; in `Id`, `Id.run_forIn_list_earlyReturn_of_inv` | — | — | — |
 | `throw`/`tryCatch` on `ExceptT`/`OptionT` | core's lifted instances (`Spec.throw_MonadExcept`, `Spec.tryCatch_ExceptT`), plus `Spec.tryCatch_MonadExcept` registered in `Do/Spec.lean` for the `try … catch` elaboration | via the instance | core's lifts, exact over an exact base | `ExceptT.mapHom`/`OptionT.mapHom` | — |
 | `get`/`set`/`read` | core's lifted instances | `Support/Indexed.lean` (`supportFrom`, `supportAt`) | core's lifts, exact over an exact base | `StateT.mapHom`/`ReaderT.mapHom` | — |
 | `tell`/`WriterT.run` | `WriterT.MonoidWP.instWPMonad` or `WriterT.AppendWP.instWPMonad` (`WriterT/WP.lean`) with `Spec.tell_WriterT` / `monadLift_WriterT` / `mk_WriterT` / `run_WriterT` and their `_append` forms, registered in those scopes | `mem_support_writerT_iff`, with exact support over an exact base (`Support/Instances.lean`) | `WriterT.instExactWPMonadWpMonadOf` | `WriterT.mapHom` | — |
-| `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM` | — | — | — | `ITree.wpTotal`/`wpPartial` loop rules (`ITree/WP/Bind.lean`) |
+| `while`/`repeat` | `ITree` only (`ITree/Do.lean`); no rule on finite `FreeM`; core's `Spec.forIn_loop` in `Id` and other `MonadTail` monads | in `Id`, `Lean.Loop.idRun_forIn_of_measure` (`ToCslib/Control/Loop/While.lean`) | — | — | `ITree.wpTotal`/`wpPartial` loop rules (`ITree/WP/Bind.lean`) |
 
 The table has no relational column: loop rules for `MAlgRelOrdered` would need an invariant
 relating two programs, and PolyFun states none. The `OptionT` rules and the rules for the
@@ -315,6 +315,60 @@ to a smaller carrier, so rewriting with the set terminates. Most are also `simp`
 lets a proof normalize the residue without the whole `simp` set.
 `PolyFunTest/Do/Normalization.lean` checks each group, and `PolyFunTest/Do/{Charge,FreeM}.lean`
 apply the set to what `vcgen` leaves.
+
+## Loops in `Id.run do` code
+
+Executable code is often imperative: `Id.run do` blocks with `for` loops over `[a:b]` ranges,
+lists, arrays and byte arrays, mutable arrays, cursors, and `return` inside the loop. Two routes
+relate such code to a functional specification.
+
+**Rewriting with the loop lemmas.** `ToCslib/Control/Loop/` stages them for cslib, and its
+statements use core types only. `Basic.lean` turns a `[a:b]` loop into a loop over
+`List.range' a (b - a)`, and a body that only yields into `List.foldl`. It also splits a pair state
+into two folds and proves body congruence and concatenation. The `loop_norm` simp set performs
+these rewrites. `Array.lean` identifies index-wise fills with `Array.ofFn` and push or append
+builders with `List.flatMap`, and `While.lean` handles `while` loops with a decreasing measure.
+`ToCslib/Data/{Array,ByteArray}.lean` add the missing reads after `set!` and `push`, and give
+`ByteArray` its `Std.Internal.PureForIn` instance.
+
+The invariant rules for loops that stop early or return early live in
+`PolyFun/Control/Monad/Support/IdLoops.lean`. They specialize the support rules of `Support/Loops.lean`,
+which are core's `Spec.forIn_list` and `Spec.forIn_pure` read through the demonic interpretation,
+along `MonadAttach.Id.canReturn_iff`. `ToCslib` imports neither `Std.WP` nor PolyFun, so they cannot be
+staged there. `Id.run_bind_forIn_of_pureForIn` and `Id.run_bind_forIn_earlyReturn_of_pureForIn`
+conclude a postcondition of a loop followed by the rest of its block. A proof applies them to the
+unfolded definition, so it never restates the elaborated loop body.
+
+**Core's `vcgen`.** `Std.WP.Id.of_run_eq_wp` turns `Id.run prog = x` into a weakest precondition,
+and `vcgen` with invariants produces the verification conditions.
+`PolyFunTest/Do/LoopBridge.lean` proves three programs both ways: nested `[0:k]` and `[0:n]`
+loops writing an array with a cursor, a decoder that returns `none` inside its loop, and a
+`while` loop with a measure. At the pinned toolchain:
+
+- legacy ranges go through `Spec.forIn_pure`. The conditions mention `ForIn.toList [a:b]`, which
+  `simp` rewrites to `List.range'`, and a step at `pref ++ cur :: suff` needs
+  `List.eq_add_mul_length_of_range'_eq_append_cons` to learn `cur = a + pref.length`;
+- nested loops take one invariant each. The labelled form
+  `invariants | inv1 => … | inv2 opref _ _ _ _ _ _ => …` binds the outer loop's prefix in the
+  inner invariant, which the bulleted form cannot name;
+- `return` inside a loop works with `Invariant.withEarlyReturnNewDo`, and `simp_all` reduces its
+  lattice connectives to `∧`, `∨` and `∃`. An intrinsic `for … invariant` clause states nothing
+  about the returned value, so the condition for a value returned early cannot be proved from it;
+- a plain `while` loop takes a `WhileInvariant` (`inv1`) and a `Variant` (`inv2`), and the
+  variant's universe must be given (`Variant.{0, 0, 0}`), or the declaration contains a universe
+  metavariable. An intrinsic `decreasing` clause supplies the variant. An intrinsic `invariant`
+  clause works when its `exit` binder is `_`. When the clause names `exit`, its elaboration binds
+  it with a `have`, and `vcgen` fails with "unexpected let-declaration term during structural
+  definitional equality";
+- `vcgen` unfolds `Array.getD` to its `dite` form in the conditions.
+
+Use the lemmas when a loop is a fold, a fill or a builder, or when the specification is an
+equation with a functional definition: `simp only [loop_norm]` and one lemma usually finish.
+Use `vcgen` when the specification is a property that needs a real invariant, such as bounds or
+a relation between the state and the consumed prefix. It handles nested loops and early return
+without restating the body. For an early-return decoder on valid input, both routes work:
+`Id.run_forIn_eq_foldl_of_pureForIn_of_inv` shows that the body only yields, and the loop is then
+a fold.
 
 ## Interaction trees
 
