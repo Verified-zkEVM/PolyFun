@@ -5,7 +5,7 @@ Authors: Devon Tuma
 -/
 module
 
-public import PolyFun.PFunctor.Free.Path.Bounded
+public import PolyFun.PFunctor.Free.Query
 
 /-! # Bounded path-length examples -/
 
@@ -81,5 +81,27 @@ theorem branchProgram_bound : branchProgram.IsTotalRollBound 2 := by
 
 example : Path.length branchProgram longPath ≤ 2 :=
   Path.length_le_of_isTotalRollBound branchProgram branchProgram_bound longPath
+
+example : Cslib.Query.UpperBound (fun _ : Unit => branchProgram.toQueryProgram)
+    (fun _ => 0) (fun _ => 2) :=
+  queryUpperBound_of_isTotalRollBound (fun _ => branchProgram) monotone_const
+    (fun _ => branchProgram_bound)
+
+/-- The third call is reachable when the first two answers to the same request differ. -/
+private def repeatProgram : FreeM BranchP Unit :=
+  .liftBind false fun (first : Bool) => .liftBind false fun (second : Bool) =>
+    if first = second then pure () else .liftBind false fun _ => pure ()
+
+example (oracle : {β : Type} → BranchP.Obj β → β) :
+    repeatProgram.toQueryProgram.countQueries oracle = 2 := by
+  let answer := oracle (PFunctor.Obj.mk (P := BranchP) false id)
+  rw [countQueries_toQueryProgram]
+  let choose (a : BranchP.A) := oracle (PFunctor.Obj.mk a id)
+  change Path.length (if answer = answer then (pure () : FreeM BranchP Unit)
+    else .liftBind false fun _ => pure ()) (Path.ofHandler choose _) + 1 + 1 = 2
+  cases answer <;> rfl
+
+example : ¬ repeatProgram.IsTotalRollBound 2 :=
+  fun h => Nat.lt_irrefl 0 (((h.2 false).2 true).1)
 
 end PFunctor.FreeM.PathBoundedExamples
