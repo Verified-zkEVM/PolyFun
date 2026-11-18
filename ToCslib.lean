@@ -7,6 +7,7 @@ Authors: Devon Tuma, Quang Dao
 module
 
 public import ToCslib.Algebra.PolynomialGrowth
+public import ToCslib.Combinatorics.Hypergraph.WeakColoring
 public import ToCslib.Control.ForIn
 public import ToCslib.Control.Loop.Array
 public import ToCslib.Control.Loop.Attr
