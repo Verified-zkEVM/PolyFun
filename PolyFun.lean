@@ -484,6 +484,7 @@ public import PolyFun.PFunctor.Resumption.Domain
 public import PolyFun.PFunctor.Resumption.DomainLaws
 public import PolyFun.PFunctor.Resumption.DomainTruncate
 public import PolyFun.PFunctor.Resumption.Empty
+public import PolyFun.PFunctor.Resumption.Measure.ExpectedCharge
 public import PolyFun.PFunctor.Resumption.Truncate
 public import PolyFun.PFunctor.Resumption.WellFounded
 public import PolyFun.PFunctor.Slice

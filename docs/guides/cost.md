@@ -328,6 +328,20 @@ call from earlier answers. For a setup cost shared across calls, use
 `FreeM.wpFold_statefulExpectedCharge_le_of_potential` with an invariant preserved almost surely
 and a measurable potential. See also the [measure fold](probability.md).
 
+### Expected cost of an unbounded client
+
+`Resumption.expectedCharge K c tree post` takes the supremum of the expected charges of finite
+truncations. A prefix earns `post` if it returns and zero terminal credit if it stops at a pending
+request. This distinguishes two prices for the same infinite sequence of requests. If only the
+first request costs one, the total is one. If every request costs one, the total is infinite.
+
+With countable answer spaces having measurable singletons, measurable prices, and measurable
+terminal observations in the private state, `Resumption.expectedCharge_bind` prices a prefix
+using the expected charge of its continuation as the terminal payoff. For a prefix embedded from
+a finite program, `Resumption.expectedCharge_toResumption` then reduces the calculation to
+`FreeM.wpFold`. The almost-sure invariant and local potential inequality used for a finite client
+also bound a resumption through `Resumption.expectedCharge_le_of_potential`.
+
 ## Layers and certified implementations
 
 A cost argument usually spans layers. A specification is priced by its calls, an algorithm
