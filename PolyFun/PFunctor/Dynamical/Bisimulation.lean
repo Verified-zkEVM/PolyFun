@@ -67,6 +67,14 @@ def toLTS (D : DynSystem S p) : Control.LTS (Σ a : p.A, Option (p.B a)) where
 @[simp] theorem toLTS_next_some (D : DynSystem S p) (s : S) (d : p.B (D.expose s)) :
     (D.toLTS).next s (some d) = D.update s d := rfl
 
+/-- Each label records the move, so a state has at most one successor for each label. -/
+theorem toLTS_deterministic (D : DynSystem S p) : D.toLTS.toLts.Deterministic := by
+  constructor
+  rintro state label _ _ ⟨move, h₁, rfl⟩ ⟨move', h₂, rfl⟩
+  have he : move = move' := eq_of_heq (Sigma.mk.inj_iff.mp (Option.some.inj (h₁.trans h₂.symm))).2
+  cases he
+  rfl
+
 /-- A move heterogeneously equal to `some d` at a different exposed position is,
 after transporting `d` along the position equality, literally `some (hh ▸ d)`.
 Universally quantifying the positions lets `cases hh` discharge the transport.
@@ -151,6 +159,17 @@ theorem obsEq_of_isStrongSimulation
     {st₁ : S₁} {st₂ : S₂} (hr : rel st₁ st₂) :
     DynSystem.ObsEq D₁ D₂ st₁ st₂ :=
   behavior_eq_of_isSimulation (isSimulation_of_isStrongSimulation h) hr
+
+/-- States that match at every finite bisimulation depth have equal behaviour trees.
+The labelled transitions are deterministic even for interfaces with infinitely many directions. -/
+theorem obsEq_of_forall_bisimilarityApprox {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p}
+    {s₁ : S₁} {s₂ : S₂}
+    (h : ∀ n : ℕ, Cslib.LTS.BisimilarityApprox D₁.toLTS.toLts D₂.toLTS.toLts n s₁ s₂) :
+    ObsEq D₁ D₂ s₁ s₂ := by
+  let := D₁.toLTS_deterministic
+  let := D₂.toLTS_deterministic
+  obtain ⟨r, hb, hr⟩ := Control.strongBisimilar_iff_forall_bisimilarityApprox.mpr h
+  exact obsEq_of_isStrongSimulation hb.forward hr
 
 end DynSystem
 end PFunctor

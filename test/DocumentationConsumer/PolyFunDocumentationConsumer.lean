@@ -14,6 +14,7 @@ import Examples.Tutorials.InteractionTrees
 import Examples.Tutorials.ParallelReports
 import Examples.Tutorials.VersionedRequests
 import Examples.Tutorials.UpdatePolicies
+import PolyFun.PFunctor.Free.Measure.StatefulExpectedCharge
 import PolyFun.PFunctor.Handler.Sum
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
@@ -198,3 +199,41 @@ example : ¬ ∃ d : Unit → Unit → Empty,
       (fun _ => ()) d := by
   rintro ⟨d, _⟩
   exact (d () ()).elim
+
+namespace StatefulCostConsumer
+
+open MeasureTheory PFunctor PFunctor.FreeM
+open scoped ENNReal
+
+private abbrev Tick : PFunctor.{0, 0} := ⟨Unit, fun _ => Unit⟩
+
+private def cached : Handler.Stateful (FreeM Tick) Bool Tick := fun _ => StateT.mk fun warm =>
+  if warm then pure ((), true) else FreeM.liftBind () (fun _ => pure ((), true))
+
+private noncomputable def law (_ : Tick.A) : Measure Unit := Measure.dirac ()
+private def price (_ : Tick.A) (warm : Bool) : ℝ≥0∞ := if warm then 0 else 1
+private noncomputable def replies := cached.toKernelHandler law (fun _ => Measurable.of_discrete)
+
+private theorem local_price (a : Tick.A) (warm : Bool) :
+    cached.expectedCharge law (fun _ => 1) a warm = price a warm := by
+  cases warm <;>
+    simp [Handler.Stateful.expectedCharge, cached, price, law, OpSpec.expectedCharge_apply]
+
+example {α : Type} (client : FreeM Tick α) (reward : α → Bool → ℝ≥0∞) (warm : Bool) :
+    wpFold (OpSpec.expectedCharge law (fun _ => 1)) (cached.run client warm)
+        (fun z => reward z.1 z.2) =
+      wpFold (OpSpec.statefulExpectedCharge replies price) client reward warm := by
+  simpa only [replies, funext₂ local_price] using wpFold_expectedCharge_run law (fun _ => 1)
+    cached (fun _ => Measurable.of_discrete) (fun _ => Measurable.of_discrete)
+    client reward (fun _ => Measurable.of_discrete) warm
+
+example {α : Type} (client : FreeM Tick α) (reward : α → Bool → ℝ≥0∞) (warm : Bool) :
+    wpFold (OpSpec.expectedCharge law (fun _ => 1)) (cached.run client warm)
+        (fun z => reward z.1 z.2) ≤
+      wpFold (OpSpec.statefulExpectedCharge replies (fun _ _ => 1)) client reward warm := by
+  apply wpFold_expectedCharge_run_le_of_discrete
+  intro a warm
+  rw [local_price]
+  cases warm <;> simp [price]
+
+end StatefulCostConsumer

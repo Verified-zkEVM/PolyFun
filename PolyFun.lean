@@ -6,6 +6,9 @@ public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
+public import PolyFun.Control.Do.MOfFn
+public import PolyFun.Control.Do.Normalization
+public import PolyFun.Control.Do.Normalization.Attr
 public import PolyFun.Control.Do.Spec
 public import PolyFun.Control.Domain.LazySeq
 public import PolyFun.Control.Domain.Measure
@@ -393,6 +396,7 @@ public import PolyFun.PFunctor.Free.Measure.Kernel.Handler
 public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
 public import PolyFun.PFunctor.Free.Measure.Lintegral
 public import PolyFun.PFunctor.Free.Measure.Path
+public import PolyFun.PFunctor.Free.Measure.StatefulExpectedCharge
 public import PolyFun.PFunctor.Free.Measure.Support
 public import PolyFun.PFunctor.Free.Measure.Uniform
 public import PolyFun.PFunctor.Free.Measure.WP
@@ -404,6 +408,7 @@ public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Path.MapMoves
 public import PolyFun.PFunctor.Free.Polynomial
+public import PolyFun.PFunctor.Free.Query
 public import PolyFun.PFunctor.Free.Quotient
 public import PolyFun.PFunctor.Free.QuotientRel
 public import PolyFun.PFunctor.Free.Replicate

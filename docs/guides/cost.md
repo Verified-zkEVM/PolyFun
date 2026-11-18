@@ -134,6 +134,13 @@ additive valuation of the path's event trace (`charge_eq_traceList_charge`), and
   completed path respects. So the completed-path reading has its own calculus, valid in any
   ordered cost type.
 
+A fixed oracle answers each occurrence of an operation the same way. In
+`PolyFun.PFunctor.Free.Query`, `countQueries_toQueryProgram` identifies CSLib’s query count with
+the length of the path selected by that oracle. `queryUpperBound_of_isTotalRollBound` turns a
+monotone total roll bound for an input family into a CSLib query upper bound. The converse can
+fail. A program that asks the same Boolean question twice and asks a third time if the answers
+differ takes exactly two steps for every fixed oracle. Its tree admits a three-step path.
+
 The calculus:
 
 - `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the
@@ -292,12 +299,6 @@ on reachable states needs a state type that excludes the unreachable ones.
   additive hom `f` is charging by `f ∘ c` (`mapOutputHom_liftM_withChargeW`). The two writer
   morphisms behind these laws, `WriterT.mapOutputHom` and `WriterT.toStateTHom`, are in
   `PolyFun/Control/Monad/Hom/Writer.lean`.
-- An expected-cost reading needs a probability semantics, which this guide does not cover;
-  PolyFun's measure companions define one as a fold
-  (`PFunctor/Free/Measure/ExpectedCharge.lean`; see [probability](probability.md)). It transfers
-  through a handler only from a per-call bound that holds for every call argument and every
-  handler state. A bound that holds only on average can fail once later calls depend on earlier
-  answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
@@ -309,6 +310,23 @@ lemmas are proved directly. Readings of one program compare the same way: a spec
 spec at every call folds below it (`wpFold_le_wpFold_of_le`). A larger charge therefore gives a
 larger cost (`costWith_mono_charge`), and the fold of any spec below `OpSpec.charge c` at every
 call is at most `costWith c`.
+
+### Expected cost through a stateful handler
+
+A handler can cache a result in its private state. A cold call might issue one target request,
+while a warm call can reuse the answer for free. To price an adaptive client,
+`OpSpec.statefulExpectedCharge K c` charges `c a s` before sampling the answer and next state
+jointly from `K a s`. A call still incurs its charge when its answer measure is zero.
+
+Use `FreeM.wpFold_expectedCharge_run` to replace a finite handler run with a fold over the
+client. The price of each call is the expected charge of its implementation from the current
+state. The theorem requires measurability of that price, the joint terminal law and the
+terminal observation in the private state. For discrete private state,
+`FreeM.wpFold_expectedCharge_run_le_of_discrete` lifts a per-call bound to the whole client.
+A bound averaged over a fixed distribution of states can fail when the client chooses its next
+call from earlier answers. For a setup cost shared across calls, use
+`FreeM.wpFold_statefulExpectedCharge_le_of_potential` with an invariant preserved almost surely
+and a measurable potential. See also the [measure fold](probability.md).
 
 ## Layers and certified implementations
 

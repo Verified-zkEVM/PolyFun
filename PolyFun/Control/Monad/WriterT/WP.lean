@@ -27,9 +27,9 @@ the writer's `LawfulMonad` instance (`WriterT.lawfulMonad_monad`). Clients opt i
 interpretation locally. Importing the module does not choose a writer interpretation. Exactness
 over an exact base is a global instance keyed on `WriterT.wpMonadOf`
 (`WriterT.instExactWPMonadWpMonadOf`), so it holds under either scope and for a local
-interpretation. The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
-live in `PolyFun.Control.Do.Spec`, registered in the same two scopes; the entailments they wrap
-are stated here.
+interpretation. The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run` are registered in the
+same two scopes, beside the entailments they wrap, so `vcgen` uses them exactly where a writer
+interpretation is selected.
 -/
 
 public section
@@ -264,3 +264,96 @@ theorem wp_run_eq (x : WriterT ω m α) (post : α × ω → Pred) (epost : EPre
   simp only [wp_apply_eq, one_mul]
 
 end WriterT
+
+/-! ## `vcgen` rules
+
+The rules for `tell`, `monadLift`, `WriterT.mk` and `WriterT.run` wrap the entailments above. The
+rules for multiplicative logs are stated for the interpretation of `WriterT.MonoidWP`, and the
+rules for append-based logs for that of `WriterT.AppendWP`. Each set is registered in the scope of
+its interpretation, so `vcgen` uses it exactly where that interpretation is installed. -/
+
+namespace Std.WP
+
+section WriterTSpec
+
+open scoped WriterT.MonoidWP
+
+variable {m : Type u → Type v} {ω : Type u} {Pred : Type w} {EPred : Type z} [Monad m] [Monoid ω]
+  [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
+
+/-- `tell` on a multiplicative log, read by `WriterT.MonoidWP`, multiplies the log on the right. -/
+theorem Spec.tell_WriterT (out : ω) (post : PUnit → ω → Pred) {epost : EPred} :
+    Triple (MonadWriter.tell out : WriterT ω m PUnit) (fun w => post ⟨⟩ (w * out)) post epost :=
+  Triple.intro (WriterT.le_wp_tell out post epost)
+
+/-- A lifted base computation leaves a multiplicative log unchanged. -/
+theorem Spec.monadLift_WriterT {α : Type u} (x : m α) (post : α → ω → Pred) {epost : EPred} :
+    Triple (MonadLift.monadLift x : WriterT ω m α)
+      (fun w => wp x (fun a => post a w) epost) post epost :=
+  Triple.intro (WriterT.le_wp_monadLift x post epost)
+
+/-- `WriterT.mk x` on a multiplicative log multiplies in the log `x` returns. -/
+theorem Spec.mk_WriterT {α : Type u} (x : m (α × ω)) (post : α → ω → Pred) {epost : EPred} :
+    Triple (WriterT.mk x : WriterT ω m α)
+      (fun w => wp x (fun p => post p.1 (w * p.2)) epost) post epost :=
+  Triple.intro fun _ => Lean.Order.PartialOrder.rel_refl
+
+/-- Running a writer computation on a multiplicative log starts from the unit. -/
+theorem Spec.run_WriterT {α : Type u} (x : WriterT ω m α) (post : α × ω → Pred)
+    {epost : EPred} :
+    Triple (x.run : m (α × ω)) (wp x (fun a w => post (a, w)) epost 1) post epost :=
+  Triple.intro (by rw [WriterT.wp_run_eq])
+
+end WriterTSpec
+
+section WriterTAppendSpec
+
+open scoped WriterT.AppendWP
+
+variable {m : Type u → Type v} {ω : Type u} {Pred : Type w} {EPred : Type z} [Monad m]
+  [EmptyCollection ω] [Append ω] [Std.Associative (α := ω) (· ++ ·)]
+  [Std.LawfulIdentity (α := ω) (· ++ ·) ∅] [Assertion Pred] [Assertion EPred]
+  [WPMonad m Pred EPred]
+
+/-- `tell` on an append-based log, read by `WriterT.AppendWP`, extends the log on the right. -/
+theorem Spec.tell_WriterT_append (out : ω) (post : PUnit → ω → Pred) {epost : EPred} :
+    Triple (MonadWriter.tell out : WriterT ω m PUnit) (fun w => post ⟨⟩ (w ++ out)) post epost :=
+  Triple.intro (WriterT.AppendWP.le_wp_tell out post epost)
+
+/-- A lifted base computation leaves an append-based log unchanged. -/
+theorem Spec.monadLift_WriterT_append {α : Type u} (x : m α) (post : α → ω → Pred)
+    {epost : EPred} :
+    Triple (MonadLift.monadLift x : WriterT ω m α)
+      (fun w => wp x (fun a => post a w) epost) post epost :=
+  Triple.intro (WriterT.AppendWP.le_wp_monadLift x post epost)
+
+/-- `WriterT.mk x` on an append-based log appends the log `x` returns. -/
+theorem Spec.mk_WriterT_append {α : Type u} (x : m (α × ω)) (post : α → ω → Pred)
+    {epost : EPred} :
+    Triple (WriterT.mk x : WriterT ω m α)
+      (fun w => wp x (fun p => post p.1 (w ++ p.2)) epost) post epost :=
+  Triple.intro fun _ => Lean.Order.PartialOrder.rel_refl
+
+/-- Running an append-based writer computation starts from the empty log. -/
+theorem Spec.run_WriterT_append {α : Type u} (x : WriterT ω m α) (post : α × ω → Pred)
+    {epost : EPred} :
+    Triple (x.run : m (α × ω)) (wp x (fun a w => post (a, w)) epost ∅) post epost :=
+  Triple.intro (by rw [WriterT.AppendWP.wp_run_eq])
+
+end WriterTAppendSpec
+
+end Std.WP
+
+namespace WriterT.MonoidWP
+
+attribute [scoped spec] Std.WP.Spec.tell_WriterT Std.WP.Spec.monadLift_WriterT
+  Std.WP.Spec.mk_WriterT Std.WP.Spec.run_WriterT
+
+end WriterT.MonoidWP
+
+namespace WriterT.AppendWP
+
+attribute [scoped spec] Std.WP.Spec.tell_WriterT_append Std.WP.Spec.monadLift_WriterT_append
+  Std.WP.Spec.mk_WriterT_append Std.WP.Spec.run_WriterT_append
+
+end WriterT.AppendWP
