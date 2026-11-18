@@ -154,7 +154,7 @@ example :
   have h₁ : CanReturn zeroOne 1 := Or.inr rfl
   refine Nat.one_ne_zero ((WPMonad.lawfulWPMonadAttach_iff _).mp h (P := (· = 0)) h₁ fun _ => ?_)
   rw [toWPMonadAngelic_wp]
-  exact ⟨0, Or.inl rfl, (Lean.Order.ofProp_prop_eq _).mpr rfl⟩
+  exact ⟨0, Or.inl rfl, (Lean.Order.CompleteLattice.ofProp_prop_eq _).mpr rfl⟩
 
 end Canaries
 
