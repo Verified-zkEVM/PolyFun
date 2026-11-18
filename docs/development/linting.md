@@ -12,6 +12,7 @@ lake exe lint-style PolyFun ToCslib ComplexityBackends \
   Examples.Tutorials.VersionedRequests Examples.Tutorials.UpdatePolicies \
   Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
   Examples.Tutorials.BoundedController Examples.Tutorials.LazyLanguages \
+  Examples.Tutorials.MoveTranslation Examples.Tutorials.MinimumHint Examples.Tutorials.FerryCrossing \
   Examples.IO.Console Examples.IO.Storage \
   Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
   Examples.Tutorials.ScopedDomains \
