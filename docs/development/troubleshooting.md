@@ -459,6 +459,16 @@ template. Specifications match the program syntactically, so state them on the c
 (`forM`, `forIn`) and reach the function spelling (`List.forM`) through its defining equation
 in the unfolding list: `vcgen [prog, List.forM_eq_forM]`.
 
+### An intrinsic `while` invariant that names `exit` stops `vcgen`
+
+The `invariant exit => …` clause of a `while` or `repeat` loop elaborates its body with a `have`
+that binds `exit`. `vcgen` matches the loop specification structurally and fails on it with
+"unexpected let-declaration term during structural definitional equality". Write the binder as
+`_` when the invariant does not need the flag, or leave the program unannotated and pass a
+`WhileInvariant` through `vcgen … invariants`, whose `inv true` case states what holds when the loop
+stops. A `Variant` passed this way needs its universe fixed by hand (`Variant.{0, 0, 0}`).
+`PolyFunTest/Do/LoopBridge.lean` shows each form.
+
 ### A `Set` literal ascribed as `SetM` is still a `Set`
 
 `SetM α := Set α` is a `def`, so `(({1, 2} : Set Nat) : SetM Nat)` elaborates to a term of type
