@@ -134,6 +134,13 @@ additive valuation of the path's event trace (`charge_eq_traceList_charge`), and
   completed path respects. So the completed-path reading has its own calculus, valid in any
   ordered cost type.
 
+A fixed oracle answers each occurrence of an operation the same way. In
+`PolyFun.PFunctor.Free.Query`, `countQueries_toQueryProgram` identifies CSLib’s query count with
+the length of the path selected by that oracle. `queryUpperBound_of_isTotalRollBound` turns a
+monotone total roll bound for an input family into a CSLib query upper bound. The converse can
+fail. A program that asks the same Boolean question twice and asks a third time if the answers
+differ takes exactly two steps for every fixed oracle. Its tree admits a three-step path.
+
 The calculus:
 
 - `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the

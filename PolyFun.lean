@@ -407,6 +407,7 @@ public import PolyFun.PFunctor.Free.Path.Charge
 public import PolyFun.PFunctor.Free.Path.Execution
 public import PolyFun.PFunctor.Free.Path.MapMoves
 public import PolyFun.PFunctor.Free.Polynomial
+public import PolyFun.PFunctor.Free.Query
 public import PolyFun.PFunctor.Free.Quotient
 public import PolyFun.PFunctor.Free.QuotientRel
 public import PolyFun.PFunctor.Free.Replicate
