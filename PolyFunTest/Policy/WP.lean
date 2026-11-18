@@ -24,7 +24,7 @@ checks the other two rules, on imports and on `vcgen`.
 #guard_msgs in
 #check_wp_instances PolyFun ToCslib ComplexityBackends
 
-/-- info: 24 global `@[spec]` registrations, all of rules on `specAllowlist` -/
+/-- info: 23 global `@[spec]` registrations, all of rules on `specAllowlist` -/
 #guard_msgs in
 #check_wp_specs PolyFun ToCslib ComplexityBackends
 
@@ -64,14 +64,14 @@ info: PFunctor.FreeM.Spec.lift_angelic:
 
 /--
 info: Std.WP.Spec.tell_WriterT:
-  `@[spec]` rule scoped in WriterT.MonoidWP, from PolyFun.Control.Do.Spec
+  `@[spec]` rule scoped in WriterT.MonoidWP, from PolyFun.Control.Monad.WriterT.WP
 -/
 #guard_msgs in
 #wp_registrations Std.WP.Spec.tell_WriterT
 
 /--
 info: Std.WP.Spec.tell_WriterT_append:
-  `@[spec]` rule scoped in WriterT.AppendWP, from PolyFun.Control.Do.Spec
+  `@[spec]` rule scoped in WriterT.AppendWP, from PolyFun.Control.Monad.WriterT.WP
 -/
 #guard_msgs in
 #wp_registrations Std.WP.Spec.tell_WriterT_append
