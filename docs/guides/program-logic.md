@@ -76,9 +76,9 @@ a candidate for core's `Std.WP.Triple.SpecLemmas`:
   `MonadExcept.tryCatch`, which `try … catch` elaborates to. Core states this rule but does not
   tag it.
 - `Spec.seqLeft` and `Spec.seqRight`, for `<*` and `*>`.
-- `Spec.failure_OptionT` and `Spec.lift_OptionT` for every assertion carrier, `Spec.guard_OptionT`
-  for `Prop`-valued readings, and `Spec.guard_OptionT_iInf`, its counterpart for every assertion
-  carrier.
+- `Spec.failure_OptionT`, `Spec.lift_OptionT`, and `Spec.guard_OptionT_cases` for every assertion
+  carrier. A guard generates one verification condition under a proof of its predicate and one
+  under a proof of its negation.
 - `Spec.mk_StateT`, `Spec.lift_StateT`, `Spec.run'_StateT`, `Spec.mk_OptionT`,
   `Spec.mk_ExceptT`, and `Spec.lift_ExceptT`, for the transformers' constructors, lifts, and
   runners that programs write. `Spec.run_OptionT_some_none` and `Spec.run_ExceptT_ok_error` run
@@ -663,7 +663,9 @@ are plain conjunction (`frameFst_fst`, `frameSnd_snd`). On spectator-dependent a
 existential projection forgets the old spectator constraint, while the frame constrains the
 current spectator; the resulting assertion need not imply or be implied by the original. The
 frame closure of a weakest precondition built from them need not equal that weakest
-precondition.
+precondition. For `StateT S (Except ε)` the error predicate sees only the exception. For
+`ExceptT ε (StateM S)` it also sees the state where the exception was thrown, so the frame acts
+pointwise on the error predicate.
 
 ## Charges and budgets
 

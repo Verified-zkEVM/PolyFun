@@ -24,7 +24,7 @@ checks the other two rules, on imports and on `vcgen`.
 #guard_msgs in
 #check_wp_instances PolyFun ToCslib ComplexityBackends
 
-/-- info: 24 global `@[spec]` registrations, all of rules on `specAllowlist` -/
+/-- info: 23 global `@[spec]` registrations, all of rules on `specAllowlist` -/
 #guard_msgs in
 #check_wp_specs PolyFun ToCslib ComplexityBackends
 

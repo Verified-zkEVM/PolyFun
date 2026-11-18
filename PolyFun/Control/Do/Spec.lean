@@ -23,8 +23,7 @@ ranges, arrays, and iterators, and the operations of core's own transformers; th
   transformer stack instead of stopping with "no spec found";
 * the `OptionT` rules that core does not state: `failure` and `OptionT.lift` for every
   assertion carrier, and `guard`, stated with lattice connectives so that `vcgen` splits it into
-  its two outcomes. `Spec.guard_OptionT` covers `Prop`-valued readings, and
-  `Spec.guard_OptionT_iInf`, at a lower priority, covers every assertion carrier;
+  its two outcomes for every assertion carrier;
 * the transformers' constructors, lifts and runners that programs also write: `StateT.mk`,
   `StateT.lift`, running a `StateT` at a state with the state discarded, `OptionT.mk`,
   `ExceptT.mk`, `ExceptT.lift`, and running an `OptionT` or `ExceptT` into a postcondition of the
@@ -119,7 +118,6 @@ theorem Spec.lift_OptionT (x : m α) (post : α → Pred) (epost : (Unit → Pre
 
 /-- `guard p` in `OptionT` over a `Prop`-valued reading: the success postcondition when `p`
 holds and the failure postcondition when it does not, as a meet of two implications. -/
-@[spec]
 theorem Spec.guard_OptionT {m : Type → Type v} {EPred : Type z} [Monad m] [Assertion EPred]
     [WPMonad m Prop EPred] (p : Prop) [Decidable p] (post : Unit → Prop)
     (epost : (Unit → Prop) × EPred) :
@@ -247,25 +245,34 @@ section guard
 variable {m : Type → Type v} {Pred : Type} {EPred : Type z}
   [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
 
-/-- `guard p` in `OptionT` for every assertion carrier: the postcondition when `p` holds and the
-failure assertion when it does not, stated with lattice connectives so that every reading
-decomposes it. `Spec.guard_OptionT` above is stated for `Prop` assertions and takes precedence
-there. -/
-@[spec low]
-theorem Spec.guard_OptionT_iInf (p : Prop) [Decidable p] (post : Unit → Pred)
+/-- A successful guard establishes the value postcondition. A failed guard establishes the
+exception postcondition. Both branches quantify over the proof supplied by the guard. -/
+@[spec]
+theorem Spec.guard_OptionT_cases (p : Prop) [Decidable p] (post : Unit → Pred)
     (epost : (Unit → Pred) × EPred) :
-    ⦃ (Lean.Order.iInf fun _ : PLift p => post ()) ⊓
-        (Lean.Order.iInf fun _ : PLift ¬p => epost.1 ()) ⦄ (guard p : OptionT m Unit)
+    ⦃ (Lean.Order.iInf fun _ : p => post ()) ⊓
+        (Lean.Order.iInf fun _ : ¬p => epost.1 ()) ⦄ (guard p : OptionT m Unit)
       ⦃ post; epost ⦄ := by
   rw [Triple.iff]
   unfold guard
   split
   next hp =>
     exact PartialOrder.rel_trans (meet_le_left _ _)
-      (PartialOrder.rel_trans (iInf_le _ ⟨hp⟩) (Spec.pure ()).le_wp)
+      (PartialOrder.rel_trans (iInf_le _ hp) (Spec.pure ()).le_wp)
   next hp =>
     exact PartialOrder.rel_trans (meet_le_right _ _)
-      (PartialOrder.rel_trans (iInf_le _ ⟨hp⟩) (Spec.failure_OptionT post epost).le_wp)
+      (PartialOrder.rel_trans (iInf_le _ hp) (Spec.failure_OptionT post epost).le_wp)
+
+/-- The guard rule with lifted proof indices. -/
+theorem Spec.guard_OptionT_iInf (p : Prop) [Decidable p] (post : Unit → Pred)
+    (epost : (Unit → Pred) × EPred) :
+    ⦃ (Lean.Order.iInf fun _ : PLift p => post ()) ⊓
+        (Lean.Order.iInf fun _ : PLift ¬p => epost.1 ()) ⦄ (guard p : OptionT m Unit)
+      ⦃ post; epost ⦄ := by
+  refine ⟨PartialOrder.rel_trans (le_meet _ _ _ (le_iInf _ _ ?_) (le_iInf _ _ ?_))
+    (Spec.guard_OptionT_cases p post epost).le_wp⟩
+  · exact fun hp => PartialOrder.rel_trans (meet_le_left _ _) (iInf_le _ ⟨hp⟩)
+  · exact fun hp => PartialOrder.rel_trans (meet_le_right _ _) (iInf_le _ ⟨hp⟩)
 
 end guard
 

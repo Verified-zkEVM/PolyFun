@@ -133,13 +133,13 @@ theorem join_eq_sup (x y : α) : Lean.Order.join x y = x ⊔ y :=
 
 /-- On a Mathlib complete lattice, core's infimum of an indexed family is Mathlib's `⨅`. -/
 @[simp]
-theorem iInf_eq_iInf {ι : Type v} (f : ι → α) : Lean.Order.iInf f = ⨅ i, f i :=
+theorem iInf_eq_iInf {ι : Sort v} (f : ι → α) : Lean.Order.iInf f = ⨅ i, f i :=
   le_antisymm (le_iInf fun i => Lean.Order.iInf_le f i)
     (Lean.Order.le_iInf f _ fun i => iInf_le f i)
 
 /-- On a Mathlib complete lattice, core's supremum of an indexed family is Mathlib's `⨆`. -/
 @[simp]
-theorem iSup_eq_iSup {ι : Type v} (f : ι → α) : Lean.Order.iSup f = ⨆ i, f i :=
+theorem iSup_eq_iSup {ι : Sort v} (f : ι → α) : Lean.Order.iSup f = ⨆ i, f i :=
   le_antisymm (Lean.Order.iSup_le f _ fun i => le_iSup f i)
     (iSup_le fun i => Lean.Order.le_iSup f i)
 

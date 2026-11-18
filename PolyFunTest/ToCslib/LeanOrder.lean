@@ -84,3 +84,9 @@ example : (instCompleteLatticeOrderDual : Lean.Order.CompleteLattice (Nat → Pr
   with_reducible_and_instances rfl
 
 end Diamonds
+
+example (p : Prop) (f : p → ℕ∞) : Lean.Order.iInf f = _root_.iInf f :=
+  LeanOrder.iInf_eq_iInf f
+
+example (p : Prop) (f : p → ℕ∞) : Lean.Order.iSup f = _root_.iSup f :=
+  LeanOrder.iSup_eq_iSup f

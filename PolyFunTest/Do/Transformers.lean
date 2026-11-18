@@ -18,9 +18,8 @@ into a postcondition of the returned option or result, `List.mapM` with a loop i
 sequence combinators `<*` and `*>`, and the rule of `PolyFun.Control.Do.MOfFn` for `Fin.mOfFn`
 with a loop invariant, each over core's `Prop` reading of `Id`,
 where the matcher applies the rule to the constructor, lift or runner before `vcgen` looks inside;
-`Fin.mOfFn` over `StateT`, with a state-passing invariant; and `guard` under a lattice-valued
-reading of a deterministic monad, where `Spec.guard_OptionT_iInf` applies in place of the `Prop`
-rule.
+`Fin.mOfFn` over `StateT`, with a state-passing invariant; and both outcomes of `guard`
+under propositional and lattice-valued readings.
 -/
 
 public section
@@ -110,23 +109,22 @@ example : ⦃ True ⦄ ((pure true : Id Bool) <* (pure 0 : Id Nat)) ⦃ fun b =>
 example : ⦃ True ⦄ ((pure 0 : Id Nat) *> (pure true : Id Bool)) ⦃ fun b => b = true ⦄ := by
   vcgen
 
-/-! ## `guard` under a lattice-valued reading
+/-! ## Propositional and quantitative guards -/
 
-The deterministic monad `Det` of `PolyFunTest.Do.Fixtures`, read at the extended naturals through
-its identity ordered algebra; the `Prop` rule for `guard` does not apply there, and
-`Spec.guard_OptionT_iInf` does. -/
+example : ⦃ True ⦄ (guard (2 < 1) : OptionT Id Unit)
+    ⦃ fun _ => False; estack⟨fun _ => True⟩ ⦄ := by
+  vcgen
+  exact absurd ‹2 < 1› (by decide)
 
 section Lattice
 
 open scoped PolyFunTest.Det.ENatWP
 
-/- `guard` on a true condition continues, through `Spec.guard_OptionT_iInf`: the branch for the
-false condition is ruled out by `decide`. -/
+/- A successful guard preserves the extended-natural postcondition. -/
 example : ⦃ (3 : ℕ∞) ⦄ (do guard (1 < 2); OptionT.lift (pure 3 : Det ℕ∞) : OptionT Det ℕ∞)
     ⦃ fun n => n; estack⟨fun _ => 0⟩ ⦄ := by
   vcgen
-  rename_i h
-  exact absurd h.down (by decide)
+  exact absurd ‹¬ (1 < 2)› (by decide)
 
 end Lattice
 
