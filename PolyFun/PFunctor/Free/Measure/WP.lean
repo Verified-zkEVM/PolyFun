@@ -142,7 +142,7 @@ theorem Spec.lift_expectation_iInf {P : PFunctor.{uA, 0}} [∀ a, MeasurableSpac
       ((expectationWPMonad ν).toWP _) (Lean.Order.iInf Q) Q E := by
   let inst := expectationWPMonad ν
   refine ⟨?_⟩
-  rw [expectationWPMonad_wp, wpFold_lift, OpSpec.lintegral_apply, MAlgOrdered.iInf_eq_iInf]
+  rw [expectationWPMonad_wp, wpFold_lift, OpSpec.lintegral_apply, LeanOrder.iInf_eq_iInf]
   calc ⨅ b, Q b = ∫⁻ _, ⨅ b, Q b ∂ν a := by simp
     _ ≤ ∫⁻ b, Q b ∂ν a := lintegral_mono fun b => iInf_le Q b
 
@@ -155,7 +155,7 @@ theorem Spec.liftBind_expectation_iInf [∀ a, IsProbabilityMeasure (ν a)] {α 
       (Lean.Order.iInf fun b => ((expectationWPMonad ν).toWP α).wp (r b) Q E) Q E := by
   let inst := expectationWPMonad ν
   refine ⟨?_⟩
-  simp only [expectationWPMonad_wp, MAlgOrdered.iInf_eq_iInf]
+  simp only [expectationWPMonad_wp, LeanOrder.iInf_eq_iInf]
   change ⨅ b, wpFold (OpSpec.lintegral ν) (r b) Q ≤
     ∫⁻ b, wpFold (OpSpec.lintegral ν) (r b) Q ∂ν a
   calc ⨅ b, wpFold (OpSpec.lintegral ν) (r b) Q

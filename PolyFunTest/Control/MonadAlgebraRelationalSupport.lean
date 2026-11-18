@@ -30,8 +30,8 @@ local instance instDemonicLeft : Std.WP.WPMonad SetM Prop EStack⟨⟩ :=
   toWPMonadDemonic
 local instance instDemonicRel : MAlgRelOrdered SetM SetM Prop :=
   mAlgRelOrderedPropDemonic
-local instance instDemonicStrict : StrictBind SetM SetM Prop := strictBindPropDemonic
-local instance instDemonicAnchored : Anchored SetM SetM Prop := anchoredPropDemonic
+local instance instDemonicStrict : StrictBind SetM SetM Prop := strictBind_mAlgRelOrderedPropDemonic
+local instance instDemonicAnchored : Anchored SetM SetM Prop := anchored_mAlgRelOrderedPropDemonic
 
 example : StrictBind SetM SetM Prop := inferInstance
 example : Anchored SetM SetM Prop := inferInstance
@@ -65,8 +65,8 @@ local instance instAngelicLeft : Std.WP.WPMonad SetM Prop EStack⟨⟩ :=
   toWPMonadAngelic
 local instance instAngelicRel : MAlgRelOrdered SetM SetM Prop :=
   mAlgRelOrderedPropAngelic
-local instance instAngelicStrict : StrictBind SetM SetM Prop := strictBindPropAngelic
-local instance instAngelicAnchored : Anchored SetM SetM Prop := anchoredPropAngelic
+local instance instAngelicStrict : StrictBind SetM SetM Prop := strictBind_mAlgRelOrderedPropAngelic
+local instance instAngelicAnchored : Anchored SetM SetM Prop := anchored_mAlgRelOrderedPropAngelic
 
 example : StrictBind SetM SetM Prop := inferInstance
 example : Anchored SetM SetM Prop := inferInstance

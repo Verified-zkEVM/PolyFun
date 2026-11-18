@@ -66,6 +66,15 @@ example (f : Handler.Stateful (Except String) Nat counter)
     Lean.Order.meet guard (frameSnd F (wp x post E)) ⊑ wp x (fun a => frameSnd F (post a)) E :=
   (frames_sum_inr f g (FreeM.lift ()) F guard).op_wp_le_wp_op post E
 
+/-- An exception thrown over a state monad sees the frame at the state where it was thrown. -/
+example (e : String) (F : Bool → Prop) (guard : Nat × Bool → Prop) :
+    WP.Frames (frameFst (S := Nat) (T := Bool))
+      (opE := FrameOp.prod (FrameOp.pointwise frameFst) FrameOp.ignore)
+      (throwThe String e : ExceptT String (StateM (Nat × Bool)) Nat) F guard := by
+  constructor
+  intro post E st h
+  exact meet_le_right guard _ st h
+
 example (post : Nat → Nat × Bool → Prop) (E : EStack⟨⟩) :
     wp ((twoTicks.mapLens Lens.inl).liftM (sum tick take)) post E ⊑
       ((WP.trans ((twoTicks.mapLens Lens.inl).liftM (sum tick take))).frameClosure frameFst).apply
