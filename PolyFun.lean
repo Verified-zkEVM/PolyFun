@@ -424,6 +424,7 @@ public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.StatefulFrame
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
+public import PolyFun.PFunctor.Handler.CacheMeter
 public import PolyFun.PFunctor.Handler.Certified
 public import PolyFun.PFunctor.Handler.CertifiedUnder
 public import PolyFun.PFunctor.Handler.CertifiedVec
