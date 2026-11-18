@@ -51,6 +51,10 @@ abbrev coinBudget : WPMonad (FreeM Coin) (ℕ → Prop) EStack⟨⟩ :=
 
 attribute [local instance] coinBudget
 
+/-- The budget reading is exact, by the instance keyed on `OpSpec.toWPMonad`, which instance search
+reaches by unfolding `FreeM.budgetWPMonad`. -/
+example : ExactWPMonad (FreeM Coin) (ℕ → Prop) EStack⟨⟩ := inferInstance
+
 /- The call in the true branch returns a concrete `Bool` in tail position. -/
 example : ⦃ fun s => s = 0 ⦄ flips ⦃ fun _ s => s ≤ 3 ⦄ := by
   vcgen [flips]

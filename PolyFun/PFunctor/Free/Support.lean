@@ -114,8 +114,11 @@ instance instExactMonadAttach : ExactMonadAttach (FreeM P) where
 
 theorem support_eq_supp (x : FreeM P α) : support x = supp x := rfl
 
+/-- The support of a leaf is the singleton of its value, by `rfl`. -/
 @[simp]
-theorem support_pure' (a : α) : support (pure a : FreeM P α) = {a} := rfl
+protected theorem support_pure (a : α) : support (pure a : FreeM P α) = {a} := rfl
+
+@[deprecated (since := "2026-11-16")] alias support_pure' := FreeM.support_pure
 
 @[freeM_unfold]
 theorem support_liftBind (a : P.A) (r : P.B a → FreeM P α) :
@@ -230,7 +233,7 @@ theorem support_eq_range_output (s : FreeM P α) :
   induction s with
   | pure x =>
       ext c
-      simp only [support_pure', Set.mem_singleton_iff, Set.mem_range]
+      simp only [FreeM.support_pure, Set.mem_singleton_iff, Set.mem_range]
       exact ⟨fun h => ⟨⟨⟩, h.symm⟩, fun ⟨_, h⟩ => h.symm⟩
   | lift_bind a r ih =>
       change support (FreeM.liftBind a r) =

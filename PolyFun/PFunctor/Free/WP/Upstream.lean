@@ -89,7 +89,7 @@ theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Monotone) {α : Type v} (x
 instance instExactWPMonadToUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Monotone) :
     @ExactWPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ _ _ _ (Φ.toUpperWPMonad hΦ) :=
   letI := Φ.toWPMonad hΦ
-  ExactWPMonad.instExactWPMonadDual
+  ExactWPMonad.instDual
 
 end OpSpec
 

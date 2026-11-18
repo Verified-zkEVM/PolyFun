@@ -91,7 +91,7 @@ noncomputable local instance instLeftState :
 
 noncomputable local instance instStrictLeftState :
     StrictBind (StateT Nat Id) Id (Nat → Prop) :=
-  strictBindStateTLeft Nat
+  strictBind_stateTLeft Nat
 
 noncomputable example : MAlgRelOrdered (StateT Nat Id) Id (Nat → Prop) := inferInstance
 noncomputable example : StrictBind (StateT Nat Id) Id (Nat → Prop) := inferInstance
@@ -115,7 +115,7 @@ noncomputable local instance instRightState :
 
 noncomputable local instance instStrictRightState :
     StrictBind Id (StateT Bool Id) (Bool → Prop) :=
-  strictBindStateTRight Bool
+  strictBind_stateTRight Bool
 
 noncomputable example : MAlgRelOrdered Id (StateT Bool Id) (Bool → Prop) := inferInstance
 noncomputable example : StrictBind Id (StateT Bool Id) (Bool → Prop) := inferInstance
@@ -136,7 +136,7 @@ noncomputable local instance instBothStates :
 
 noncomputable local instance instStrictBothStates :
     StrictBind (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop) :=
-  strictBindStateTBoth Bool Nat
+  strictBind_stateTBoth Bool Nat
 
 noncomputable example :
     MAlgRelOrdered (StateT Bool Id) (StateT Nat Id) (Bool → Nat → Prop) :=
@@ -168,7 +168,7 @@ noncomputable local instance instLeftReader :
 
 noncomputable local instance instStrictLeftReader :
     StrictBind (ReaderT Bool Id) Id (Bool → Prop) :=
-  strictBindReaderTLeft Bool
+  strictBind_readerTLeft Bool
 
 noncomputable example : StrictBind (ReaderT Bool Id) Id (Bool → Prop) := inferInstance
 
@@ -189,7 +189,7 @@ noncomputable local instance instRightReader :
 
 noncomputable local instance instStrictRightReader :
     StrictBind Id (ReaderT Nat Id) (Nat → Prop) :=
-  strictBindReaderTRight Nat
+  strictBind_readerTRight Nat
 
 noncomputable example : StrictBind Id (ReaderT Nat Id) (Nat → Prop) := inferInstance
 
@@ -203,7 +203,7 @@ noncomputable local instance instBothReaders :
 
 noncomputable local instance instStrictBothReaders :
     StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop) :=
-  strictBindReaderTBoth Bool Nat
+  strictBind_readerTBoth Bool Nat
 
 noncomputable example :
     StrictBind (ReaderT Bool Id) (ReaderT Nat Id) (Bool → Nat → Prop) :=
