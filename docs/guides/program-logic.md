@@ -308,9 +308,7 @@ The set contains these lemmas:
 
 Each lemma is an unconditional equation whose right-hand side removes core vocabulary or moves it
 to a smaller carrier, so rewriting with the set terminates. Most are also `simp` lemmas. The set
-lets a proof normalize the residue without the whole `simp` set, which on a concrete interface also
-reduces the value types of calls
-([troubleshooting](../development/troubleshooting.md#vcgen-matches-specs-structurally-so-dependent-value-types-need-care)).
+lets a proof normalize the residue without the whole `simp` set.
 `PolyFunTest/Do/Normalization.lean` checks each group, and `PolyFunTest/Do/{Charge,FreeM}.lean`
 apply the set to what `vcgen` leaves.
 
