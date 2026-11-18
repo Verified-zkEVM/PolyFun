@@ -912,6 +912,25 @@ exist yet, such as a table entry that only the later import reaches. `Select` ch
 by name, such as those that get equation lemmas, and refuses a name in `only` or `except` that is
 not a declaration of the import.
 
+[`Import/Env.lean`](../../PolyFun/IPFunctor/Scoped/Import/Env.lean) builds and reads the
+environments of imported declarations. A declaration is a term in the context of its dependencies'
+sorts, nearest first. `Scope.env` writes the environment of the dependencies' meanings as a chain
+of `Env.cons` over `Env.empty`. `Scope.liftRel` writes the proof of `Env.LiftRel` between two such
+environments from the dependencies' proofs. A frontend thus gives each declaration its meaning at
+its dependencies' meanings, and assembles the proof of the fundamental lemma for the kernel to
+check. `EnvReader` goes the other way: it reads the values of an explicit environment, the
+position of a variable, and the entry that a lookup of a chain of `Env.cons` reaches.
+
+[`Import/Apply.lean`](../../PolyFun/IPFunctor/Scoped/Import/Apply.lean) prints application
+equations. From `N.meaning_eq : N.meaning = r`, `ApplyPrinter.applyEquation` writes
+`∀ ns xs, apply (N.meaning ns) xs = r'`. It applies the outer abstractions of `r` to fresh
+variables, evaluates the type level, and reads environment lookups off. `logApplyEquation` prints
+the statement as a theorem to paste, with the proof `kernel_rfl`. When the right side wraps a
+dependency's meaning, the proof first rewrites by `N.meaning_eq`, so that the kernel does not
+unfold the dependency on both sides. The frontend supplies the type-level evaluator, the binder
+telescope, the application former, the wrapper test and an inliner. The printer is not trusted:
+the kernel checks the statement when it is pasted.
+
 The [toy JSON frontend](../../PolyFunTest/IPFunctor/Scoped/Import/Toy.lean) imports the
 [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean)'s language, inserting a coercion
 after each size instantiation. Its [fixtures](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean)
@@ -923,7 +942,11 @@ bundle that fits only with per-declaration scopes, generated declarations that `
 beside a hand-written one it reports, and decoding and elaboration errors at their paths. They
 cover the registry: a repeated import that adds nothing, an import of the whole file after part of
 it, and the refusals of another file, of other settings, of a hand-written declaration under the
-prefix, and of a declaration named like a bundle declaration. In commit mode, neither a rejection
-in the middle of a bundle, nor a wrong proof of a theorem, nor a declaration that the kernel
-accepts and the code generator cannot compile leaves a declaration or an axiom behind. The
-validation wrapper's axiom sweep includes both modules.
+prefix, and of a declaration named like a bundle declaration. Declarations with dependencies get
+their meanings at the dependencies' meanings, and representation theorems assembled from the
+dependencies' theorems, also for two dependencies of different schemes. `#toy_apply` prints
+application equations, of a size-polymorphic declaration and of wrappers too, which `kernel_rfl`
+proves once pasted. In commit mode, neither a rejection in the middle of a bundle, nor a wrong
+proof of a theorem, nor a declaration that the kernel accepts and the code generator cannot compile
+leaves a declaration or an axiom behind. The validation wrapper's axiom sweep includes both
+modules.
