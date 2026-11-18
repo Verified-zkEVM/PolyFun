@@ -31,6 +31,13 @@ example : Nash board Sigma.mk payoff .enter (policy .share) := by decide
 example : check .out .share = some (.offer .enter 0 3) := rfl
 example : check .enter .priceWar = some (.reply .share 0 1) := rfl
 
+/-- Omitting entry hides a profitable move, while listing entry alone gives a replayable witness. -/
+example : findDeviation board Sigma.mk payoff .out (policy .share) [.out] [] = none ∧
+    ¬ Nash board Sigma.mk payoff .out (policy .share) ∧
+    Deviation.Valid board Sigma.mk payoff .out (policy .share) (.offer .enter 0 3) := by
+  exact ⟨rfl, by decide, valid_of_findDeviation_eq_some board Sigma.mk payoff .out
+    (policy .share) [.enter] [] rfl⟩
+
 /-- The entrant gains three by entering when the incumbent shares. -/
 public theorem entrant_deviation_replays :
     Deviation.Valid board Sigma.mk payoff .out (policy .share) (.offer .enter 0 3) :=
