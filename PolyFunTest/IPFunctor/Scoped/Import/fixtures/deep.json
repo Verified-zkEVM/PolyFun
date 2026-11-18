@@ -1,3 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
 [
   {
     "name": "deep",
@@ -5,4 +6,4 @@
     "body": {"lam": {"arg": {"arrow": ["nat", "nat"]}, "body": {"lam": {"arg": "nat", "body":
       {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"app": [{"var": 1}, {"var": 0}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}]}}}}}
   }
-]
+]}

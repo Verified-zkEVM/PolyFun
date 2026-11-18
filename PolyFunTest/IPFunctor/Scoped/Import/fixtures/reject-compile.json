@@ -1,3 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
 [
   {
     "name": "opaque",
@@ -5,4 +6,4 @@
     "body": {"lam": {"arg": "nat", "body": {"var": 0}}},
     "uncompiled": true
   }
-]
+]}
