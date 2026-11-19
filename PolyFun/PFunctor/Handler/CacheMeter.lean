@@ -77,7 +77,7 @@ theorem run_apply_of_dlookup_eq_none {a : P.A} {c : List (Σ a, P.B a)}
 /-- A call recorded in the cache is charged nothing by a fresh charge relative to the keys. -/
 theorem freshCharge_cons_of_mem {ω : Type w} [AddCommMonoid ω] (e : P.A → ω)
     {K : Finset P.A} (i : P.Idx) (ha : i.1 ∈ K) (t : TraceList P) :
-    TraceList.freshCharge e K ((i :: t : List P.Idx) : TraceList P) =
+    TraceList.freshCharge e K (FreeMonoid.of i * t) =
       TraceList.freshCharge e K t := by
   unfold TraceList.freshCharge
   rw [TraceList.positions_cons, List.toFinset_cons, Finset.insert_sdiff_of_mem _ ha]
@@ -85,7 +85,7 @@ theorem freshCharge_cons_of_mem {ω : Type w} [AddCommMonoid ω] (e : P.A → ω
 /-- A call outside the keys is charged once, and is known for the rest of the trace. -/
 theorem freshCharge_cons_of_not_mem {ω : Type w} [AddCommMonoid ω] (e : P.A → ω)
     {K : Finset P.A} (i : P.Idx) (ha : i.1 ∉ K) (t : TraceList P) :
-    TraceList.freshCharge e K ((i :: t : List P.Idx) : TraceList P) =
+    TraceList.freshCharge e K (FreeMonoid.of i * t) =
       e i.1 + TraceList.freshCharge e (insert i.1 K) t := by
   unfold TraceList.freshCharge
   rw [TraceList.positions_cons, List.toFinset_cons, Finset.insert_sdiff_of_notMem _ ha,
@@ -110,8 +110,8 @@ theorem exists_path_run {ω : Type w} [AddCommMonoid ω] (e : P.A → ω) (x : F
   | pure v =>
     intro q
     refine ⟨⟨⟩, rfl, ?_, ?_⟩
-    · change (0 : ω) = TraceList.freshCharge e c.keys.toFinset []
-      simp [TraceList.freshCharge, TraceList.positions_nil]
+    · change (0 : ω) = TraceList.freshCharge e c.keys.toFinset 1
+      simp [TraceList.freshCharge, TraceList.positions_one]
     · change c.keys.toFinset = c.keys.toFinset ∪ ([] : List P.A).toFinset
       simp
   | liftBind a r ih =>
@@ -181,8 +181,8 @@ theorem exists_path_run_withCharge {ω₁ : Type u} [AddMonoid ω₁] {ω : Type
   | pure v =>
     intro q
     refine ⟨⟨⟩, rfl, (add_zero t).symm, ?_⟩
-    change (0 : ω) = TraceList.freshCharge e c.keys.toFinset []
-    simp [TraceList.freshCharge, TraceList.positions_nil]
+    change (0 : ω) = TraceList.freshCharge e c.keys.toFinset 1
+    simp [TraceList.freshCharge, TraceList.positions_one]
   | liftBind a r ih =>
     rw [run_run_liftM_withCharge_liftBind]
     cases hc : c.dlookup a with
