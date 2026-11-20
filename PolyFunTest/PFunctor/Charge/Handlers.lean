@@ -113,9 +113,9 @@ example : (flips.liftM (answer.withChargeW chgN)).run.run = (true, Multiplicativ
 
 /-- On each completed path, the writer log is that path's charge. -/
 example {α : Type} (x : FreeM Coin α) :
-    FreeM.supp (x.liftM ((Handler.id Coin).withChargeW chgN)).run =
+    MonadAttach.support (x.liftM ((Handler.id Coin).withChargeW chgN)).run =
       Set.range fun p : Path x => (output x p, Multiplicative.ofAdd (Path.charge chgN x p)) :=
-  Handler.supp_run_liftM_id_withChargeW chgN x
+  Handler.support_run_liftM_id_withChargeW chgN x
 
 /-! ## Gates -/
 
@@ -217,7 +217,7 @@ example {α : Type} (n : ℕ) (x : FreeM Keys α) (hx : x.IsChargeBound (fun _ =
 /-- A paused continuation never needs more than the interrupted program's budget. -/
 example {α : Type} (k n : ℕ) (x : FreeM Keys α) (hx : x.IsChargeBound (fun _ => (1 : ℕ)) n)
     {a : Keys.A} {kont : Keys.B a → FreeM Keys α} {used : ℕ}
-    (hz : (Sum.inr ⟨a, kont⟩, used) ∈ FreeM.supp (runUntil (gate k) x 0)) :
+    (hz : (Sum.inr ⟨a, kont⟩, used) ∈ MonadAttach.support (runUntil (gate k) x 0)) :
     (FreeM.liftBind a kont).IsChargeBound (fun _ => (1 : ℕ)) n :=
   hx.runUntil_paused hz
 

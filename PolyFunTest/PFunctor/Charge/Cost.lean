@@ -138,9 +138,9 @@ def pricey (n : ℕ) : FreeM Coin Bool :=
     FreeM.lift (P := Coin) ()
 
 example : (FreeM.bind (pure 0 : FreeM Coin ℕ) pricey).IsChargeBound (fun _ => (1 : ℕ)) 1 := by
-  have := (isChargeBound_pure (c := fun _ : Coin.A => (1 : ℕ)) (B := 0) (0 : ℕ)).bind_supp
+  have := (isChargeBound_pure (c := fun _ : Coin.A => (1 : ℕ)) (B := 0) (0 : ℕ)).bind_support
     (f := pricey) (B₂ := 1) fun a ha => by
-      obtain rfl : a = 0 := ha
+      obtain rfl : a = 0 := FreeM.canReturn_pure_iff.mp ha
       cost_bound [pricey]
   simpa using this
 

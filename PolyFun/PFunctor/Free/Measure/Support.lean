@@ -51,7 +51,9 @@ theorem mem_support_of_measureFold_singleton_ne_zero {program : FreeM P α} {v :
     change Measure.dirac x {v} ≠ 0 at h
     rw [Measure.dirac_apply] at h
     by_contra hv
-    exact h (Set.indicator_of_notMem (fun hx => hv (Set.mem_singleton_iff.1 hx).symm) _)
+    refine h (Set.indicator_of_notMem (fun hx => hv ?_) _)
+    obtain rfl := Set.mem_singleton_iff.1 hx
+    exact FreeM.CanReturn.pure _
   | liftBind a cont ih =>
     rw [measureFold_liftBind μ a cont Measurable.of_discrete.aemeasurable,
       Measure.bind_apply (measurableSet_singleton v) Measurable.of_discrete.aemeasurable] at h
@@ -59,7 +61,7 @@ theorem mem_support_of_measureFold_singleton_ne_zero {program : FreeM P α} {v :
       by_contra hne
       push Not at hne
       exact h (by simp [hne])
-    exact Set.mem_iUnion.2 ⟨b, ih b hb⟩
+    exact FreeM.CanReturn.liftBind b (ih b hb)
 
 /-- When every answer of every operation has positive mass, every possible output has positive
 mass under the measure fold. -/
@@ -68,12 +70,12 @@ theorem measureFold_singleton_ne_zero_of_mem_support (hμ : ∀ a b, μ a {b} �
     measureFold μ program {v} ≠ 0 := by
   induction program using FreeM.rec with
   | pure x =>
-    obtain rfl : v = x := h
+    obtain rfl : v = x := FreeM.canReturn_pure_iff.mp h
     change Measure.dirac v {v} ≠ 0
     rw [Measure.dirac_apply_of_mem (Set.mem_singleton v)]
     exact one_ne_zero
   | liftBind a cont ih =>
-    obtain ⟨b, hb⟩ := Set.mem_iUnion.1 h
+    obtain ⟨b, hb⟩ := FreeM.mem_support_liftBind.1 h
     rw [measureFold_liftBind μ a cont Measurable.of_discrete.aemeasurable,
       Measure.bind_apply (measurableSet_singleton v) Measurable.of_discrete.aemeasurable]
     refine ne_of_gt (lt_of_lt_of_le ?_ (setLIntegral_le_lintegral {b} _))
@@ -95,8 +97,11 @@ omit [∀ a, MeasurableSpace (P.B a)] [∀ a, DiscreteMeasurableSpace (P.B a)] [
 theorem support_countable [∀ a, Countable (P.B a)] (program : FreeM P α) :
     (MonadAttach.support program).Countable := by
   induction program using FreeM.rec with
-  | pure x => exact Set.countable_singleton x
-  | liftBind a cont ih => exact Set.countable_iUnion ih
+  | pure x =>
+    exact (Set.countable_singleton x).mono fun _ hv => (FreeM.canReturn_pure_iff.mp hv :)
+  | liftBind a cont ih =>
+    rw [support_liftBind]
+    exact Set.countable_iUnion ih
 
 /-- Over countable discrete answer types, the measure fold of a program is concentrated on its
 possible outputs. -/
@@ -104,14 +109,14 @@ theorem ae_mem_support_measureFold [∀ a, Countable (P.B a)] (program : FreeM P
     ∀ᵐ v ∂measureFold μ program, v ∈ MonadAttach.support program := by
   induction program using FreeM.rec with
   | pure x =>
-    change ∀ᵐ v ∂Measure.dirac x, v ∈ ({x} : Set α)
+    change ∀ᵐ v ∂Measure.dirac x, v ∈ MonadAttach.support (FreeM.pure x : FreeM P α)
     rw [ae_dirac_eq]
-    exact Filter.eventually_pure.2 rfl
+    exact Filter.eventually_pure.2 (FreeM.CanReturn.pure x)
   | liftBind a cont ih =>
     rw [measureFold_liftBind μ a cont Measurable.of_discrete.aemeasurable]
     exact Measure.ae_bind_of_ae Measurable.of_discrete
       (support_countable (FreeM.liftBind a cont)).measurableSet
-      (Filter.Eventually.of_forall fun b ↦ (ih b).mono fun _ hv ↦ Set.mem_iUnion.2 ⟨b, hv⟩)
+      (Filter.Eventually.of_forall fun b ↦ (ih b).mono fun _ hv ↦ FreeM.CanReturn.liftBind b hv)
 
 /-- Over countable discrete answer types, every output measure is concentrated on the countable
 set of possible outputs. -/
