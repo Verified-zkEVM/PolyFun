@@ -308,6 +308,7 @@ public import PolyFun.PFunctor.Cofree.Polynomial
 public import PolyFun.PFunctor.Cofree.Universal
 public import PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.Comonoid.Category
+public import PolyFun.PFunctor.Comonoid.StateTensor
 public import PolyFun.PFunctor.Comonoid.Tensor
 public import PolyFun.PFunctor.Deprecated
 public import PolyFun.PFunctor.Display
