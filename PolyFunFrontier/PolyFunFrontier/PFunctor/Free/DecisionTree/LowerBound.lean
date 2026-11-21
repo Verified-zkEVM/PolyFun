@@ -54,9 +54,10 @@ open PFunctor Finset BitString
 
 variable {ι : Type u} {β : Type v}
 
-/-- A free program over Boolean queries that computes `f` within total roll bound `d` shows that
-the decision tree complexity of `f` is at most `d`. -/
-theorem complexity_le_of_isTotalRollBound {f : (ι → Bool) → β} {p : (monomial ι Bool).FreeM β}
+/-- A free program over finitely many Boolean coordinates that computes `f` within total roll
+bound `d` shows that the decision tree complexity of `f` is at most `d`. -/
+theorem complexity_le_of_isTotalRollBound [Finite ι] {f : (ι → Bool) → β}
+    {p : (monomial ι Bool).FreeM β}
     (hp : ∀ x, p.foldFreeM id (fun i k => k (x i)) = f x) {d : ℕ}
     (hd : p.IsTotalRollBound d) : complexity f ≤ d :=
   (complexity_le_depth (t := ofFreeM p) fun x => (eval_ofFreeM p x).trans (hp x)).trans
