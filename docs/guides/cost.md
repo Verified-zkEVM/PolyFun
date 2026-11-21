@@ -216,8 +216,8 @@ ignored, such as a tick, merges into what follows when it has an answer
 and `IsChargeBound.bind_of_le` lets the continuation start from any amount within a bound.
 
 **Reachable results** (`PolyFun/PFunctor/Free/Cost/Support.lean`). The continuation's budget is
-needed only where `x` can return: `IsChargeBound.bind_supp` and `cost_bind_le_supp` take it on the
-support `x.supp`. `x.CallsIn S` says every call of `x` is in `S`; then charges and handlers matter
+needed only where `x` can return: `IsChargeBound.bind_support` and `cost_bind_le_support` take it
+on the support `support x`. `x.CallsIn S` says every call of `x` is in `S`; then charges and handlers matter
 only on `S` (`IsChargeBound.congr_charge`, `costWith_congr_charge`, `liftM_congr_of_callsIn`).
 `x.MayCall a` says a call at `a` occurs in the tree, and the calls that occur form the least such
 `S` (`callsIn_iff_forall_mayCall`, `callsIn_setOf_mayCall`).
@@ -280,7 +280,7 @@ on reachable states needs a state type that excludes the unreachable ones.
 - `h.withCharge c` keeps the amount spent as `StateT` state, and forgetting it recovers the
   handler (`fst_map_run_liftM_withCharge`). `h.withChargeW c` logs it in a writer instead, as
   writer tracing of the charge (`withChargeW_eq_withTraceBefore`, `fst_map_run_liftM_writerT`,
-  `run_liftM_withChargeW_id`, `supp_run_liftM_id_withChargeW`).
+  `run_liftM_withChargeW_id`, `support_run_liftM_id_withChargeW`).
 - On every possible result of a run of a program within budget `B`, the amount spent is at most
   `B` (`IsChargeBound.le_of_canReturn_run_liftM_withCharge`).
 - That is an instance of resource growth (`IsChargeBound.le_of_canReturn_run_liftM`): if each call

@@ -161,21 +161,22 @@ theorem run_liftM_withCharge_id [AddMonoid ω] (h : Handler Id P) (c : P.A → �
 /-- **Instrumenting the program itself.** Run through the identity handler instrumented with a
 charge, a program returns, on each completed path, its output together with the amount spent along
 that path. -/
-theorem supp_run_liftM_id_withCharge [AddMonoid ω] (c : P.A → ω) {α : Type uB} (x : FreeM P α)
-    (s : ω) :
-    FreeM.supp ((x.liftM ((Handler.id P).withCharge c)).run s) =
+theorem support_run_liftM_id_withCharge [AddMonoid ω] (c : P.A → ω) {α : Type uB}
+    (x : FreeM P α) (s : ω) :
+    MonadAttach.support ((x.liftM ((Handler.id P).withCharge c)).run s) =
       Set.range fun p : FreeM.Path x => (FreeM.output x p, s + FreeM.Path.charge c x p) := by
   induction x using FreeM.rec generalizing s with
   | pure a =>
     ext z
-    change z = (a, s) ↔ _
+    change FreeM.CanReturn (FreeM.pure (a, s)) z ↔ _
+    rw [FreeM.canReturn_pure_iff]
     exact ⟨fun h => ⟨⟨⟩, by rw [h]; exact congrArg (Prod.mk a) (add_zero s)⟩,
       fun ⟨_, h⟩ => h.symm.trans (congrArg (Prod.mk a) (add_zero s))⟩
   | liftBind a r ih =>
-    change FreeM.supp (FreeM.liftBind a fun b =>
+    change MonadAttach.support (FreeM.liftBind a fun b =>
       ((r b).liftM ((Handler.id P).withCharge c)).run (s + c a)) = _
     ext z
-    simp only [FreeM.supp, Set.mem_iUnion, ih, Set.mem_range]
+    simp only [FreeM.mem_support_liftBind, ih, Set.mem_range]
     constructor
     · rintro ⟨b, p, rfl⟩
       exact ⟨⟨b, p⟩, by rw [add_assoc]; rfl⟩
@@ -221,30 +222,34 @@ theorem run_liftM_withChargeW_id [AddMonoid ω] (h : Handler Id P) (c : P.A → 
 
 /-- **The program's own log.** Run through the identity handler instrumented with a charge in a
 writer, a program returns, on each completed path, its output together with that path's charge. -/
-theorem supp_run_liftM_id_withChargeW [AddMonoid ω] (c : P.A → ω) {α : Type uB} (x : FreeM P α) :
-    FreeM.supp (x.liftM ((Handler.id P).withChargeW c)).run =
+theorem support_run_liftM_id_withChargeW [AddMonoid ω] (c : P.A → ω) {α : Type uB}
+    (x : FreeM P α) :
+    MonadAttach.support (x.liftM ((Handler.id P).withChargeW c)).run =
       Set.range fun p : FreeM.Path x =>
         (FreeM.output x p, Multiplicative.ofAdd (FreeM.Path.charge c x p)) := by
   induction x using FreeM.rec with
   | pure a =>
     ext z
-    change z = (a, 1) ↔ _
+    change FreeM.CanReturn (FreeM.pure (a, 1)) z ↔ _
+    rw [FreeM.canReturn_pure_iff]
     exact ⟨fun h => ⟨⟨⟩, h.symm⟩, fun ⟨_, h⟩ => h.symm⟩
   | liftBind a r ih =>
-    have ih' : ∀ b, MonadAttach.support ((r b).liftM ((Handler.id P).withChargeW c)).run =
-        Set.range fun p : FreeM.Path (r b) =>
-          (FreeM.output (r b) p, Multiplicative.ofAdd (FreeM.Path.charge c (r b) p)) := ih
     change MonadAttach.support (FreeM.liftBind a fun b =>
       FreeM.map (fun q : _ × Multiplicative ω => (q.1, Multiplicative.ofAdd (c a) * q.2))
         ((r b).liftM ((Handler.id P).withChargeW c)).run) = _
     ext z
-    simp only [FreeM.support_liftBind, Set.mem_iUnion, FreeM.support_map, ih', Set.mem_image,
+    simp only [FreeM.support_liftBind, Set.mem_iUnion, FreeM.support_map, ih, Set.mem_image,
       Set.mem_range]
     constructor
     · rintro ⟨b, _, ⟨p, rfl⟩, rfl⟩
       exact ⟨⟨b, p⟩, rfl⟩
     · rintro ⟨⟨b, p⟩, rfl⟩
       exact ⟨b, _, ⟨p, rfl⟩, rfl⟩
+
+@[deprecated (since := "2026-11-20")]
+alias supp_run_liftM_id_withCharge := support_run_liftM_id_withCharge
+@[deprecated (since := "2026-11-20")]
+alias supp_run_liftM_id_withChargeW := support_run_liftM_id_withChargeW
 
 /-- Run a handler under a budget: a call at `a` that would bring the amount spent above `B`
 fails; any other call is charged and run. -/
@@ -437,12 +442,12 @@ theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [Add ω] [Zero ω] [P
     [CanonicallyOrderedAdd ω]
     {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
     (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
-    (hz : (Sum.inr ⟨a, k⟩, state') ∈ FreeM.supp (FreeM.runUntil h x state)) :
+    (hz : (Sum.inr ⟨a, k⟩, state') ∈ MonadAttach.support (FreeM.runUntil h x state)) :
     ∃ s', s ≤ s' ∧ (FreeM.liftBind a k).IsChargeBound c B s' := by
   induction x using FreeM.rec generalizing s state with
   | pure v =>
     have hz' : ((Sum.inr ⟨a, k⟩, state') : (α ⊕ (Σ a : P.A, (P.B a → FreeM P α))) × σ) =
-      (Sum.inl v, state) := hz
+      (Sum.inl v, state) := FreeM.canReturn_pure_iff.mp hz
     simp at hz'
   | liftBind a' r ih =>
     change _ ∈ MonadAttach.support (FreeM.bind (h a' state) _) at hz
@@ -451,7 +456,7 @@ theorem IsChargeBound.exists_runUntil_paused {ω : Type w} [Add ω] [Zero ω] [P
     obtain ⟨o, -, hz⟩ := hz
     rcases o with _ | ⟨b, state''⟩
     · have hz' : ((Sum.inr ⟨a, k⟩, state') : (α ⊕ (Σ a : P.A, (P.B a → FreeM P α))) × σ) =
-          (Sum.inr ⟨a', r⟩, state) := hz
+          (Sum.inr ⟨a', r⟩, state) := FreeM.canReturn_pure_iff.mp hz
       simp only [Prod.mk.injEq, Sum.inr.injEq, Sigma.mk.inj_iff] at hz'
       obtain ⟨⟨rfl, hk⟩, -⟩ := hz'
       obtain rfl := eq_of_heq hk
@@ -465,7 +470,7 @@ theorem IsChargeBound.runUntil_paused {ω : Type w} [Add ω] [Zero ω] [Preorder
     [AddRightMono ω] [CanonicallyOrderedAdd ω]
     {h : (a : P.A) → σ → FreeM Q (Option (P.B a × σ))} {c : P.A → ω} {B s : ω} {x : FreeM P α}
     (hx : x.IsChargeBound c B s) {state state' : σ} {a : P.A} {k : P.B a → FreeM P α}
-    (hz : (Sum.inr ⟨a, k⟩, state') ∈ FreeM.supp (FreeM.runUntil h x state)) :
+    (hz : (Sum.inr ⟨a, k⟩, state') ∈ MonadAttach.support (FreeM.runUntil h x state)) :
     (FreeM.liftBind a k).IsChargeBound c B s :=
   let ⟨_, hs, h'⟩ := hx.exists_runUntil_paused hz
   h'.mono_spent hs

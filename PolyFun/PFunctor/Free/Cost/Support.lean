@@ -11,10 +11,10 @@ public import PolyFun.PFunctor.Free.Cost.Value
 /-!
 # Charges restricted to reachable results and to the calls made
 
-Sequencing laws need the continuation only where `x` can return. `IsChargeBound.bind_of_le_supp`
-and `IsChargeBound.bind_supp` take the continuation bound on the structural support `x.supp`, and
-`costWith_le_cost_add_supp` / `cost_bind_le_supp` restrict the worst-case cost of the
-continuation the same way.
+Sequencing laws need the continuation only where `x` can return.
+`IsChargeBound.bind_of_le_support` and `IsChargeBound.bind_support` take the continuation bound on
+the support `support x`, and `costWith_le_cost_add_support` / `cost_bind_le_support` restrict the
+worst-case cost of the continuation the same way.
 
 `x.CallsIn S` says that every call of `x` is at a position in `S`. Under it, charges and handlers
 matter only on `S`:
@@ -34,6 +34,8 @@ universe uA uB uA₂ uB₂ v v' w
 
 namespace PFunctor.FreeM
 
+open MonadAttach (support)
+
 variable {P : PFunctor.{uA, uB}} {α : Type v} {ω : Type w}
 
 /-! ## Restricted sequencing -/
@@ -45,20 +47,20 @@ variable [Add ω] [Zero ω] [Preorder ω] {c : P.A → ω} {B L s : ω}
 /-- **Sequencing on reachable results.** If `x` stays within `L ≤ B` and the continuation at
 every result `x` can return stays within `B` from any amount at most `L`, then `x >>= f` stays
 within `B`. -/
-theorem IsChargeBound.bind_of_le_supp {β : Type v'} {x : FreeM P α} {f : α → FreeM P β}
+theorem IsChargeBound.bind_of_le_support {β : Type v'} {x : FreeM P α} {f : α → FreeM P β}
     (hx : IsChargeBound x c L s) (hL : L ≤ B)
-    (hf : ∀ a ∈ x.supp, ∀ s', s' ≤ L → IsChargeBound (f a) c B s') :
+    (hf : ∀ a ∈ support x, ∀ s', s' ≤ L → IsChargeBound (f a) c B s') :
     IsChargeBound (FreeM.bind x f) c B s := by
   induction x using FreeM.rec generalizing s with
-  | pure a => exact hf a rfl s hx
+  | pure a => exact hf a (FreeM.CanReturn.pure a) s hx
   | liftBind a r ih =>
     exact ⟨hx.1.trans hL, fun b =>
-      ih b (hx.2 b) fun a' ha' => hf a' (mem_supp_liftBind_of_mem ha')⟩
+      ih b (hx.2 b) fun a' ha' => hf a' (FreeM.CanReturn.liftBind b ha')⟩
 
 /-- **Sequencing at an invariant.** If `x` stays within `L ≤ B`, every result of `x` satisfies
 `I`, and the continuation at every result satisfying `I` stays within `B` from any amount at most
-`L`, then `x >>= f` stays within `B`. Reachable results are the case `I := (· ∈ x.supp)`
-(`IsChargeBound.bind_of_le_supp`). -/
+`L`, then `x >>= f` stays within `B`. Reachable results are the case `I := (· ∈ support x)`
+(`IsChargeBound.bind_of_le_support`). -/
 theorem IsChargeBound.bind_of_le_of_wpFold {β : Type v'} {x : FreeM P α} {f : α → FreeM P β}
     {I : α → Prop} (hx : IsChargeBound x c L s) (hI : wpFold (OpSpec.demonic P) x I) (hL : L ≤ B)
     (hf : ∀ a, I a → ∀ s', s' ≤ L → IsChargeBound (f a) c B s') :
@@ -86,11 +88,11 @@ theorem IsChargeBound.bind_of_wpFold {β : Type v'} {x : FreeM P α} {f : α →
   exact this.mono (by gcongr)
 
 /-- **Budgets add under sequencing on reachable results.** -/
-theorem IsChargeBound.bind_supp {β : Type v'}
+theorem IsChargeBound.bind_support {β : Type v'}
     {x : FreeM P α} {f : α → FreeM P β} {B₁ B₂ : ω} (hx : IsChargeBound x c B₁ s)
-    (hf : ∀ a ∈ x.supp, IsChargeBound (f a) c B₂) :
+    (hf : ∀ a ∈ support x, IsChargeBound (f a) c B₂) :
     IsChargeBound (FreeM.bind x f) c (B₁ + B₂) s := by
-  refine hx.bind_of_le_supp le_self_add fun a ha s' hs' => ?_
+  refine hx.bind_of_le_support le_self_add fun a ha s' hs' => ?_
   have := (hf a ha).add_left s'
   rw [add_zero] at this
   exact this.mono (by gcongr)
@@ -102,27 +104,34 @@ section Cost
 variable [AddMonoid ω] [CompleteLattice ω] [AddLeftMono ω] [AddRightMono ω] {c : P.A → ω}
 
 /-- The leaf costs split off over reachable results only. -/
-theorem costWith_le_cost_add_supp (x : FreeM P α) (k : α → ω) :
-    costWith c x k ≤ cost c x + ⨆ a ∈ x.supp, k a := by
+theorem costWith_le_cost_add_support (x : FreeM P α) (k : α → ω) :
+    costWith c x k ≤ cost c x + ⨆ a ∈ support x, k a := by
   induction x using FreeM.rec with
   | pure a =>
-    exact (le_iSup₂ (f := fun a' (_ : a' ∈ supp (FreeM.pure a : FreeM P α)) => k a') a rfl).trans
-      (le_of_eq (zero_add _).symm)
+    exact (le_iSup₂ (f := fun a' (_ : a' ∈ support (FreeM.pure a : FreeM P α)) => k a') a
+      (FreeM.CanReturn.pure a)).trans (le_of_eq (zero_add _).symm)
   | liftBind a r ih =>
     rw [costWith_liftBind, cost_liftBind, add_assoc]
     refine add_le_add le_rfl (iSup_le fun b => (ih b).trans (add_le_add
       (le_iSup (fun b => cost c (r b)) b) (iSup₂_le fun a' ha' => ?_)))
-    exact le_iSup₂ (f := fun a' (_ : a' ∈ supp (FreeM.liftBind a r)) => k a') a'
-      (mem_supp_liftBind_of_mem ha')
+    exact le_iSup₂ (f := fun a' (_ : a' ∈ support (FreeM.liftBind a r)) => k a') a'
+      (FreeM.CanReturn.liftBind b ha')
 
 /-- The cost of a sequence is at most the cost of the first part plus the worst continuation at a
 reachable result. -/
-theorem cost_bind_le_supp {β : Type v'} (x : FreeM P α) (f : α → FreeM P β) :
-    cost c (FreeM.bind x f) ≤ cost c x + ⨆ a ∈ x.supp, cost c (f a) := by
+theorem cost_bind_le_support {β : Type v'} (x : FreeM P α) (f : α → FreeM P β) :
+    cost c (FreeM.bind x f) ≤ cost c x + ⨆ a ∈ support x, cost c (f a) := by
   rw [cost_bind]
-  exact costWith_le_cost_add_supp x _
+  exact costWith_le_cost_add_support x _
 
 end Cost
+
+@[deprecated (since := "2026-11-20")]
+alias IsChargeBound.bind_of_le_supp := IsChargeBound.bind_of_le_support
+@[deprecated (since := "2026-11-20")] alias IsChargeBound.bind_supp := IsChargeBound.bind_support
+@[deprecated (since := "2026-11-20")]
+alias costWith_le_cost_add_supp := costWith_le_cost_add_support
+@[deprecated (since := "2026-11-20")] alias cost_bind_le_supp := cost_bind_le_support
 
 /-! ## Provenance -/
 
