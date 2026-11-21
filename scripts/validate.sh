@@ -84,7 +84,8 @@ if (( run_lint )); then
     Examples.Tutorials.ReviewableWorkflows Examples.Tutorials.FairWorkQueues \
     Examples.Tutorials.BoundedController Examples.Tutorials.LazyLanguages \
     Examples.IO.Console Examples.IO.Storage \
-    Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
+    Examples.Tutorials.ScopedPrograms Examples.Tutorials.ScopedEffects \
+    Examples.Tutorials.ScopedExecution Examples.Tutorials.ScopedFamily \
     Examples.Tutorials.ScopedDomains \
     Examples.Tutorials.ScopedVectors \
     Examples.Parliament PolyFunParliamentMain
@@ -120,7 +121,8 @@ if (( run_axioms )); then
     --root Examples.Tutorials.UpdatePolicies \
     --root Examples.Tutorials.ReviewableWorkflows --root Examples.Tutorials.FairWorkQueues \
     --root Examples.Tutorials.BoundedController --root Examples.Tutorials.LazyLanguages \
-    --root Examples.Tutorials.ScopedPrograms --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
+    --root Examples.Tutorials.ScopedPrograms --root Examples.Tutorials.ScopedEffects \
+    --root Examples.Tutorials.ScopedExecution --root Examples.Tutorials.ScopedFamily \
     --root Examples.Tutorials.ScopedDomains \
     --root Examples.Tutorials.ScopedVectors \
     --root Examples.IO.Console --root Examples.IO.Storage --root Examples.Parliament \

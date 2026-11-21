@@ -79,6 +79,34 @@ theorem ScopedVar.sigma_eq_of_index_eq {S : Type u} {Γ : List S} {a b : S}
     change (x.weakenMany Ξ).index + 1 = _
     rw [ih, List.length_cons, Nat.add_assoc]
 
+/-- Keep a variable of a block at its position in front of an ambient context. This is the
+counterpart of `weakenMany`, as `List.mem_append_left` is of `List.mem_append_right`. -/
+@[expose] def ScopedVar.appendLeft {S : Type u} (Γ : List S) :
+    {Ξ : List S} → {a : S} → ScopedVar Ξ a → ScopedVar (Ξ ++ Γ) a
+  | _ :: _, _, .zero => .zero
+  | _ :: _, _, .succ x => .succ (appendLeft Γ x)
+
+@[simp] theorem ScopedVar.index_appendLeft {S : Type u} (Γ : List S) {Ξ : List S} {a : S}
+    (x : ScopedVar Ξ a) : (x.appendLeft Γ).index = x.index := by
+  induction x with
+  | zero => rfl
+  | succ x ih => exact congrArg (· + 1) ih
+
+/-- A variable's sort occurs in its context. -/
+theorem ScopedVar.mem {S : Type u} : {Γ : List S} → {a : S} → ScopedVar Γ a → a ∈ Γ
+  | _, _, .zero => List.mem_cons_self
+  | _, _, .succ x => List.mem_cons_of_mem _ x.mem
+
+private theorem ScopedVar.nonempty_of_mem {S : Type u} {a : S} :
+    {Γ : List S} → a ∈ Γ → Nonempty (ScopedVar Γ a)
+  | _, .head _ => ⟨.zero⟩
+  | _, .tail _ h => (nonempty_of_mem h).map .succ
+
+/-- A context has a variable of a sort exactly when the sort occurs in it. -/
+theorem nonempty_scopedVar_iff {S : Type u} {Γ : List S} {a : S} :
+    Nonempty (ScopedVar Γ a) ↔ a ∈ Γ :=
+  ⟨fun ⟨x⟩ => x.mem, ScopedVar.nonempty_of_mem⟩
+
 /-- Constructor shapes with explicit binding information for every argument. -/
 structure ScopedSignature (S : Type u) where
   /-- Constructors producing the given sort. -/
@@ -137,6 +165,11 @@ theorem eq_empty (η : Env V []) : η = empty := by
 @[simp] theorem cons_succ {a b : S} (x : V a) (η : Env V Γ) (v : ScopedVar Γ b) :
     cons x η b (.succ v) = η b v := rfl
 
+/-- An environment of a non-empty context is its nearest value followed by the others. -/
+theorem cons_eta {a : S} (η : Env V (a :: Γ)) : cons (η a .zero) (fun b x => η b x.succ) = η := by
+  funext b x
+  cases x <;> rfl
+
 /-- The environment of a context with one variable. -/
 @[expose] def single {a : S} (x : V a) : Env V [a] := cons x empty
 
@@ -153,6 +186,28 @@ theorem eq_empty (η : Env V []) : η = empty := by
   induction Ξ with
   | nil => rfl
   | cons b Ξ ih => exact ih (fun c y => ξ c (.succ y))
+
+/-- The positions of a fresh block keep their values. -/
+@[simp] theorem append_appendLeft : {Ξ : List S} → (ξ : Env V Ξ) → (η : Env V Γ) → {a : S} →
+    (x : ScopedVar Ξ a) → append ξ η a (x.appendLeft Γ) = ξ a x
+  | _ :: _, _, _, _, .zero => rfl
+  | _ :: _, ξ, η, _, .succ x => append_appendLeft (fun _ y => ξ _ y.succ) η x
+
+/-- A property holds at every position of an appended environment exactly when it holds at
+every position of each block. -/
+theorem forall_append {p : ∀ a, V a → Prop} {Ξ : List S} {ξ : Env V Ξ} {η : Env V Γ} :
+    (∀ a x, p a (append ξ η a x)) ↔ (∀ a x, p a (ξ a x)) ∧ ∀ a x, p a (η a x) := by
+  constructor
+  · intro h
+    exact ⟨fun a x => by simpa only [append_appendLeft] using h a (x.appendLeft Γ),
+      fun a x => by simpa only [append_weakenMany] using h a (x.weakenMany Ξ)⟩
+  · rintro ⟨hξ, hη⟩
+    induction Ξ with
+    | nil => exact hη
+    | cons b Ξ ih =>
+      rintro a (_ | x)
+      · exact hξ _ .zero
+      · exact ih (fun c y => hξ c y.succ) a x
 
 /-- Assemble an environment from its values listed by position. -/
 @[expose] def ofFin : {Ξ : List S} → ((i : Fin Ξ.length) → V Ξ[i]) → Env V Ξ
