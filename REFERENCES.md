@@ -4,6 +4,10 @@ This file centralizes the public external references cited in module
 docstrings across `PolyFun/`. When adding a new citation in shared docs,
 prefer linking here instead of duplicating partial citations inline.
 
+## Finite partitions
+
+Mathlib supplies the finite partition type, its finite universe, and the recurrence for Stirling numbers of the second kind. The local enumeration proves that the partitions of `Fin n` into `k` parts have this cardinality. [Finpartitions](https://github.com/leanprover-community/mathlib4/blob/fc4f59e577feb1a4956671bc04ac18aaaf8cd842/Mathlib/Order/Partition/Finpartition.lean) · [Stirling numbers](https://github.com/leanprover-community/mathlib4/blob/fc4f59e577feb1a4956671bc04ac18aaaf8cd842/Mathlib/Combinatorics/Enumerative/Stirling.lean)
+
 ## Foundational citations
 
 ### HS00 — Hancock and Setzer, *Interactive programs in dependent type theory*
