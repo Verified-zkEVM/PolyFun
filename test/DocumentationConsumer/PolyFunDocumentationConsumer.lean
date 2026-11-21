@@ -16,6 +16,7 @@ import Examples.Tutorials.VersionedRequests
 import Examples.Tutorials.UpdatePolicies
 import PolyFun.PFunctor.Free.Measure.StatefulExpectedCharge
 import PolyFun.PFunctor.Handler.Sum
+import PolyFun.PFunctor.Resumption.Measure.ExpectedCharge
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
 import Examples.Tutorials.ScopedFamily
@@ -237,3 +238,28 @@ example {α : Type} (client : FreeM Tick α) (reward : α → Bool → ℝ≥0�
   cases warm <;> simp [price]
 
 end StatefulCostConsumer
+
+namespace ResumptionChargeConsumer
+
+open PFunctor Resumption
+open scoped ENNReal
+
+-- A finite setup can use the budget of each possible service as its terminal payoff,
+-- even when the service itself runs forever.
+example {P : PFunctor} {S α β : Type*} [MeasurableSpace S]
+    [∀ a, MeasurableSpace (P.B a)] [∀ a, Countable (P.B a)]
+    [∀ a, MeasurableSingletonClass (P.B a)]
+    (replies : KernelHandler P S) (price : P.A → S → ℝ≥0∞)
+    (hprice : ∀ a, Measurable (price a))
+    (setup : FreeM P α) (serve : α → Resumption P β)
+    (reward : β → S → ℝ≥0∞) (hreward : ∀ y, Measurable (reward y))
+    (budget : α → S → ℝ≥0∞)
+    (hbudget : ∀ x, expectedCharge replies price (serve x) reward ≤ budget x) :
+    expectedCharge replies price (bind (FreeM.toResumption setup) serve) reward ≤
+      FreeM.wpFold (OpSpec.statefulExpectedCharge replies price) setup budget := by
+  rw [expectedCharge_bind replies price hprice _ _ reward hreward,
+    expectedCharge_toResumption replies price hprice setup _
+      (fun x => measurable_expectedCharge replies price hprice (serve x) reward hreward)]
+  exact FreeM.wpFold_mono (OpSpec.statefulExpectedCharge_mono replies price) setup hbudget
+
+end ResumptionChargeConsumer
