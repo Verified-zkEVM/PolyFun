@@ -133,7 +133,7 @@ theorem execution_correct {Γ : List Ty} {e : Expr Γ .nat} (h : FirstOrder e)
   .loop n (.literal 0) (.add (.var .zero) (.var (.succ .zero)))
 
 /-- A second frontend's all-input certificate uses no Cryptol types or primitives. -/
-@[expose] def sumCertificate : Control.Semantics.CertifiedMeaning
+@[expose] def sumCertificate : Control.Semantics.Correspondence
     (Function.Embedding.refl Nat) (Function.Embedding.refl Nat) where
   meaning n := runFree (compile (sumSupported n) Env.empty)
   implementation n := (sumTo n).denote algebra Env.empty
