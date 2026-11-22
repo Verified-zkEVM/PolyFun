@@ -20,6 +20,7 @@ public import ToCslib.Data.ENNReal.AddSupDistrib
 public import ToCslib.Data.Fin.Cases
 public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
+public import ToCslib.Data.Nat.PolynomialBound
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
 public import ToCslib.MeasureTheory.Function.AEMeasurable

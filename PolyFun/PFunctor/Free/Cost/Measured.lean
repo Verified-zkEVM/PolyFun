@@ -27,8 +27,8 @@ computes `f` with no operations at cost `0`.
 runs `outer`. It does this on the sum of the two interfaces, each operation tagged with the view it
 belongs to, keeping both price lists. It computes the composite
 (`run_comp`, `Realizes.comp`), and its budgets add (`CostAtMost.comp`). `contramap` precomposes an
-uncharged map on inputs. A `BudgetedProgram f ω` bundles a measured program realizing `f` with a
-budget, and composes the same way.
+uncharged map on inputs, and `mapCost` maps every price. A `BudgetedProgram f ω` bundles a
+measured program realizing `f` with a budget, and composes the same way.
 
 **Budgeted carriers.** `Budgeted c B α` is the subtype of free programs within budget `B`. With
 budgets graded by `Multiplicative ω`, it is a `GradedMonad`: `gbind` adds budgets.
@@ -36,7 +36,7 @@ budgets graded by `Multiplicative ω`, it is a `GradedMonad`: `gbind` adds budge
 
 @[expose] public section
 
-universe u v w uA uB uI uI'
+universe u v w w' uA uB uI uI'
 
 namespace PFunctor.FreeM
 
@@ -187,6 +187,11 @@ theorem CostAtMost.contramap [Add ω] [Zero ω] [LE ω] {Input' : Type uI'}
     {M : MeasuredProgram Input Result ω} {B : ω} (h : M.CostAtMost B) (g : Input' → Input) :
     (M.contramap g).CostAtMost B :=
   h
+
+/-- The program with every price mapped by `φ`. -/
+def mapCost {ω' : Type w'} (M : MeasuredProgram Input Result ω) (φ : ω → ω') :
+    MeasuredProgram Input Result ω' :=
+  { M with cost := φ ∘ M.cost }
 
 end MeasuredProgram
 

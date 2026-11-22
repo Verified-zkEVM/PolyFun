@@ -368,6 +368,8 @@ public import PolyFun.PFunctor.Free.CodeRel
 public import PolyFun.PFunctor.Free.Cost
 public import PolyFun.PFunctor.Free.Cost.Loops
 public import PolyFun.PFunctor.Free.Cost.Measured
+public import PolyFun.PFunctor.Free.Cost.Sized
+public import PolyFun.PFunctor.Free.Cost.Sized.Growth
 public import PolyFun.PFunctor.Free.Cost.Support
 public import PolyFun.PFunctor.Free.Cost.Tactic
 public import PolyFun.PFunctor.Free.Cost.Value

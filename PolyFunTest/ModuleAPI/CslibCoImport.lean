@@ -9,9 +9,12 @@ module
 import Cslib.Foundations.Data.PFunctor.Basic
 import Cslib.Foundations.Data.PFunctor.Free.Fold
 import Cslib.Foundations.Data.PFunctor.Free.W
+import Cslib.Foundations.Data.Nat.PolynomialBound
+import Cslib.Foundations.Data.Polynomial.Monotone
 import PolyFun.PFunctor.Basic
 import PolyFun.PFunctor.Free.Basic
 import ToCslib.Data.PFunctor.Free.Basic
+import ToCslib.Data.Nat.PolynomialBound
 
 /-!
 # Co-import canaries for cslib's polynomial modules
@@ -19,8 +22,10 @@ import ToCslib.Data.PFunctor.Free.Basic
 cslib's `PFunctor.Basic` owns the monomial abbreviations, `0`, `1`, `P + Q` and `P * Q`; its
 `Free.Fold` and `Free.W` own the fold `PFunctor.FreeM.foldFreeM` and the W-type equivalence
 `PFunctor.FreeM.equivWOfIsEmpty`. `PolyFun.PFunctor.Basic`, `PolyFun.PFunctor.Free.Basic` and
-`ToCslib.Data.PFunctor.Free.Basic` build on them without redeclaring any of these, so all six
-modules import together. Each example combines a lemma from cslib with one from PolyFun or
+`ToCslib.Data.PFunctor.Free.Basic` build on them without redeclaring any of these. cslib's
+`Nat.PolynomialBound` and `Polynomial.Monotone` own `Cslib.PolynomiallyBounded` and the
+monotonicity of polynomial evaluation, on which `ToCslib.Data.Nat.PolynomialBound` builds. All
+nine modules import together. Each example combines a lemma from cslib with one from PolyFun or
 `ToCslib` through ordinary imports.
 -/
 
@@ -76,5 +81,13 @@ example {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} (lens : Lens P Q) 
         FreeM.toWOfIsEmpty ((rest (lens.toFunB a d)).mapLens lens) := by
   rw [FreeM.mapLens_liftBind]
   rfl
+
+/-! ## Polynomial bounds -/
+
+/-- cslib's `PolynomiallyBounded` and its monotone polynomial evaluation combine with the staged
+polynomial form of the bound. -/
+example (q : Polynomial ℕ) {m n : ℕ} (h : m ≤ n) :
+    Cslib.PolynomiallyBounded q.eval ∧ q.eval m ≤ q.eval n :=
+  ⟨Cslib.polynomiallyBounded_eval q, q.eval_mono h⟩
 
 end PolyFunTest.ModuleAPI.CslibCoImport
