@@ -29,7 +29,7 @@ On discrete operands, `strict1` and `strict2` demand one or two operands from le
 `condContinuous` demands a Boolean condition and then only the branch it selects.
 
 `valueEmbedding` embeds returned values, and `map` changes them without any order, so a decoder
-into results over native values is a `Control.Semantics.CertifiedMeaning` into
+into results over native values is a `Control.Semantics.Correspondence` into
 `valueEmbedding`. Through an injective function, `map` is injective (`map_injective`), so a
 result read back as `f x` returned `x` (`map_eq_value_apply_iff`). `toOption` keeps a returned
 value and forgets the difference between bottom and an error.
