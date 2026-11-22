@@ -271,8 +271,6 @@ theorem transport_eq_of_totalEq {g : PFunctor.Lens P Q} (baseEq : f = g)
     TotalEq (transport h left) right ↔ TotalEq left right := by
   simp [TotalEq]
 
-@[deprecated (since := "2026-10-19")] alias TotalEq.transport_left := TotalEq.transport_left_iff
-
 /-- Embed a fiberwise lens as a displayed one-operation free handler. -/
 def toHandler (displayed : Display.Lens S T f) :
     Display.Handler S T (PFunctor.Handler.ofLens f) :=

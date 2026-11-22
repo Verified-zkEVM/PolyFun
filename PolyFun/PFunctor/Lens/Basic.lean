@@ -404,9 +404,6 @@ set_option linter.checkUnivs false in
 /-- The type of lenses from a polynomial functor `P` to `y` -/
 -- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
 -- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-@[deprecated Section +typeChanged (since := "2026-10-19")]
-def enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
-  Lens P y.{uA₁, uB₁}
 
 /-- The transition lens `δ : Sy^S ⇆ Sy^S ◃ Sy^S` on the self-monomial state
 polynomial (Niu–Spivak Example 6.44): `δ = (id, tgt, run)` remembers the start
@@ -960,16 +957,12 @@ instance [IsEmpty I] {F : I → PFunctor.{u}} {a : (sigma F).A} : IsEmpty ((sigm
 def Equiv.emptySigma [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ 0 :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.emptySigma (F := F))
 
-@[deprecated (since := "2026-10-19")] alias sigmaEmpty := Equiv.emptySigma
-
 /-- Sigma of a `PUnit`-indexed family is equivalent to the functor itself (up to `ulift`). -/
 def Equiv.punitSigma {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃ₗ (F PUnit.unit).ulift :=
   PFunctor.Equiv.toLensEquiv
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.punitSigma (F := F))
       (PFunctor.Equiv.ulift (F PUnit.unit)).symm)
-
-@[deprecated (since := "2026-10-19")] alias sigmaUnit := Equiv.punitSigma
 
 /-- Sigma of a unique-indexed family is equivalent to the default fiber (up to `ulift`). -/
 def Equiv.uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ (F default).ulift :=
@@ -978,16 +971,12 @@ def Equiv.uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃ₗ 
       (PFunctor.Equiv.uniqueSigma (F := F))
       (PFunctor.Equiv.ulift (F default)).symm)
 
-@[deprecated (since := "2026-10-19")] alias sigmaOfUnique := Equiv.uniqueSigma
-
 /-- Left distributivity of product over sigma. -/
 def Equiv.prodSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
     (P * sigma F : PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) ≃ₗ
       (sigma (fun i => (P * F i : PFunctor.{max uA₁ uA₂, max uB₁ uB₂})) :
         PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.prodSigmaDistrib (P := P) (F := F))
-
-@[deprecated (since := "2026-10-19")] alias prodSigmaDistrib := Equiv.prodSigmaDistrib
 
 /-- Right distributivity of product over sigma. -/
 def Equiv.sigmaProdDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
@@ -996,28 +985,20 @@ def Equiv.sigmaProdDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA
         PFunctor.{max uA₁ uA₂ v, max uB₁ uB₂}) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.sigmaProdDistrib (P := P) (F := F))
 
-@[deprecated (since := "2026-10-19")] alias sigmaProdDistrib := Equiv.sigmaProdDistrib
-
 /-- Left distributivity of tensor product over sigma. -/
 def Equiv.tensorSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
     P ⊗ sigma F ≃ₗ sigma (fun i => P ⊗ F i) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.tensorSigmaDistrib (P := P) (F := F))
-
-@[deprecated (since := "2026-10-19")] alias tensorSigmaDistrib := Equiv.tensorSigmaDistrib
 
 /-- Right distributivity of tensor product over sigma. -/
 def Equiv.sigmaTensorDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁, uB₁}} :
     sigma F ⊗ P ≃ₗ sigma (fun i => F i ⊗ P) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.sigmaTensorDistrib (F := F) (P := P))
 
-@[deprecated (since := "2026-10-19")] alias sigmaTensorDistrib := Equiv.sigmaTensorDistrib
-
 /-- Right distributivity of composition over sigma. -/
 def Equiv.sigmaCompDistrib {P : PFunctor.{uA₂, uB₂}} {F : I → PFunctor.{uA₁, uB₁}} :
     sigma F ◃ P ≃ₗ sigma (fun i => F i ◃ P) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.sigmaCompDistrib (F := F) (P := P))
-
-@[deprecated (since := "2026-10-19")] alias sigmaCompDistrib := Equiv.sigmaCompDistrib
 
 end Sigma
 
@@ -1031,8 +1012,6 @@ def Equiv.piPUnit {P : PFunctor.{u}} : pi (fun (_ : PUnit) => P) ≃ₗ P where
   invLens := (fun pa _ => pa) ⇆ (fun _ spb => spb.2)
   left_inv := rfl
   right_inv := rfl
-
-@[deprecated (since := "2026-10-19")] alias piUnit := Equiv.piPUnit
 
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
 def Equiv.piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :
@@ -1049,8 +1028,6 @@ def Equiv.piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F 
         ext a <;> exact isEmptyElim a
       right_inv := by
         ext a <;> exact PEmpty.elim a }
-
-@[deprecated (since := "2026-10-19")] alias piZero := Equiv.piZero
 
 end Pi
 

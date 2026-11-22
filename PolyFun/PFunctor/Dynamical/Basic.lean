@@ -169,14 +169,6 @@ theorem comp_assoc {S₃ : Type u₃} {S₄ : Type u₄}
     comp (comp first second) third = comp first (comp second third) :=
   Relation.comp_assoc
 
-/-- The permissive relation accepting every pair of concrete steps. -/
-@[deprecated "use `⊤`, the top of the lattice of relations" (since := "2026-10-19")]
-abbrev top : StepRel s₁ s₂ := ⊤
-
-@[deprecated "use `Pi.top_apply`" (since := "2026-10-19")]
-theorem top_apply (step₁ : s₁.Step) (step₂ : s₂.Step) :
-    (⊤ : StepRel s₁ s₂) step₁ step₂ := trivial
-
 /-- Reverse a step relation by flipping its arguments: `flip`. -/
 def reverse (rel : StepRel s₁ s₂) : StepRel s₂ s₁ := flip rel
 
@@ -198,18 +190,8 @@ theorem reverse_comp {S₃ : Type u₃} {r : PFunctor.{uA₃, uB₃}} {s₃ : Dy
     reverse (comp first second) = comp (reverse second) (reverse first) :=
   Relation.flip_comp
 
-/-- Conjunction of step relations. -/
-@[deprecated "use `⊓`, the meet of the lattice of relations" (since := "2026-10-19")]
-abbrev inter (first second : StepRel s₁ s₂) : StepRel s₁ s₂ := first ⊓ second
-
-@[deprecated "use `Pi.inf_apply`" (since := "2026-10-19")]
-theorem inter_apply (first second : StepRel s₁ s₂) (step₁ : s₁.Step) (step₂ : s₂.Step) :
-    (first ⊓ second) step₁ step₂ ↔ first step₁ step₂ ∧ second step₁ step₂ := Iff.rfl
-
 @[simp] theorem reverse_inf (first second : StepRel s₁ s₂) :
     reverse (first ⊓ second) = reverse first ⊓ reverse second := rfl
-
-@[deprecated (since := "2026-10-19")] alias reverse_inter := reverse_inf
 
 /-- Synchronized concrete steps over a shared interface expose equal positions
 and select equal directions up to transport along that equality. -/

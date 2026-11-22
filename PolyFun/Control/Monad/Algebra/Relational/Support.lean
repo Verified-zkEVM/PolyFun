@@ -149,13 +149,4 @@ theorem anchored_mAlgRelOrderedPropAngelic : Anchored m₁ m₂ Prop := by
 
 end Angelic
 
-@[deprecated (since := "2026-11-16")]
-alias strictBindPropDemonic := strictBind_mAlgRelOrderedPropDemonic
-@[deprecated (since := "2026-11-16")]
-alias anchoredPropDemonic := anchored_mAlgRelOrderedPropDemonic
-@[deprecated (since := "2026-11-16")]
-alias strictBindPropAngelic := strictBind_mAlgRelOrderedPropAngelic
-@[deprecated (since := "2026-11-16")]
-alias anchoredPropAngelic := anchored_mAlgRelOrderedPropAngelic
-
 end MonadAttach

@@ -52,8 +52,6 @@ particular state. -/
 abbrev TicketMap {S : Type u} (s : DynSystem S p) (Ticket : Type w) :=
   (st : S) → p.B (s.expose st) → Ticket
 
-@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
-
 set_option linter.checkUnivs false in
 /-- A dynamical system equipped with a stable external event label for each
 transition. This is the smallest bundle supporting statements about observable
@@ -88,10 +86,6 @@ structure SafetySpec (p : PFunctor.{uA, uB}) extends Machine.{u} p where
   Assumptions : State → Prop := fun _ => True
   /-- The safety predicate that states are required to satisfy. -/
   Safe : State → Prop := fun _ => True
-
-@[deprecated (since := "2026-10-19")] alias SafetySpec.init := SafetySpec.Init
-@[deprecated (since := "2026-10-19")] alias SafetySpec.assumptions := SafetySpec.Assumptions
-@[deprecated (since := "2026-10-19")] alias SafetySpec.safe := SafetySpec.Safe
 
 end DynSystem
 

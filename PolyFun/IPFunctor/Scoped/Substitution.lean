@@ -149,12 +149,6 @@ theorem liftMany_comp (θ : σ.Substitution Γ Δ) (τ : σ.Substitution Δ Θ) 
     rw [h, lift_comp]
     rfl
 
-/-- Extend a substitution by an image for its newest variable. -/
-@[deprecated Env.cons +typeChanged (since := "2026-11-07")]
-abbrev cons {a : S} (θ : σ.Substitution Γ Δ) (value : σ.Term Δ a) :
-    σ.Substitution (a :: Γ) Δ :=
-  Env.cons value θ
-
 end Substitution
 
 namespace Term

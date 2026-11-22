@@ -132,8 +132,6 @@ theorem length_eq_length_trace (spine : Spine program residual) :
       simp only [length, trace, ih]
       rfl
 
-@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
-
 /-- Plug a complete path through the residual back through a cursor spine. -/
 def plug : {program residual : FreeM P α} →
     Spine program residual → Path residual → Path program
@@ -298,8 +296,6 @@ theorem trace_comp (first : Cursor program) (second : Cursor first.residual) :
 theorem length_eq_length_trace (cursor : Cursor program) :
     cursor.length = cursor.trace.toList.length :=
   Spine.length_eq_length_trace cursor.spine
-
-@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete residual path back into the source program. -/
 def plug (cursor : Cursor program) : Path cursor.residual → Path program :=
@@ -588,9 +584,6 @@ theorem Terminal.output_eq_output_pathOfTerminal (terminal : Terminal program) :
           dsimp at residual_eq ⊢
           subst residual
           rfl
-
-@[deprecated (since := "2026-10-19")] alias terminal_output_eq_path_output :=
-  Terminal.output_eq_output_pathOfTerminal
 
 @[simp]
 theorem terminalOfPath_pathOfTerminal :
