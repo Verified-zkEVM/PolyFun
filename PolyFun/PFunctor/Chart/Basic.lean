@@ -341,9 +341,6 @@ position. It is the chart analogue of the lens sections `PFunctor.Section`. -/
 def Enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
   Chart P y.{uA₁, uB₁}
 
-set_option linter.checkUnivs false in
--- The alias keeps `Chart.Enclose`'s independent codomain universes `uA₁`/`uB₁`.
-
 /-! ### Notations for binary operations -/
 
 @[inherit_doc] scoped[PFunctor] infixl:75 " ⊎c " => PFunctor.Chart.sumMap

@@ -400,11 +400,6 @@ scoped notation "[" l₁ "," l₂ "]ₗ" => sumPair l₁ l₂
 `open scoped PFunctor.Lens`. -/
 scoped notation "⟨" l₁ "," l₂ "⟩ₗ" => prodPair l₁ l₂
 
-set_option linter.checkUnivs false in
-/-- The type of lenses from a polynomial functor `P` to `y` -/
--- `Lens.enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
--- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-
 /-- The transition lens `δ : Sy^S ⇆ Sy^S ◃ Sy^S` on the self-monomial state
 polynomial (Niu–Spivak Example 6.44): `δ = (id, tgt, run)` remembers the start
 state, relabels each direction by the state it targets, and composes two hops
