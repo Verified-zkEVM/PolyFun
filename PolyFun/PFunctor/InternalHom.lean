@@ -106,8 +106,6 @@ def Lens.Equiv.ihomY (r : PFunctor.{uA, uB}) : ihom y r ≃ₗ r where
   left_inv := rfl
   right_inv := rfl
 
-@[deprecated (since := "2026-10-19")] alias ihomY := Lens.Equiv.ihomY
-
 /-- The positions of `[q, y]` are the sections (handlers) of `q`, i.e. the
 lenses `q ⇆ y`. -/
 theorem ihom_y_A (q : PFunctor.{uA, uB}) :
@@ -153,8 +151,6 @@ def Equiv.ihomSum (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB})
   equivA := ihomSumAEquiv q₁ q₂ r
   equivB f := _root_.Equiv.sumSigmaDistrib (fun j => r.B (f.toFunA j))
 
-@[deprecated (since := "2026-10-19")] alias ihomSumPEquiv := Equiv.ihomSum
-
 /-- The internal hom sends a coproduct in its first argument to a categorical
 product: `[q₁ + q₂, r] ≅ [q₁, r] × [q₂, r]`. This is the contravariant image of
 the coproduct's universal property under the tensor–hom adjunction. -/
@@ -162,7 +158,5 @@ def Lens.Equiv.ihomSum (q₁ : PFunctor.{qA₁, qB}) (q₂ : PFunctor.{qA₂, qB
     (r : PFunctor.{rA, rB}) :
     ihom (PFunctor.add q₁ q₂) r ≃ₗ PFunctor.prod (ihom q₁ r) (ihom q₂ r) :=
   PFunctor.Equiv.toLensEquiv (PFunctor.Equiv.ihomSum q₁ q₂ r)
-
-@[deprecated (since := "2026-10-19")] alias ihomSum := Lens.Equiv.ihomSum
 
 end PFunctor

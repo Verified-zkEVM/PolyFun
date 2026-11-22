@@ -203,8 +203,6 @@ def terminal {P : PFunctor.{uA, uB}} : Chart P y :=
 
 alias fromZero := initial
 
-@[deprecated (since := "2026-10-19")] alias toOne := terminal
-
 /-! ### Coproduct (`+`)
 
 `+` is the coproduct in the chart category (as it is in the lens category).
@@ -329,23 +327,6 @@ def mapIdx (φ : Chart P Q) (i : Idx P) : Idx Q :=
 
 @[simp] theorem mapIdx_comp (g : Chart Q R) (f : Chart P Q) (i : Idx P) :
     mapIdx (g ∘c f) i = mapIdx g (mapIdx f i) := rfl
-
-/-! ### Special charts -/
-
-set_option linter.checkUnivs false in
-/-- The type of charts from a polynomial functor `P` to `y`.
-
-A chart `P → y` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
-i.e. a boundary valuation that picks out a single direction at every
-position. It is the chart analogue of the lens sections `PFunctor.Section`. -/
--- `Chart.Enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
--- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-def Enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
-  Chart P y.{uA₁, uB₁}
-
-set_option linter.checkUnivs false in
--- The alias keeps `Chart.Enclose`'s independent codomain universes `uA₁`/`uB₁`.
-@[deprecated (since := "2026-10-19")] alias enclose := Enclose
 
 /-! ### Notations for binary operations -/
 
@@ -826,8 +807,6 @@ variable {I : Type v}
 def emptySigma [IsEmpty I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c 0 :=
   PFunctor.Equiv.toChartEquiv (PFunctor.Equiv.emptySigma (F := F))
 
-@[deprecated (since := "2026-10-19")] alias sigmaEmpty := emptySigma
-
 /-- Sigma of a `PUnit`-indexed family is equivalent to the functor itself
     (up to `ulift`). -/
 def punitSigma {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃c (F PUnit.unit).ulift :=
@@ -836,8 +815,6 @@ def punitSigma {F : PUnit → PFunctor.{uA, uB}} : sigma F ≃c (F PUnit.unit).u
       (PFunctor.Equiv.punitSigma (F := F))
       (PFunctor.Equiv.ulift (F PUnit.unit)).symm)
 
-@[deprecated (since := "2026-10-19")] alias sigmaUnit := punitSigma
-
 /-- Sigma of a unique-indexed family is equivalent to the default fiber
     (up to `ulift`). -/
 def uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c (F default).ulift :=
@@ -845,8 +822,6 @@ def uniqueSigma [Unique I] {F : I → PFunctor.{uA, uB}} : sigma F ≃c (F defau
     (PFunctor.Equiv.trans
       (PFunctor.Equiv.uniqueSigma (F := F))
       (PFunctor.Equiv.ulift (F default)).symm)
-
-@[deprecated (since := "2026-10-19")] alias sigmaOfUnique := uniqueSigma
 
 /-- Left distributivity of polynomial product over sigma. -/
 def prodSigmaDistrib {P : PFunctor.{uA₁, uB₁}} {F : I → PFunctor.{uA₂, uB₂}} :
@@ -888,8 +863,6 @@ def piPUnit {P : PFunctor.{uA, uB}} : pi (fun (_ : PUnit) => P) ≃c P where
     refine Chart.ext _ _ ?_ ?_
     · intro _; rfl
     · intro _; funext _; rfl
-
-@[deprecated (since := "2026-10-19")] alias piUnit := piPUnit
 
 /-- Pi of a family of zero functors over an inhabited type is the zero functor. -/
 def piZero [Inhabited I] {F : I → PFunctor.{uA, uB}} (F_zero : ∀ i, F i = 0) :

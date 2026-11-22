@@ -111,8 +111,6 @@ theorem runFree_eq_run_toStateful
     R.runFree program state = R.toStateful.run program state :=
   R.runFree_eq_liftM program state
 
-@[deprecated (since := "2026-10-19")] alias runFree_eq_statefulRun := runFree_eq_run_toStateful
-
 /-- Transport dependent result and state evidence along equality of execution
 results. This names the equality plumbing used by displayed execution laws. -/
 def transportRunEvidence {E : Type uV}
@@ -182,8 +180,6 @@ theorem toStateful_reindex
     (R : Responder State Q) :
     (reindex f R).toStateful = fun query state => R.runFree (f query) state :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias toStateHandler_reindex := toStateful_reindex
 
 @[simp]
 theorem answer_reindex (f : Handler (FreeM Q) P)

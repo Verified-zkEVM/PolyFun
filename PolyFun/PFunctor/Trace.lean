@@ -92,8 +92,6 @@ theorem length_positions {P : PFunctor.{uA, uB}} (events : TraceList P) :
 @[simp]
 theorem positions_one {P : PFunctor.{uA, uB}} : positions (1 : TraceList P) = [] := rfl
 
-@[deprecated (since := "2026-11-17")] alias positions_nil := positions_one
-
 @[simp]
 theorem positions_of {P : PFunctor.{uA, uB}} (event : P.Idx) :
     positions (FreeMonoid.of event : TraceList P) = [event.1] := rfl
@@ -133,8 +131,6 @@ def occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
 @[simp]
 theorem occurrences_one {P : PFunctor.{uA, uB}} [DecidableEq P.A] (target : P.A) :
     occurrences target (1 : TraceList P) = 0 := rfl
-
-@[deprecated (since := "2026-11-17")] alias occurrences_nil := occurrences_one
 
 /-- A single event counts once exactly when it sits at the target. -/
 @[simp]
@@ -257,9 +253,6 @@ theorem getAt?_mul_self_occurrences {P : PFunctor.{uA, uB}} [DecidableEq P.A]
       rw [mul_assoc, getAt?_of_mul, occurrences_of_mul]
       by_cases h : event.1 = target <;> simpa [h] using ih
 
-@[deprecated (since := "2026-11-17")] alias getAt?_append_self_occurrences :=
-  getAt?_mul_self_occurrences
-
 /-- Relabel-and-filter the events of a trace list along a partial map of
 indices: `List.filterMap` with the monoid structure of `TraceList` made
 explicit. `Trace.mapPartial` is this operation pointwise. -/
@@ -303,8 +296,6 @@ theorem mapPartial_mapPartial {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂
     mapPartial g (mapPartial f t) = mapPartial (fun i => (f i).bind g) t := by
   apply FreeMonoid.ext
   simp only [toList_mapPartial, List.filterMap_filterMap]
-
-@[deprecated (since := "2026-10-19")] alias mapPartial_comp := mapPartial_mapPartial
 
 end TraceList
 
@@ -369,8 +360,6 @@ theorem mapPartial_mapPartial (g : Idx Q → Option (Idx R)) (f : Idx P → Opti
     mapPartial g (mapPartial f t) = mapPartial (fun i => (f i).bind g) t := by
   funext x
   exact TraceList.mapPartial_mapPartial g f (t x)
-
-@[deprecated (since := "2026-10-19")] alias mapPartial_comp := mapPartial_mapPartial
 
 @[simp]
 theorem mapPartial_none (t : Trace P X) : mapPartial (Q := Q) (fun _ => none) t = 1 := by

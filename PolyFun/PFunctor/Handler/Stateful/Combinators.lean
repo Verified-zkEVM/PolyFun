@@ -66,9 +66,6 @@ theorem fst_map_run_eq_of_apply_map_eq [Monad m] [LawfulMonad m]
   rw [← run_map_eq_of_apply_map_eq h₁ h₂ proj hproj x s, Functor.map_map]
   rfl
 
-@[deprecated (since := "2026-10-19")] alias map_fst_run_eq_of_apply_map_eq :=
-  fst_map_run_eq_of_apply_map_eq
-
 /-- A stateful handler over the same interface whose answers, ignoring the state, are the
 requests themselves leaves every program's value unchanged. -/
 theorem fst_map_run_eq_self (h : Stateful (FreeM P) S P)
@@ -79,8 +76,6 @@ theorem fst_map_run_eq_self (h : Stateful (FreeM P) S P)
     rw [run_liftBind, map_bind, FreeM.liftBind_eq, FreeM.bind_eq_bind, ← hh a s,
       bind_map_left]
     exact bind_congr fun r => fst_map_run_eq_self h hh (k r.1) r.2
-
-@[deprecated (since := "2026-10-19")] alias map_fst_run_eq_self := fst_map_run_eq_self
 
 /-! ### Changing the base monad -/
 
@@ -114,43 +109,17 @@ def sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
   | .inl a => StateT.mk fun st => Prod.map _root_.id (·, st.2) <$> (f a).run st.1
   | .inr b => StateT.mk fun st => Prod.map _root_.id (st.1, ·) <$> (g b).run st.2
 
-/-- Run two stateful handlers on the two summands with a product state. -/
-@[deprecated sum (since := "2026-10-19")]
-def parallel [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
-    Stateful m (S × T) (P + Q : PFunctor.{max uA uA', u})
-  | .inl a => StateT.mk fun st => Prod.map _root_.id (·, st.2) <$> (f a).run st.1
-  | .inr b => StateT.mk fun st => Prod.map _root_.id (st.1, ·) <$> (g b).run st.2
-
 /-- The sum handler answers a left request with the left handler on the first state
 component and leaves the second component unchanged. -/
 @[simp] theorem sum_inl_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
     (a : P.A) (st : S × T) :
     (sum f g (.inl a)).run st = Prod.map _root_.id (·, st.2) <$> (f a).run st.1 := rfl
 
-/-- The left handler updates the first state component. -/
-@[simp, deprecated sum_inl_run +typeChanged (since := "2026-10-19")]
-theorem parallel_inl_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
-    (a : P.A) (st : S × T) :
-    (parallel f g (.inl a)).run st = Prod.map _root_.id (·, st.2) <$> (f a).run st.1 := rfl
-
 /-- The sum handler answers a right request with the right handler on the second state
 component and leaves the first component unchanged. -/
 @[simp] theorem sum_inr_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
     (b : Q.A) (st : S × T) :
     (sum f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
-
-/-- The right handler updates the second state component. -/
-@[simp, deprecated sum_inr_run +typeChanged (since := "2026-10-19")]
-theorem parallel_inr_run [Functor m] (f : Stateful m S P) (g : Stateful m T Q)
-    (b : Q.A) (st : S × T) :
-    (parallel f g (.inr b)).run st = Prod.map _root_.id (st.1, ·) <$> (g b).run st.2 := rfl
-
-/-- The deprecated `parallel` is `sum`. -/
-@[deprecated sum +typeChanged (since := "2026-10-19")]
-theorem parallel_eq_sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
-    parallel f g = sum f g := by
-  funext x
-  cases x <;> rfl
 
 /-- Run an indexed family of stateful handlers on the indexed sum, each member on its own
 component of a dependent product state. -/
@@ -161,8 +130,6 @@ def sigma {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}} 
     Prod.map _root_.id (Function.update s (PFunctor.sigma.fst x)) <$>
       (f (PFunctor.sigma.fst x) (PFunctor.sigma.snd x)).run (s (PFunctor.sigma.fst x))
 
-@[deprecated (since := "2026-10-19")] alias pi := sigma
-
 /-- The product handler answers a request at member `i` with the `i`-th handler on the `i`-th
 state component and updates only that component. -/
 @[simp] theorem sigma_mk_run {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}}
@@ -171,8 +138,6 @@ state component and updates only that component. -/
     (sigma f (PFunctor.sigma.mk i a)).run s =
       Prod.map _root_.id (Function.update s i) <$> (f i a).run (s i) :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias pi_mk_run := sigma_mk_run
 
 /-- Reassociate a stateful handler over a stateful base into one product state; the outer state
 is the first component. -/
