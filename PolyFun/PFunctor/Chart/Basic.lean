@@ -328,19 +328,6 @@ def mapIdx (φ : Chart P Q) (i : Idx P) : Idx Q :=
 @[simp] theorem mapIdx_comp (g : Chart Q R) (f : Chart P Q) (i : Idx P) :
     mapIdx (g ∘c f) i = mapIdx g (mapIdx f i) := rfl
 
-/-! ### Special charts -/
-
-set_option linter.checkUnivs false in
-/-- The type of charts from a polynomial functor `P` to `y`.
-
-A chart `P → y` is equivalent to a function `(a : P.A) → P.B a → PUnit`,
-i.e. a boundary valuation that picks out a single direction at every
-position. It is the chart analogue of the lens sections `PFunctor.Section`. -/
--- `Chart.Enclose`'s two universe pairs are the independent domain (`uA`/`uB`) and
--- codomain (`uA₁`/`uB₁`) position/direction universes, kept independent.
-def Enclose (P : PFunctor.{uA, uB}) : Type max uA uA₁ uB uB₁ :=
-  Chart P y.{uA₁, uB₁}
-
 /-! ### Notations for binary operations -/
 
 @[inherit_doc] scoped[PFunctor] infixl:75 " ⊎c " => PFunctor.Chart.sumMap
