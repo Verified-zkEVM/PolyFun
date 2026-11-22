@@ -11,7 +11,7 @@ public import PolyFun.IPFunctor.Scoped.DomainInterpretation
 public import PolyFun.IPFunctor.Scoped.StackedInterpretation
 
 /-!
-# Certified meanings from fundamental lemmas
+# Correspondences from fundamental lemmas
 
 A continuous meaning related to an ordinary evaluator by a fundamental lemma is certified against
 a native implementation by two more facts. The representation relates each encoded input to a
@@ -19,10 +19,10 @@ native representative and lets a representative determine its encoded output. To
 the evaluator returns the representative of the implementation's result.
 
 * `Term.liftFun_denoteDomain` and `Stacked.Model.liftFun_denoteDomain` state the fundamental
-  lemmas as `Relator.LiftFun`, the premise of `Control.Semantics.CertifiedMeaning.ofLiftFun`.
-* `Term.certifiedMeaning` certifies a term with one free variable, which is its input, and
+  lemmas as `Relator.LiftFun`, the premise of `Control.Semantics.Correspondence.ofLiftFun`.
+* `Term.correspondence` certifies a term with one free variable, which is its input, and
   `Term.correspondsOn_denoteDomain` gives the correspondence when the evaluator is total only on
-  admissible inputs. `Stacked.Model.certifiedMeaning` certifies a term of a stacked family at a
+  admissible inputs. `Stacked.Model.correspondence` certifies a term of a stacked family at a
   type assignment.
 
 An input variable needs no function sorts, so first-order languages are covered. A language with
@@ -60,31 +60,31 @@ theorem Term.liftFun_denoteDomain (h : DomainInterpretation.Related R alg alg') 
 certified against `implementation`. The input's encoding is related to its native
 representative, a representative determines the encoded output, and the evaluator returns the
 representative of `implementation x` at every input `x`. -/
-@[expose] noncomputable def Term.certifiedMeaning (h : DomainInterpretation.Related R alg alg')
+@[expose] noncomputable def Term.correspondence (h : DomainInterpretation.Related R alg alg')
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} (represents : ∀ x, R a (input x) (nativeIn x))
     (determines : ∀ y d, R b d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
-    CertifiedMeaning input output :=
-  CertifiedMeaning.ofLiftFun (fun d => t.denoteDomain alg (Env.single d)) implementation
+    Correspondence input output :=
+  Correspondence.ofLiftFun (fun d => t.denoteDomain alg (Env.single d)) implementation
     (eval := fun w => t.denote alg' (Env.single w))
     (fun _ _ hdw => Term.denoteDomain_related h t ((Env.liftRel_empty R).cons hdw))
     represents determines total
 
-theorem Term.certifiedMeaning_meaning (h : DomainInterpretation.Related R alg alg')
+theorem Term.correspondence_meaning (h : DomainInterpretation.Related R alg alg')
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} (represents : ∀ x, R a (input x) (nativeIn x))
     (determines : ∀ y d, R b d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
-    (t.certifiedMeaning h represents determines implementation total).meaning =
+    (t.correspondence h represents determines implementation total).meaning =
       fun d => t.denoteDomain alg (Env.single d) := rfl
 
-theorem Term.certifiedMeaning_implementation (h : DomainInterpretation.Related R alg alg')
+theorem Term.correspondence_implementation (h : DomainInterpretation.Related R alg alg')
     (t : σ.Term [a] b) {A : Type uA} {B : Type uB} {input : A ↪ V a} {output : B ↪ V b}
     {nativeIn : A → W a} {nativeOut : B → W b} (represents : ∀ x, R a (input x) (nativeIn x))
     (determines : ∀ y d, R b d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x)) :
-    (t.certifiedMeaning h represents determines implementation total).implementation =
+    (t.correspondence h represents determines implementation total).implementation =
       implementation := rfl
 
 /-- The correspondence on admissible inputs, for an evaluator that returns the implementation's
@@ -125,38 +125,38 @@ theorem liftFun_denoteDomain (hI : DomainInterp.Related R I I') {Θ : List K}
 variable {Θ : List K} {s s' : τ.Term Θ k₀}
 
 /-- The meaning of a term with one free value variable, at the type assignment `ρ`, is certified
-against `implementation`, under the premises of `Term.certifiedMeaning`. -/
-@[expose] noncomputable def certifiedMeaning (hI : DomainInterp.Related R I I')
+against `implementation`, under the premises of `Term.correspondence`. -/
+@[expose] noncomputable def correspondence (hI : DomainInterp.Related R I I')
     (t : S.toFamily.Term Θ [s] s') (ρ : Env M.Den Θ) {A : Type uA} {B : Type uB}
     {input : A ↪ V (s.denote M.tyAlg ρ)} {output : B ↪ V (s'.denote M.tyAlg ρ)}
     {nativeIn : A → W (s.denote M.tyAlg ρ)} {nativeOut : B → W (s'.denote M.tyAlg ρ)}
     (represents : ∀ x, R _ (input x) (nativeIn x))
     (determines : ∀ y d, R _ d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, M.denote W I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
-    CertifiedMeaning input output :=
-  CertifiedMeaning.ofLiftFun (fun d => M.denoteDomain V I t ρ (Env.single d)) implementation
+    Correspondence input output :=
+  Correspondence.ofLiftFun (fun d => M.denoteDomain V I t ρ (Env.single d)) implementation
     (eval := fun w => M.denote W I' t ρ (Env.single w))
     (fun _ _ hdw => denoteDomain_related hI t ρ ((Env.liftRel_empty _).cons hdw))
     represents determines total
 
-theorem certifiedMeaning_meaning (hI : DomainInterp.Related R I I')
+theorem correspondence_meaning (hI : DomainInterp.Related R I I')
     (t : S.toFamily.Term Θ [s] s') (ρ : Env M.Den Θ) {A : Type uA} {B : Type uB}
     {input : A ↪ V (s.denote M.tyAlg ρ)} {output : B ↪ V (s'.denote M.tyAlg ρ)}
     {nativeIn : A → W (s.denote M.tyAlg ρ)} {nativeOut : B → W (s'.denote M.tyAlg ρ)}
     (represents : ∀ x, R _ (input x) (nativeIn x))
     (determines : ∀ y d, R _ d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, M.denote W I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
-    (certifiedMeaning hI t ρ represents determines implementation total).meaning =
+    (correspondence hI t ρ represents determines implementation total).meaning =
       fun d => M.denoteDomain V I t ρ (Env.single d) := rfl
 
-theorem certifiedMeaning_implementation (hI : DomainInterp.Related R I I')
+theorem correspondence_implementation (hI : DomainInterp.Related R I I')
     (t : S.toFamily.Term Θ [s] s') (ρ : Env M.Den Θ) {A : Type uA} {B : Type uB}
     {input : A ↪ V (s.denote M.tyAlg ρ)} {output : B ↪ V (s'.denote M.tyAlg ρ)}
     {nativeIn : A → W (s.denote M.tyAlg ρ)} {nativeOut : B → W (s'.denote M.tyAlg ρ)}
     (represents : ∀ x, R _ (input x) (nativeIn x))
     (determines : ∀ y d, R _ d (nativeOut y) → d = output y) (implementation : A → B)
     (total : ∀ x, M.denote W I' t ρ (Env.single (nativeIn x)) = nativeOut (implementation x)) :
-    (certifiedMeaning hI t ρ represents determines implementation total).implementation =
+    (correspondence hI t ρ represents determines implementation total).implementation =
       implementation := rfl
 
 end Stacked.Model
