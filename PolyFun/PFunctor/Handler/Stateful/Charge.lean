@@ -18,7 +18,7 @@ call at `a` stays within `c a` under the target charge `d` (`Stateful.WithinChar
 
 * A stateless certificate lifts to any state (`Handler.WithinCharge.lift`).
 * A certificate pushes forward along a change of cost type (`Stateful.WithinCharge.map`), which
-  plays the role of the exchange of a certified handler.
+  plays the role of the exchange of a costed handler.
 * Certificates compose along `Stateful.link`, which runs the outer package's programs through the
   inner package (`Stateful.WithinCharge.link`). Linked packages are the stateful cross-layer links:
   a protocol implemented by a stateful algorithm, implemented in turn by a stateful machine model.

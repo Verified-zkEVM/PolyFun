@@ -6,12 +6,12 @@ Authors: Bas Spitters
 
 module
 
-public import PolyFun.PFunctor.Handler.CertifiedUnder
+public import PolyFun.PFunctor.Handler.CostedOn
 
 /-!
-# Certified handlers over allowed answers
+# Costed handlers over allowed answers
 
-Checks for `PolyFun.PFunctor.Handler.CertifiedUnder` at use vectors in `ι → ℕ∞`:
+Checks for `PolyFun.PFunctor.Handler.CostedOn` at use vectors in `ι → ℕ∞`:
 
 * with every answer allowed, `isChargeBoundUnder_liftM_demand` gives
   `isChargeBound_liftM_demand`;
@@ -22,7 +22,7 @@ public section
 
 open PFunctor PFunctor.FreeM PFunctor.Handler
 
-namespace PolyFunTest.ChargeCertifiedUnder
+namespace PolyFunTest.ChargeCostedOn
 
 universe uA uB
 
@@ -52,4 +52,4 @@ example {c : P.A → ι → ℕ∞} {allowsP : (a : P.A) → P.B a → Prop} {e 
       (fun a => isChargeBoundUnder_iff_costUnder_le.2 (hh a)) hout
       (isChargeBoundUnder_iff_costUnder_le.2 hx))
 
-end PolyFunTest.ChargeCertifiedUnder
+end PolyFunTest.ChargeCostedOn
