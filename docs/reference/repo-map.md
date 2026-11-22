@@ -69,6 +69,7 @@ Example and test imports never flow back into production.
 | Admissible implementations and resources | [Realizability](../../PolyFun/Realizability/Basic.lean), [quantitative certificates](../../PolyFun/Realizability/Quantitative.lean), [description measures](../../PolyFun/Realizability/Quantitative/Description.lean) | [Realizability](../guides/realizability.md) |
 | Strength, the strong bind, and structural cost laws | [Strength](../../PolyFun/Realizability/Quantitative/Strength.lean), [cost laws](../../PolyFun/Realizability/Quantitative/CostLaws.lean), [carries](../../PolyFun/Realizability/Quantitative/Carry.lean) | [Realizability](../guides/realizability.md#strength-and-the-strong-bind) |
 | Stateful handler substitution | [Handler costs](../../PolyFun/Realizability/Quantitative/Handler.lean), [product machine](../../PolyFun/PFunctor/Dynamical/DynComputation/WrapState.lean) | [Realizability](../guides/realizability.md#stateful-handler-substitution) |
+| Counting contracts for interface use | [Counting cost types and contracts](../../PolyFun/PFunctor/Free/Cost/Count.lean) | [Interaction cost](../guides/cost.md#counting-contracts) |
 
 `Control/` also holds reusable monad, comonad, coalgebra, and LTS infrastructure: ordered,
 graded, Dijkstra and relative monads and monad relations under `Control/Monad/`, and the

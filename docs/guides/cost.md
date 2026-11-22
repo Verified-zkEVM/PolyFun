@@ -207,6 +207,52 @@ A bound presented as a resource contract needs more than the laws of this guide:
   a call whose answer type is empty meets its budget and never returns. Keep `ProgramProgress`
   (`programProgress_of_nonempty`) or an availability predicate as its own conjunct.
 
+### Counting contracts
+
+`CountCost ω` (`PolyFun/PFunctor/Free/Cost/Count.lean`) is a property of the cost type that
+excludes the hazards behind the first three requirements. It supplies an additive map `count`
+from `ω` into finitely supported natural-number counts, one count per kind. The map preserves and
+reflects the partial order of `ω`, so it is injective (`count_injective`). So `ω` has the addition
+and the order of a submonoid of natural-number counts.
+
+- Instances cover `ℕ`, `K →₀ ℕ` for any `K`, and `K → ℕ` for finite `K`. Pointwise counts are a
+  counting cost type exactly over finitely many kinds (`nonempty_countCost_pi_iff`).
+- In a counting cost type, adding a cost never decreases it (`CountCost.le_self_add`). If a sum
+  of two costs is `0`, the first cost is `0` (`CountCost.eq_zero_of_add_eq_zero`). These two
+  properties are weaker than Mathlib's `CanonicallyOrderedAdd`, which also asks that `a ≤ b` give
+  some `c` with `b = a + c`. Neither class contains the other. `ℕ∞` is canonically ordered but not
+  a counting cost type. `{n : ℕ // n ≠ 1}` is a counting cost type but not canonically ordered.
+  The total of a cost, `CountCost.total`, is a natural number. It is monotone
+  (`total_le_total`) and zero only at zero (`total_eq_zero_iff`).
+- No hazard above is a counting cost type. Under any partial order, `ℤ`, and so signed weights,
+  fails `eq_zero_of_add_eq_zero`. The reversed order fails `le_self_add`. Some nonzero cost is its
+  own double (`1` under `max` addition, `⊤` in `ℕ∞`), so its total is zero, under any partial
+  order. Pointwise counts over infinitely many kinds fail `nonempty_countCost_pi_iff`.
+  `PolyFunTest/PFunctor/Charge/Basic.lean` proves each rejection next to its hazard.
+
+`MeasuredProgram.CountAtMost B` is the contract form of `CostAtMost B`. On every completed path
+of every view's program, the count of each kind is at most its count in `B`. In a counting cost
+type it is equivalent to `CostAtMost B` (`countAtMost_iff_costAtMost`), so the laws of
+`CostAtMost` still apply (`CountAtMost.mono`, `CountAtMost.comp`, `CountAtMost.contramap`,
+`countAtMost_ofFun`). Addition in a counting cost type is monotone (`CountCost.addLeftMono`,
+`CountCost.addRightMono`), so `CountAtMost.comp` needs no further hypothesis.
+
+- Every completed path makes at most `total B` calls of nonzero price
+  (`CountAtMost.charge_indicator_le_total`). When every price is nonzero, this bounds the number
+  of calls (`CountAtMost.length_le_total`). The proof compares the charges call by call
+  (`Path.charge_mono`).
+- Only the kinds of count must be finite or finitely supported. The operations can form an
+  infinite type, such as the queries to a random oracle on an infinite domain.
+- For a family whose kinds depend on a parameter, each member's budget has a finite total. The
+  totals can still grow without bound: `n` kinds at count `1` each have total `n`. A bound on the
+  calls of the whole family needs a uniform bound on the totals of the budgets.
+- The contract bounds only the charges of the program's declared operations. The view, the
+  answering function and the code between calls are not charged, and an operation of price `0` is
+  free. So `ofFun f` meets the contract `0` for every `f`.
+
+`PolyFunTest/PFunctor/Charge/Count.lean` checks the instances, coarse orders, an oracle on `ℕ`,
+per-kind counts and the family bound.
+
 ## Laws
 
 **Sequencing.** `isChargeBound_bind_iff` and `cost c (x >>= f) = costWith c x fun a => cost c

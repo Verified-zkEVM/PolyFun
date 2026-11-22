@@ -119,6 +119,15 @@ section Ordered
 
 variable [AddMonoid ω] [Preorder ω] {B s : ω}
 
+/-- A larger charge at every call gives a larger charge along every completed path. -/
+theorem charge_mono [AddLeftMono ω] [AddRightMono ω] {d : P.A → ω} (h : ∀ a, c a ≤ d a)
+    (x : FreeM P α) (p : Path x) : charge c x p ≤ charge d x p := by
+  induction x using FreeM.rec with
+  | pure a => exact le_rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    exact add_le_add (h a) (ih b p)
+
 /-- A structural bound bounds the charge of every completed path. -/
 theorem charge_le_of_isChargeBound {x : FreeM P α} (h : x.IsChargeBound c B s) (p : Path x) :
     s + charge c x p ≤ B := by
