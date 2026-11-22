@@ -6,13 +6,13 @@ Authors: Bas Spitters
 
 module
 
-public import PolyFun.PFunctor.Handler.CertifiedVec
+public import PolyFun.PFunctor.Handler.Demand
 public import PolyFun.PFunctor.Free.Cost.Tactic
 
 /-!
 # Vector charges
 
-Checks for `PolyFun.PFunctor.Handler.CertifiedVec` on a program that makes two hash calls and one
+Checks for `PolyFun.PFunctor.Handler.Demand` on a program that makes two hash calls and one
 compression call:
 
 * its use vector over the two resources is `(2, 1)`, and the components of its worst-case vector
