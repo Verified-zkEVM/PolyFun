@@ -513,7 +513,10 @@ single-variable substitution laws live in `Scoped.Renaming` and
 `Scoped.Substitution`. `Scoped.Interpretation` folds into functions of environments
 and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
 constructor algebra. Algebras receive argument meanings as functions of new bound
-values, so entering a binder does not execute its body.
+values, so entering a binder does not execute its body. A context has finitely many
+variables, so a decidable property of every variable is decidable
+(`ScopedVar.decidableForall`), and `decide` checks a property of every entry of a concrete
+environment.
 
 A context `Ξ ++ Γ` has two blocks of positions. `x.weakenMany Ξ` moves a variable of `Γ` past
 the block `Ξ`, and `x.appendLeft Γ` keeps a variable of `Ξ` at its position in front of `Γ`.

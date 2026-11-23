@@ -17,7 +17,9 @@ leaves, and constructor children carry their extended typing judgments.
 
 An environment `Env V Γ` assigns a value to each binding position of `Γ`. Renamings
 and substitutions are the environments whose values are variables and terms. They
-lift under each argument's binders.
+lift under each argument's binders. A context has finitely many positions, so a
+decidable property of every variable, or of every entry of an environment, is decidable
+(`ScopedVar.decidableForall`).
 -/
 
 public section
@@ -106,6 +108,22 @@ private theorem ScopedVar.nonempty_of_mem {S : Type u} {a : S} :
 theorem nonempty_scopedVar_iff {S : Type u} {Γ : List S} {a : S} :
     Nonempty (ScopedVar Γ a) ↔ a ∈ Γ :=
   ⟨fun ⟨x⟩ => x.mem, ScopedVar.nonempty_of_mem⟩
+
+/-- A property of every variable of a context is decidable when it is decidable at each
+variable: the positions are checked from the nearest outwards. A property of every entry of an
+environment `η`, `∀ a x, q a (η a x)`, is the case `p a x := q a (η a x)`. -/
+instance ScopedVar.decidableForall {S : Type u} :
+    {Γ : List S} → {p : ∀ a, ScopedVar Γ a → Prop} → [∀ a x, Decidable (p a x)] →
+      Decidable (∀ a x, p a x)
+  | [], _, _ => isTrue fun _ x => nomatch x
+  | _ :: _, p, _ =>
+    haveI := decidableForall (p := fun a x => p a (.succ x))
+    decidable_of_iff (p _ .zero ∧ ∀ a x, p a (.succ x))
+      ⟨fun h a x => by
+        cases x with
+        | zero => exact h.1
+        | succ x => exact h.2 a x,
+        fun h => ⟨h _ .zero, fun a x => h a x.succ⟩⟩
 
 /-- Constructor shapes with explicit binding information for every argument. -/
 structure ScopedSignature (S : Type u) where

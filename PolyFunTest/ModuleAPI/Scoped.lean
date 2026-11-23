@@ -218,6 +218,28 @@ example {Ξ Γ : List Ty} (ξ : Env (fun _ : Ty => Nat) Ξ) (η : Env (fun _ : T
     (hξ : ∀ a x, 0 < ξ a x) (hη : ∀ a x, 0 < η a x) : ∀ a x, 0 < Env.append ξ η a x :=
   Env.forall_append.2 ⟨hξ, hη⟩
 
+/-- Three positive entries. -/
+def positiveEntries : Env (fun _ : Ty => Nat) [.nat, .nat, .nat] :=
+  Env.cons 1 (Env.cons 2 (Env.single 3))
+
+/-- The same entries with zero at the middle position. -/
+def zeroInMiddle : Env (fun _ : Ty => Nat) [.nat, .nat, .nat] :=
+  Env.cons 1 (Env.cons 0 (Env.single 3))
+
+/-- A property of every entry of a concrete environment is decided entry by entry. -/
+example : ∀ a x, 0 < positiveEntries a x := by decide
+
+/-- One failing entry past the nearest position makes the property false. -/
+example : ¬ ∀ a x, 0 < zeroInMiddle a x := by decide
+
+/-- The empty context has no variables, so every property holds at all of them. -/
+example : ∀ a, ScopedVar ([] : List Ty) a → False := by decide
+
+/-- A property of the variables themselves. -/
+example : ∀ a (x : ScopedVar [Ty.nat, .arrow .nat .nat] a), x.index < 2 := by decide
+
+example : ¬ ∀ a (x : ScopedVar [Ty.nat, .arrow .nat .nat] a), x.index < 1 := by decide
+
 /-- A context has a variable of a sort exactly when the sort occurs in it. -/
 example : Nonempty (ScopedVar [Ty.nat, .arrow .nat .nat] (.arrow .nat .nat)) :=
   nonempty_scopedVar_iff.2 (by simp)
