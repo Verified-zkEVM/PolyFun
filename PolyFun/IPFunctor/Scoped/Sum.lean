@@ -22,6 +22,12 @@ both summands has finitely many arguments, so does each constructor of the sum, 
 of the two summands in one carrier combine into an interpretation of the sum:
 `Interpretation.sum`, and `CBVInterpretation.sum` for call-by-value readings.
 
+Both combined interpretations are reducible too. At a constructor of one summand, each reduces
+to that summand's algebra, so `simp` with the summands' equations normalizes the reading of a
+concrete term. An equation stated for arbitrary summands would not fire there, because `simp`
+indexes the type arguments of `Sum.inl`. In such an equation they are the operation types of the
+summand variables, but in a concrete term they reduce to concrete types.
+
 A term of a summand is a term of the sum. `Term.inl` and `Term.inr` transport it with
 `IFreeM.mapLens` along the injections `ScopedSignature.inl` and `ScopedSignature.inr` of the
 syntax polynomials. The embedded term means what the original means in the summand's
@@ -79,13 +85,13 @@ section Interpretations
 variable {V : S → Type z} {m : Type z → Type z'}
 
 /-- Interpret each summand's constructors with its own algebra. -/
-@[expose] def Interpretation.sum (alg₁ : Interpretation σ V) (alg₂ : Interpretation τ V) :
-    Interpretation (σ.sum τ) V
+@[expose, reducible] def Interpretation.sum (alg₁ : Interpretation σ V)
+    (alg₂ : Interpretation τ V) : Interpretation (σ.sum τ) V
   | _, .inl o, next => alg₁ o next
   | _, .inr o, next => alg₂ o next
 
 /-- Interpret each summand's constructors with its own call-by-value algebra. -/
-@[expose] def CBVInterpretation.sum (alg₁ : CBVInterpretation σ m V)
+@[expose, reducible] def CBVInterpretation.sum (alg₁ : CBVInterpretation σ m V)
     (alg₂ : CBVInterpretation τ m V) : CBVInterpretation (σ.sum τ) m V
   | _, .inl o, next => alg₁ o next
   | _, .inr o, next => alg₂ o next

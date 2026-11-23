@@ -22,7 +22,8 @@ oracle interface `Query`. Its arguments run from left to right, an abstraction r
 arrow, and a query asks the oracle. Running the program with the handler that answers by `f`
 (`run f`) gives the ordinary reading (`run_denoteCBV`). The proof is `Term.denoteCBV_related` at a
 logical relation (`Rel`): equal numbers, and at an arrow sort, functions that send related
-arguments to programs whose runs are related to the results.
+arguments to programs whose runs are related to the results. The program of a concrete term
+normalizes by `simp` with the equations of the two readings (`askNested`).
 
 A term that uses no query gives the same answer under every handler (`run_denoteCBV_of_heads`).
 Its fragment is the set of left heads, `Set.range Head.inl`. A scoped-program expression
@@ -134,6 +135,17 @@ example : askTwice.denoteCBV cbv Env.empty =
     .liftBind (P := Query) 3 fun x => .liftBind x fun y => pure (x + y) := rfl
 
 example : run (· + 1) (askTwice.denoteCBV cbv Env.empty) = 4 + 5 := rfl
+
+/-- `query (query 3)`: ask at `3`, then at the answer. -/
+@[expose] def askNested : Lang.Term [] .nat := query (query (Term.inl (Expr.literal 3)))
+
+/-- `cbv` reduces to `coreCBV` or `queryCBV` at each constructor, so `simp` with their equations
+normalizes the call-by-value program of `askNested`. `askTwice` is checked by `rfl` instead:
+the signature gives the argument sorts of its `let` by `Fin.cases` at a position, which `simp`
+does not reduce inside the types of the arguments. -/
+example :
+    askNested.denoteCBV cbv Env.empty = .liftBind (P := Query) 3 fun x => .liftBind x pure := by
+  simp [askNested, query, coreCBV, queryCBV, Expr.literal]
 
 /-! ## Adequacy -/
 

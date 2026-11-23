@@ -544,7 +544,10 @@ instances for a concrete signature.
 
 [`Scoped.Sum`](../../PolyFun/IPFunctor/Scoped/Sum.lean) combines two signatures over the same
 sorts. `σ.sum τ` has the constructors of both, and `Interpretation.sum` and
-`CBVInterpretation.sum` interpret each constructor with the algebra of its summand. `Term.inl` and
+`CBVInterpretation.sum` interpret each constructor with the algebra of its summand. Both are
+reducible, so `simp` with the summands' equations normalizes the reading of a concrete term.
+Equations stated for arbitrary summands would not fire on a concrete term: `simp` indexes the
+type arguments of `Sum.inl`, which reduce to concrete operation types there. `Term.inl` and
 `Term.inr` embed the terms of a summand by `IFreeM.mapLens` along the injections
 `ScopedSignature.inl` and `ScopedSignature.inr` of the syntax polynomials. An embedded term keeps
 its meaning (`denote_inl`, `denoteCBV_inl`), by `fold_reindex`. It uses the images of its heads

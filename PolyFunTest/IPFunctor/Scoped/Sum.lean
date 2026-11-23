@@ -18,6 +18,8 @@ query signature.
   summand's interpretation. The same holds for the call-by-value reading.
 * An embedded term uses only heads of its own summand, and `decide` checks this for concrete
   terms through the finiteness instance of the sum's arguments.
+* The combined interpretations are reducible, so the reading of a concrete term normalizes by
+  `simp` with the equations of the summands' algebras.
 * A term that uses a query changes its meaning when the query's interpretation does, and its run
   changes when the handler does. So the fragment condition of `run_denoteCBV_of_heads` cannot be
   dropped.
@@ -79,6 +81,14 @@ example : (Term.inr (σ := signature) queryVar).heads = {Head.inr ⟨.nat, Query
   simp [queryVar]
 
 example : ¬ askTwice.heads ⊆ {h | isCore h = true} := by decide
+
+/-! ## Concrete readings by `simp` -/
+
+/-- The ordinary reading of a concrete term normalizes by `simp` with the summands' equations, as
+its call-by-value reading does in the tutorial. -/
+example (f : Nat → Nat) :
+    askNested.denote (algebra.sum (queryAlgebra f)) Env.empty = f (f 3) := by
+  simp [askNested, query, algebra, queryAlgebra, Expr.literal]
 
 /-! ## The fragment condition is needed -/
 
