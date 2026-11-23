@@ -515,6 +515,37 @@ and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
 constructor algebra. Algebras receive argument meanings as functions of new bound
 values, so entering a binder does not execute its body.
 
+A context `Ξ ++ Γ` has two blocks of positions. `x.weakenMany Ξ` moves a variable of `Γ` past
+the block `Ξ`, and `x.appendLeft Γ` keeps a variable of `Ξ` at its position in front of `Γ`.
+Reading `Env.append ξ η` through them gives `η` and `ξ` (`Env.rename_weakenMany_append`,
+`Env.rename_appendLeft_append`). Reading through an appended pair of renamings reads each block
+through its own (`Env.rename_append_renaming`), so a permutation of blocks, such as exchanging
+two, is a renaming assembled from these.
+
+[`Scoped.Uses`](../../PolyFun/IPFunctor/Scoped/Uses.lean) records the constructors a term uses.
+A `Head` is an operation together with its result sort, and `Term.heads t` is the set of heads
+that occur in `t`, below any number of binders. It is a fold. Renaming keeps the heads of a term
+(`heads_rename`). Substitution keeps them and adds at most the heads of the substituted terms
+(`heads_subset_heads_subst`, `heads_subst_subset`). `Term.denote_congr_of_agreeOn_heads` states
+that two interpretations that agree on the heads of `t` give `t` the same meaning. A side
+condition `h ∉ t.heads` therefore gives each consequence of not using `h` without an induction
+over terms. When every constructor has finitely many arguments, `h ∈ t.heads` and `t.heads ⊆ H`
+for a decidable set `H` are decidable, and `decide` checks them on concrete terms. Both decision
+procedures are Boolean folds, related to `heads` by `fold_rel`. `Head` is a structure rather than
+the sigma type `(a : S) × σ.Op a`: through the sigma type, instance search would not find these
+instances for a concrete signature.
+
+[`Scoped.Sum`](../../PolyFun/IPFunctor/Scoped/Sum.lean) combines two signatures over the same
+sorts. `σ.sum τ` has the constructors of both, and `Interpretation.sum` and
+`CBVInterpretation.sum` interpret each constructor with the algebra of its summand. `Term.inl` and
+`Term.inr` embed the terms of a summand by `IFreeM.mapLens` along the injections
+`ScopedSignature.inl` and `ScopedSignature.inr` of the syntax polynomials. An embedded term keeps
+its meaning (`denote_inl`, `denoteCBV_inl`), by `fold_reindex`. It uses the images of its heads
+(`heads_inl`), so the heads of one summand, such as `Set.range Head.inl`, name the fragment of the
+sum's terms that use no constructor of the other. The sum's argument types are `Sum` recursors,
+as in `IPFunctor.sum`; `Sum.instFintypeRec` in `ToCslib` makes them finite when both summands'
+are, so `decide` checks the heads of concrete terms of a sum.
+
 [`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
 interprets a binding signature continuously. A `DomainInterpretation σ V` receives each
 argument as a continuous function of only the variables that argument binds, over an
@@ -542,21 +573,61 @@ the depth. [`KernelBudget`](../../PolyFunTest/IPFunctor/Scoped/KernelBudget.lean
 nested abstractions of the tutorial with the kernel's budget lowered to `maxHeartbeats 200`. They
 need between 5 and 10, and between 4000 and 5000 through `Env.bindOne`.
 
+[`Scoped.CBVInterpretation`](../../PolyFun/IPFunctor/Scoped/CBVInterpretation.lean) reads a term
+call by value in a monad `m`. A `CBVInterpretation σ m V` receives each argument as a computation
+of the argument's value from the values of the variables it binds,
+`Env V (σ.binders op p) → m (V (σ.sort op p))`. `Term.denoteCBV` folds it, and a variable
+returns its value by `pure`. Variables stand for values, never for computations, so the algebra
+decides when each argument runs and in which order the effects happen. A language with Kleisli
+arrows reads an abstraction as a closure and runs it at each application. Renaming reads the
+environment through the renaming (`denoteCBV_rename`). Substituting an arbitrary term for a
+variable changes the meaning in general: the term runs at each occurrence of the variable instead
+of once, where it is bound.
+
+`Term.denoteCBV_related` is the fundamental lemma of a logical relation between a call-by-value
+reading and an ordinary `Interpretation`. It takes a relation `RV` between computed and plain
+values, and a relation `RC` between computations and plain values. Suppose that `pure` sends
+related values to related computations, and that each head in a set `H` sends related arguments
+to related results (`CBVInterpretation.RelatedOn H`). Then every term with `t.heads ⊆ H` has
+related meanings in environments related by `Env.LiftRel RV`. A fragment is thus named by the same
+notion of used constructors as in `denote_congr_of_heads_subset`, and `RelatedOn.sum` assembles the
+relation of a sum from those of its summands. Adequacy of an effectful reading is the instance in
+which a computation is related to a value when running it gives a related value.
+
+The lazy and the strict readings are two folds of one syntax layer. `DomainInterpretation` passes
+each argument as a continuous function of its bound values, which the algebra may apply, discard,
+or take a least fixed point of: a call-by-name reading with recursion and divergence, and no other
+effect. `CBVInterpretation` passes each argument as a computation in `m`, which the algebra
+sequences: a call-by-value reading with the effects of `m`, and recursion only where `m` provides
+it. Each reading has a fundamental lemma against an ordinary `Interpretation`, with environments
+related by `Env.LiftRel` (`denoteDomain_related`, `denoteCBV_related`), so a language can relate
+both readings to one native evaluator.
+
+The call-by-value reading is defined for binding signatures only. A stacked family reads its value
+level through evaluated heads and casts each result along the model's coherence equations
+(`Stacked.Model.alg`). A call-by-value counterpart would cast computations `m (V d)` along the
+same equations and needs its own fundamental lemma. Its fragment condition would also need the
+heads of `ScopedFamily` terms, which `Term.heads` does not cover. No stacked language needs an
+effectful reading yet, so these remain unbuilt.
+
 Names in the scoped layer follow one rule. A plain name is an ordinary interpretation and its
 fold: `Interpretation` and `Term.denote`, and for stacked families `Model.Interp`, `Model.alg`
 and `Model.denote`. `Domain` marks the continuous counterpart, semantics in omega-complete
 partial orders: `DomainInterpretation`, `Term.denoteDomain`, `substitutionEnvDomain`,
-`Model.DomainInterp`, `Model.domainAlg` and `Model.denoteDomain`. The suffix `Continuous` marks
-instead the bundled `→𝒄` form of an existing function, such as `Env.renameContinuous`.
-`DomainInterpretation` is the binding-signature analogue of `PFunctor.Resumption.ContinuousAlgebra`,
-whose fold over resumptions is called `denote`.
+`Model.DomainInterp`, `Model.domainAlg` and `Model.denoteDomain`. `CBV` marks the call-by-value
+counterpart, semantics in a monad: `CBVInterpretation` and `Term.denoteCBV`. The suffix
+`Continuous` marks instead the bundled `→𝒄` form of an existing function, such as
+`Env.renameContinuous`. `DomainInterpretation` is the binding-signature analogue of
+`PFunctor.Resumption.ContinuousAlgebra`, whose fold over resumptions is called `denote`.
 
 Here an algebra is always a signature algebra, which interprets each constructor given its
-arguments' meanings. `Interpretation` and `DomainInterpretation` are algebras of a binding
-signature, and the tutorials' `algebra` definitions are instances of them. `Model.alg` and
-`Model.domainAlg` are the `IPFunctor.FoldAlgebra`s that a stacked model's interpretation induces
-on the syntax polynomial, the input of `IFreeM.fold`. The ordered monad algebras of the program
-logic, such as `MAlgOrdered`, are a different notion: they interpret the computations of a monad.
+arguments' meanings. `Interpretation`, `DomainInterpretation` and `CBVInterpretation` are
+algebras of a binding signature, and the tutorials' `algebra` definitions are instances of them.
+`Model.alg` and `Model.domainAlg` are the `IPFunctor.FoldAlgebra`s that a stacked model's
+interpretation induces on the syntax polynomial, the input of `IFreeM.fold`. The ordered monad
+algebras of the program logic, such as `MAlgOrdered`, are a different notion: they interpret the
+computations of a monad. A `CBVInterpretation` takes values in a monad but is still a signature
+algebra: it interprets constructors, not the monad's computations.
 
 [`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
 lemma into a `Control.Semantics.Correspondence`. `Term.correspondence` certifies a term
@@ -604,9 +675,26 @@ does not itself supply a language's type-quantifier syntax or constraints.
 The [scoped-program tutorial](../../Examples/Tutorials/ScopedPrograms.lean)
 contains arithmetic, functions, lexical lets, and a bounded loop whose body is
 stored once. Its let-elimination proof uses generic fold fusion and substitution
-correctness. [Ordinary-import checks](../../PolyFunTest/ModuleAPI/Scoped.lean)
+correctness. Let elimination leaves no let under any binder (`heads_eliminateLets`), so the
+program it returns means the same under every interpretation of `let`
+(`eliminateLets_denote_of_agree`). [Ordinary-import checks](../../PolyFunTest/ModuleAPI/Scoped.lean)
 exercise capture avoidance, noninjective sort translation, and the environment laws
-shared by renamings and substitutions.
+shared by renamings and substitutions. [`Uses`](../../PolyFunTest/IPFunctor/Scoped/Uses.lean)
+decides which heads concrete programs use, and shows a program that reads a tape position
+changing its meaning when the tape does.
+
+The [effectful-language tutorial](../../Examples/Tutorials/ScopedEffects.lean) adds an oracle
+query to the scoped-program language as the second summand of a sum. Its call-by-value reading is
+a free program over the oracle. Running the program with the handler that answers by a function
+`f` gives the ordinary reading that answers by `f` (`run_denoteCBV`). A term that uses no query
+gives the same answer under every handler (`run_denoteCBV_of_heads`), and each embedded
+scoped-program expression is such a term (`run_denoteCBV_inl`). The regression module
+[`CBVInterpretation`](../../PolyFunTest/IPFunctor/Scoped/CBVInterpretation.lean) reads a language
+with a logging operation in a state monad. It checks that the algebra fixes the order of effects.
+A let runs its bound term once, and substituting the term runs it at each occurrence. A term that
+writes to the log lies outside the fragment in which the log is unchanged.
+[`Sum`](../../PolyFunTest/IPFunctor/Scoped/Sum.lean) checks the embeddings and the heads of the
+tutorial's language.
 
 ## Binders that change parameter contexts
 

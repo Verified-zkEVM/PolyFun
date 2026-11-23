@@ -184,4 +184,47 @@ example (η : Env Ty.Value [Ty.nat, .nat]) :
     | zero => rfl
     | succ x => nomatch x
 
+/-! ## Blocks of positions -/
+
+/-- The positions of the first block of `[nat, nat] ++ [nat]`, and those past it. -/
+example :
+    let η : Env (fun _ : Ty => Nat) ([.nat, .nat] ++ [.nat]) :=
+      Env.append (Env.cons 1 (Env.single 2)) (Env.single 3)
+    η .nat ((ScopedVar.succ .zero : ScopedVar [Ty.nat, .nat] .nat).appendLeft [.nat]) = 2 ∧
+      η .nat ((ScopedVar.zero : ScopedVar [Ty.nat] .nat).weakenMany [.nat, .nat]) = 3 :=
+  ⟨rfl, rfl⟩
+
+/-- Keeping a variable in front of a context keeps its index. -/
+example {Γ Ξ : List Ty} {a : Ty} (x : ScopedVar Ξ a) : (x.appendLeft Γ).index = x.index := by
+  simp
+
+/-- Exchange the blocks of `Ξ ++ Γ`. -/
+def swapBlocks (Ξ Γ : List Ty) : Renaming (Ξ ++ Γ) (Γ ++ Ξ) :=
+  Env.append (fun _ x => x.weakenMany Γ) (fun _ x => x.appendLeft Ξ)
+
+/-- Reading through the exchange exchanges the blocks of an environment. -/
+example {Ξ Γ : List Ty} (ξ : Env Ty.Value Ξ) (η : Env Ty.Value Γ) :
+    Env.rename (swapBlocks Ξ Γ) (Env.append η ξ) = Env.append ξ η := by
+  rw [swapBlocks, Env.rename_append_renaming, Env.rename_weakenMany_append,
+    Env.rename_appendLeft_append]
+
+/-- An environment of a non-empty context is its nearest value followed by the others. -/
+example {Γ : List Ty} {a : Ty} (η : Env Ty.Value (a :: Γ)) :
+    Env.cons (η a .zero) (fun b x => η b x.succ) = η :=
+  Env.cons_eta η
+
+/-- A property of every value of an appended environment is a property of each block. -/
+example {Ξ Γ : List Ty} (ξ : Env (fun _ : Ty => Nat) Ξ) (η : Env (fun _ : Ty => Nat) Γ)
+    (hξ : ∀ a x, 0 < ξ a x) (hη : ∀ a x, 0 < η a x) : ∀ a x, 0 < Env.append ξ η a x :=
+  Env.forall_append.2 ⟨hξ, hη⟩
+
+/-- A context has a variable of a sort exactly when the sort occurs in it. -/
+example : Nonempty (ScopedVar [Ty.nat, .arrow .nat .nat] (.arrow .nat .nat)) :=
+  nonempty_scopedVar_iff.2 (by simp)
+
+example : ¬ Nonempty (ScopedVar [Ty.nat] (.arrow .nat .nat)) := by
+  simp [nonempty_scopedVar_iff]
+
+example {Γ : List Ty} {a : Ty} (x : ScopedVar Γ a) : a ∈ Γ := x.mem
+
 end PolyFunTest.Scoped

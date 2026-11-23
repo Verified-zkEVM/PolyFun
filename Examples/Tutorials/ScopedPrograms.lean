@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.IPFunctor.Scoped.Interpretation
+public import PolyFun.IPFunctor.Scoped.Uses
 public import ToCslib.Data.Fin.Cases
 
 /-!
@@ -14,7 +14,9 @@ public import ToCslib.Data.Fin.Cases
 
 Arithmetic, functions, lexical lets, and bounded loops share the generic
 binding and interpretation APIs. A loop stores its body once, independently
-of the iteration count. Let elimination uses capture-avoiding substitution.
+of the iteration count. Let elimination uses capture-avoiding substitution. It leaves no let
+under any binder, so the program it returns means the same under every interpretation of
+`let`.
 -/
 
 public section
@@ -147,5 +149,37 @@ theorem eliminateLets_correct {Γ : List Ty} {a : Ty} (e : Expr Γ a) (ρ : Env 
       | loop a n => rfl)
     e
   exact congrFun h ρ
+
+/-! ## Let elimination removes every let -/
+
+/-- Whether an operation is a lexical binding. -/
+@[expose] def Op.isLet : {a : Ty} → Op a → Bool
+  | _, .letE _ _ => true
+  | _, _ => false
+
+/-- Let elimination keeps only heads of the original program, and none of them is a let. -/
+theorem heads_eliminateLets {Γ : List Ty} {a : Ty} (e : Expr Γ a) :
+    (eliminateLets e).heads ⊆ {h ∈ e.heads | h.op.isLet = false} := by
+  refine IFreeM.fold_rel (D := fun j => Expr j.1 j.2) (E := fun _ => Set signature.Head)
+    (fun _ e' s => e'.heads ⊆ {h ∈ s | h.op.isLet = false}) _ _ _ _ ?_ ?_ e
+  · exact fun _ _ => Set.empty_subset _
+  intro ⟨Γ, a⟩ op es ss h
+  have hes (p) : (es p).heads ⊆ {x ∈ insert ⟨a, op⟩ (⋃ p, ss p) | x.op.isLet = false} :=
+    (h p).trans fun x hx => ⟨Set.mem_insert_of_mem _ (Set.mem_iUnion_of_mem _ hx.1), hx.2⟩
+  cases op with
+  | letE a b =>
+    exact (Term.heads_substOne_subset (es 1) (es 0)).trans (Set.union_subset (hes 1) (hes 0))
+  | literal n | add | lam a b | app a b | loop a n =>
+    exact Set.insert_subset_iff.2 ⟨⟨Set.mem_insert _ _, rfl⟩, Set.iUnion_subset hes⟩
+
+/-- After let elimination, a program means the same under every interpretation that agrees
+with `algebra` on the other operations, however it interprets `let`. -/
+theorem eliminateLets_denote_of_agree {alg : Interpretation signature Ty.Value}
+    (hagree : ∀ h : signature.Head, h.op.isLet = false → alg h.op = algebra h.op)
+    {Γ : List Ty} {a : Ty} (e : Expr Γ a) (ρ : Env Ty.Value Γ) :
+    (eliminateLets e).denote alg ρ = e.denote algebra ρ := by
+  rw [Term.denote_congr_of_heads_subset (H := {h : signature.Head | h.op.isLet = false}) _
+    ((heads_eliminateLets e).trans fun _ hh => hh.2) fun h hh => hagree h hh,
+    eliminateLets_correct]
 
 end Examples.ScopedPrograms
