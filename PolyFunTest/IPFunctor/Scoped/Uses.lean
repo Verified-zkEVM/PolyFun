@@ -174,6 +174,20 @@ example {i : Nat} (body : signature.Term (.nat :: Γ) a) (value : signature.Term
 /-- Renaming keeps the heads. -/
 example (t : signature.Term Γ a) (b : Ty) : (t.weaken b).heads = t.heads := by simp
 
+/-- A constructor whose heads avoid tape reads is not itself a tape read, and neither are the
+heads of its arguments. -/
+example {op : signature.Op a}
+    {args : (p : signature.Arg op) → signature.Term (signature.binders op p ++ Γ)
+      (signature.sort op p)}
+    (ht : (Term.node op args).heads ⊆ {h | h.op.isRand = false}) :
+    op.isRand = false ∧ ∀ p, (args p).heads ⊆ {h | h.op.isRand = false} :=
+  (Term.heads_node_subset_iff op args).1 ht
+
+/-- A tape read has no arguments, so only its own head excludes it from the fragment. -/
+example : ¬ (rand 1 : signature.Term [] .nat).heads ⊆ {h | h.op.isRand = false} := by
+  simp only [rand, Term.heads_node_subset_iff]
+  simp [Op.isRand]
+
 end PolyFunTest.Scoped.Uses
 
 /-! ## Let elimination in the scoped-program tutorial -/

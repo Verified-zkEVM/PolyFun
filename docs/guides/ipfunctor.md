@@ -534,7 +534,9 @@ that occur in `t`, below any number of binders. It is a fold. Renaming keeps the
 (`heads_subset_heads_subst`, `heads_subst_subset`). `Term.denote_congr_of_agreeOn_heads` states
 that two interpretations that agree on the heads of `t` give `t` the same meaning. A side
 condition `h ∉ t.heads` therefore gives each consequence of not using `h` without an induction
-over terms. When every constructor has finitely many arguments, `h ∈ t.heads` and `t.heads ⊆ H`
+over terms. At a constructor, `heads_node_subset_iff` splits `t.heads ⊆ H` into the condition
+on its own head and the conditions on its arguments' heads. When every constructor has finitely
+many arguments, `h ∈ t.heads` and `t.heads ⊆ H`
 for a decidable set `H` are decidable, and `decide` checks them on concrete terms. Both decision
 procedures are Boolean folds, related to `heads` by `fold_rel`. `Head` is a structure rather than
 the sigma type `(a : S) × σ.Op a`: through the sigma type, instance search would not find these

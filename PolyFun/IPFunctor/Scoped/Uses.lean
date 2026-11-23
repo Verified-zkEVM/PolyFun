@@ -85,6 +85,13 @@ theorem heads_subset_heads_node (op : σ.Op a)
     (args p).heads ⊆ (node op args).heads :=
   (Set.subset_iUnion (fun p => (args p).heads) p).trans (Set.subset_insert _ _)
 
+/-- The heads of a constructor lie in a set exactly when its own head and the heads of each of
+its arguments do. -/
+theorem heads_node_subset_iff (op : σ.Op a)
+    (args : (p : σ.Arg op) → σ.Term (σ.binders op p ++ Γ) (σ.sort op p)) {H : Set σ.Head} :
+    (node op args).heads ⊆ H ↔ (⟨a, op⟩ : σ.Head) ∈ H ∧ ∀ p, (args p).heads ⊆ H := by
+  simp [Set.insert_subset_iff]
+
 /-! ## Renaming and substitution -/
 
 /-- Renaming changes only variables, so it keeps the heads of a term. -/
