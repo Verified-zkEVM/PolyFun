@@ -198,15 +198,34 @@ example :
 example {Γ Ξ : List Ty} {a : Ty} (x : ScopedVar Ξ a) : (x.appendLeft Γ).index = x.index := by
   simp
 
-/-- Exchange the blocks of `Ξ ++ Γ`. -/
-def swapBlocks (Ξ Γ : List Ty) : Renaming (Ξ ++ Γ) (Γ ++ Ξ) :=
-  Env.append (fun _ x => x.weakenMany Γ) (fun _ x => x.appendLeft Ξ)
-
-/-- Reading through the exchange exchanges the blocks of an environment. -/
+/-- With no nearer block, the exchange exchanges the two blocks of a context. -/
 example {Ξ Γ : List Ty} (ξ : Env Ty.Value Ξ) (η : Env Ty.Value Γ) :
-    Env.rename (swapBlocks Ξ Γ) (Env.append η ξ) = Env.append ξ η := by
-  rw [swapBlocks, Env.rename_append_renaming, Env.rename_weakenMany_append,
-    Env.rename_appendLeft_append]
+    Env.rename (Renaming.swapBlocks [] Ξ Γ) (Env.append η ξ) = Env.append ξ η :=
+  Env.rename_swapBlocks Env.empty ξ η
+
+/-- Exchanging the two outermost positions keeps the nearest one. -/
+example :
+    let η : Env (fun _ : Ty => Nat) ([.nat] ++ [.nat] ++ [.nat]) :=
+      Env.append (Env.append (Env.single 1) (Env.single 2)) (Env.single 3)
+    let η' : Env (fun _ : Ty => Nat) [.nat, .nat, .nat] :=
+      Env.rename (Renaming.swapBlocks [Ty.nat] [.nat] [.nat]) η
+    η' .nat .zero = 1 ∧ η' .nat (.succ .zero) = 3 ∧ η' .nat (.succ (.succ .zero)) = 2 :=
+  ⟨rfl, rfl, rfl⟩
+
+/-- The exchange of the two outermost positions behind any block, in `simp` normal form. -/
+example {Ξ : List Ty} {b c : Ty} (w : Env Ty.Value Ξ) (x : c.Value) (y : b.Value) :
+    Env.rename (Renaming.swapBlocks Ξ [b] [c])
+        (Env.append (Env.append w (Env.single x)) (Env.single y)) =
+      Env.append (Env.append w (Env.single y)) (Env.single x) := by
+  simp
+
+/-- A term renamed by the exchange reads the exchanged environment as the original term reads
+the original one: the variable of the outer block reads `5` either way. -/
+example : ((Term.var (.succ .zero) : Expr ([] ++ [.nat] ++ [.nat]) .nat).rename
+      (Renaming.swapBlocks [] [.nat] [.nat])).denote algebra
+        (Env.append (Env.append Env.empty (Env.single 5)) (Env.single 7)) = 5 := by
+  rw [Term.denote_rename_swapBlocks]
+  rfl
 
 /-- An environment of a non-empty context is its nearest value followed by the others. -/
 example {Γ : List Ty} {a : Ty} (η : Env Ty.Value (a :: Γ)) :

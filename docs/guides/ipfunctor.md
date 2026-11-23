@@ -522,8 +522,10 @@ A context `Ξ ++ Γ` has two blocks of positions. `x.weakenMany Ξ` moves a vari
 the block `Ξ`, and `x.appendLeft Γ` keeps a variable of `Ξ` at its position in front of `Γ`.
 Reading `Env.append ξ η` through them gives `η` and `ξ` (`Env.rename_weakenMany_append`,
 `Env.rename_appendLeft_append`). Reading through an appended pair of renamings reads each block
-through its own (`Env.rename_append_renaming`), so a permutation of blocks, such as exchanging
-two, is a renaming assembled from these.
+through its own (`Env.rename_append_renaming`), so a permutation of blocks is a renaming
+assembled from these. `Renaming.swapBlocks Ξ Δ₁ Δ₂` exchanges the blocks `Δ₁` and `Δ₂` behind
+`Ξ`. Reading through it exchanges their values (`Env.rename_swapBlocks`), and a term renamed by
+it means in the exchanged environment what it meant before (`Term.denote_rename_swapBlocks`).
 
 [`Scoped.Uses`](../../PolyFun/IPFunctor/Scoped/Uses.lean) records the constructors a term uses.
 A `Head` is an operation together with its result sort, and `Term.heads t` is the set of heads

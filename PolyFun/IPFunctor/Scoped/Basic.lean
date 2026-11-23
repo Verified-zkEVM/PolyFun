@@ -264,6 +264,14 @@ namespace Renaming
     (b : S) (Ξ : List S) {a : S} (x : ScopedVar (b :: Ξ ++ Γ) a) :
     ρ.liftMany (b :: Ξ) a x = lift (liftMany ρ Ξ) b a x := rfl
 
+/-- Exchange two adjacent blocks `Δ₁` and `Δ₂` of positions behind a block `Ξ` of nearer ones,
+which keep their places. With `Ξ = []` it exchanges the two blocks of a context, and with
+singleton blocks it exchanges the two outermost positions. -/
+@[expose] def swapBlocks (Ξ Δ₁ Δ₂ : List S) : Renaming (Ξ ++ Δ₁ ++ Δ₂) (Ξ ++ Δ₂ ++ Δ₁) :=
+  Env.append
+    (Env.append (fun _ x => (x.appendLeft Δ₂).appendLeft Δ₁) fun _ x => x.weakenMany (Ξ ++ Δ₂))
+    fun _ x => (x.weakenMany Ξ).appendLeft Δ₁
+
 end Renaming
 
 namespace Term

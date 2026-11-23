@@ -13,7 +13,9 @@ public import PolyFun.IPFunctor.Scoped.Basic
 
 `Env.rename ρ η` reads the environment `η` through the renaming `ρ`. Renamings and
 substitutions are environments, so the same operation composes a renaming with either:
-`Env.rename ρ τ` applies `ρ` and then `τ`.
+`Env.rename ρ τ` applies `ρ` and then `τ`. Reading through `Renaming.swapBlocks`, the
+exchange of two blocks of positions, exchanges those blocks of an environment
+(`Env.rename_swapBlocks`).
 -/
 
 public section
@@ -78,6 +80,15 @@ theorem rename_append_renaming {Ξ : List S} (ρ₁ : Renaming Ξ Δ) (ρ₂ : R
     cases x with
     | zero => rfl
     | succ x => exact congrFun (congrFun (ih fun _ y => ρ₁ _ y.succ) b) x
+
+/-- Reading through the exchange of two blocks exchanges their values. -/
+@[simp] theorem rename_swapBlocks {Ξ Δ₁ Δ₂ : List S} (ξ : Env V Ξ) (η₁ : Env V Δ₁)
+    (η₂ : Env V Δ₂) :
+    rename (Renaming.swapBlocks Ξ Δ₁ Δ₂) (append (append ξ η₂) η₁) =
+      append (append ξ η₁) η₂ := by
+  rw [Renaming.swapBlocks, rename_append_renaming, rename_append_renaming,
+    rename_weakenMany_append]
+  refine congrArg₂ append (congrArg (append · η₁) ?_) ?_ <;> funext a x <;> simp
 
 end Env
 
