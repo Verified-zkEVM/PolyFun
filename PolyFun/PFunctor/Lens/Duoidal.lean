@@ -85,10 +85,10 @@ def orderingLens (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
 `Σ _ : p.B a, q.B b` and the plain product `p.B a × q.B b`. In duoidal terms,
 `⊗` and `◃` carry the *same* directions; they differ only in how positions are
 packaged. -/
-theorem orderingLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
-    (orderingLens p q).IsCartesian := fun _ab =>
-  Function.bijective_iff_has_inverse.mpr
-    ⟨fun uv => ⟨uv.1, uv.2⟩, fun _ => rfl, fun _ => rfl⟩
+instance orderingLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
+    (orderingLens p q).IsCartesian where
+  bijective _ := Function.bijective_iff_has_inverse.mpr
+      ⟨fun uv => ⟨uv.1, uv.2⟩, fun _ => rfl, fun _ => rfl⟩
 
 /-- Naturality of the ordering lens in both polynomial arguments. -/
 @[simp]
@@ -128,12 +128,12 @@ def duoidalLens (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
 
 /-- The interchange lens is cartesian: its backward map is the middle-four
 permutation on direction pairs. -/
-theorem duoidalLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+instance duoidalLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
-    (duoidalLens p p' q q').IsCartesian := fun _ =>
-  Function.bijective_iff_has_inverse.mpr
-    ⟨fun dir => ⟨(dir.1.1, dir.2.1), (dir.1.2, dir.2.2)⟩,
-      fun _ => rfl, fun _ => rfl⟩
+    (duoidalLens p p' q q').IsCartesian where
+  bijective _ := Function.bijective_iff_has_inverse.mpr
+      ⟨fun dir => ⟨(dir.1.1, dir.2.1), (dir.1.2, dir.2.2)⟩,
+        fun _ => rfl, fun _ => rfl⟩
 
 /-- Full four-variable naturality of duoidal interchange. -/
 @[simp]

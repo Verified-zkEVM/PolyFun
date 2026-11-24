@@ -86,7 +86,9 @@ of exactly one lens (`Lens.existsUnique_mapObj`), namely `Lens.ofNatural η`
 the sum of the representables at its directions (`Equiv.sigmaPurePower`) and defines the
 pure-power (the book's representable), constant, linear, and monomial classes up to `≃ₚ`. `isPurePower_iff`,
 `isConstant_iff`, `isLinear_iff`, and `isMonomial_iff` characterize them by positions and
-directions.
+directions. Lean infers `IsPurePower (y^A)` for every exponent `A`. For any
+`h : IsPurePower P`, `h.exists_equiv` gives the existence of an exponent and a polynomial
+equivalence.
 
 [`Lens/Universal.lean`](../../PolyFun/PFunctor/Lens/Universal.lean) states the universal
 properties of sums and products as hom-set equivalences (`Lens.sigmaEquiv`, `Lens.piEquiv` with
@@ -129,6 +131,20 @@ vertical–cartesian factorization system of
 `MorphismProperty`: `LensCat.vertical` and `LensCat.cartesian` are multiplicative, every lens
 factors through them (`HasFactorization`), a `Lens.DiagonalFiller` is a `CommSq.LiftStruct`, and
 the isomorphisms of `LensCat` are the lenses in both classes.
+
+For a given lens, Lean can infer `Lens.IsCartesian` and `Lens.IsVertical` through composition
+and polynomial operations. This example uses `PolyFun.PFunctor.Lens.Factorization`.
+
+```lean
+open PFunctor
+
+example {P Q : PFunctor} (l : Lens P Q) [l.IsCartesian] :
+    ((Lens.id Q ∘ₗ l) ⊎ₗ l).IsCartesian := inferInstance
+```
+
+For a cartesian witness `h`, use `h.bijective a` for the bijection on directions at position
+`a`. A vertical witness provides `h.bijective` on positions. The explicit closure lemmas such
+as `h₁.comp h₂` also accept proofs directly.
 
 [`Category/MonoEpi.lean`](../../PolyFun/PFunctor/Category/MonoEpi.lean) characterizes the
 monomorphisms and epimorphisms of `LensCat`. A lens is a monomorphism exactly when it is
