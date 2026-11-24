@@ -426,6 +426,7 @@ public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.StatefulFrame
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
+public import PolyFun.PFunctor.Handler.CacheMeter
 public import PolyFun.PFunctor.Handler.Charge
 public import PolyFun.PFunctor.Handler.Costed
 public import PolyFun.PFunctor.Handler.CostedOn
