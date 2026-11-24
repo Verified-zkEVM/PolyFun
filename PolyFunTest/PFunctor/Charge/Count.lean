@@ -17,6 +17,7 @@ Checks for `PolyFun.PFunctor.Free.Cost.Count`:
   finitely many kinds are counting cost types, and their totals are sums;
 * in `ℕ∞`, every program meets the budget `⊤`. Under any partial order, `ℕ∞` is not a counting
   cost type, because `⊤ + ⊤ = ⊤` gives `⊤` total `0`;
+* `{n : ℕ // n ≠ 1}` is a counting cost type but not canonically ordered;
 * under any partial order, a nonzero natural number has a nonzero total. A pair with an integer
   component is not a counting cost type. So no coarse order hides a cost;
 * a program that queries a random oracle on an infinite domain meets a counting contract, and the
@@ -61,6 +62,36 @@ example (order : PartialOrder ℕ∞) : IsEmpty (@CountCost ℕ∞ _ order) := �
   have h : CountCost.total (⊤ : ℕ∞) = CountCost.total (⊤ + ⊤ : ℕ∞) := by rw [top_add]
   rw [map_add] at h
   exact absurd ((CountCost.total_eq_zero_iff (a := (⊤ : ℕ∞))).1 (by omega)) (by simp)⟩
+
+/-! ## A counting cost type that is not canonically ordered
+
+The natural numbers other than `1` are closed under addition. With the order of `ℕ`, they form a
+counting cost type. -/
+
+section NeOne
+
+local instance : Zero {n : ℕ // n ≠ 1} := ⟨⟨0, zero_ne_one⟩⟩
+
+/-- A sum of two natural numbers other than `1` is not `1`. -/
+local instance : Add {n : ℕ // n ≠ 1} := ⟨fun a b => ⟨a + b, by have := a.2; have := b.2; omega⟩⟩
+
+local instance : AddZeroClass {n : ℕ // n ≠ 1} :=
+  Subtype.val_injective.addZeroClass _ rfl fun _ _ => rfl
+
+/-- The natural numbers other than `1` count one kind, as `ℕ` does. -/
+noncomputable local instance : CountCost {n : ℕ // n ≠ 1} where
+  Kind := Unit
+  count := (Finsupp.singleAddHom ()).comp ⟨⟨Subtype.val, rfl⟩, fun _ _ => rfl⟩
+  count_le_count_iff := Finsupp.single_le_single
+
+/-- `2 ≤ 3`, but `3 - 2 = 1` is excluded, so no `c` gives `3 = 2 + c`. -/
+example : ¬ CanonicallyOrderedAdd {n : ℕ // n ≠ 1} := fun _ => by
+  obtain ⟨c, hc⟩ := exists_add_of_le (show (⟨2, by decide⟩ : {n : ℕ // n ≠ 1}) ≤ ⟨3, by decide⟩
+    from by decide)
+  have h : 3 = 2 + c.1 := congrArg Subtype.val hc
+  exact c.2 (by omega)
+
+end NeOne
 
 /-! ## Coarse orders
 
