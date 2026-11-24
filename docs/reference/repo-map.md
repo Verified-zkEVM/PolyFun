@@ -50,6 +50,7 @@ Example and test imports never flow back into production.
 | Iterative monads and transformer loops | [Iteration](../../PolyFun/Control/Monad/Iter.lean), [transformer instances](../../PolyFun/Control/Monad/Iter/Instances.lean) | [Interaction trees](../guides/itree.md#iterative-monads) |
 | Protocol shapes and strategies | [TypeTree](../../PolyFun/Interaction/Basic/TypeTree.lean) | [Interaction](../guides/interaction.md) |
 | Lens-based two-party interaction | [Signature](../../PolyFun/Interaction/TwoParty/Lens/Signature.lean), [strategies](../../PolyFun/Interaction/TwoParty/Lens/Strategy.lean), [composition](../../PolyFun/Interaction/TwoParty/Lens/Compose.lean) | [Lens interaction](../guides/interaction.md#lens-based-two-party-protocols-twopartylens) |
+| Coalgebras on types | [Structure maps and morphisms](../../PolyFun/Control/Coalgebra.lean), [Mathlib coalgebras](../../PolyFun/Control/Coalgebra/Category.lean) | [Interaction](../guides/interaction.md) |
 | Two-party, multiparty, concurrent interaction | `Interaction/TwoParty`, `Multiparty`, `Concurrent` | [Interaction](../guides/interaction.md) |
 | General interfaces and directed boundaries | [Interface](../../PolyFun/Interaction/Interface.lean) | [Execution](../guides/execution.md) |
 | Executable reactive/request networks | `Interaction/Execution` | [Execution](../guides/execution.md) |
