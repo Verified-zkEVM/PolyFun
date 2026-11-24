@@ -25,8 +25,9 @@ answer of every operation has positive mass, every possible output has positive 
 Without full support the inclusion can be strict: an answer measure may give a reachable answer
 zero mass, so reachability and positive probability are separate notions.
 
-Over countable answer types the support is countable (`support_countable`), and the measure fold
-is concentrated on it (`ae_mem_support_measureFold`). Free programs over countable discrete answers
+Countable answer types give countable support (`support_countable`). For countable discrete
+answer types and measurable output singletons, the measure fold is concentrated on that support
+(`ae_mem_support_measureFold`). Free programs over countable discrete answers
 therefore satisfy `CountableEvalDist`, through an instance of priority 20, like the measure
 semantics it reads, so that an instance for a monad that unfolds to `FreeM` takes precedence.
 -/
