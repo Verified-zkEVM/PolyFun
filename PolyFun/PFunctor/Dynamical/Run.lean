@@ -358,8 +358,6 @@ namespace MooreMachine
 
 variable {S : Type u} {O : Type uO} {I : Type uI}
 
-@[deprecated (since := "2026-10-19")] alias stepInput := transition
-
 /-- The state reached after consuming a list of inputs from `st`. -/
 def run (m : MooreMachine S O I) (st : S) : List I → S := List.foldl m.transition st
 
@@ -383,8 +381,6 @@ theorem run_append (m : MooreMachine S O I) (st : S) (is js : List I) :
 @[simp] theorem length_trace (m : MooreMachine S O I) (st : S) (is : List I) :
     (m.trace st is).length = is.length + 1 := by
   induction is generalizing st <;> simp [trace, *]
-
-@[deprecated (since := "2026-10-19")] alias trace_length := length_trace
 
 /-! ## Streams
 
@@ -426,8 +422,6 @@ def Accepts (a : DeterministicAutomaton Bool I) (w : List I) : Prop :=
 
 instance (a : DeterministicAutomaton Bool I) (w : List I) : Decidable (a.Accepts w) :=
   inferInstanceAs (Decidable (_ = true))
-
-@[deprecated (since := "2026-10-19")] alias accepts := Accepts
 
 end DeterministicAutomaton
 

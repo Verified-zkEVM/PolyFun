@@ -207,8 +207,6 @@ abbrev substMonoid : PFunctor.SubstMonoid.{u + 1, u} :=
 theorem substMonoid_one_toFunA (x : PUnit) : TypeTree.substMonoid.one.toFunA x = TypeTree.done :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias substMonoid_unit_toFunA := substMonoid_one_toFunA
-
 -- Not `@[simp]`: `substMonoid` is a reducible `abbrev`, so the LHS
 -- dsimp-normalizes through the `FreeP.substMonoid` projection lemmas and the
 -- `simpNF` linter rejects the attribute. Used by name in `simp only` rewrites.
@@ -216,16 +214,12 @@ theorem substMonoid_mul_toFunA (spec : TypeTree) (next : Path spec → TypeTree)
     TypeTree.substMonoid.mul.toFunA ⟨spec, next⟩ = spec.append next :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias substMonoid_mult_toFunA := substMonoid_mul_toFunA
-
 -- Not `@[simp]` for the same `simpNF` reason as `substMonoid_mul_toFunA`.
 theorem substMonoid_mul_toFunB (spec : TypeTree) (next : Path spec → TypeTree)
     (tr : Path (spec.append next)) :
     TypeTree.substMonoid.mul.toFunB ⟨spec, next⟩ tr =
       PFunctor.FreeM.Path.split spec next tr :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias substMonoid_mult_toFunB := substMonoid_mul_toFunB
 
 /-- A straight-line `TypeTree` with no branching: each move type in the list
 becomes one round, and later rounds do not depend on earlier moves. -/

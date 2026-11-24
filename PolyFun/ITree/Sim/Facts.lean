@@ -803,8 +803,6 @@ theorem shape'_mapSpec {E : PFunctor.{uEA, uEB}}
       .mk (mapSpecStep φ u).fst (fun b => mapSpec φ ((mapSpecStep φ u).snd b)) := by
   rw [mapSpec, shape'_corec_apply]
 
-@[deprecated (since := "2026-11-15")] alias dest_mapSpec := shape'_mapSpec
-
 open scoped PFunctor in
 theorem mapSpec_comp {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
     {G : PFunctor.{uGA, uGB}} {α : Type uα}

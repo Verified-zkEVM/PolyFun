@@ -78,8 +78,6 @@ def StateChainFamily {a : α} {Stage : Nat → Type w}
           StateChainFamily Family n (i + 1) (advance i state path₁) pathRest)
         path
 
-@[reducible, deprecated (since := "2026-10-19")] alias stateChainFamily := StateChainFamily
-
 @[simp]
 theorem stateChainFamily_zero {a : α} {Stage : Nat → Type w}
     {s : (i : Nat) → Stage i → FreeM P α}

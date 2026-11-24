@@ -26,7 +26,7 @@ converse fails, because the lazy meaning ignores an unused divergent argument.
 
 With a representation of numbers, the same lemma certifies programs. A program with one
 numeric input whose evaluation returns `implementation n` at every input `n` has a
-`CertifiedMeaning` (`addTwoCertified`). A program that the evaluator handles only on some
+`Correspondence` (`addTwoCertified`). A program that the evaluator handles only on some
 inputs corresponds to its implementation there (`pred_correspondsOn`). A decoder into results
 over native numbers composes with a certificate (`addTwoDecoded`).
 
@@ -36,7 +36,7 @@ amount of fuel (`meaning_approximates`). Bottom approximates every computation, 
 fixed point is its own unfolding, so every unrolling approximates it. The proof is an induction on
 the number of unrollings and needs no admissibility. With enough fuel for each input, the
 evaluator certifies the decoded lazy meaning of the recursive `double` against `(2 * ·)`
-(`doubleCertified`, by `CertifiedMeaning.ofLiftFunDecode`).
+(`doubleCertified`, by `Correspondence.ofLiftFunDecode`).
 
 The lazy meaning is also adequate for a call-by-name evaluator. A closed numeric term means `n`
 exactly when it evaluates to the numeral `n`, and a closed term means bottom exactly when it
@@ -305,8 +305,8 @@ theorem agrees_some_iff (d : Ty.nat.Comp) (n : ℕ) : Agrees .nat d (some n) ↔
 
 /-- The lazy meaning of `addTwo` returns the encoding of `n + 2` at the encoding of every `n`.
 The evaluator computes `n + 2` definitionally. -/
-@[expose] noncomputable def addTwoCertified : CertifiedMeaning natEmbedding natEmbedding :=
-  addTwo.certifiedMeaning algebra_related (nativeIn := some) (nativeOut := some)
+@[expose] noncomputable def addTwoCertified : Correspondence natEmbedding natEmbedding :=
+  addTwo.correspondence algebra_related (nativeIn := some) (nativeOut := some)
     (fun n => (agrees_some_iff _ n).2 rfl) (fun n d h => (agrees_some_iff d n).1 h) (· + 2)
     (fun _ => rfl)
 
@@ -338,14 +338,14 @@ theorem pred_zero : pred.denoteDomain algebra (Env.single (number 0)) = ⊥ :=
 
 /-- An encoded number decodes to that number. -/
 @[expose] noncomputable def decodeNatCertified :
-    CertifiedMeaning natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) where
+    Correspondence natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) where
   meaning := decodeNat
   implementation := id
   correct _ := rfl
 
 /-- The decoded lazy meaning of `addTwo`, certified against `(· + 2)`. -/
 @[expose] noncomputable def addTwoDecoded :
-    CertifiedMeaning natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) :=
+    Correspondence natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) :=
   decodeNatCertified.comp addTwoCertified
 
 /-- At every native input, the decoded lazy meaning returns `n + 2` as a value: it neither
@@ -499,8 +499,8 @@ evaluator. Each input's native representative carries the fuel for that input. T
 premise compares decoded results only (`decodeNat_of_approximates`), so it needs no encoding of
 outputs in the lazy carrier. -/
 @[expose] noncomputable def doubleCertified :
-    CertifiedMeaning natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) :=
-  CertifiedMeaning.ofLiftFunDecode (fun d => double.denoteDomain algebra (Env.single d)) decodeNat
+    Correspondence natEmbedding (DomainResult.valueEmbedding : ℕ ↪ DomainResult Empty ℕ) :=
+  Correspondence.ofLiftFunDecode (fun d => double.denoteDomain algebra (Env.single d)) decodeNat
     (2 * ·) (Rin := fun d w => Approximates .nat d w.2) (Rout := Approximates .nat)
     (eval := fun w : ℕ × Ty.nat.Fuel => double.denote (fuelEvaluator w.1) (Env.single w.2))
     (nativeIn := fun n => (n + 1, DomainResult.value n)) (nativeOut := DomainResult.value)

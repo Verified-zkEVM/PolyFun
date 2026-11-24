@@ -608,8 +608,6 @@ abbrev TicketMap {P : Type v} {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
     (process : ProcessOver.{v, w, w₂} P Γ) (Ticket : Type w₃) :=
   PFunctor.DynSystem.TicketMap process Ticket
 
-@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
-
 /--
 `StepRel left right` relates concrete process steps: each argument
 contains the source process state together with the complete path chosen
@@ -631,17 +629,6 @@ abbrev StepRel
 
 namespace StepRel
 
-/-- The permissive step relation that accepts every pair of concrete process
-steps. -/
-@[deprecated "use `⊤`, the top of the lattice of relations" (since := "2026-10-19")]
-abbrev top
-    {P₁ P₂ : Type v}
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
-    {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ} :
-    StepRel left right :=
-  ⊤
-
 /-- Reverse a step-matching relation by flipping its two path
 arguments. -/
 abbrev reverse
@@ -652,17 +639,6 @@ abbrev reverse
     (rel : StepRel left right) :
     StepRel right left :=
   PFunctor.DynSystem.StepRel.reverse rel
-
-/-- Conjunction of step-matching relations. -/
-@[deprecated "use `⊓`, the meet of the lattice of relations" (since := "2026-10-19")]
-abbrev inter
-    {P₁ P₂ : Type v}
-    {Γ : Interaction.TypeTree.Node.Context.{w, w₂}}
-    {Δ : Interaction.TypeTree.Node.Context.{w, w₃}}
-    {left : ProcessOver P₁ Γ} {right : ProcessOver P₂ Δ}
-    (first second : StepRel left right) :
-    StepRel left right :=
-  first ⊓ second
 
 end StepRel
 
@@ -853,8 +829,6 @@ A stable ticket for each complete closed-world process step.
 abbrev TicketMap {P : Type v} {Party : Type u}
     (process : Process P Party) (Ticket : Type w₂) :=
   ProcessOver.TicketMap process Ticket
-
-@[deprecated (since := "2026-10-19"), reducible] alias Tickets := TicketMap
 
 /--
 The closed-world specialization of `ProcessOver.StepRel`.
