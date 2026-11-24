@@ -11,16 +11,15 @@ public import Mathlib.Data.Fin.VecNotation
 /-!
 # Direct compilation of finite case analysis
 
-The pinned core defines `Fin.cases` using induction. Strict evaluation may
-compute discarded induction hypotheses, which compounds for nested vector
-constructors: compiled code reads entry `i` of a chain of `Fin.cons` in time
-exponential in `i`. A proved compiler simplification selects the case
-directly, so the read takes time linear in `i`. The logical definition and its
-computation equations remain those of core.
+Core defines `Fin.cases` by induction. Strict evaluation can compute discarded induction
+hypotheses at each level of a nested `Fin.cons` chain, repeating work exponentially in the
+index. The `@[csimp]` lemmas compile `Fin.cases`, `Fin.cons`, and `Matrix.vecCons` using a
+direct match on the index. Looking up entry `i` then follows `i.val` tails and selects the
+head. This counts the steps to select an entry in the chain. Computing its values may take
+additional work.
 
-A compiler simplification applies to the definitions compiled in the modules
-that import it. A library that compiles finite case analysis, `Fin.cons` or
-vector notation imports this module, as `ToCslib.Data.Fin.MOfFn` does.
+Import this module where definitions using finite case analysis or vector notation are compiled,
+as `ToCslib.Data.Fin.MOfFn` does. Proofs use the ordinary computation equations of `Fin.cases`.
 -/
 
 public section

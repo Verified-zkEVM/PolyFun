@@ -11,13 +11,14 @@ public import ToCslib.Data.Fin.Cases
 /-!
 # Monadic sequencing of `Fin`-indexed families
 
-`Fin.mOfFn n f` runs `f 0`, …, `f (n - 1)` in order and collects the results as a function
-`Fin n → α`. It is the function-valued counterpart of Mathlib's `List.Vector.mOfFn`; the pinned
-core, Batteries and Mathlib define no monadic `Fin.ofFn`. The body is exposed so that its two
-equations, `Fin.mOfFn_zero` and `Fin.mOfFn_succ`, hold by `rfl` for every importer.
+`Fin.mOfFn n f` sequences the computations `f i` in increasing index order and collects their
+results as a function `Fin n → α`. It is the function-valued counterpart of Mathlib's
+`List.Vector.mOfFn`. The successor equation binds `f 0` before sequencing the tail, so in
+`Option` the first `none` stops the traversal. Both `Fin.mOfFn_zero` and `Fin.mOfFn_succ`
+hold by `rfl` for importers.
 
-The collected function is a chain of `Fin.cons`. This module imports the compiler simplifications
-of `ToCslib.Data.Fin.Cases`, so compiled code reads entry `i` of the chain in time linear in `i`.
+The result is a chain of `Fin.cons`. The compiler simplifications from `ToCslib.Data.Fin.Cases`
+let a lookup follow `i.val` tails to retrieve the value collected at index `i`.
 -/
 
 public section
