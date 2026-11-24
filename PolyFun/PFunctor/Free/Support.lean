@@ -129,25 +129,6 @@ theorem support_lift_bind (a : P.A) (r : P.B a → FreeM P α) :
     support ((FreeM.lift a).bind (α := no_index (P.B a)) r) = ⋃ b, support (r b) :=
   support_liftBind a r
 
-/-! ## Deprecated structural support -/
-
-/-- The set of possible outputs of a free tree. -/
-@[deprecated MonadAttach.support +typeChanged (since := "2026-11-20")]
-def supp (x : FreeM P α) : Set α := support x
-
-@[deprecated "`supp` is `MonadAttach.support`" (since := "2026-11-20")]
-theorem support_eq_supp (x : FreeM P α) : support x = supp x := rfl
-
-@[deprecated FreeM.CanReturn.liftBind +typeChanged (since := "2026-11-20")]
-theorem mem_supp_liftBind_of_mem {op : P.A} {r : P.B op → FreeM P α} {b : P.B op} {a : α}
-    (h : a ∈ support (r b)) : a ∈ support (FreeM.liftBind op r) :=
-  FreeM.CanReturn.liftBind b h
-
-@[deprecated (since := "2026-11-20")] alias supp_map_imp := canReturn_map_val_imp
-@[deprecated (since := "2026-10-19")] alias supp_map := canReturn_map_val_imp
-@[deprecated (since := "2026-11-16")] alias support_pure' := FreeM.support_pure
-
-
 /-- Mapping a free tree maps its reachable leaves, independently of result universes. -/
 @[simp]
 theorem support_map {γ : Type v} {δ : Type w} (f : γ → δ) (program : FreeM P γ) :

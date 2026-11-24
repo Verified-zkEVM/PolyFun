@@ -89,8 +89,6 @@ theorem trace_liftBind (a : P.A) (next : P.B a → FreeM P α)
     trace (FreeM.liftBind a next) ⟨answer, tail⟩ =
       FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * trace (next answer) tail := rfl
 
-@[deprecated (since := "2026-11-17")] alias trace_liftBind_eq_mul := trace_liftBind
-
 /-- The visited input positions of a typed execution path, preserving their order and repeats. -/
 def positions (program : FreeM P α) (path : Path program) : List P.A :=
   TraceList.positions (trace program path)
@@ -157,8 +155,6 @@ theorem length_eq_length_trace (program : FreeM P α) (path : Path program) :
       change length (next answer) tail + 1 =
         (trace (next answer) tail).toList.length + 1
       exact congrArg (fun n => n + 1) (ih answer tail)
-
-@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Agreement on the operations visited by one deterministic execution preserves its entire
 typed path. The alternative handler may differ arbitrarily on unvisited operations. -/

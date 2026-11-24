@@ -129,8 +129,6 @@ theorem runObj_eq_mapObj_xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB
                   M.Vertex matter)) := rfl
       exact hfirst.trans hsecond
 
-@[deprecated (since := "2026-10-19")] alias runObj_eq_xi_mapObj := runObj_eq_mapObj_xi
-
 /-- The executable synchronized traversal is exactly the paper's
 internal-hom/convolution construction. -/
 theorem runOn_eq_xi (P : PFunctor.{pA, max qA qB}) (Q : PFunctor.{qA, qB}) :

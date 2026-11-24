@@ -6,7 +6,7 @@ Authors: Bas Spitters
 
 module
 
-public import PolyFun.PFunctor.Handler.Certified
+public import PolyFun.PFunctor.Handler.Costed
 public import Mathlib.Algebra.BigOperators.Pi
 public import Mathlib.Algebra.BigOperators.Ring.Finset
 public import Mathlib.Algebra.Order.Ring.Defs
@@ -29,7 +29,7 @@ Two monotone additive maps convert vectors of resource counts:
   where `d i` is the use vector over `ι'` of one unit of resource `i`.
 
 A handler whose implementation of each call at `a` has use vector `∑ i, c a i • d i` is certified
-with the demand map as its exchange (`Handler.Certified.ofDemand`). A program with use vector `u`
+with the demand map as its exchange (`Handler.Costed.ofDemand`). A program with use vector `u`
 then runs through it with use vector `∑ i, u i • d i` (`Handler.isChargeBound_liftM_demand`), and
 two such handlers compose with the composite demand (`Handler.isChargeBound_liftM_demand_comp`).
 -/
@@ -169,9 +169,9 @@ variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA
 
 /-- A handler whose implementation of each call at `a` has use vector at most
 `∑ i, c a i • d i`, certified with the demand map of `d` as its exchange. -/
-def Certified.ofDemand {c : P.A → ι → ω} {e : Q.A → ι' → ω} (h : Handler (FreeM Q) P)
+def Costed.ofDemand {c : P.A → ι → ω} {e : Q.A → ι' → ω} (h : Handler (FreeM Q) P)
     (d : ι → ι' → ω) (hd : 0 ≤ d) (hh : ∀ a, (h a).IsChargeBound e (∑ i, c a i • d i)) :
-    Certified P Q c e :=
+    Costed P Q c e :=
   ⟨h, demandHom d hd, hh⟩
 
 /-- **Use bounds through a handler.** If `x` has use vector `u` and each call at `a` is
@@ -182,7 +182,7 @@ theorem isChargeBound_liftM_demand {c : P.A → ι → ω} {e : Q.A → ι' → 
     (hh : ∀ a, (h a).IsChargeBound e (∑ i, c a i • d i)) {x : FreeM P α} {u : ι → ω}
     (hx : x.IsChargeBound c u) :
     (x.liftM h).IsChargeBound e (∑ i, u i • d i) := by
-  have := (Certified.ofDemand h d hd hh).transfer hx
+  have := (Costed.ofDemand h d hd hh).transfer hx
   rwa [map_zero] at this
 
 /-- **Use bounds through two handlers.** Running `x` through `h₁` with demands `d₁` and then
@@ -196,7 +196,7 @@ theorem isChargeBound_liftM_demand_comp [Fintype ι'] {Q : PFunctor.{uA₂, uB}}
     (hh₂ : ∀ b, (h₂ b).IsChargeBound f (∑ j, e b j • d₂ j)) {x : FreeM P α} {u : ι → ω}
     (hx : x.IsChargeBound c u) :
     (x.liftM (h₂.comp h₁)).IsChargeBound f (∑ i, u i • ∑ j, d₁ i j • d₂ j) := by
-  let g := (Certified.ofDemand h₂ d₂ hd₂ hh₂).comp (Certified.ofDemand h₁ d₁ hd₁ hh₁)
+  let g := (Costed.ofDemand h₂ d₂ hd₂ hh₂).comp (Costed.ofDemand h₁ d₁ hd₁ hh₁)
   have h := g.transfer hx
   rw [map_zero] at h
   have hu : g.exchange u = ∑ i, u i • ∑ j, d₁ i j • d₂ j :=

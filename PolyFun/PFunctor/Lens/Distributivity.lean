@@ -143,8 +143,6 @@ def fromMonomialEquiv {A : Type uA} {B : Type uB} {p : PFunctor.{uA₂, uB₂}} 
   left_inv := fun _ => rfl
   right_inv := fun _ => rfl
 
-@[deprecated (since := "2026-10-19")] alias homMonomialEquiv := fromMonomialEquiv
-
 end Lens
 
 end PFunctor

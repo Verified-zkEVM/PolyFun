@@ -143,8 +143,6 @@ instance instExactWPMonadWpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (app
           (fun q => post q.1 (append (append w p.2) q.2)) epost) epost
       simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc])
 
-@[deprecated (since := "2026-11-16")] alias exactWPMonad_wpMonadOf := instExactWPMonadWpMonadOf
-
 /-- The explicit writer interpretation exposes its accumulated-log equation. Not `@[simp]`: the
 scoped readings state their own equations on core's `wp` (`WriterT.wp_apply_eq`,
 `WriterT.AppendWP.wp_apply_eq`). -/

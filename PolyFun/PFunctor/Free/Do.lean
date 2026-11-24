@@ -70,8 +70,6 @@ theorem wp_eq_allOutputs (x : FreeM P α) (post : α → Prop) (epost : EStack�
     wp x post epost = AllOutputs post x :=
   rfl
 
-@[deprecated (since := "2026-11-16")] alias wp_apply_eq := wp_eq_allOutputs
-
 /-- The demonic triple is the guarded "always" judgment. -/
 theorem triple_iff_allOutputs (x : FreeM P α) (pre : Prop) (post : α → Prop)
     (epost : EStack⟨⟩) :
@@ -93,8 +91,6 @@ variable {α : Type uB}
 theorem wp_eq_someOutput (x : FreeM P α) (post : α → Prop) (epost : EStack⟨⟩) :
     wp x post epost = SomeOutput post x :=
   rfl
-
-@[deprecated (since := "2026-11-16")] alias wp_apply_eq := wp_eq_someOutput
 
 end AngelicWP
 

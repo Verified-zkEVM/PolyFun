@@ -149,17 +149,11 @@ def iterateWith (h : Handler.Stateful m σ q) (A : DynSystem S q) :
   | 0, p => pure p
   | n + 1, p => stepWith h A p >>= iterateWith h A n
 
-@[deprecated (since := "2026-10-19")] alias iterWith := iterateWith
-
 @[simp] theorem iterateWith_zero (h : Handler (StateT σ m) q) (A : DynSystem S q) (p : σ × S) :
     iterateWith h A 0 p = pure p := rfl
 
-@[deprecated (since := "2026-10-19")] alias iterWith_zero := iterateWith_zero
-
 theorem iterateWith_succ (h : Handler (StateT σ m) q) (A : DynSystem S q) (n : ℕ) (p : σ × S) :
     iterateWith h A (n + 1) p = stepWith h A p >>= iterateWith h A n := rfl
-
-@[deprecated (since := "2026-10-19")] alias iterWith_succ := iterateWith_succ
 
 /-- A stateless handler lifted into the state monad steps the system as
 `kleisliStep` does and carries the handler state unchanged. -/
@@ -181,14 +175,10 @@ theorem iterateWith_lift [LawfulMonad m] (h₀ : Handler m q) (A : DynSystem S q
     simp only [bind_map_left, map_bind]
     exact bind_congr fun s' => ih (p.1, s')
 
-@[deprecated (since := "2026-10-19")] alias iterWith_lift := iterateWith_lift
-
 /-- Running a system against a responder's stateful handler is stepping the
 closed game: `stepWith` at `m := Id` is `closedGame`'s step. -/
 theorem stepWith_toStateful (R : Responder σ q) (A : DynSystem S q) (p : σ × S) :
     stepWith (m := Id) R.toStateful A p = (closedGame R A).step p := rfl
-
-@[deprecated (since := "2026-10-19")] alias stepWith_toStateHandler := stepWith_toStateful
 
 /-- The `Id` run against a responder's stateful handler computes the closed
 game's trajectory. -/
@@ -200,8 +190,6 @@ theorem iterateWith_toStateful (R : Responder σ q) (A : DynSystem S q) (n : ℕ
     change iterateWith (m := Id) R.toStateful A n (stepWith (m := Id) R.toStateful A p) = _
     rw [stepWith_toStateful, ih]
     rfl
-
-@[deprecated (since := "2026-10-19")] alias iterWith_toStateHandler := iterateWith_toStateful
 
 end Kleisli
 

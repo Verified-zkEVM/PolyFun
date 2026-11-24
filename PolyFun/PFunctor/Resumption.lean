@@ -300,8 +300,6 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
   apply eq_of_dest_eq
   simp
 
-@[deprecated (since := "2026-10-19")] alias bind_pure_left := pure_bind
-
 @[simp] theorem bind_query (position : p.A) (next : p.B position → Resumption p α)
     (k : α → Resumption p β) :
     bind (query position next) k = query position (fun direction => bind (next direction) k) := by
@@ -329,8 +327,6 @@ private theorem corec_bindStep_inr (k : α → Resumption p β)
       simp_all
     · rw [← pack_dest, ← pack_inr]
       exact congrArg pack h
-
-@[deprecated (since := "2026-10-19")] alias bind_pure_right := bind_pure
 
 theorem bind_assoc (computation : Resumption p α) (k : α → Resumption p β)
     (k' : β → Resumption p γ) :
@@ -463,8 +459,6 @@ def mapLens (lens : Lens p q) (computation : Resumption p β) : Resumption q β 
         (by rw [dest_mapLens, h]; rfl)
         (fun direction => ⟨_, rfl, rfl⟩)
   · exact ⟨computation, rfl, rfl⟩
-
-@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
 
 theorem mapLens_bind (lens : Lens p q) (computation : Resumption p α)
     (k : α → Resumption p β) :

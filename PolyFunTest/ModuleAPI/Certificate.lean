@@ -10,11 +10,11 @@ public import Examples.Tutorials.ScopedDomains
 public import Examples.Tutorials.ScopedVectors
 import PolyFun.IPFunctor.Scoped.Certificate
 
-/-! # Ordinary-import checks for certified meanings of binding syntax -/
+/-! # Ordinary-import checks for correspondences of binding syntax -/
 
 open OmegaCompletePartialOrder IPFunctor IPFunctor.ScopedSignature Control.Semantics
 
-/-- The fundamental lemma as a relator, the premise of `CertifiedMeaning.ofLiftFun`. -/
+/-- The fundamental lemma as a relator, the premise of `Correspondence.ofLiftFun`. -/
 example {S : Type} {σ : ScopedSignature S} {V W : S → Type}
     [∀ a, OmegaCompletePartialOrder (V a)] {R : ∀ a, V a → W a → Prop}
     {alg : DomainInterpretation σ V} {alg' : Interpretation σ W}
@@ -32,7 +32,7 @@ example {S : Type} {σ : ScopedSignature S} {V W : S → Type}
     (determines : ∀ y v, R b v (nativeOut y) → v = output y) (implementation : A → B)
     (total : ∀ x, t.denote alg' (Env.single (nativeIn x)) = nativeOut (implementation x))
     (d : V a) :
-    (t.certifiedMeaning h represents determines implementation total).meaning d =
+    (t.correspondence h represents determines implementation total).meaning d =
       t.denoteDomain alg (Env.single d) := rfl
 
 namespace PolyFunTest.ModuleAPI.Certificate

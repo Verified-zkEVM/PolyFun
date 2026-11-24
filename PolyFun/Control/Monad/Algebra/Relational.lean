@@ -740,13 +740,6 @@ theorem strictBind_readerTBoth [StrictBind m₁ m₂ l] (ρ₁ ρ₂ : Type u) :
   convert h using 1
   rfl
 
-@[deprecated (since := "2026-11-16")] alias strictBindStateTLeft := strictBind_stateTLeft
-@[deprecated (since := "2026-11-16")] alias strictBindStateTRight := strictBind_stateTRight
-@[deprecated (since := "2026-11-16")] alias strictBindStateTBoth := strictBind_stateTBoth
-@[deprecated (since := "2026-11-16")] alias strictBindReaderTLeft := strictBind_readerTLeft
-@[deprecated (since := "2026-11-16")] alias strictBindReaderTRight := strictBind_readerTRight
-@[deprecated (since := "2026-11-16")] alias strictBindReaderTBoth := strictBind_readerTBoth
-
 end StrictBindInstances
 
 /-! ## Anchored subclass
