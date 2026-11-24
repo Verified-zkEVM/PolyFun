@@ -338,11 +338,11 @@ direction.
 
 ### Replay and ownership exchange
 
-`PublicCoinCounterpart.toCounterpart` executes exposed challenge samplers.
-`PublicCoinCounterpart.replay` follows the recorded challenge without invoking
-its sampler, including when that sampler would fail. Observation and leaf
-slots still execute. Conversion and replay have public leaf, sender, and
-receiver equations.
+Running `PublicCoinCounterpart.toCounterpart` executes a draw at each challenge.
+The challenge handler supplies the distribution. Observing a sender message and
+returning the leaf value are pure. `PublicCoinCounterpart.replay` follows the recorded
+moves and returns the transcript-indexed output directly, even when a stored sampler
+would fail. Conversion and replay have public leaf, sender, and receiver equations.
 
 `swapLens` uses the existing `Role.swap` to exchange ownership while preserving
 source branches and moves;
@@ -388,9 +388,9 @@ For public-coin protocols, `PublicCoinCounterpart` and `replay` support
 public-coin path replay (Fiat-Shamir-style).
 
 `TwoParty/PublicCoin.lean` provides ordinary-import constructor equations for
-both `replay` and `toCounterpart`. At receiver nodes replay follows a prescribed
-challenge, whereas the ordinary counterpart samples a challenge and follows its
-indexed continuation. These equations do not assert Fiat-Shamir security or
+both `replay` and `toCounterpart`. Replay and output mapping need only the effect
+type constructor. Replay selects the continuation at the prescribed challenge.
+The ordinary counterpart draws a challenge and follows its indexed continuation. These equations do not assert Fiat-Shamir security or
 that the prescribed path was produced by a particular prover.
 
 At the free-program layer, typed replay trees retain a fixed prefix while
