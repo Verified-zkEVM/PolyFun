@@ -544,11 +544,11 @@ coalgebras of polynomial functors
 - `StepOver Γ` remains a `Functor` (post-compose on `next`) and
   `LawfulFunctor`; `StepOver.equivObj` identifies it with the extension
   of `StepOver.toPFunctor Γ`.
-- The coalgebra packaging `DynSystem.coalg : Coalg p.Obj S` (built from
-  `DynSystem.out`, against
-  [`PolyFun/Control/Coalgebra.lean`](../../PolyFun/Control/Coalgebra.lean))
-  therefore covers both; a `Coalg F S` is a type `S` together with
-  `out : S → F S`, the categorical dual of `MonadAlgebra`.
+- Each system supplies its own structure map through `DynSystem.coalg : Coalg p.Obj S`.
+  A morphism `Coalg.Hom D₁.coalg D₂.coalg` specifies both systems, even when they have the
+  same state type. For a lawful endofunctor on a single universe,
+  [the Mathlib bridge](../../PolyFun/Control/Coalgebra/Category.lean) bundles the carrier and
+  identifies the two types of morphisms, preserving identities and composition.
 
 Consequently the whole dynamical-system toolkit applies to processes and
 machines directly: terminal-coalgebra behavior and observational
