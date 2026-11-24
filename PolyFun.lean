@@ -4,6 +4,7 @@ public import PolyFun.Complexity.SecondOrderPolynomial
 public import PolyFun.Complexity.SecondOrderPolynomial.NatPolynomial
 public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
+public import PolyFun.Control.Coalgebra.Category
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
 public import PolyFun.Control.Do.MOfFn

@@ -46,20 +46,15 @@ example {S₁ : Type u} {S₂ : Type v} {D₁ : DynSystem S₁ p} {D₂ : DynSys
     D₁.behavior s₁ = D₂.behavior s₂ :=
   DynSystem.behavior_eq_of_isSimulation sim h
 
-/-- The graph of the identity coalgebra morphism is a simulation. The coalgebra
-structure is the system's own, supplied locally via `letI := D.coalg`. -/
+/-- The graph of the identity coalgebra morphism is a simulation. -/
 example (D : DynSystem S p) :
-    letI := D.coalg
-    DynSystem.IsSimulation D D (fun s₁ s₂ => Coalg.Hom.id (F := p.Obj) s₁ = s₂) :=
-  letI := D.coalg
-  DynSystem.isSimulation_graph_coalgHom (Coalg.Hom.id)
+    DynSystem.IsSimulation D D (fun s₁ s₂ => Coalg.Hom.id D.coalg s₁ = s₂) :=
+  DynSystem.isSimulation_graph_coalgHom (Coalg.Hom.id D.coalg)
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
 example (D : DynSystem S p) (s : S) :
-    letI := D.coalg
-    D.behavior (Coalg.Hom.id (F := p.Obj) (S₁ := S) s) = D.behavior s :=
-  letI := D.coalg
-  DynSystem.behavior_coalgHom Coalg.Hom.id s
+    D.behavior (Coalg.Hom.id D.coalg s) = D.behavior s :=
+  DynSystem.behavior_coalgHom (Coalg.Hom.id D.coalg) s
 
 /-- A step-synchronized simulation is an operational forward simulation at
 `StepRel.sync`. -/
