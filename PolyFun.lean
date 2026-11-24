@@ -104,6 +104,11 @@ public import PolyFun.IPFunctor.Scoped.Basic
 public import PolyFun.IPFunctor.Scoped.CBVInterpretation
 public import PolyFun.IPFunctor.Scoped.Certificate
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
+public import PolyFun.IPFunctor.Scoped.CostD.Cost
+public import PolyFun.IPFunctor.Scoped.CostD.Erasure
+public import PolyFun.IPFunctor.Scoped.CostD.Semantics
+public import PolyFun.IPFunctor.Scoped.CostD.Syntax
+public import PolyFun.IPFunctor.Scoped.CostD.Tree
 public import PolyFun.IPFunctor.Scoped.Domain
 public import PolyFun.IPFunctor.Scoped.DomainInterpretation
 public import PolyFun.IPFunctor.Scoped.DomainRelation
