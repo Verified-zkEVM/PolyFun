@@ -1,7 +1,8 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
 [
   {
     "name": "seven",
     "scheme": "nat",
     "body": {"app": [{"lam": {"arg": "nat", "body": {"var": 0}}}, {"lit": 7}]}
   }
-]
+]}

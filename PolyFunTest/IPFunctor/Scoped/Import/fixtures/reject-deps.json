@@ -1,0 +1,5 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
+[
+  {"name": "early", "deps": ["late"], "scheme": "nat", "body": {"lit": 0}},
+  {"name": "late", "scheme": "nat", "body": {"lit": 1}}
+]}

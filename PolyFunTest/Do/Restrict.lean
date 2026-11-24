@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunTest.Do.Algebra
+public import PolyFunTest.Do.Fixtures
 public import PolyFun.Control.Monad.Algebra.Restrict
 public import PolyFun.Control.Monad.Support.Instances
 public import PolyFun.Control.Monad.Support.WP
@@ -14,7 +14,7 @@ public import PolyFun.Control.Monad.Support.WP
 /-!
 # A restricted carrier on core's `vcgen`
 
-The identity algebra of `PolyFunTest.Do.Algebra` restricted to `[0, 1] ⊆ ℕ∞` drives `vcgen`
+The identity algebra of `PolyFunTest.Do.Fixtures` restricted to `[0, 1] ⊆ ℕ∞` drives `vcgen`
 like any other ordered algebra: the carrier's own bound is available as `le_top`, and the
 restricted `wp` and triple are the original ones on underlying values. The module acknowledges the
 tactic's experimental status with `set_option experimental.vcgen true`; `PolyFunTest.Do.Algebra`
@@ -23,12 +23,12 @@ pins the diagnostic itself.
 
 public section
 
-open Std.WP MAlgOrdered
+open Std.WP MAlgOrdered PolyFunTest
 
 set_option experimental.vcgen true
 
 /- The identity ordered algebra on `Det` at the extended naturals, installed locally. -/
-attribute [local instance] instMAlgOrderedDetENat
+attribute [local instance] Det.mAlgOrderedENat
 
 /-- The identity algebra respects every bound. -/
 theorem μ_const_le (c : ℕ∞) {α : Type} (x : Det α) :

@@ -108,19 +108,17 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
   | here => rfl
   | stepSame answer tail ih =>
       change occurrences target
-        ((⟨target, answer⟩ : P.Idx) :: tail.before) = _
+        (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * tail.before) = _
       rw [occurrences_cons_self, ih]
   | stepOther hne answer tail ih =>
       change occurrences target
-        ((⟨_, answer⟩ : P.Idx) :: tail.before) = _
-      simpa [hne] using ih
-
-@[deprecated (since := "2026-10-19")] alias before_count := occurrences_before
+        (FreeMonoid.of (α := P.Idx) ⟨_, answer⟩ * tail.before) = _
+      rwa [occurrences_cons_of_ne hne]
 
 @[simp] theorem trace_plug (occ : Occurrence target program n)
     (answer : P.B target) (suffix : Path (occ.resume answer)) :
-    Path.trace program (occ.plug answer suffix) = List.append occ.before
-      (⟨target, answer⟩ :: Path.trace (occ.resume answer) suffix) := by
+    Path.trace program (occ.plug answer suffix) = occ.before *
+      (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * Path.trace (occ.resume answer) suffix) := by
   change Path.trace program
       (occ.toCursor.plug
         (⟨answer, suffix⟩ : Path (FreeM.liftBind target occ.resume))) = _
@@ -159,7 +157,7 @@ the answer stored by that completion. -/
       some completion.answer := by
   rw [Completion.path, trace_plug]
   simpa only [occurrences_before] using
-    (PFunctor.TraceList.getAt?_append_self_occurrences
+    (PFunctor.TraceList.getAt?_mul_self_occurrences
       occ.before (Path.trace (occ.resume completion.answer) completion.suffix)
         target completion.answer)
 
@@ -358,8 +356,9 @@ theorem valid_prependSame [DecidableEq P.A] {next : P.B target → FreeM P α}
   cases result with
   | missing path =>
       change occurrences target
-        (⟨target, answer⟩ :: Path.trace (next answer) path) ≤ n + 1
-      simpa using Nat.succ_le_succ hresult
+        (FreeMonoid.of (α := P.Idx) ⟨target, answer⟩ * Path.trace (next answer) path) ≤ n + 1
+      rw [occurrences_cons_self]
+      exact Nat.succ_le_succ hresult
   | found occurrence => trivial
 
 theorem valid_prependOther [DecidableEq P.A] {a : P.A} {next : P.B a → FreeM P α}
@@ -369,8 +368,9 @@ theorem valid_prependOther [DecidableEq P.A] {a : P.A} {next : P.B a → FreeM P
   cases result with
   | missing path =>
       change occurrences target (Path.trace (next answer) path) ≤ n at hresult
-      change occurrences target (⟨a, answer⟩ :: Path.trace (next answer) path) ≤ n
-      simpa [hne] using hresult
+      change occurrences target
+        (FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * Path.trace (next answer) path) ≤ n
+      rwa [occurrences_cons_of_ne hne]
   | found occurrence => trivial
 
 theorem completeFork_prependSame {next : P.B target → FreeM P α} (answer : P.B target) {n : Nat}

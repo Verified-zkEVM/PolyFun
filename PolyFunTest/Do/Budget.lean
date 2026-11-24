@@ -43,11 +43,6 @@ def flips : FreeM Coin Bool := do
   let b ← FreeM.lift (P := Coin) ()
   if b then FreeM.lift (P := Coin) () else pure false
 
-def twoFlipsPure : FreeM Coin Bool := do
-  let b ← FreeM.lift (P := Coin) ()
-  let c ← FreeM.lift (P := Coin) ()
-  pure (b && c)
-
 section BudgetReading
 
 /-- The budget reading of the unit charge with budget `3`. -/
@@ -56,12 +51,13 @@ abbrev coinBudget : WPMonad (FreeM Coin) (ℕ → Prop) EStack⟨⟩ :=
 
 attribute [local instance] coinBudget
 
-/- Under the budget reading, `vcgen` goes through every call. A `do` block that ends in a call is
-not matched by the call rule, because the elaborator has reduced its value type to `Bool` (see
-`docs/development/troubleshooting.md`), so the program ends in `pure`. -/
-example : ⦃ fun s => s = 0 ⦄ twoFlipsPure ⦃ fun _ s => s ≤ 3 ⦄ := by
-  unfold twoFlipsPure
-  vcgen
+/-- The budget reading is exact, by the instance keyed on `OpSpec.toWPMonad`, which instance search
+reaches by unfolding `FreeM.budgetWPMonad`. -/
+example : ExactWPMonad (FreeM Coin) (ℕ → Prop) EStack⟨⟩ := inferInstance
+
+/- The call in the true branch returns a concrete `Bool` in tail position. -/
+example : ⦃ fun s => s = 0 ⦄ flips ⦃ fun _ s => s ≤ 3 ⦄ := by
+  vcgen [flips]
   all_goals simp_all
 
 end BudgetReading
@@ -86,7 +82,7 @@ theorem chargedLoop_spec (n : ℕ) :
   vcgen [chargedLoop, Handler.id] invariants
     · fun pref _ _ s => s = 2 * pref.length
   all_goals simp_all
-  all_goals omega
+  omega
 
 variable {P : PFunctor.{0, 0}}
 

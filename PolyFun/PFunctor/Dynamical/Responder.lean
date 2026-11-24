@@ -155,13 +155,9 @@ state and thread the next state. -/
 def toStateful (R : Responder S q) : Handler.Stateful Id S q :=
   fun a s => (R.answer s a, R.next s a)
 
-@[deprecated (since := "2026-10-19")] alias toStateHandler := toStateful
-
 /-- Bundle a stateful handler as a responder. -/
 def ofStateful (h : Handler.Stateful Id S q) : Responder S q :=
   mk' (fun s a => (h a s).1) (fun s a => (h a s).2)
-
-@[deprecated (since := "2026-10-19")] alias ofStateHandler := ofStateful
 
 /-- The **Kleisli–Mealy bridge**: responders with states `S` for `q` are exactly
 the pure stateful handlers `Handler.Stateful Id S q`, with both round-trips
@@ -172,17 +168,11 @@ def equivStateful : Responder S q ≃ Handler.Stateful Id S q where
   left_inv _ := rfl
   right_inv _ := rfl
 
-@[deprecated (since := "2026-10-19")] alias equivStateHandler := equivStateful
-
 @[simp] theorem equivStateful_apply (R : Responder S q) :
     equivStateful R = R.toStateful := rfl
 
-@[deprecated (since := "2026-10-19")] alias equivStateHandler_apply := equivStateful_apply
-
 @[simp] theorem equivStateful_symm_apply (h : Handler.Stateful Id S q) :
     equivStateful.symm h = ofStateful h := rfl
-
-@[deprecated (since := "2026-10-19")] alias equivStateHandler_symm_apply := equivStateful_symm_apply
 
 end KleisliMealy
 

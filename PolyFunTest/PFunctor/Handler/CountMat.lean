@@ -12,7 +12,7 @@ public import PolyFun.PFunctor.Handler.CountMat
 
 Regression tests: a one-shape Diller–Nahm morphism built from a matrix has that matrix as its
 count matrix, co-Kleisli composition multiplies count matrices at a concrete matrix, and the
-certified handler of a composite is the composite of the certified handlers.
+costed handler of a composite is the composite of the costed handlers.
 -/
 
 @[expose] public section
@@ -34,19 +34,19 @@ example : (Lens.bangComp twiceTrue twiceTrue).countMat PUnit.unit false true = 4
   rw [Lens.countMat_bangComp]
   decide
 
-/-- The demand of a composite certified handler is the product of the demand matrices. -/
+/-- The demand of a composite costed handler is the product of the demand matrices. -/
 example {P Q R : PFunctor.{0, 0}} {c : P.A → Bool → ℕ} {e : Q.A → Bool → ℕ}
-    {f : R.A → Bool → ℕ} (D₂ : Handler.CountCertified Q R e f)
-    (D₁ : Handler.CountCertified P Q c e) :
+    {f : R.A → Bool → ℕ} (D₂ : Handler.Counted Q R e f)
+    (D₁ : Handler.Counted P Q c e) :
     Matrix.of ((D₂.comp D₁).lens.demand ℕ) =
       Matrix.of (D₁.lens.demand ℕ) * Matrix.of (D₂.lens.demand ℕ) :=
   Lens.demand_bangComp_eq_mul _ _
 
-/-- The composite of certified handlers is certified with the composite exchange. -/
+/-- The composite of costed handlers has the composite exchange. -/
 example {P Q R : PFunctor.{0, 0}} {c : P.A → Bool → ℕ} {e : Q.A → Bool → ℕ}
-    {f : R.A → Bool → ℕ} (D₂ : Handler.CountCertified Q R e f)
-    (D₁ : Handler.CountCertified P Q c e) :
-    (D₂.comp D₁).toCertified = D₂.toCertified.comp D₁.toCertified :=
-  Handler.CountCertified.toCertified_comp D₂ D₁
+    {f : R.A → Bool → ℕ} (D₂ : Handler.Counted Q R e f)
+    (D₁ : Handler.Counted P Q c e) :
+    (D₂.comp D₁).toCosted = D₂.toCosted.comp D₁.toCosted :=
+  Handler.Counted.toCosted_comp D₂ D₁
 
 end PFunctor.CountMatTest

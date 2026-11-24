@@ -37,8 +37,6 @@ namespace PFunctor
 
 namespace DynSystem
 
-@[deprecated (since := "2026-10-19")] alias twoStep := Lens.speedup
-
 /-! ## The `n`-step system `Run_n` (§7.1.5) -/
 
 section
@@ -77,8 +75,6 @@ position of the composition unit. -/
 `Lens.speedup` after the inner unitor `compY` (`p ◃ y ≅ p`). -/
 theorem nStep_two_eq_speedup (φ : DynSystem S p) :
     (Lens.id p ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ φ.nStep 2 = Lens.speedup φ := rfl
-
-@[deprecated (since := "2026-10-19")] alias nStep_two_eq_twoStep := nStep_two_eq_speedup
 
 end
 

@@ -174,8 +174,6 @@ theorem tensorUnitMap_one_mul :
         Lens.id y.{uA, uB}) =
       Equiv.yTensor.toLens := rfl
 
-@[deprecated (since := "2026-10-19")] alias tensorUnitMap_unit_left := tensorUnitMap_one_mul
-
 /-- Right unitality of the tensor-unit multiplication. -/
 theorem tensorUnitMap_mul_one :
     (tensorUnitMap :
@@ -183,8 +181,6 @@ theorem tensorUnitMap_mul_one :
       (Lens.id y.{uA, uB} ⊗ₗ
         (unitComparison : Lens y.{uA, uB} y.{uA, uB})) =
       Equiv.tensorY.toLens := rfl
-
-@[deprecated (since := "2026-10-19")] alias tensorUnitMap_unit_right := tensorUnitMap_mul_one
 
 /-- Associativity of the tensor-unit multiplication. -/
 theorem tensorUnitMap_mul_assoc :
@@ -199,8 +195,6 @@ theorem tensorUnitMap_mul_assoc :
           Lens (y.{uA, uB} ⊗ y.{uA, uB}) y.{uA, uB})) ∘ₗ
         Equiv.tensorAssoc.toLens := rfl
 
-@[deprecated (since := "2026-10-19")] alias tensorUnitMap_assoc := tensorUnitMap_mul_assoc
-
 /-- Left counitality of the composition-unit comultiplication. -/
 theorem compUnitMap_counit_comul :
     (Equiv.yComp (P := y.{uA, uB})).toLens ∘ₗ
@@ -211,8 +205,6 @@ theorem compUnitMap_counit_comul :
             Lens y.{uA, uB} y.{max uA uB, uB})) =
       Lens.id y.{uA, uB} := rfl
 
-@[deprecated (since := "2026-10-19")] alias compUnitMap_counit_left := compUnitMap_counit_comul
-
 /-- Right counitality of the composition-unit comultiplication. -/
 theorem compUnitMap_comul_counit :
     (Equiv.compY (P := y.{uA, uB})).toLens ∘ₗ
@@ -222,8 +214,6 @@ theorem compUnitMap_comul_counit :
           (unitComparison :
             Lens y.{uA, uB} y.{max uA uB, uB})) =
       Lens.id y.{uA, uB} := rfl
-
-@[deprecated (since := "2026-10-19")] alias compUnitMap_counit_right := compUnitMap_comul_counit
 
 /-- Coassociativity of the composition-unit comultiplication. -/
 theorem compUnitMap_comul_assoc :
@@ -243,8 +233,6 @@ theorem compUnitMap_comul_assoc :
         (compUnitMap ∘ₗ
           (unitComparison :
             Lens y.{uA, uB} y.{max uA uB, uB})) := rfl
-
-@[deprecated (since := "2026-10-19")] alias compUnitMap_coassoc := compUnitMap_comul_assoc
 
 /-- Left-composition-unit coherence for duoidal interchange. Interchanging a pair of
 left-unital composites and then combining their two unit components agrees
@@ -319,9 +307,6 @@ def Equiv.tensorTensorTensorComm (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{u
     (fun _ ((a, b), (c, d)) => ((a, c), (b, d)))
   left_inv := rfl
   right_inv := rfl
-
-@[deprecated (since := "2026-10-19")] alias Equiv.tensorMiddleFour :=
-  Equiv.tensorTensorTensorComm
 
 /-- `orderingLens : (⊗) ⇒ (◃)` preserves the binary multiplication:
 ordering each pair and then interchanging phases agrees with first applying the

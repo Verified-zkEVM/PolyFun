@@ -1,3 +1,4 @@
+{"format": "polyfun-toy-decls", "version": 1, "producer": "hand-written", "decls":
 [
   {
     "name": "twice_nat",
@@ -6,4 +7,4 @@
       {"lam": {"arg": "nat", "body":
         {"app": [{"var": 1}, {"app": [{"var": 1}, {"var": 0}]}]}}}}}
   }
-]
+]}

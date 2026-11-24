@@ -20,17 +20,22 @@ exception layer, built from `MonadAttach` alone. Under the demonic transformer (
 reading has no counterpart in core's `Std.Do` framework, whose predicate transformers carry
 conjunctivity as a field.
 
-The demonic reading is conjunctive (`toWPMonadDemonic_wpConjunctive`). The angelic reading is
-not, and `PolyFunTest/Do/Angelic.lean` pins the counterexample against core's classes. Neither
+The demonic reading is conjunctive (`instWPConjunctiveToWPMonadDemonic`). The angelic reading
+is not, and `PolyFunTest/Do/Angelic.lean` pins the counterexample against core's classes. Neither
 reading is a global instance: install each scoped or local where the support semantics is
-intended. The demonic monad laws need only `LawfulMonadAttach`, because core's elimination rules
-for return values prove them. The angelic laws need the introduction rules of
-`ExactMonadAttach`. Over an `ExactMonadAttach` both readings are exact (`ExactWPMonad`):
-"always" and "sometimes" distribute over `pure` and `bind` with equality, so core's `wp` under
-either reading carries the equational `simp` set of `PolyFun.Control.Monad.ExactWP`.
+intended. Their `Prop`-valued facts are global instances keyed on the construction, so they apply
+wherever the reading is installed, and the value lemmas `toWPMonadDemonic_wp` and
+`toWPMonadAngelic_wp` are not `@[simp]`: core's `wp` stays the normal form.
+
+The demonic monad laws need only `LawfulMonadAttach`, because core's elimination rules for return
+values prove them. The angelic laws need the introduction rules of `ExactMonadAttach`. Over an
+`ExactMonadAttach` both readings are exact (`ExactWPMonad`): "always" and "sometimes" distribute
+over `pure` and `bind` with equality, so core's `wp` under either reading carries the equational
+`simp` set of `PolyFun.Control.Monad.ExactWP`.
 
 `Std.WP.LawfulWPMonadAttach` is soundness of a `WPMonad` interpretation with respect to
 lawful attachment: a `wp`-provable postcondition holds at every value the computation can return.
+The demonic reading is sound (`instLawfulWPMonadAttachToWPMonadDemonic`).
 `support_subset_of_wp` and `allOutputs_of_wp` turn any sound triple, including one discharged
 by `vcgen`, into a support fact. This soundness property does not hold automatically for the
 angelic reading or for an expectation reading.
@@ -82,10 +87,10 @@ attachment alone: `wp x post` holds when every possible output of `x` satisfies 
 instance. -/
 @[expose, instance_reducible]
 def toWPDemonic (α : Type u) : WP (m α) α Prop EStack⟨⟩ where
-  wpTrans x := ⟨fun post _ => AllOutputs post x⟩
-  wp_trans_monotone _ _ _ _ _ _ hpost := allOutputs_mono hpost
+  trans x := ⟨fun post _ => AllOutputs post x⟩
+  trans_monotone _ _ _ _ _ _ hpost := allOutputs_mono hpost
 
-@[simp]
+/-- The value of the demonic transformer. Not `@[simp]`: core's `wp` is the normal form. -/
 theorem toWPDemonic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
     (toWPDemonic (m := m) α).wp x post epost = AllOutputs post x :=
   rfl
@@ -95,10 +100,10 @@ attachment alone: `wp x post` holds when some possible output of `x` satisfies `
 instance, and deliberately without `WPConjunctive` or `LawfulWPMonadAttach` companions. -/
 @[expose, instance_reducible]
 def toWPAngelic (α : Type u) : WP (m α) α Prop EStack⟨⟩ where
-  wpTrans x := ⟨fun post _ => SomeOutput post x⟩
-  wp_trans_monotone _ _ _ _ _ _ hpost := someOutput_mono hpost
+  trans x := ⟨fun post _ => SomeOutput post x⟩
+  trans_monotone _ _ _ _ _ _ hpost := someOutput_mono hpost
 
-@[simp]
+/-- The value of the angelic transformer. Not `@[simp]`: core's `wp` is the normal form. -/
 theorem toWPAngelic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
     (toWPAngelic (m := m) α).wp x post epost = SomeOutput post x :=
   rfl
@@ -125,7 +130,8 @@ def toWPMonadDemonic : WPMonad m Prop EStack⟨⟩ where
     obtain ⟨a, ha, hab⟩ := LawfulMonadAttach.canReturn_bind_imp' hb
     exact h a ha b hab
 
-@[simp]
+/-- The value of the demonic reading. Not `@[simp]`: core's `wp` is the normal form, driven by the
+exact equations of `ExactWPMonad`. -/
 theorem toWPMonadDemonic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
     ((toWPMonadDemonic (m := m)).toWP α).wp x post epost = AllOutputs post x :=
   rfl
@@ -135,29 +141,24 @@ theorem toWPMonadDemonic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post 
     (epost : EStack⟨⟩) :
     @Std.WP.Triple Prop EStack⟨⟩ (m α) α _ _ x ((toWPMonadDemonic (m := m)).toWP α)
         pre post epost ↔
-      (pre → AllOutputs post x) := by
-  let inst := (toWPMonadDemonic (m := m)).toWP α
-  exact Std.WP.Triple.iff
+      (pre → AllOutputs post x) :=
+  WP.triple_iff _
 
 /-- The demonic interpretation is conjunctive: "always" distributes over `∧`. -/
-theorem toWPMonadDemonic_wpConjunctive {α : Type u} (x : m α) :
-    @WPConjunctive (m α) α Prop EStack⟨⟩ _ _ ((toWPMonadDemonic (m := m)).toWP α) x := by
-  let inst := (toWPMonadDemonic (m := m)).toWP α
-  refine ⟨fun Q₁ Q₂ _ _ => ?_⟩
-  change Lean.Order.meet (AllOutputs Q₁ x) (AllOutputs Q₂ x) →
-    AllOutputs (Lean.Order.meet Q₁ Q₂) x
-  rw [Lean.Order.meet_prop_eq_and]
-  rintro ⟨h₁, h₂⟩ a ha
-  rw [Lean.Order.meet_apply, Lean.Order.meet_prop_eq_and]
-  exact ⟨h₁ a ha, h₂ a ha⟩
+instance instWPConjunctiveToWPMonadDemonic {α : Type u} (x : m α) :
+    @WPConjunctive (m α) α Prop EStack⟨⟩ _ _ ((toWPMonadDemonic (m := m)).toWP α) x :=
+  (WP.wpConjunctive_iff _ x).mpr fun Q₁ Q₂ _ _ => by
+    simp only [toWPMonadDemonic_wp, Lean.Order.meet_prop_eq_and]
+    rintro ⟨h₁, h₂⟩ a ha
+    rw [Lean.Order.meet_apply, Lean.Order.meet_prop_eq_and]
+    exact ⟨h₁ a ha, h₂ a ha⟩
 
 /-- The demonic interpretation is sound in core's sense: `CanReturn` is exactly the support. -/
-theorem toWPMonadDemonic_lawfulWPMonadAttach :
-    @LawfulWPMonadAttach m Prop EStack⟨⟩ _ _ _ _ _ (toWPMonadDemonic (m := m)) := by
-  let inst := toWPMonadDemonic (m := m)
-  refine ⟨fun {α x P a} hcan hwp => ?_⟩
-  have h : AllOutputs (fun a => ⌜P a⌝) x := Lean.Order.of_top_le_prop hwp
-  simpa only [Lean.Order.ofProp_prop_eq] using h a hcan
+instance instLawfulWPMonadAttachToWPMonadDemonic :
+    @LawfulWPMonadAttach m Prop EStack⟨⟩ _ _ _ _ _ (toWPMonadDemonic (m := m)) :=
+  (WPMonad.lawfulWPMonadAttach_iff _).mpr fun {_ x P a} hcan hwp => by
+    have h : AllOutputs (fun a => ⌜P a⌝) x := Lean.Order.of_top_le_prop hwp
+    simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using h a hcan
 
 end Demonic
 
@@ -176,7 +177,8 @@ def toWPMonadAngelic : WPMonad m Prop EStack⟨⟩ where
   pure_le_wp_pure a post _ := (someOutput_pure post a).mpr
   bind_le_wp_bind x f post _ := fun h => (someOutput_bind post x f).mpr h
 
-@[simp]
+/-- The value of the angelic reading. Not `@[simp]`: core's `wp` is the normal form, driven by the
+exact equations of `ExactWPMonad`. -/
 theorem toWPMonadAngelic_wp {α : Type u} (x : m α) (post : α → Prop) (epost : EStack⟨⟩) :
     ((toWPMonadAngelic (m := m)).toWP α).wp x post epost = SomeOutput post x :=
   rfl
@@ -186,9 +188,8 @@ theorem toWPMonadAngelic_triple_iff {α : Type u} (x : m α) (pre : Prop) (post 
     (epost : EStack⟨⟩) :
     @Std.WP.Triple Prop EStack⟨⟩ (m α) α _ _ x ((toWPMonadAngelic (m := m)).toWP α)
         pre post epost ↔
-      (pre → SomeOutput post x) := by
-  let inst := (toWPMonadAngelic (m := m)).toWP α
-  exact Std.WP.Triple.iff
+      (pre → SomeOutput post x) :=
+  WP.triple_iff _
 
 end Angelic
 

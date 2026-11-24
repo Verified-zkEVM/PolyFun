@@ -66,6 +66,12 @@ follow:
 | `WeakBisimilar` | `WeakBisimilarity` |
 | `LTS.WeakTrace s obs t` | `MTr` of `toLts.saturate` at `obs.map some` |
 
+When each state has finitely many successors for each label,
+`strongBisimilar_iff_forall_bisimilarityApprox` identifies strong bisimilarity with agreement
+at every finite depth. Finite move types suffice by `LTS.toLts_imageFinite_of_finite_moves`.
+A finite depth can distinguish weakly bisimilar systems. At depth one, an idle loop requires a
+matching silent move even if both systems have identical visible ticks.
+
 The weak entry is the substantive one. PolyFun's weak bisimulation issues a
 *single* transition as the challenge and answers with a weak one — which is
 exactly cslib's `IsSWBisimulation`, not its `IsWeakBisimulation` (bisimulation
@@ -101,6 +107,10 @@ direction.
   correspondence;
 - `obsEq_of_isStrongSimulation` then reuses
   `behavior_eq_of_isSimulation` to obtain equality of behavior trees.
+
+The label of a dynamical-system transition records its move, so the projected system is
+deterministic for each label. `obsEq_of_forall_bisimilarityApprox` therefore recovers equality of
+behaviour trees from agreement at every finite depth, including for infinite direction types.
 
 The adapter contains no second coinduction proof; terminal-coalgebra finality
 remains the single behavioural-equality principle.

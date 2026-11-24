@@ -59,6 +59,30 @@ run frames that state. Charging `p` in a writer logs the charge of the one path
 the program follows, the path of any total choice of answers that extends `p`
 (`run_liftM_withChargeW_eq_of_liftM_eq_some`).
 
+Suppose several cache histories share one public hint. When can a caller use one cache for
+that hint and still get the same answer on every read that previously succeeded? Consider a
+caller that reads the key `false` and then uses the answer as its next key. Cache A contains
+only `false ↦ true`. Cache B contains only `true ↦ false`. With A the second request misses.
+With B the first request misses. A replacement that preserves both entries follows
+`false → true → false` and returns `some false`.
+
+```lean
+import PolyFunTest.PFunctor.Handler.Hint
+open PolyFunTest.HandlerHint
+
+#eval adaptive.liftM (partialAnswer false)       -- none
+#eval adaptive.liftM (partialAnswer true)        -- none
+#eval adaptive.liftM (fun key => some (!key))    -- some false
+```
+
+The same reasoning applies to any family of partial handlers. One handler per hint
+preserves every successful result of every adaptive program exactly when histories sharing
+a hint agree on each request they both answer. A one-request program detects a conflicting
+answer. For exact replay the replacement must also preserve misses, so A and B cannot share
+an exact replacement. The theorem allows the response type to depend on the request.
+[Handler replay theorem](../../PolyFun/PFunctor/Handler/Hint.lean) ·
+[Proof that every common replacement returns `some false`](../../PolyFunTest/PFunctor/Handler/Hint.lean)
+
 `Handler.comp second first`
 ([`Handler/Free.lean`](../../PolyFun/PFunctor/Handler/Free.lean)) implements
 each request of `P` as a free program over `Q` and runs that program through

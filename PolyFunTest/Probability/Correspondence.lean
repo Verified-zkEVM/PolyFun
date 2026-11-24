@@ -10,10 +10,10 @@ public import PolyFun.Control.Monad.Measure.Uniform
 public import PolyFun.Control.Semantics.Measure
 
 /-!
-# Pushforwards of certified meanings
+# Pushforwards of correspondences
 
-Regression tests for the measure pushforwards of `Control.Semantics.CertifiedMeaning` and
-`Control.Semantics.CorrespondsOn`. The certified meaning `double` doubles an extended natural
+Regression tests for the measure pushforwards of `Control.Semantics.Correspondence` and
+`Control.Semantics.CorrespondsOn`. The correspondence `double` doubles an extended natural
 number, and its implementation doubles a natural number. Under a uniform draw from a set of
 natural numbers, the meaning's pushforward of the draw is the uniform measure on the encoded
 doubles. Running the meaning on the encoded draw is therefore a uniform draw from them. An
@@ -35,7 +35,7 @@ theorem natEmbedding_apply (n : ℕ) : natEmbedding n = n := rfl
 
 /-- Doubling: the meaning doubles in `ℕ∞`, where it also sends `⊤`, which encodes no natural
 number, to `⊤`, and the implementation doubles in `ℕ`. -/
-@[expose] def double : CertifiedMeaning natEmbedding natEmbedding where
+@[expose] def double : Correspondence natEmbedding natEmbedding where
   meaning n := 2 * n
   implementation n := 2 * n
   correct n := by simp
@@ -47,22 +47,16 @@ theorem injOn_double_implementation (s : Set ℕ) : Set.InjOn double.implementat
 variable {m : Type → Type} [Monad m] [LawfulMonad m] [EvalDistSemantics m]
   [LawfulEvalDistSemantics m]
 
-/-- The meaning's pushforward of a uniform draw is the uniform measure on the encoded doubles. -/
-theorem map_double_meaning [MeasurableSpace ℕ∞] [MeasurableSingletonClass ℕ∞] {mx : m ℕ}
-    {s : Set ℕ} (h : IsUniformOn mx s) :
-    (evalDist mx).map (double.meaning ∘ natEmbedding) =
-      uniformOn (natEmbedding '' (double.implementation '' s)) := by
-  rw [double.evalDist_map_meaning mx Measurable.of_discrete Measurable.of_discrete,
-    (h.map_of_injOn (injOn_double_implementation s)).evalDist_eq,
-    map_uniformOn_of_injOn Measurable.of_discrete natEmbedding.injective.injOn]
-
 /-- Running the meaning on the encoded draw is a uniform draw from the encoded doubles. -/
 example {mx : m ℕ} {s : Set ℕ} (h : IsUniformOn mx s) :
     IsUniformOn ((double.meaning ∘ natEmbedding) <$> mx)
       (natEmbedding '' (double.implementation '' s)) := by
   constructor
   intro _ _
-  rw [evalDist_map_of_discrete, map_double_meaning h]
+  rw [evalDist_map_of_discrete,
+    double.evalDist_map_meaning mx Measurable.of_discrete Measurable.of_discrete,
+    (h.map_of_injOn (injOn_double_implementation s)).evalDist_eq,
+    map_uniformOn_of_injOn Measurable.of_discrete natEmbedding.injective.injOn]
 
 /-- An implementation that doubles only below four corresponds to the doubling meaning on the
 inputs below four. -/

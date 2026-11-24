@@ -83,6 +83,14 @@ Their pins are recorded in the manifest; their README files live under
   lattice-generic weakest-precondition framework `Std.WP`, which `vcgen` uses.
   Core's `Std.Do` framework, which `mvcgen` uses, is a distinct interface that
   PolyFun does not instantiate. See [program logic](../guides/program-logic.md).
+  Material that core could own is stated in core's namespaces and marked with an
+  `upstream candidate` comment: the `@[spec]` rules of
+  `PolyFun/Control/Do/Spec.lean` with the registration of
+  `Spec.tryCatch_MonadExcept`, and the control-flow equations `Std.WP.wp_ite`,
+  `wp_dite`, `wp_option_elim`, and `wp_sum_elim` of
+  `PolyFun/Control/Monad/ExactWP.lean`. The order bridge
+  `ToCslib/Order/LeanOrder.lean`, with its transfer lemmas in the namespace
+  `LeanOrder`, is a candidate for Mathlib.
 - **Measure staging:** the Mathlib lemmas that PolyFun's `Measure` companions need are staged
   under `ToCslib/MeasureTheory/` and `ToCslib/Probability/`, in paths that mirror Mathlib's, so
   VCVio's `ToMathlib` modules of the same relative paths can re-export them. See
@@ -104,7 +112,7 @@ behavior match the consumer.
 
 `ToCslib/Data/Fin/Cases.lean` proves compiler simplifications for core's
 `Fin.cases` and Mathlib's `Fin.cons`/`Matrix.vecCons` wrappers. At the pinned
-v4.35.0, strict evaluation of the induction-based definition computes
+v4.36.0, strict evaluation of the induction-based definition computes
 discarded recursive results; nested vector lookup compounds that work, so
 compiled code reads entry `i` of a chain of `Fin.cons` in time exponential in
 `i`. The replacement selects the underlying natural-number case directly,
@@ -121,8 +129,8 @@ implementations.
 `ToCslib/Data/Fin/MOfFn.lean` defines `Fin.mOfFn`, which runs a `Fin n`-indexed
 family of monadic computations in order and collects the results as a function.
 The pinned Mathlib has only the vector-valued `List.Vector.mOfFn`; an upstream
-version belongs beside it. Its `vcgen` rule `Spec.mOfFn_fin` stays in
-`PolyFun/Control/Do/Spec.lean`, because `ToCslib` imports no `Std.WP` module.
+version belongs beside it. Its `vcgen` rule `Fin.Spec.mOfFn` stays in
+`PolyFun/Control/Do/MOfFn.lean`, because `ToCslib` imports no `Std.WP` module.
 
 `ToCslib/Data/Fin/Lattice.lean` splits a supremum over `Fin (n + 1)` into its first term and the
 rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums but not over `Fin`;

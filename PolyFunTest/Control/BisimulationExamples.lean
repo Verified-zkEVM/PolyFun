@@ -174,6 +174,30 @@ theorem idle_weak_plain_state : WeakBisimilar idleLTS plainLTS () () := by
   cases state
   exact ⟨rel, hb.toWeak, hrel⟩
 
+/-- The two systems agree before any moves are observed. -/
+example : Cslib.LTS.BisimilarityApprox idleLTS.toLts plainLTS.toLts 0 () () :=
+  Cslib.LTS.BisimilarityApprox.zero
+
+/-- The first strong approximation already detects the idle move. -/
+private theorem idle_plain_first_depth :
+    ¬ Cslib.LTS.BisimilarityApprox idleLTS.toLts plainLTS.toLts 1 () () := by
+  intro h
+  have hi : idleLTS.toLts.Tr () none () := ⟨false, rfl, rfl⟩
+  have h' : Cslib.LTS.BisimilarityApprox idleLTS.toLts plainLTS.toLts (0 + 1) () () := by
+    simpa only [zero_add] using h
+  obtain ⟨_, ⟨move, hlabel, _⟩, _⟩ := Cslib.LTS.BisimilarityApprox.follow_fst h' hi
+  cases move
+  contradiction
+
+example : ¬ StrongBisimilar idleLTS plainLTS () () := by
+  let : ∀ s, Finite (idleLTS.Move s) := fun _ => inferInstanceAs (Finite Bool)
+  let : ∀ s, Finite (plainLTS.Move s) := fun _ => inferInstanceAs (Finite Unit)
+  let := idleLTS.toLts_imageFinite_of_finite_moves
+  let := plainLTS.toLts_imageFinite_of_finite_moves
+  intro h
+  apply idle_plain_first_depth
+  simpa using strongBisimilar_iff_forall_bisimilarityApprox.mp h 1
+
 example : WeakBisimilar plainLTS idleLTS () () := idle_weak_plain_state.symm
 
 example : WeakBisimilar idleLTS idleLTS () () := by

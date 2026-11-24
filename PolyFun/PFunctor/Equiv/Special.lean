@@ -60,7 +60,6 @@ variable {P : PFunctor.{uA, uB}}
 the sense of Niu–Spivak §2.2, whose action is the corepresentable functor `Hom(A, −)`. -/
 def IsPurePower (P : PFunctor.{uA, uB}) : Prop :=
   ∃ A : Type uB, Nonempty (P ≃ₚ (y^A : PFunctor.{uA, uB}))
-@[deprecated (since := "2026-10-19")] alias IsRepresentable := IsPurePower
 
 /-- `P` is **constant** if it is isomorphic to the constant polynomial `C I` for some `I`
 (Niu–Spivak §2.2). -/
@@ -80,7 +79,6 @@ def IsMonomial (P : PFunctor.{uA, uB}) : Prop :=
 theorem isPurePower_purePower (A : Type uB) :
     IsPurePower (y^A : PFunctor.{uA, uB}) :=
   ⟨A, ⟨Equiv.refl _⟩⟩
-@[deprecated (since := "2026-10-19")] alias isRepresentable_purePower := isPurePower_purePower
 
 theorem isConstant_C (I : Type uA) : IsConstant (C I : PFunctor.{uA, uB}) :=
   ⟨I, ⟨Equiv.refl _⟩⟩
@@ -102,7 +100,6 @@ theorem isPurePower_iff : IsPurePower P ↔ Nonempty (Unique P.A) := by
     exact ⟨P.B default, ⟨
       { equivA := _root_.Equiv.equivPUnit P.A
         equivB := fun a => _root_.Equiv.cast (congrArg P.B (Subsingleton.elim a default)) }⟩⟩
-@[deprecated (since := "2026-10-19")] alias isRepresentable_iff := isPurePower_iff
 
 /-- A polynomial is constant exactly when none of its positions has a direction (Niu–Spivak
 Ex 2.13). -/
@@ -153,6 +150,5 @@ theorem IsPurePower.isMonomial (h : IsPurePower P) : IsMonomial P := by
   obtain ⟨u⟩ := isPurePower_iff.mp h
   exact isMonomial_iff.mpr ⟨P.B default, fun a =>
     ⟨_root_.Equiv.cast (congrArg P.B (Subsingleton.elim a default))⟩⟩
-@[deprecated (since := "2026-10-19")] alias IsRepresentable.isMonomial := IsPurePower.isMonomial
 
 end PFunctor

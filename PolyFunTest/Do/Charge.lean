@@ -8,6 +8,7 @@ module
 
 public import PolyFun.PFunctor.Free.WP.Charge
 public import PolyFun.PFunctor.Free.Do
+public import PolyFun.Control.Do.Normalization
 
 /-!
 # Charges, budgets and upper-bound triples on free programs
@@ -85,8 +86,7 @@ the remaining condition closes on the fold. -/
 example : ⦃ toDual (2 : ℕ∞) ⦄ twoFlips ⦃ fun (_ : Bool) => toDual (0 : ℕ∞) ⦄ := by
   unfold twoFlips
   vcgen
-  simp only [binderNameHint, Lean.Order.rel_eq_le, toDual_le_toDual,
-    ExactWPMonad.wp_bind, ExactWPMonad.wp_pure]
+  simp only [wp_norm, ExactWPMonad.wp_bind, ExactWPMonad.wp_pure]
   rw [OpSpec.toUpperWPMonad_wp]
   simp [one_add_one_eq_two]
 
@@ -99,11 +99,11 @@ example (x : FreeM Coin Bool) (k : ℕ) (hx : FreeM.IsTotalRollBound x k) :
   · intro a j
     refine ⟨?_⟩
     rw [OpSpec.toUpperWPMonad_wp]
-    simp only [Lean.Order.rel_eq_le, toDual_le_toDual, ofDual_toDual, doubled,
-      FreeM.wpFold_bind, FreeM.wpFold_lift, OpSpec.charge_apply, iSup_const]
+    simp only [wp_norm, doubled, FreeM.wpFold_bind, FreeM.wpFold_lift, OpSpec.charge_apply,
+      iSup_const]
     exact_mod_cast (by omega : 1 + (1 + 2 * j) ≤ 2 * (j + 1))
   · intro j
-    simp only [Lean.Order.rel_eq_le, toDual_le_toDual]
+    simp only [wp_norm]
     exact_mod_cast (by omega : 2 * 0 ≤ 2 * j)
 
 /-! ## Handlers with state -/

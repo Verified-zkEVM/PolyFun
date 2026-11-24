@@ -6,20 +6,20 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Control.Do.Spec
-public import PolyFun.Control.Monad.Algebra.WP
-public import Mathlib.Data.ENat.Lattice
+public import PolyFun.Control.Do.MOfFn
+public import PolyFunTest.Do.Fixtures
 
 /-!
 # The transformers' constructors, lifts, runners and loops on core's `vcgen`
 
 The rules of `PolyFun.Control.Do.Spec` for `StateT.mk`, `StateT.lift`, running a `StateT` with
 the state discarded, `OptionT.mk`, `ExceptT.mk`, `ExceptT.lift`, running an `OptionT` or `ExceptT`
-into a postcondition of the returned option or result, `List.mapM` and `Fin.mOfFn` with a loop
-invariant, and the sequence combinators `<*` and `*>`, each over core's `Prop` reading of `Id`,
+into a postcondition of the returned option or result, `List.mapM` with a loop invariant, and the
+sequence combinators `<*` and `*>`, and the rule of `PolyFun.Control.Do.MOfFn` for `Fin.mOfFn`
+with a loop invariant, each over core's `Prop` reading of `Id`,
 where the matcher applies the rule to the constructor, lift or runner before `vcgen` looks inside;
-`Fin.mOfFn` over `StateT`, with a state-passing invariant; and `guard` under a lattice-valued
-reading of a deterministic monad, where `Spec.guard_OptionT_iInf` applies in place of the `Prop`
-rule.
+`Fin.mOfFn` over `StateT`, with a state-passing invariant; and both outcomes of `guard`
+under propositional and lattice-valued readings.
 -/
 
 public section
@@ -100,7 +100,7 @@ def countSteps (n : Nat) : StateT Nat Id (Fin n → Nat) :=
 example (n : Nat) : ⦃ fun s => s = 0 ⦄ countSteps n ⦃ fun _ s => s = n ⦄ := by
   vcgen [countSteps] invariants
     · fun k _ s => s = k
-  all_goals simp_all
+  simp_all
 
 /- The sequence combinators keep the first, respectively the second, value. -/
 example : ⦃ True ⦄ ((pure true : Id Bool) <* (pure 0 : Id Nat)) ⦃ fun b => b = true ⦄ := by
@@ -109,37 +109,23 @@ example : ⦃ True ⦄ ((pure true : Id Bool) <* (pure 0 : Id Nat)) ⦃ fun b =>
 example : ⦃ True ⦄ ((pure 0 : Id Nat) *> (pure true : Id Bool)) ⦃ fun b => b = true ⦄ := by
   vcgen
 
-/-! ## `guard` under a lattice-valued reading
+/-! ## Propositional and quantitative guards -/
 
-A deterministic monad with no global weakest-precondition instance, read at the extended
-naturals through a local ordered algebra, as `PolyFunTest.Do.Exact` sets up; the `Prop` rule
-for `guard` does not apply there, and `Spec.guard_OptionT_iInf` does. -/
+example : ⦃ True ⦄ (guard (2 < 1) : OptionT Id Unit)
+    ⦃ fun _ => False; estack⟨fun _ => True⟩ ⦄ := by
+  vcgen
+  exact absurd ‹2 < 1› (by decide)
 
-/-- A deterministic monad with no global weakest-precondition instance. -/
-@[expose]
-def Det (α : Type) : Type := α
+section Lattice
 
-instance : Monad Det where
-  pure a := a
-  bind x f := f x
+open scoped PolyFunTest.Det.ENatWP
 
-instance : LawfulMonad Det :=
-  LawfulMonad.mk' Det (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl)
-
-noncomputable local instance instMAlgOrderedDetENat : MAlgOrdered Det ℕ∞ where
-  μ x := x
-  μ_pure _ := rfl
-  μ_bind_mono _ _ h x := h x
-
-noncomputable local instance instWPMonadDetENat : WPMonad Det ℕ∞ EStack⟨⟩ :=
-  MAlgOrdered.toWPMonad
-
-/- `guard` on a true condition continues, through `Spec.guard_OptionT_iInf`: the branch for the
-false condition is ruled out by `decide`. -/
+/- A successful guard preserves the extended-natural postcondition. -/
 example : ⦃ (3 : ℕ∞) ⦄ (do guard (1 < 2); OptionT.lift (pure 3 : Det ℕ∞) : OptionT Det ℕ∞)
     ⦃ fun n => n; estack⟨fun _ => 0⟩ ⦄ := by
   vcgen
-  rename_i h
-  exact absurd h.down (by decide)
+  exact absurd ‹¬ (1 < 2)› (by decide)
+
+end Lattice
 
 end PolyFunTest.Transformers

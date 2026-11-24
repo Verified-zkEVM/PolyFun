@@ -134,6 +134,13 @@ additive valuation of the path's event trace (`charge_eq_traceList_charge`), and
   completed path respects. So the completed-path reading has its own calculus, valid in any
   ordered cost type.
 
+A fixed oracle answers each occurrence of an operation the same way. In
+`PolyFun.PFunctor.Free.Query`, `countQueries_toQueryProgram` identifies CSLib’s query count with
+the length of the path selected by that oracle. `queryUpperBound_of_isTotalRollBound` turns a
+monotone total roll bound for an input family into a CSLib query upper bound. The converse can
+fail. A program that asks the same Boolean question twice and asks a third time if the answers
+differ takes exactly two steps for every fixed oracle. Its tree admits a three-step path.
+
 The calculus:
 
 - `Path.splitBind` splits a path through `x >>= f` into a path through `x` and one through the
@@ -178,7 +185,7 @@ calls a program makes and nothing else. At this layer the following are free:
 - the answers, and whatever handler, oracle or machine produces them;
 - handler state, and the cost of reading or updating it.
 
-Each free component is bounded one layer down: by a certified handler into the next interface,
+Each free component is bounded one layer down: by a costed handler into the next interface,
 by a machine that refines the program, or by a quantitative realization, which charges backend
 work. A bound is useful only together with a statement of which layer picks up what this one
 leaves free.
@@ -209,8 +216,8 @@ ignored, such as a tick, merges into what follows when it has an answer
 and `IsChargeBound.bind_of_le` lets the continuation start from any amount within a bound.
 
 **Reachable results** (`PolyFun/PFunctor/Free/Cost/Support.lean`). The continuation's budget is
-needed only where `x` can return: `IsChargeBound.bind_supp` and `cost_bind_le_supp` take it on the
-support `x.supp`. `x.CallsIn S` says every call of `x` is in `S`; then charges and handlers matter
+needed only where `x` can return: `IsChargeBound.bind_support` and `cost_bind_le_support` take it
+on the support `support x`. `x.CallsIn S` says every call of `x` is in `S`; then charges and handlers matter
 only on `S` (`IsChargeBound.congr_charge`, `costWith_congr_charge`, `liftM_congr_of_callsIn`).
 `x.MayCall a` says a call at `a` occurs in the tree, and the calls that occur form the least such
 `S` (`callsIn_iff_forall_mayCall`, `callsIn_setOf_mayCall`).
@@ -273,7 +280,7 @@ on reachable states needs a state type that excludes the unreachable ones.
 - `h.withCharge c` keeps the amount spent as `StateT` state, and forgetting it recovers the
   handler (`fst_map_run_liftM_withCharge`). `h.withChargeW c` logs it in a writer instead, as
   writer tracing of the charge (`withChargeW_eq_withTraceBefore`, `fst_map_run_liftM_writerT`,
-  `run_liftM_withChargeW_id`, `supp_run_liftM_id_withChargeW`).
+  `run_liftM_withChargeW_id`, `support_run_liftM_id_withChargeW`).
 - On every possible result of a run of a program within budget `B`, the amount spent is at most
   `B` (`IsChargeBound.le_of_canReturn_run_liftM_withCharge`).
 - That is an instance of resource growth (`IsChargeBound.le_of_canReturn_run_liftM`): if each call
@@ -292,12 +299,6 @@ on reachable states needs a state type that excludes the unreachable ones.
   additive hom `f` is charging by `f ∘ c` (`mapOutputHom_liftM_withChargeW`). The two writer
   morphisms behind these laws, `WriterT.mapOutputHom` and `WriterT.toStateTHom`, are in
   `PolyFun/Control/Monad/Hom/Writer.lean`.
-- An expected-cost reading needs a probability semantics, which this guide does not cover;
-  PolyFun's measure companions define one as a fold
-  (`PFunctor/Free/Measure/ExpectedCharge.lean`; see [probability](probability.md)). It transfers
-  through a handler only from a per-call bound that holds for every call argument and every
-  handler state. A bound that holds only on average can fail once later calls depend on earlier
-  answers.
 - `h.withBudget c B` refuses any call that would overspend, and `h.withBudgetOr c B fallback`
   answers it with a fallback. On a program within budget neither intervenes
   (`run_liftM_withBudget_of_isChargeBound`, `run_liftM_withBudgetOr_of_isChargeBound`).
@@ -310,37 +311,54 @@ spec at every call folds below it (`wpFold_le_wpFold_of_le`). A larger charge th
 larger cost (`costWith_mono_charge`), and the fold of any spec below `OpSpec.charge c` at every
 call is at most `costWith c`.
 
-## Layers and certified implementations
+### Expected cost through a stateful handler
+
+A handler can cache a result in its private state. A cold call might issue one target request,
+while a warm call can reuse the answer for free. To price an adaptive client,
+`OpSpec.statefulExpectedCharge K c` charges `c a s` before sampling the answer and next state
+jointly from `K a s`. A call still incurs its charge when its answer measure is zero.
+
+Use `FreeM.wpFold_expectedCharge_run` to replace a finite handler run with a fold over the
+client. The price of each call is the expected charge of its implementation from the current
+state. The theorem requires measurability of that price, the joint terminal law and the
+terminal observation in the private state. For discrete private state,
+`FreeM.wpFold_expectedCharge_run_le_of_discrete` lifts a per-call bound to the whole client.
+A bound averaged over a fixed distribution of states can fail when the client chooses its next
+call from earlier answers. For a setup cost shared across calls, use
+`FreeM.wpFold_statefulExpectedCharge_le_of_potential` with an invariant preserved almost surely
+and a measurable potential. See also the [measure fold](probability.md).
+
+## Layers and costed implementations
 
 A cost argument usually spans layers. A specification is priced by its calls, an algorithm
 implements each call by operations, and the operations run as instructions or gates. Each link
-between two layers is a **certified implementation** (`PolyFun/PFunctor/Handler/Certified.lean`):
+between two layers is a **costed implementation** (`PolyFun/PFunctor/Handler/Costed.lean`):
 
 - an implementation of the upper interface `P` by programs over the lower interface `Q`;
 - an **exchange** `E : ω →+o ω'` that converts prices, such as "one hash is two compressions";
 - a certificate that each call at `a` is implemented within `E (c a)`.
 
-`Handler.Certified P Q c d` packages the three. Bounds transfer along it: a program within `B` is
-simulated within `E B` (`Certified.transfer`), and in value form a simulated program costs at most
-`E` of the original's cost (`Certified.cost_liftM_le`). Certified implementations compose, and so
-do their exchanges (`Certified.comp`), so a chain of layers gives a bound at the bottom by
+`Handler.Costed P Q c d` packages the three. Bounds transfer along it: a program within `B` is
+simulated within `E B` (`Costed.transfer`), and in value form a simulated program costs at most
+`E` of the original's cost (`Costed.cost_liftM_le`). Costed implementations compose, and so
+do their exchanges (`Costed.comp`), so a chain of layers gives a bound at the bottom by
 composition, without unfolding the programs. A reduction runs a setup program, the source program
-through a certified handler, and a finishing program, and the handler and the finishing program may
+through a costed handler, and a finishing program, and the handler and the finishing program may
 use what the setup returned. Its bound is affine in the source budget,
 `setupCost + E B + finishCost` (`CostedReduction.run_isChargeBound`).
 
 Charges with values in `ι → ω` count one resource per index
-(`PolyFun/PFunctor/Handler/CertifiedVec.lean`). Worst-case vector costs are computed componentwise
+(`PolyFun/PFunctor/Handler/Demand.lean`). Worst-case vector costs are computed componentwise
 (`cost_pi_apply`, `cost_le_pi_iff`). Pricing at nonnegative prices `p`, `u ↦ ∑ i, p i * u i`
 (`priceHom`), turns a vector bound into a scalar one (`IsChargeBound.price`, `cost_price_le`).
 Per-resource demands `d : ι → ι' → ω` give the exchange `u ↦ ∑ i, u i • d i` (`demandHom`): a
 handler whose call at `a` uses at most `∑ i, c a i • d i` is certified by it
-(`Certified.ofDemand`), a program with use vector `u` then runs with use vector `∑ i, u i • d i`
+(`Costed.ofDemand`), a program with use vector `u` then runs with use vector `∑ i, u i • d i`
 (`Handler.isChargeBound_liftM_demand`), and demands compose
 (`demandHom_demandHom`, `Handler.isChargeBound_liftM_demand_comp`).
 
-`Handler.CertifiedUnder P Q c allowsP d allowsQ` is the form over allowed answers
-(`PolyFun/PFunctor/Handler/CertifiedUnder.lean`): each implementation stays within its exchanged
+`Handler.CostedOn P Q c allowsP d allowsQ` is the form over allowed answers
+(`PolyFun/PFunctor/Handler/CostedOn.lean`): each implementation stays within its exchanged
 price along `allowsQ`, and every result it can return along `allowsQ` is allowed by `allowsP`. It
 has `transfer` and `comp`, and with the demand exchange it gives
 `Handler.isChargeBoundUnder_liftM_demand`.

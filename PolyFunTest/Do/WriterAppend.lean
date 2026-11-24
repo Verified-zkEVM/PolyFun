@@ -6,7 +6,7 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Do.Spec
+public import PolyFun.Control.Monad.WriterT.WP
 
 /-!
 # Append-based writer interpretation
@@ -16,7 +16,7 @@ preserves a nonempty incoming log and its output order without installing a mono
 on lists or changing the writer's monad instance. The scoped interpretation
 `WriterT.AppendWP` installs the same reading from core's `Std.Associative (· ++ ·)` and
 `Std.LawfulIdentity (· ++ ·) ∅`, and `vcgen` steps through `tell`, lifted base computations,
-`WriterT.mk` and `run` with the rules of `PolyFun.Control.Do.Spec`.
+`WriterT.mk` and `run` with the rules that `WriterT.AppendWP` registers.
 -/
 
 public section
@@ -87,7 +87,7 @@ example (a b : Nat) :
     ⦃ fun log => log = [99] ⦄ logPair a b
       ⦃ fun result log => result = a + b ∧ log = [99, a, b] ⦄ := by
   vcgen [logPair]
-  simp_all
+  all_goals simp_all
 
 /- `run` starts from the empty log. -/
 example (a b : Nat) : ⦃ True ⦄ (logPair a b).run ⦃ fun p => p = (a + b, [a, b]) ⦄ := by

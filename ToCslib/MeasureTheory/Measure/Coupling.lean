@@ -150,11 +150,11 @@ theorem smul_prod (μ : Measure α) (ν : Measure β) [IsFiniteMeasure μ] [IsFi
     ENNReal.inv_mul_cancel hμ (measure_ne_top μ Set.univ)
   constructor
   · ext s hs
-    rw [Measure.fst_apply hs, Measure.smul_apply, smul_eq_mul,
+    rw [Measure.fst_apply hs, smul_apply, smul_eq_mul,
       show Prod.fst ⁻¹' s = s ×ˢ (Set.univ : Set β) by ext; simp, Measure.prod_prod, ← h,
       mul_comm (μ s), ← mul_assoc, hcancel, one_mul]
   · ext t ht
-    rw [Measure.snd_apply ht, Measure.smul_apply, smul_eq_mul,
+    rw [Measure.snd_apply ht, smul_apply, smul_eq_mul,
       show Prod.snd ⁻¹' t = (Set.univ : Set α) ×ˢ t by ext; simp, Measure.prod_prod,
       ← mul_assoc, hcancel, one_mul]
 

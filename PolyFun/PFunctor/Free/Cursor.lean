@@ -22,13 +22,6 @@ attach protocol-specific meaning to the visited prefix.
 
 @[expose] public section
 
-/- Lean 4.33 compares assigned metavariable types at implicit transparency;
-the trace calc steps below move between the `TraceList` carrier (reducibly
-`FreeMonoid (Idx _)`) and its `List` normal form there. `implicit_reducible`
-(unlike `reducible`) stays invisible to simp and instance search, and needs
-no `allowUnsafeReducibility`. -/
-attribute [local implicit_reducible] FreeMonoid PFunctor.Idx
-
 universe uA uB v
 
 namespace PFunctor.FreeM
@@ -106,25 +99,25 @@ theorem length_comp (first : Spine program middle)
 /-- Erased events visited by a cursor spine. -/
 def trace : {program residual : FreeM P α} →
     Spine program residual → PFunctor.TraceList P
-  | _, _, .root _ => []
-  | _, _, .down (a := a) answer tail => (⟨a, answer⟩ : P.Idx) :: tail.trace
+  | _, _, .root _ => 1
+  | _, _, .down (a := a) answer tail => FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * tail.trace
 
 @[simp]
 theorem trace_root (program : FreeM P α) :
-    (Spine.root program).trace = [] :=
+    (Spine.root program).trace = 1 :=
   rfl
 
 @[simp]
 theorem trace_down {a : P.A} {next : P.B a → FreeM P α}
     {residual : FreeM P α} (answer : P.B a)
     (tail : Spine (next answer) residual) :
-    (Spine.down answer tail).trace = (⟨a, answer⟩ : P.Idx) :: tail.trace :=
+    (Spine.down answer tail).trace = FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * tail.trace :=
   rfl
 
 @[simp]
 theorem trace_comp (first : Spine program middle)
     (second : Spine middle residual) :
-    (first.comp second).trace = List.append first.trace second.trace := by
+    (first.comp second).trace = first.trace * second.trace := by
   induction first with
   | root => rfl
   | down answer tail ih =>
@@ -132,14 +125,12 @@ theorem trace_comp (first : Spine program middle)
       rfl
 
 theorem length_eq_length_trace (spine : Spine program residual) :
-    spine.length = FreeMonoid.length spine.trace := by
+    spine.length = spine.trace.toList.length := by
   induction spine with
   | root => rfl
   | down answer tail ih =>
       simp only [length, trace, ih]
       rfl
-
-@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete path through the residual back through a cursor spine. -/
 def plug : {program residual : FreeM P α} →
@@ -179,13 +170,11 @@ theorem output_plug (spine : Spine program residual) (path : Path residual) :
 @[simp]
 theorem trace_plug (spine : Spine program residual) (path : Path residual) :
     Path.trace program (spine.plug path) =
-      List.append spine.trace (Path.trace residual path) := by
+      spine.trace * Path.trace residual path := by
   induction spine with
   | root => rfl
   | down answer tail ih =>
-      change _ :: Path.trace _ (tail.plug path) =
-        _ :: List.append tail.trace (Path.trace _ path)
-      rw [ih]
+      rw [plug_down, Path.trace_liftBind, trace_down, ih, mul_assoc]
 
 end Spine
 
@@ -290,25 +279,23 @@ def trace (cursor : Cursor program) : PFunctor.TraceList P :=
   cursor.spine.trace
 
 @[simp]
-theorem trace_root (program : FreeM P α) : (root program).trace = [] :=
+theorem trace_root (program : FreeM P α) : (root program).trace = 1 :=
   rfl
 
 @[simp]
 theorem trace_down {a : P.A} {next : P.B a → FreeM P α}
     (answer : P.B a) (tail : Cursor (next answer)) :
-    (down answer tail).trace = ⟨a, answer⟩ :: tail.trace :=
+    (down answer tail).trace = FreeMonoid.of (α := P.Idx) ⟨a, answer⟩ * tail.trace :=
   rfl
 
 @[simp]
 theorem trace_comp (first : Cursor program) (second : Cursor first.residual) :
-    (first.comp second).trace = List.append first.trace second.trace :=
+    (first.comp second).trace = first.trace * second.trace :=
   Spine.trace_comp first.spine second.spine
 
 theorem length_eq_length_trace (cursor : Cursor program) :
-    cursor.length = FreeMonoid.length cursor.trace :=
+    cursor.length = cursor.trace.toList.length :=
   Spine.length_eq_length_trace cursor.spine
-
-@[deprecated (since := "2026-10-19")] alias length_eq_trace_length := length_eq_length_trace
 
 /-- Plug a complete residual path back into the source program. -/
 def plug (cursor : Cursor program) : Path cursor.residual → Path program :=
@@ -340,7 +327,7 @@ theorem output_plug (cursor : Cursor program) (path : Path cursor.residual) :
 @[simp]
 theorem trace_plug (cursor : Cursor program) (path : Path cursor.residual) :
     Path.trace program (cursor.plug path) =
-      List.append cursor.trace (Path.trace cursor.residual path) :=
+      cursor.trace * Path.trace cursor.residual path :=
   Spine.trace_plug cursor.spine path
 
 /-! ## Immediate edges and extension witnesses -/
@@ -432,11 +419,11 @@ theorem length_le (extension : Extends earlier later) :
 
 /-- Extending a cursor appends the continuation trace. -/
 theorem trace_eq (extension : Extends earlier later) :
-    later.trace = List.append earlier.trace extension.continuation.trace :=
+    later.trace = earlier.trace * extension.continuation.trace :=
   calc
     later.trace = (earlier.comp extension.continuation).trace :=
       congrArg Cursor.trace extension.comp_eq.symm
-    _ = List.append earlier.trace extension.continuation.trace :=
+    _ = earlier.trace * extension.continuation.trace :=
       trace_comp earlier extension.continuation
 
 end Extends
@@ -597,9 +584,6 @@ theorem Terminal.output_eq_output_pathOfTerminal (terminal : Terminal program) :
           dsimp at residual_eq ⊢
           subst residual
           rfl
-
-@[deprecated (since := "2026-10-19")] alias terminal_output_eq_path_output :=
-  Terminal.output_eq_output_pathOfTerminal
 
 @[simp]
 theorem terminalOfPath_pathOfTerminal :

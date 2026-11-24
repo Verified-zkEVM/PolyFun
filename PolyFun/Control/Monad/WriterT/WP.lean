@@ -24,10 +24,12 @@ under `WriterT.MonoidWP`, and the specialization to logs combined by `++` from `
 `Std.Associative` and `Std.LawfulIdentity` is scoped under `WriterT.AppendWP`, which also supplies
 the writer's `LawfulMonad` instance (`WriterT.lawfulMonad_monad`). Clients opt in with
 `open scoped WriterT.MonoidWP` or `open scoped WriterT.AppendWP`, or install an explicit
-interpretation locally. Importing the module does not choose a writer interpretation.
-The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run`
-live in `PolyFun.Control.Do.Spec`, registered in the same two scopes; the entailments they wrap
-are stated here.
+interpretation locally. Importing the module does not choose a writer interpretation. Exactness
+over an exact base is a global instance keyed on `WriterT.wpMonadOf`
+(`WriterT.instExactWPMonadWpMonadOf`), so it holds under either scope and for a local
+interpretation. The `@[spec]` rules for `tell`, `monadLift`, `mk`, and `run` are registered in the
+same two scopes, beside the entailments they wrap, so `vcgen` uses them exactly where a writer
+interpretation is selected.
 -/
 
 public section
@@ -36,17 +38,6 @@ universe u v w z
 
 open Std.WP
 open scoped Lean.Order
-
-/-- `WPMonad.map_le_wp_map` with the unmapped program's postcondition given up to an equation, the
-form the `WriterT` proofs below instantiate. -/
-private theorem WPMonad.map_le_wp_map' {m : Type u → Type v} {Pred : Type w} {EPred : Type z}
-    [Monad m] [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred] {α β : Type u}
-    (f : α → β) (x : m α) :
-    ∀ post post' epost, post = (fun a => post' (f a)) →
-      wp x post epost ⊑ wp (f <$> x) post' epost := by
-  intro post post' epost h
-  subst h
-  exact WPMonad.map_le_wp_map f x post' epost
 
 namespace WriterT
 
@@ -58,9 +49,9 @@ told the log accumulated so far. -/
 @[expose, instance_reducible]
 def wpInstOf (append : ω → ω → ω) [WP (m (α × ω)) (α × ω) Pred EPred] :
     WP (WriterT ω m α) α (ω → Pred) EPred where
-  wpTrans x := ⟨fun post epost w => wp x.run (fun p => post p.1 (append w p.2)) epost⟩
-  wp_trans_monotone x := fun _ _ _ _ hepost hpost w => by
-    apply WP.wp_consequence_econs (x := x.run)
+  trans x := ⟨fun post epost w => wp x.run (fun p => post p.1 (append w p.2)) epost⟩
+  trans_monotone x := fun _ _ _ _ hepost hpost w => by
+    apply WP.wp_monotone (x := x.run)
     · intro p
       exact hpost p.1 (append w p.2)
     · exact hepost
@@ -124,12 +115,13 @@ def wpMonadOf (empty : ω) (append : ω → ω → ω)
         (fun q => post q.1 (append (append w p.2) q.2)) epost) epost ⊑
           wp (x.run >>= fun p => (fun q : β × ω => (q.1, append p.2 q.2)) <$> (f p.1).run)
             (fun q => post q.1 (append w q.2)) epost
-      refine Lean.Order.PartialOrder.rel_trans (WP.wp_consequence x.run _ _ epost fun p => ?_)
+      refine Lean.Order.PartialOrder.rel_trans (WP.wp_monotone_post (x := x.run) fun p => ?_)
         (WPMonad.bind_le_wp_bind x.run _ _ epost)
-      exact WPMonad.map_le_wp_map' _ (f p.1).run _ _ epost (funext fun q => by rw [assoc]) }
+      simpa only [assoc] using WPMonad.map_le_wp_map (fun q : β × ω => (q.1, append p.2 q.2))
+        (f p.1).run (fun q => post q.1 (append w q.2)) epost }
 
 /-- Over an exact base interpretation, the explicit writer interpretation is exact. -/
-theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append : ω → ω → ω)
+instance instExactWPMonadWpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append : ω → ω → ω)
     (right_id : ∀ w, append w empty = w)
     (assoc : ∀ a b c, append (append a b) c = append a (append b c))
     [@LawfulMonad (WriterT ω m) (WriterT.monad empty append)] :
@@ -151,8 +143,9 @@ theorem exactWPMonad_wpMonadOf [ExactWPMonad m Pred EPred] (empty : ω) (append 
           (fun q => post q.1 (append (append w p.2) q.2)) epost) epost
       simp only [ExactWPMonad.wp_bind, ExactWPMonad.wp_map, assoc])
 
-/-- The explicit writer interpretation exposes its accumulated-log equation. -/
-@[simp]
+/-- The explicit writer interpretation exposes its accumulated-log equation. Not `@[simp]`: the
+scoped readings state their own equations on core's `wp` (`WriterT.wp_apply_eq`,
+`WriterT.AppendWP.wp_apply_eq`). -/
 theorem wpInstOf_apply_eq (append : ω → ω → ω) (x : WriterT ω m α)
     (post : α → ω → Pred) (epost : EPred) (w : ω) :
     (wpInstOf append).wp x post epost w =
@@ -172,8 +165,10 @@ theorem le_wp_liftTell_of (empty : ω) (append : ω → ω → ω)
     (post : α → ω → Pred) (epost : EPred) :
     (fun w => wp x (fun a => post a w) epost) ⊑
       (wpInstOf append).wp ((WriterT.liftTell empty).monadLift x) post epost :=
-  fun w => WPMonad.map_le_wp_map' (fun a => (a, empty)) x _ _ epost
-    (funext fun a => by simp only [right_id])
+  fun w => by
+    have h := WPMonad.map_le_wp_map (fun a => (a, empty)) x (fun p => post p.1 (append w p.2)) epost
+    simp only [right_id] at h
+    exact h
 
 /-- Starting the accumulated-log interpretation at a left identity gives the base run. -/
 theorem wp_run_eq_of (empty : ω) (append : ω → ω → ω)
@@ -196,11 +191,6 @@ variable [EmptyCollection ω] [Append ω] [Std.Associative (α := ω) (· ++ ·)
 accumulated so far, extended on the right by `++`. -/
 scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
   wpMonadOf ∅ (· ++ ·) Std.LawfulRightIdentity.right_id Std.Associative.assoc
-
-/-- The append-based writer interpretation is exact over an exact base. -/
-scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
-    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
-  exactWPMonad_wpMonadOf ∅ (· ++ ·) Std.LawfulRightIdentity.right_id Std.Associative.assoc
 
 @[simp, grind =]
 theorem wp_apply_eq (x : WriterT ω m α) (post : α → ω → Pred) (epost : EPred) (w : ω) :
@@ -232,21 +222,11 @@ end AppendWP
 
 variable [Monoid ω]
 
-/-- The accumulated-log interpretation for multiplicative monoid logs. -/
-@[expose, instance_reducible]
-def wpInst [WP (m (α × ω)) (α × ω) Pred EPred] :
-    WP (WriterT ω m α) α (ω → Pred) EPred := wpInstOf (· * ·)
-
 namespace MonoidWP
 
 /-- Opt-in writer interpretation for multiplicative monoid logs. -/
 scoped instance instWPMonad : WPMonad (WriterT ω m) (ω → Pred) EPred :=
   wpMonadOf 1 (· * ·) mul_one mul_assoc
-
-/-- The multiplicative writer interpretation is exact over an exact base. -/
-scoped instance instExactWPMonad [ExactWPMonad m Pred EPred] :
-    ExactWPMonad (WriterT ω m) (ω → Pred) EPred :=
-  exactWPMonad_wpMonadOf 1 (· * ·) mul_one mul_assoc
 
 end MonoidWP
 
@@ -266,8 +246,10 @@ theorem le_wp_tell (out : ω) (post : PUnit → ω → Pred) (epost : EPred) :
 theorem le_wp_monadLift (x : m α) (post : α → ω → Pred) (epost : EPred) :
     (fun w => wp x (fun a => post a w) epost) ⊑
       wp (MonadLift.monadLift x : WriterT ω m α) post epost :=
-  fun w => WPMonad.map_le_wp_map' (fun a => (a, (1 : ω))) x _ _ epost
-    (funext fun a => by simp only [mul_one])
+  fun w => by
+    have h := WPMonad.map_le_wp_map (fun a => (a, (1 : ω))) x (fun p => post p.1 (w * p.2)) epost
+    simp only [mul_one] at h
+    exact h
 
 @[simp, grind =]
 theorem wp_mk_apply_eq (x : m (α × ω)) (post : α → ω → Pred) (epost : EPred) (w : ω) :
@@ -280,3 +262,96 @@ theorem wp_run_eq (x : WriterT ω m α) (post : α × ω → Pred) (epost : EPre
   simp only [wp_apply_eq, one_mul]
 
 end WriterT
+
+/-! ## `vcgen` rules
+
+The rules for `tell`, `monadLift`, `WriterT.mk` and `WriterT.run` wrap the entailments above. The
+rules for multiplicative logs are stated for the interpretation of `WriterT.MonoidWP`, and the
+rules for append-based logs for that of `WriterT.AppendWP`. Each set is registered in the scope of
+its interpretation, so `vcgen` uses it exactly where that interpretation is installed. -/
+
+namespace Std.WP
+
+section WriterTSpec
+
+open scoped WriterT.MonoidWP
+
+variable {m : Type u → Type v} {ω : Type u} {Pred : Type w} {EPred : Type z} [Monad m] [Monoid ω]
+  [Assertion Pred] [Assertion EPred] [WPMonad m Pred EPred]
+
+/-- `tell` on a multiplicative log, read by `WriterT.MonoidWP`, multiplies the log on the right. -/
+theorem Spec.tell_WriterT (out : ω) (post : PUnit → ω → Pred) {epost : EPred} :
+    Triple (MonadWriter.tell out : WriterT ω m PUnit) (fun w => post ⟨⟩ (w * out)) post epost :=
+  Triple.intro (WriterT.le_wp_tell out post epost)
+
+/-- A lifted base computation leaves a multiplicative log unchanged. -/
+theorem Spec.monadLift_WriterT {α : Type u} (x : m α) (post : α → ω → Pred) {epost : EPred} :
+    Triple (MonadLift.monadLift x : WriterT ω m α)
+      (fun w => wp x (fun a => post a w) epost) post epost :=
+  Triple.intro (WriterT.le_wp_monadLift x post epost)
+
+/-- `WriterT.mk x` on a multiplicative log multiplies in the log `x` returns. -/
+theorem Spec.mk_WriterT {α : Type u} (x : m (α × ω)) (post : α → ω → Pred) {epost : EPred} :
+    Triple (WriterT.mk x : WriterT ω m α)
+      (fun w => wp x (fun p => post p.1 (w * p.2)) epost) post epost :=
+  Triple.intro fun _ => Lean.Order.PartialOrder.rel_refl
+
+/-- Running a writer computation on a multiplicative log starts from the unit. -/
+theorem Spec.run_WriterT {α : Type u} (x : WriterT ω m α) (post : α × ω → Pred)
+    {epost : EPred} :
+    Triple (x.run : m (α × ω)) (wp x (fun a w => post (a, w)) epost 1) post epost :=
+  Triple.intro (by rw [WriterT.wp_run_eq])
+
+end WriterTSpec
+
+section WriterTAppendSpec
+
+open scoped WriterT.AppendWP
+
+variable {m : Type u → Type v} {ω : Type u} {Pred : Type w} {EPred : Type z} [Monad m]
+  [EmptyCollection ω] [Append ω] [Std.Associative (α := ω) (· ++ ·)]
+  [Std.LawfulIdentity (α := ω) (· ++ ·) ∅] [Assertion Pred] [Assertion EPred]
+  [WPMonad m Pred EPred]
+
+/-- `tell` on an append-based log, read by `WriterT.AppendWP`, extends the log on the right. -/
+theorem Spec.tell_WriterT_append (out : ω) (post : PUnit → ω → Pred) {epost : EPred} :
+    Triple (MonadWriter.tell out : WriterT ω m PUnit) (fun w => post ⟨⟩ (w ++ out)) post epost :=
+  Triple.intro (WriterT.AppendWP.le_wp_tell out post epost)
+
+/-- A lifted base computation leaves an append-based log unchanged. -/
+theorem Spec.monadLift_WriterT_append {α : Type u} (x : m α) (post : α → ω → Pred)
+    {epost : EPred} :
+    Triple (MonadLift.monadLift x : WriterT ω m α)
+      (fun w => wp x (fun a => post a w) epost) post epost :=
+  Triple.intro (WriterT.AppendWP.le_wp_monadLift x post epost)
+
+/-- `WriterT.mk x` on an append-based log appends the log `x` returns. -/
+theorem Spec.mk_WriterT_append {α : Type u} (x : m (α × ω)) (post : α → ω → Pred)
+    {epost : EPred} :
+    Triple (WriterT.mk x : WriterT ω m α)
+      (fun w => wp x (fun p => post p.1 (w ++ p.2)) epost) post epost :=
+  Triple.intro fun _ => Lean.Order.PartialOrder.rel_refl
+
+/-- Running an append-based writer computation starts from the empty log. -/
+theorem Spec.run_WriterT_append {α : Type u} (x : WriterT ω m α) (post : α × ω → Pred)
+    {epost : EPred} :
+    Triple (x.run : m (α × ω)) (wp x (fun a w => post (a, w)) epost ∅) post epost :=
+  Triple.intro (by rw [WriterT.AppendWP.wp_run_eq])
+
+end WriterTAppendSpec
+
+end Std.WP
+
+namespace WriterT.MonoidWP
+
+attribute [scoped spec] Std.WP.Spec.tell_WriterT Std.WP.Spec.monadLift_WriterT
+  Std.WP.Spec.mk_WriterT Std.WP.Spec.run_WriterT
+
+end WriterT.MonoidWP
+
+namespace WriterT.AppendWP
+
+attribute [scoped spec] Std.WP.Spec.tell_WriterT_append Std.WP.Spec.monadLift_WriterT_append
+  Std.WP.Spec.mk_WriterT_append Std.WP.Spec.run_WriterT_append
+
+end WriterT.AppendWP

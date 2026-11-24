@@ -692,8 +692,8 @@ assignment `ρ`. -/
 @[expose] noncomputable def certifiedEvaluator {Θ : List Kind} {A B : TySig.Term Θ .type}
     (t : Tm Θ [mono A] (mono B)) (ρ : Env Den Θ) (hA : (A.denote tyAlg ρ).shape.Data)
     (hB : (B.denote tyAlg ρ).shape.Data) :
-    Control.Semantics.CertifiedMeaning hA.embedding hB.embedding :=
-  model.certifiedMeaning lazy_related t ρ (input := hA.embedding) (output := hB.embedding)
+    Control.Semantics.Correspondence hA.embedding hB.embedding :=
+  model.correspondence lazy_related t ρ (input := hA.embedding) (output := hB.embedding)
     (nativeIn := id) (nativeOut := id) hA.repT_encode (fun _ _ hv => hB.eq_encode_of_repT hv)
     (fun x => model.denote SNative native t ρ (Env.single x)) (fun _ => rfl)
 
