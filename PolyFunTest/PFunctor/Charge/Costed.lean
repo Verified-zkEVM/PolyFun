@@ -6,17 +6,17 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.PFunctor.Handler.Certified
+public import PolyFun.PFunctor.Handler.Costed
 public import PolyFun.PFunctor.Handler.Stateful.Charge
 public import PolyFun.PFunctor.Free.Cost.Tactic
 
 /-!
-# Certified handlers
+# Costed handlers
 
-Checks for `PolyFun.PFunctor.Handler.Certified` and `PolyFun.PFunctor.Handler.Stateful.Charge`:
+Checks for `PolyFun.PFunctor.Handler.Costed` and `PolyFun.PFunctor.Handler.Stateful.Charge`:
 
 * hash queries implemented by two compression calls each, and compression calls by three steps
-  each, are certified links with exchanges `2 •` and `3 •`, and they compose into a link with
+  each, are costed links with exchanges `2 •` and `3 •`, and they compose into a link with
   exchange `6 •`;
 * a budget of `q` hash queries transfers to `6 q` steps, and in value form the worst-case cost is
   at most the exchanged cost;
@@ -28,7 +28,7 @@ public section
 
 open PFunctor PFunctor.FreeM PFunctor.Handler
 
-namespace PolyFunTest.ChargeCertified
+namespace PolyFunTest.ChargeCosted
 
 /-- Hash queries, compression calls and machine steps, each with a Boolean answer. -/
 abbrev Hash : PFunctor.{0, 0} := ⟨Unit, fun _ => Bool⟩
@@ -57,12 +57,12 @@ def compressBySteps : Handler (FreeM Step) Compress := fun _ => do
   let _ ← FreeM.lift (P := Step) ()
   FreeM.lift (P := Step) ()
 
-def hashLayer : Certified Hash Compress (fun _ => (1 : ℕ)) (fun _ => 1) where
+def hashLayer : Costed Hash Compress (fun _ => (1 : ℕ)) (fun _ => 1) where
   handler := hashByCompress
   exchange := scale 2
   certificate _ := by cost_bound [hashByCompress]
 
-def compressLayer : Certified Compress Step (fun _ => (1 : ℕ)) (fun _ => 1) where
+def compressLayer : Costed Compress Step (fun _ => (1 : ℕ)) (fun _ => 1) where
   handler := compressBySteps
   exchange := scale 3
   certificate _ := by cost_bound [compressBySteps]
@@ -76,7 +76,7 @@ example (n : ℕ) : (compressLayer.comp hashLayer).exchange n = 6 * n := by
 example {α : Type} (x : FreeM Hash α) (q : ℕ) (hx : x.IsChargeBound (fun _ => 1) q) :
     (x.liftM (compressLayer.comp hashLayer).handler).IsChargeBound (fun _ => 1) (6 * q) := by
   have h := (compressLayer.comp hashLayer).transfer hx
-  simp only [Certified.comp_exchange, OrderAddMonoidHom.comp_apply, scale_apply, map_zero,
+  simp only [Costed.comp_exchange, OrderAddMonoidHom.comp_apply, scale_apply, map_zero,
     compressLayer, hashLayer] at h
   exact h.mono (by omega)
 
@@ -93,7 +93,7 @@ example {α : Type} (x : FreeM Hash α) (q : ℕ) (hx : x.IsChargeBound (fun _ =
 theorem doubleENat_apply (n : ℕ∞) : doubleENat n = 2 * n :=
   rfl
 
-def hashLayerENat : Certified Hash Compress (fun _ => (1 : ℕ∞)) (fun _ => (1 : ℕ∞)) where
+def hashLayerENat : Costed Hash Compress (fun _ => (1 : ℕ∞)) (fun _ => (1 : ℕ∞)) where
   handler := hashByCompress
   exchange := doubleENat
   certificate _ := by cost_bound [hashByCompress]
@@ -148,4 +148,4 @@ example : ((Stateful.lift (S := PUnit) hashByCompress).link countingSteps).Withi
   refine Stateful.WithinCharge.link (d := fun _ => 3) ?_ countingSteps_withinCharge
   exact Handler.WithinCharge.lift fun _ => by cost_bound [hashByCompress]
 
-end PolyFunTest.ChargeCertified
+end PolyFunTest.ChargeCosted

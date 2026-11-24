@@ -90,8 +90,6 @@ protected def bind {s t u : I} (x : FreeM₂ P s t α) (g : α → FreeM₂ P t 
 lemma pure_bind (x : α) (g : α → FreeM₂ P s u β) :
     (FreeM₂.pure (P := P) (s := s) x).bind g = g x := rfl
 
-@[deprecated (since := "2026-10-19")] alias bind_pure := pure_bind
-
 @[simp]
 lemma bind_liftBind (a : P.A s) (r : (b : P.B s a) → FreeM₂ P (P.src s a b) t α)
     (g : α → FreeM₂ P t u β) :

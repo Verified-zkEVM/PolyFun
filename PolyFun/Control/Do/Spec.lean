@@ -197,8 +197,6 @@ theorem Spec.run_OptionT_some_none (x : OptionT m α) (post : Option α → Pred
       funext o; cases o <;> rfl
     rw [h]⟩
 
-@[deprecated (since := "2026-11-16")] alias Spec.run_OptionT' := Spec.run_OptionT_some_none
-
 end OptionT
 
 /-! ## Constructing, lifting and running `ExceptT` -/
@@ -232,8 +230,6 @@ theorem Spec.run_ExceptT_ok_error (x : ExceptT ε m α) (post : Except ε α →
     have h : pushExcept (fun a => post (.ok a)) (fun e => post (.error e)) = post := by
       funext r; cases r <;> rfl
     rw [h]⟩
-
-@[deprecated (since := "2026-11-16")] alias Spec.run_ExceptT' := Spec.run_ExceptT_ok_error
 
 end ExceptT
 

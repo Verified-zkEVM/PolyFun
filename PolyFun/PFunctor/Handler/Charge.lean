@@ -246,11 +246,6 @@ theorem support_run_liftM_id_withChargeW [AddMonoid ω] (c : P.A → ω) {α : T
     · rintro ⟨⟨b, p⟩, rfl⟩
       exact ⟨b, _, ⟨p, rfl⟩, rfl⟩
 
-@[deprecated (since := "2026-11-20")]
-alias supp_run_liftM_id_withCharge := support_run_liftM_id_withCharge
-@[deprecated (since := "2026-11-20")]
-alias supp_run_liftM_id_withChargeW := support_run_liftM_id_withChargeW
-
 /-- Run a handler under a budget: a call at `a` that would bring the amount spent above `B`
 fails; any other call is charged and run. -/
 def withBudget [Monad m] [Add ω] [LE ω] [DecidableLE ω] (h : Handler m P) (c : P.A → ω)

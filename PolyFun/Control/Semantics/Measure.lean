@@ -11,26 +11,26 @@ public import PolyFun.Control.Domain.Measure
 public import PolyFun.Control.Monad.Measure
 
 /-!
-# Pushforwards of certified meanings
+# Pushforwards of correspondences
 
-A certified meaning `f : CertifiedMeaning input output` agrees with its native implementation on
-every encoded input: `f.meaning (input x) = output (f.implementation x)`. Pushing a measure on
-native inputs forward along the encoded meaning `f.meaning ∘ input` therefore gives the encoding
-of the implementation's pushforward (`Control.Semantics.CertifiedMeaning.map_meaning`). A
-correspondence on an admissible set gives the same equation when almost every input is admissible
+A correspondence `f : Correspondence input output` agrees with its native implementation on every
+encoded input: `f.meaning (input x) = output (f.implementation x)`. Pushing a measure on native
+inputs forward along the encoded meaning `f.meaning ∘ input` therefore gives the encoding of the
+implementation's pushforward (`Control.Semantics.Correspondence.map_meaning`). A `CorrespondsOn`
+fact on an admissible set gives the same equation when almost every input is admissible
 (`Control.Semantics.CorrespondsOn.map_meaning_ae`).
 
-A decoded certificate, whose output encoding is `DomainResult.valueEmbedding`, returns a value at
+A decoded correspondence, whose output encoding is `DomainResult.valueEmbedding`, returns a value at
 every input. Pushed forward along its encoded meaning, a measure on native inputs therefore has the
 implementation's pushforward as its values and no failure mass
-(`Control.Semantics.CertifiedMeaning.success_map_meaning`,
-`Control.Semantics.CertifiedMeaning.failureMass_map_meaning`). A correspondence gives the same when
-almost every input is admissible (`Control.Semantics.CorrespondsOn.success_map_meaning_ae`,
+(`Control.Semantics.Correspondence.success_map_meaning`,
+`Control.Semantics.Correspondence.failureMass_map_meaning`). A `CorrespondsOn` fact gives the same
+when almost every input is admissible (`Control.Semantics.CorrespondsOn.success_map_meaning_ae`,
 `Control.Semantics.CorrespondsOn.failureMass_map_meaning_ae`).
 
 Under a lawful measure semantics, the output measure of a computation `mx` pushed forward along the
 encoded meaning is the encoding of the output measure of `f.implementation <$> mx`
-(`Control.Semantics.CertifiedMeaning.evalDist_map_meaning`,
+(`Control.Semantics.Correspondence.evalDist_map_meaning`,
 `Control.Semantics.CorrespondsOn.evalDist_map_meaning_ae`).
 
 The statements assume measurability of the output encoding and of the implementation only. The
@@ -56,14 +56,14 @@ variable {A B D E : Type*} [MeasurableSpace A] [MeasurableSpace B] [MeasurableSp
 
 /-- Pushing a measure on native inputs forward along the encoded meaning gives the encoding of the
 implementation's pushforward. -/
-theorem CertifiedMeaning.map_meaning (f : CertifiedMeaning input output) (μ : Measure A)
+theorem Correspondence.map_meaning (f : Correspondence input output) (μ : Measure A)
     (houtput : Measurable output) (himplementation : Measurable f.implementation) :
     μ.map (f.meaning ∘ input) = (μ.map f.implementation).map output := by
   have hcomp : f.meaning ∘ input = output ∘ f.implementation := funext f.correct
   rw [hcomp, Measure.map_map houtput himplementation]
 
-/-- A correspondence on the admissible inputs gives the pushforward equation of
-`CertifiedMeaning.map_meaning` when almost every input is admissible. -/
+/-- A `CorrespondsOn` fact on the admissible inputs gives the pushforward equation of
+`Correspondence.map_meaning` when almost every input is admissible. -/
 theorem CorrespondsOn.map_meaning_ae {valid : A → Prop} {meaning : D → E} {implementation : A → B}
     (h : CorrespondsOn input output valid meaning implementation) {μ : Measure A}
     (hvalid : ∀ᵐ x ∂μ, valid x) (houtput : Measurable output)
@@ -80,27 +80,27 @@ section result
 
 variable {A D B ε : Type*} [MeasurableSpace A] [MeasurableSpace B] {input : A ↪ D}
 
-/-- A decoded certificate's encoded meaning pushes a measure on native inputs to a measure whose
+/-- A decoded correspondence's encoded meaning pushes a measure on native inputs to a measure whose
 values are the implementation's pushforward. -/
-theorem CertifiedMeaning.success_map_meaning
-    (f : CertifiedMeaning input (DomainResult.valueEmbedding : B ↪ DomainResult ε B))
+theorem Correspondence.success_map_meaning
+    (f : Correspondence input (DomainResult.valueEmbedding : B ↪ DomainResult ε B))
     {μ : Measure A} (himplementation : AEMeasurable f.implementation μ) :
     DomainResult.success (μ.map (f.meaning ∘ input)) = μ.map f.implementation := by
   have hcomp : f.meaning ∘ input = DomainResult.value ∘ f.implementation := funext f.correct
   rw [hcomp, ← DomainResult.measurable_value.aemeasurable.map_map_of_aemeasurable himplementation,
     DomainResult.success_map_value]
 
-/-- A decoded certificate's encoded meaning pushes a measure on native inputs to a measure with no
-failure mass: it neither diverges nor fails at any native input. -/
-theorem CertifiedMeaning.failureMass_map_meaning
-    (f : CertifiedMeaning input (DomainResult.valueEmbedding : B ↪ DomainResult ε B))
+/-- A decoded correspondence's encoded meaning pushes a measure on native inputs to a measure with
+no failure mass: it neither diverges nor fails at any native input. -/
+theorem Correspondence.failureMass_map_meaning
+    (f : Correspondence input (DomainResult.valueEmbedding : B ↪ DomainResult ε B))
     {μ : Measure A} (himplementation : AEMeasurable f.implementation μ) :
     DomainResult.failureMass (μ.map (f.meaning ∘ input)) = 0 := by
   have hcomp : f.meaning ∘ input = DomainResult.value ∘ f.implementation := funext f.correct
   rw [hcomp, ← DomainResult.measurable_value.aemeasurable.map_map_of_aemeasurable himplementation,
     DomainResult.failureMass_map_value]
 
-/-- A decoded correspondence gives the values of `CertifiedMeaning.success_map_meaning` when
+/-- A decoded `CorrespondsOn` fact gives the values of `Correspondence.success_map_meaning` when
 almost every input is admissible. -/
 theorem CorrespondsOn.success_map_meaning_ae {valid : A → Prop} {meaning : D → DomainResult ε B}
     {implementation : A → B}
@@ -135,12 +135,12 @@ variable {m : Type u → Type v} [Monad m] [LawfulMonad m] [EvalDistSemantics m]
 
 /-- The output measure of a computation, pushed forward along the encoded meaning, is the encoding
 of the output measure of the implementation run on its result. -/
-theorem CertifiedMeaning.evalDist_map_meaning (f : CertifiedMeaning input output) (mx : m A)
+theorem Correspondence.evalDist_map_meaning (f : Correspondence input output) (mx : m A)
     (houtput : Measurable output) (himplementation : Measurable f.implementation) :
     (evalDist mx).map (f.meaning ∘ input) = (evalDist (f.implementation <$> mx)).map output := by
   rw [evalDist_map mx himplementation, f.map_meaning _ houtput himplementation]
 
-/-- A correspondence gives the equation of `CertifiedMeaning.evalDist_map_meaning` when almost
+/-- A `CorrespondsOn` fact gives the equation of `Correspondence.evalDist_map_meaning` when almost
 every output of the computation is admissible. -/
 theorem CorrespondsOn.evalDist_map_meaning_ae {valid : A → Prop} {meaning : D → E}
     {implementation : A → B} (h : CorrespondsOn input output valid meaning implementation)

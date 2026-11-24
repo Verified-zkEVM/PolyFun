@@ -169,8 +169,6 @@ theorem mapLens_mapLens (l₂ : Lens Q R) (l₁ : Lens P Q) (x : FreeM P α) :
   | lift_bind a rest ih =>
       exact congrArg (FreeM.liftBind (l₂.toFunA (l₁.toFunA a))) (funext fun d => ih _)
 
-@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
-
 theorem mapLens_bind (l : Lens P Q) (x : FreeM P α) (f : α → FreeM P β) :
     (FreeM.bind x f).mapLens l =
       FreeM.bind (x.mapLens l) (fun a => (f a).mapLens l) := by

@@ -40,16 +40,6 @@ public section
 
 universe u v w
 
-namespace MAlgOrdered
-
-@[deprecated (since := "2026-11-16")] alias top_eq_top := LeanOrder.top_eq_top
-@[deprecated (since := "2026-11-16")] alias meet_eq_inf := LeanOrder.meet_eq_inf
-@[deprecated (since := "2026-11-16")] alias join_eq_sup := LeanOrder.join_eq_sup
-@[deprecated (since := "2026-11-16")] alias iInf_eq_iInf := LeanOrder.iInf_eq_iInf
-@[deprecated (since := "2026-11-16")] alias iSup_eq_iSup := LeanOrder.iSup_eq_iSup
-
-end MAlgOrdered
-
 open Std.WP
 
 namespace MAlgOrdered
@@ -132,7 +122,5 @@ theorem wpConjunctive_toWP {α : Type u} (x : m α)
     rw [toWP_wp, toWP_wp, toWP_wp, LeanOrder.meet_eq_inf]
     refine _root_.le_trans (h Q₁ Q₂) (μ_bind_pure_mono x fun a => ?_)
     rw [Lean.Order.meet_apply, LeanOrder.meet_eq_inf]
-
-@[deprecated (since := "2026-11-16")] alias wpConjunctiveOf := wpConjunctive_toWP
 
 end MAlgOrdered

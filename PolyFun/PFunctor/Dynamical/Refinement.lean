@@ -64,8 +64,6 @@ structure ForwardSimulation (impl : DynSystem SImpl p) (spec : DynSystem SSpec q
           matchStep ⟨stImpl, dImpl⟩ ⟨stSpec, dSpec⟩ ∧
             StateRel (impl.update stImpl dImpl) (spec.update stSpec dSpec)
 
-@[deprecated (since := "2026-10-19")] alias ForwardSimulation.stateRel := ForwardSimulation.StateRel
-
 namespace ForwardSimulation
 
 variable {impl : DynSystem SImpl p} {spec : DynSystem SSpec q}

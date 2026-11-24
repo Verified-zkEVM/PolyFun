@@ -229,15 +229,8 @@ and the constructions it supplies keep CSLib's transparency:
 - The universe parameters of `purePower` are
   `.{uB, uA}`, child universe first; those of `prod` and `instHMulPFunctor`
   are `.{uA₁, uA₂, uB₁, uB₂}`; `instZeroPFunctor` and `instOnePFunctor` take
-  the child universe first.
-
-Deprecated compatibility names preserve their original reduction contracts: `ofConst`
-is a reducible abbreviation for `monomial`, and `sum` retains its literal body for
-direction-type instance search. Its `sum_A`, `sum_B_inl`, and `sum_B_inr` equations
-still rewrite the `sum` spelling. Explicitly unfolding `coprod` exposes the same
-body. `Lens.enclose` remains available from `PolyFun.PFunctor.Lens.Basic` with
-four independent universe parameters; the preferred `Section` API is available
-there too and uses the interface's universe pair for both endpoints.
+  the child universe first. `Section` (`PolyFun.PFunctor.Lens.Basic`) uses the
+  interface's universe pair for both endpoints.
 
 Three rules follow from this transparency:
 
