@@ -15,15 +15,16 @@ Checks for `PolyFun.PFunctor.Free.Cost.Count`:
 
 * natural numbers, finitely supported counts over infinitely many kinds and pointwise counts over
   finitely many kinds are counting cost types, and their totals are sums;
-* under any partial order, `ℕ∞` is not a counting cost type, because `⊤ + ⊤ = ⊤` gives `⊤`
-  total `0`;
+* in `ℕ∞`, every program meets the budget `⊤`. Under any partial order, `ℕ∞` is not a counting
+  cost type, because `⊤ + ⊤ = ⊤` gives `⊤` total `0`;
 * under any partial order, a nonzero natural number has a nonzero total. A pair with an integer
   component is not a counting cost type. So no coarse order hides a cost;
 * a program that queries a random oracle on an infinite domain meets a counting contract, and the
-  contract bounds its calls;
+  contract bounds its calls. The contract holds for a larger budget, under an uncharged map on
+  inputs and for a composite;
 * per-kind contracts bound each kind of query, and their total bounds all of them;
 * in a family with one more kind for each member, every budget has a finite total, but the totals
-  grow without bound. A bound on the whole family needs a uniform total.
+  grow without bound. A uniform bound on the totals bounds the calls of the whole family.
 
 `PolyFunTest/PFunctor/Charge/Basic.lean` rejects the contract hazards next to the examples that
 show them.
@@ -49,6 +50,10 @@ example : CountCost.total (Finsupp.single 7 2 + Finsupp.single 9 1 : ℕ →₀ 
 
 example : CountCost.total (fun b => if b then 2 else 1 : Bool → ℕ) = 3 := by
   simp
+
+/-- In `ℕ∞`, every program meets the budget `⊤`, however many calls it makes. -/
+example (M : MeasuredProgram ℕ Bool ℕ∞) : M.CostAtMost ⊤ :=
+  fun _ _ => le_top
 
 /-- Under any partial order, `ℕ∞` is not a counting cost type: the total of `⊤` would equal its
 double. -/
@@ -105,6 +110,27 @@ example : (MeasuredProgram.ofFun (ω := ℕ) fun n : ℕ => n ^ n).CountAtMost 0
 /-- Every call is charged, so no smaller budget holds. -/
 example : ¬ threeQueries.CountAtMost 2 := fun h =>
   absurd (h.costAtMost () ⟨true, true, true, ⟨⟩⟩) (by decide)
+
+/-- A larger budget keeps the contract. -/
+example : threeQueries.CountAtMost 5 :=
+  threeQueries_countAtMost.mono (by decide)
+
+/-- The three queries, run twice. The second run ignores the result of the first. -/
+abbrev twice : MeasuredProgram Unit Bool ℕ :=
+  (threeQueries.contramap fun _ : Bool => ()).comp threeQueries
+
+/-- The composite meets the sum of the two budgets. -/
+theorem twice_countAtMost : twice.CountAtMost (3 + 3) :=
+  (threeQueries_countAtMost.contramap _).comp threeQueries_countAtMost
+
+/-- The composite makes at most six calls on every completed path. -/
+example (v : Unit) (p : Path (twice.program v)) : Path.length _ p ≤ 6 := by
+  simpa using twice_countAtMost.length_le_total
+    (fun o => by rcases o with ⟨_, _⟩ | ⟨_, _⟩ <;> exact one_ne_zero) v p
+
+/-- Every call of the composite is charged, so no smaller budget holds. -/
+example : ¬ twice.CountAtMost 5 := fun h =>
+  absurd (h.costAtMost () ⟨true, true, true, true, true, true, ⟨⟩⟩) (by decide)
 
 /-! ## Per-kind counts -/
 

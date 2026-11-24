@@ -8,11 +8,12 @@ module
 
 public import PolyFun.PFunctor.Free.Cost.Measured
 public import Mathlib.Data.Finsupp.Order
+public import Mathlib.Data.Finsupp.Weight
 
 /-!
 # Counting contracts
 
-`MeasuredProgram.CostAtMost` holds in any ordered cost type, so its laws also cover signed,
+`MeasuredProgram.CostAtMost` is defined for any ordered cost type, so its laws also cover signed,
 reversed and idempotent valuations. Such a valuation does not bound use. With a negative price, a
 refund call meets any budget. Under the reversed order, every program meets the budget `0`. With
 `max` as addition, a budget bounds only the largest price. With one count per kind over infinitely
@@ -21,12 +22,13 @@ many kinds, a pointwise budget does not bound the total.
 A counting cost type, `CountCost ω`, excludes these valuations. It gives an additive map `count`
 from `ω` into finitely supported natural-number counts, one count per kind. The map preserves and
 reflects the order of `ω`, which is a partial order, so it is an order embedding
-(`CountCost.count_injective`). So `ω` has the addition and the order of a submonoid of
-natural-number counts. Instances cover `ℕ`, `K →₀ ℕ` for any `K`, and `K → ℕ` for finite `K`
-(`nonempty_countCost_pi_iff`). In a counting cost type, adding a cost never decreases it
-(`CountCost.le_self_add`). If a sum of two costs is `0`, the first cost is `0`
-(`CountCost.eq_zero_of_add_eq_zero`). The total of a cost, `CountCost.total`, is a natural
-number that is zero only at zero (`CountCost.total_eq_zero_iff`).
+(`CountCost.count_le_count_iff`, `CountCost.count_injective`). So `ω` has the addition and the
+order of a submonoid of natural-number counts. Instances cover `ℕ`, `K →₀ ℕ` for any `K`, and
+`K → ℕ` for finite `K` (`nonempty_countCost_pi_iff`). In a counting cost type, adding a cost
+never decreases it (`CountCost.le_self_add`). If a sum of two costs is `0`, the first cost is `0`
+(`CountCost.eq_zero_of_add_eq_zero`). The total of a cost, `CountCost.total`, is the
+`Finsupp.degree` of its counts. It is a natural number that is zero only at zero
+(`CountCost.total_eq_zero_iff`).
 
 `MeasuredProgram.CountAtMost B` is the contract form of `CostAtMost B`. On every completed path of
 every view's program, the count of each kind is at most its count in `B`. It is equivalent to
@@ -42,8 +44,8 @@ function and the code between calls are not charged, and an operation of price `
 `ofFun f` meets the contract `0` for every `f` (`countAtMost_ofFun`).
 
 In a family of programs, every member can meet its contract while the totals of the budgets grow
-without bound. An example is `n` kinds at count `1` each. A bound on the calls of the whole family
-needs a uniform bound on the totals of the budgets.
+without bound. An example is `n` kinds at count `1` each. A uniform bound on the totals of the
+budgets bounds the calls of the whole family.
 -/
 
 @[expose] public section
@@ -53,8 +55,7 @@ universe u w uI uI'
 namespace PFunctor
 
 /-- A cost type of counts: an additive map into finitely supported natural-number counts, one
-count per kind, that preserves and reflects the order. A contract in a counting cost type bounds
-only the charges of the program's declared operations. -/
+count per kind, that preserves and reflects the order. -/
 class CountCost (ω : Type w) [AddZeroClass ω] [PartialOrder ω] where
   /-- The kinds that are counted. -/
   Kind : Type w
@@ -80,10 +81,6 @@ protected theorem le_self_add (a b : ω) : a ≤ a + b := by
   rw [← count_le_count_iff, map_add]
   exact _root_.le_self_add
 
-/-- Every cost is at least `0`. -/
-protected theorem zero_le (a : ω) : 0 ≤ a := by
-  simpa using CountCost.le_self_add (0 : ω) a
-
 /-- If a sum of two costs is `0`, the first cost is `0`. -/
 protected theorem eq_zero_of_add_eq_zero {a b : ω} (h : a + b = 0) : a = 0 := by
   refine count_injective ?_
@@ -91,28 +88,21 @@ protected theorem eq_zero_of_add_eq_zero {a b : ω} (h : a + b = 0) : a = 0 := b
   rw [map_zero]
   exact (Finsupp.add_eq_zero_iff _ _).1 hc |>.1
 
-/-- The total count of all kinds. -/
+/-- The total count of all kinds: the degree of the counts. -/
 noncomputable def total : ω →+ ℕ :=
-  (Finsupp.liftAddHom fun _ => AddMonoidHom.id ℕ).comp count
+  Finsupp.degree.comp count
 
-/-- The total of a cost is the sum of its counts. -/
-theorem total_apply (a : ω) : total a = (count a).sum fun _ n => n :=
+/-- The total of a cost is the degree of its counts. -/
+theorem total_apply (a : ω) : total a = (count a).degree :=
   rfl
 
 /-- A larger cost has a larger total. -/
-theorem total_le_total {a b : ω} (h : a ≤ b) : total a ≤ total b := by
-  classical
-  rw [total_apply, total_apply]
-  exact Finsupp.sum_le_sum_index (count_le_count_iff.2 h) (fun _ _ => monotone_id) fun _ _ => rfl
+theorem total_le_total {a b : ω} (h : a ≤ b) : total a ≤ total b :=
+  Finsupp.degree_mono (count_le_count_iff.2 h)
 
 /-- The total of a cost is `0` only at `0`. -/
-theorem total_eq_zero_iff {a : ω} : total a = 0 ↔ a = 0 := by
-  rw [total_apply, Finsupp.sum, Finset.sum_eq_zero_iff]
-  refine ⟨fun h => count_injective ?_, fun h k _ => by simp [h]⟩
-  ext k
-  rw [map_zero, Finsupp.coe_zero, Pi.zero_apply]
-  by_contra hk
-  exact hk (h k (Finsupp.mem_support_iff.2 hk))
+theorem total_eq_zero_iff {a : ω} : total a = 0 ↔ a = 0 :=
+  (Finsupp.degree_eq_zero_iff _).trans (map_eq_zero_iff count count_injective)
 
 /-- A nonzero cost has total at least `1`. -/
 theorem one_le_total_iff {a : ω} : 1 ≤ total a ↔ a ≠ 0 := by
@@ -155,23 +145,18 @@ noncomputable instance instPi {K : Type u} [Finite K] : CountCost (K → ℕ) wh
 
 /-- The total of a natural number is itself. -/
 @[simp]
-theorem total_nat (n : ℕ) : total n = n := by
-  simp [total_apply, count]
+theorem total_nat (n : ℕ) : total n = n :=
+  Finsupp.degree_single () n
 
-/-- The total of finitely supported counts is their sum. -/
-theorem total_finsupp {K : Type u} (f : K →₀ ℕ) : total f = f.sum fun _ n => n :=
-  total_apply f
-
-/-- The total of a single count is that count. -/
+/-- The total of finitely supported counts is their degree. -/
 @[simp]
-theorem total_single {K : Type u} (k : K) (n : ℕ) : total (Finsupp.single k n) = n := by
-  rw [total_finsupp, Finsupp.sum_single_index rfl]
+theorem total_finsupp {K : Type u} (f : K →₀ ℕ) : total f = f.degree :=
+  rfl
 
 /-- The total of pointwise counts over finitely many kinds is their sum. -/
 @[simp]
-theorem total_pi {K : Type u} [Fintype K] (v : K → ℕ) : total v = ∑ k, v k := by
-  rw [total_apply, Finsupp.sum_fintype _ _ fun _ => rfl]
-  rfl
+theorem total_pi {K : Type u} [Fintype K] (v : K → ℕ) : total v = ∑ k, v k :=
+  Finsupp.degree_eq_sum _
 
 /-- Pointwise counts form a counting cost type exactly over finitely many kinds. Over infinitely
 many kinds, the budget `1` of every kind bounds no total. -/
@@ -211,13 +196,7 @@ variable [AddMonoid ω] [PartialOrder ω] [CountCost ω] {M : MeasuredProgram In
 theorem countAtMost_iff_costAtMost : M.CountAtMost B ↔ M.CostAtMost B :=
   forall₂_congr fun _ _ => CountCost.count_le_count_iff
 
-/-- A counting contract is a cost bound. -/
-theorem CountAtMost.costAtMost (h : M.CountAtMost B) : M.CostAtMost B :=
-  countAtMost_iff_costAtMost.1 h
-
-/-- A cost bound in a counting cost type is a counting contract. -/
-theorem CostAtMost.countAtMost (h : M.CostAtMost B) : M.CountAtMost B :=
-  countAtMost_iff_costAtMost.2 h
+alias ⟨CountAtMost.costAtMost, CostAtMost.countAtMost⟩ := countAtMost_iff_costAtMost
 
 /-- A counting contract holds for every larger budget. -/
 theorem CountAtMost.mono (h : M.CountAtMost B) {B' : ω} (hB : B ≤ B') : M.CountAtMost B' :=

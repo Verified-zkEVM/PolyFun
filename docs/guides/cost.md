@@ -194,9 +194,9 @@ leaves free.
 
 A bound presented as a resource contract needs more than the laws of this guide:
 
-- **A canonically ordered cost type.** With negative prices, a program can be padded with refund
-  calls to meet any budget. Signed prices belong inside potential and completed-path arguments,
-  not in contracts.
+- **No refunds.** Adding a cost never decreases it. With negative prices, a program can be padded
+  with refund calls to meet any budget. Signed prices belong inside potential and completed-path
+  arguments, not in contracts.
 - **Finitely many kinds.** With `K → ℕ` and infinite `K`, a pointwise budget does not bound total
   use: one call to each of many kinds meets a budget of `1` per kind. Use `K →₀ ℕ`, or `[Finite K]`.
 - **The usual order and addition.** A reversed order, or a max-based addition, makes `≤ B` mean
@@ -209,7 +209,7 @@ A bound presented as a resource contract needs more than the laws of this guide:
 
 ### Counting contracts
 
-`CountCost ω` (`PolyFun/PFunctor/Free/Cost/Count.lean`) is a property of the cost type that
+`CountCost ω` (`PolyFun/PFunctor/Free/Cost/Count.lean`) is a structure on the cost type that
 excludes the hazards behind the first three requirements. It supplies an additive map `count`
 from `ω` into finitely supported natural-number counts, one count per kind. The map preserves and
 reflects the partial order of `ω`, so it is injective (`count_injective`). So `ω` has the addition
@@ -222,12 +222,12 @@ and the order of a submonoid of natural-number counts.
   properties are weaker than Mathlib's `CanonicallyOrderedAdd`, which also asks that `a ≤ b` give
   some `c` with `b = a + c`. Neither class contains the other. `ℕ∞` is canonically ordered but not
   a counting cost type. `{n : ℕ // n ≠ 1}` is a counting cost type but not canonically ordered.
-  The total of a cost, `CountCost.total`, is a natural number. It is monotone
+  The total of a cost, `CountCost.total`, is the `Finsupp.degree` of its counts. It is monotone
   (`total_le_total`) and zero only at zero (`total_eq_zero_iff`).
 - No hazard above is a counting cost type. Under any partial order, `ℤ`, and so signed weights,
   fails `eq_zero_of_add_eq_zero`. The reversed order fails `le_self_add`. Some nonzero cost is its
   own double (`1` under `max` addition, `⊤` in `ℕ∞`), so its total is zero, under any partial
-  order. Pointwise counts over infinitely many kinds fail `nonempty_countCost_pi_iff`.
+  order. Pointwise counts over infinitely many kinds are excluded by `nonempty_countCost_pi_iff`.
   `PolyFunTest/PFunctor/Charge/Basic.lean` proves each rejection next to its hazard.
 
 `MeasuredProgram.CountAtMost B` is the contract form of `CostAtMost B`. On every completed path
@@ -244,14 +244,18 @@ type it is equivalent to `CostAtMost B` (`countAtMost_iff_costAtMost`), so the l
 - Only the kinds of count must be finite or finitely supported. The operations can form an
   infinite type, such as the queries to a random oracle on an infinite domain.
 - For a family whose kinds depend on a parameter, each member's budget has a finite total. The
-  totals can still grow without bound: `n` kinds at count `1` each have total `n`. A bound on the
-  calls of the whole family needs a uniform bound on the totals of the budgets.
+  totals can still grow without bound: `n` kinds at count `1` each have total `n`. A uniform bound
+  on the totals of the budgets bounds the calls of the whole family.
 - The contract bounds only the charges of the program's declared operations. The view, the
   answering function and the code between calls are not charged, and an operation of price `0` is
   free. So `ofFun f` meets the contract `0` for every `f`.
 
+A definition stated with `CostAtMost` does not use a `[CountCost ω]` binder, and the
+`unusedArguments` linter flags the binder. `CountAtMost` uses the instance. So a contract that
+requires a counting cost type is stated with `CountAtMost`.
+
 `PolyFunTest/PFunctor/Charge/Count.lean` checks the instances, coarse orders, an oracle on `ℕ`,
-per-kind counts and the family bound.
+the transfer laws on a composite, per-kind counts and the family bound.
 
 ## Laws
 
