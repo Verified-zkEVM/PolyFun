@@ -235,6 +235,7 @@ public import PolyFun.Interaction.Interface
 public import PolyFun.Interaction.Multiparty.Broadcast
 public import PolyFun.Interaction.Multiparty.Core
 public import PolyFun.Interaction.Multiparty.Directed
+public import PolyFun.Interaction.Multiparty.Measure
 public import PolyFun.Interaction.Multiparty.Observation
 public import PolyFun.Interaction.Multiparty.ObservationProfile
 public import PolyFun.Interaction.Multiparty.Profile
