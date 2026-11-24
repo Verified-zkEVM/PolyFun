@@ -11,12 +11,15 @@ public import Std.Internal.ForIn
 /-!
 # Transport of loops along monad morphisms
 
-A monad morphism `F : ∀ {β}, m β → n β` (cslib's `IsMonadHom` predicate) commutes with every
-loop combinator that `do`-notation elaborates to. cslib's `IsMonadHom.map_listMapM`,
-`map_listForM`, `map_listFoldlM` and their relatives cover the list functions; this module adds
-the `forIn'` / `forIn` loops over lists and, through `Std.Internal.PureForIn`, over every
-container whose loop is the loop over the list `ForIn.toList` computes (arrays, ranges,
-iterators, …).
+For lists, applying a monad morphism to a `forIn` or `forIn'` loop gives the loop with
+the morphism applied to each step. Cslib's `IsMonadHom.map_listMapM`,
+`IsMonadHom.map_listForM` and `IsMonadHom.map_listFoldlM` give the corresponding laws
+for the list traversals.
+
+The container versions require the loops in both monads to traverse the list computed by
+`ForIn.toList`. For `forIn`, this is the `Std.Internal.PureForIn` hypothesis.
+The membership-aware `forIn'` uses `Std.Internal.PureForIn'` in both monads and
+`Std.Internal.LawfulMemForInId` for the container.
 -/
 
 public section

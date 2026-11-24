@@ -14,8 +14,9 @@ public import ToCslib.Control.Monad.HomTransport
 
 `FreeM.liftM s` is a monad morphism (cslib's `FreeM.isMonadHom_liftM`), so the transport lemmas
 of cslib's `IsMonadHom` and of `ToCslib.Control.Monad.HomTransport` specialise to it:
-interpreting a free program that loops over a list (or over any `PureForIn` container) is
-looping over the interpreted bodies. The `forM`, `foldlM` and `mapM` cases are cslib's
+interpreting a free program that loops over a list gives the loop over the interpreted bodies.
+For other containers, `liftM_forIn_of_pureForIn` requires `Std.Internal.PureForIn` for both
+the free monad and the target monad. The `forM`, `foldlM` and `mapM` cases are cslib's
 `IsMonadHom.map_list*` lemmas restated for discoverability under the `liftM` name.
 -/
 
