@@ -120,8 +120,6 @@ theorem pure_bind (S : Display.{uA, uB, uC, uD} P)
     S.bind (pure x) d g dg = dg x d.down :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias bind_pure := pure_bind
-
 theorem liftBind_bind (S : Display.{uA, uB, uC, uD} P)
     {E : Type uE} {F : E → Type uF}
     {E' : Type uE'} {G : E' → Type uG}
@@ -134,8 +132,6 @@ theorem liftBind_bind (S : Display.{uA, uB, uC, uD} P)
     S.bind (FreeM.liftBind a rest) ⟨c, children⟩ g dg =
       ⟨c, fun b e => S.bind (rest b) (children b e) g dg⟩ :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias bind_liftBind := liftBind_bind
 
 /-! ## Transport -/
 
@@ -177,8 +173,6 @@ theorem transport_symm_transport (S : Display.{uA, uB, uC, uD} P) {E : Type uE} 
     S.transport F h.symm (S.transport F h d) = d := by
   cases h
   rfl
-
-@[deprecated (since := "2026-10-19")] alias transport_symm := transport_symm_transport
 
 /-- Transport along equality of the substitution function acts pointwise on
 the displayed data supplied at leaves. -/

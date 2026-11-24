@@ -23,8 +23,7 @@ Checks for `PolyFun.Control.Do.Normalization` and the transfer lemmas of
   `binderNameHint`;
 * on `Prop` the result is in `Prop`'s connectives, although the bridge lemmas also apply there;
 * the names that downstream tactics match keep resolving: `ExactWPMonad.wp_ite` and
-  `ExactWPMonad.wp_dite` with no warning, and `MAlgOrdered.iInf_eq_iInf` with a deprecation
-  warning.
+  `ExactWPMonad.wp_dite`, with no warning.
 
 `PolyFunTest.Do.Charge` and `PolyFunTest.Do.FreeM` apply `wp_norm` to what `vcgen` leaves.
 -/
@@ -116,10 +115,5 @@ example (c : Prop) [Decidable c] (x : c → Id ℕ) (y : ¬c → Id ℕ) (post :
     wp (if h : c then x h else y h) post estack⟨⟩ =
       if h : c then wp (x h) post estack⟨⟩ else wp (y h) post estack⟨⟩ :=
   ExactWPMonad.wp_dite c x y post estack⟨⟩
-
-/- The deprecated name still rewrites; only its deprecation warning is reported. -/
-#guard_msgs (drop warning) in
-example (f : ℕ → ℕ∞) : Lean.Order.iInf f = ⨅ n, f n := by
-  rw [MAlgOrdered.iInf_eq_iInf]
 
 end PolyFunTest.Do.Normalization

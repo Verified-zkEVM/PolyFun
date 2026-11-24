@@ -71,19 +71,12 @@ Conventions and glyph rationale:
   `y` immediately followed by `^` would re-tokenize as the prefix.
 - **Composition powers are `◃`-marked.** `p ◃^ n` is `n`-fold `◃`, not
   `n`-fold `*` — overloading ring `^` would clash with the semiring
-  reading of `+` / `*` (compare Mathlib's marked iterate `f^[n]`). The
-  transitional `NatPow` instance remains in
-  [`Basic.lean`](../../PolyFun/PFunctor/Basic.lean) so direct importers keep
-  elaborating while migrating.
+  reading of `+` / `*` (compare Mathlib's marked iterate `f^[n]`).
 - **`◃` is composition, not the container former.** The glyph renders
   the book's composition product `p ◁ q`; it is deliberately *not*
   U+25C1 `◁` (Mathlib's monoidal whiskering) and must not be confused
   with the containers-school/Agda former `S ▷ P`, which PolyFun spells
   with the anonymous constructor `⟨S, P⟩`.
-- The transitional spellings (deprecated aliases, parse-only `A X^ B`)
-  live beside each canonical declaration so direct imports remain compatible;
-  [`Deprecated.lean`](../../PolyFun/PFunctor/Deprecated.lean) aggregates the
-  full surface. It is slated for removal once downstream projects migrate.
 
 ### Lenses and charts
 

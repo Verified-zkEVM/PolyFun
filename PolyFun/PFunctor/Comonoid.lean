@@ -81,11 +81,6 @@ structure Comonoid where
 
 namespace Comonoid
 
-@[deprecated (since := "2026-10-19")] alias comult := comul
-@[deprecated (since := "2026-10-19")] alias counit_left := counit_comul
-@[deprecated (since := "2026-10-19")] alias counit_right := comul_counit
-@[deprecated (since := "2026-10-19")] alias coassoc := comul_assoc
-
 /-! ## Morphisms of comonoids (retrofunctors) -/
 
 /-- A morphism of composition comonoids (Niu–Spivak Def 7.49), called a
@@ -100,8 +95,6 @@ structure Hom (C D : Comonoid.{uA, uB}) where
   /-- Preservation of composition. -/
   map_comul : D.comul ∘ₗ toLens =
     (toLens ◃ₗ toLens) ∘ₗ C.comul
-
-@[deprecated (since := "2026-10-19")] alias Hom.map_comult := Hom.map_comul
 
 instance {C D : Comonoid.{uA, uB}} : Coe (Hom C D) (Lens C.carrier D.carrier) :=
   ⟨Hom.toLens⟩
@@ -192,16 +185,10 @@ def comulN (C : Comonoid.{uA, uB}) : (n : ℕ) → Lens C.carrier (compNth C.car
   | 0 => C.counit
   | n + 1 => (Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul
 
-@[deprecated (since := "2026-10-19")] alias comultN := comulN
-
 @[simp] theorem comulN_zero (C : Comonoid.{uA, uB}) : C.comulN 0 = C.counit := rfl
-
-@[deprecated (since := "2026-10-19")] alias comultN_zero := comulN_zero
 
 @[simp] theorem comulN_succ (C : Comonoid.{uA, uB}) (n : ℕ) :
     C.comulN (n + 1) = (Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul := rfl
-
-@[deprecated (since := "2026-10-19")] alias comultN_succ := comulN_succ
 
 /-- A retrofunctor preserves every iterated comultiplication. This is the
 finite-path extension of `map_counit` and `map_comul`, and is the form used by
@@ -248,8 +235,6 @@ theorem Hom.map_comulN {C D : Comonoid.{uA, uB}} (f : Hom C D) (n : ℕ) :
               ((Lens.id C.carrier ◃ₗ C.comulN n) ∘ₗ C.comul) :=
                 Lens.comp_assoc _ _ _
 
-@[deprecated (since := "2026-10-19")] alias Hom.map_comultN := Hom.map_comulN
-
 /-! ## State systems (Niu–Spivak Ex 7.22) -/
 
 /-- A comonoid **is a state system** when, at every object, its codomain map
@@ -284,8 +269,6 @@ def stateComonoid (S : Type u) : Comonoid.{u, u} where
 
 @[simp] theorem stateComonoid_comul (S : Type u) :
     (stateComonoid S).comul = Lens.fixState := rfl
-
-@[deprecated (since := "2026-10-19")] alias stateComonoid_comult := stateComonoid_comul
 
 @[simp, grind =] theorem stateComonoid_counit (S : Type u) :
     (stateComonoid S).counit = ((fun _ => PUnit.unit) ⇆ (fun s _ => s)) := rfl

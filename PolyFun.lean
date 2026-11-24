@@ -313,7 +313,6 @@ public import PolyFun.PFunctor.Cofree.Universal
 public import PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.Comonoid.Category
 public import PolyFun.PFunctor.Comonoid.Tensor
-public import PolyFun.PFunctor.Deprecated
 public import PolyFun.PFunctor.Display
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Display.Category
@@ -428,11 +427,11 @@ public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.StatefulFrame
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
-public import PolyFun.PFunctor.Handler.Certified
-public import PolyFun.PFunctor.Handler.CertifiedUnder
-public import PolyFun.PFunctor.Handler.CertifiedVec
 public import PolyFun.PFunctor.Handler.Charge
+public import PolyFun.PFunctor.Handler.Costed
+public import PolyFun.PFunctor.Handler.CostedOn
 public import PolyFun.PFunctor.Handler.CountMat
+public import PolyFun.PFunctor.Handler.Demand
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Hint
 public import PolyFun.PFunctor.Handler.Instrumentation

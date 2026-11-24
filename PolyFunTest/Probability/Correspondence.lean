@@ -10,10 +10,10 @@ public import PolyFun.Control.Monad.Measure.Uniform
 public import PolyFun.Control.Semantics.Measure
 
 /-!
-# Pushforwards of certified meanings
+# Pushforwards of correspondences
 
-Regression tests for the measure pushforwards of `Control.Semantics.CertifiedMeaning` and
-`Control.Semantics.CorrespondsOn`. The certified meaning `double` doubles an extended natural
+Regression tests for the measure pushforwards of `Control.Semantics.Correspondence` and
+`Control.Semantics.CorrespondsOn`. The correspondence `double` doubles an extended natural
 number, and its implementation doubles a natural number. Under a uniform draw from a set of
 natural numbers, the meaning's pushforward of the draw is the uniform measure on the encoded
 doubles. Running the meaning on the encoded draw is therefore a uniform draw from them. An
@@ -35,7 +35,7 @@ theorem natEmbedding_apply (n : ℕ) : natEmbedding n = n := rfl
 
 /-- Doubling: the meaning doubles in `ℕ∞`, where it also sends `⊤`, which encodes no natural
 number, to `⊤`, and the implementation doubles in `ℕ`. -/
-@[expose] def double : CertifiedMeaning natEmbedding natEmbedding where
+@[expose] def double : Correspondence natEmbedding natEmbedding where
   meaning n := 2 * n
   implementation n := 2 * n
   correct n := by simp

@@ -84,15 +84,4 @@ example : (compUnit : PFunctor.{0, 0}) = y := rfl
 
 end Units
 
-section DirectImportCompatibility
-
-/- These canaries intentionally use the transitional spellings. They import only
-`PFunctor.Basic`, proving the compatibility surface is not accidentally tied
-to the aggregate `PFunctor.Deprecated` or `PolyFun` umbrella imports. -/
-example : (Bool X^ Nat) = monomial Bool Nat := rfl
-
-example (p : PFunctor.{0, 0}) : p ^ 2 = p ◃ (p ◃ y) := rfl
-
-end DirectImportCompatibility
-
 end PFunctor

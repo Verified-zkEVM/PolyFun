@@ -19,7 +19,7 @@ namespace PolyFunTest.Correspondence
 /-- Successful values represented inside a carrier that also has failure. -/
 def represented : Nat ↪ Option Nat := ⟨some, Option.some_injective Nat⟩
 
-private def increment : CertifiedMeaning represented represented where
+private def increment : Correspondence represented represented where
   meaning := Option.map (· + 1)
   implementation := (· + 1)
   correct _ := rfl
@@ -27,33 +27,33 @@ private def increment : CertifiedMeaning represented represented where
 example (x : Nat) : (increment.comp increment).meaning (some x) = some (x + 1 + 1) :=
   (increment.comp increment).correct x
 
-/-- A certificate is an equation of functions on native inputs. -/
+/-- A correspondence is an equation of functions on native inputs. -/
 example : increment.meaning ∘ represented = represented ∘ (· + 1) := increment.meaning_comp
 
-/-- The projections of a composite certificate are composites. -/
+/-- The projections of a composite correspondence are composites. -/
 example : (increment.comp increment).meaning = Option.map (· + 1) ∘ Option.map (· + 1) :=
-  CertifiedMeaning.comp_meaning increment increment
+  Correspondence.comp_meaning increment increment
 
 /-- Replacing the implementation by a pointwise equal function keeps the meaning. -/
 example : (increment.congr (g := (1 + ·)) (Nat.add_comm · 1)).implementation = (1 + ·) ∧
     (increment.congr (g := (1 + ·)) (Nat.add_comm · 1)).meaning = increment.meaning :=
-  ⟨CertifiedMeaning.congr_implementation _ _, CertifiedMeaning.congr_meaning _ _⟩
+  ⟨Correspondence.congr_implementation _ _, Correspondence.congr_meaning _ _⟩
 
-/-- A meaning certified from its relation to a native evaluator: a semantic value is related to
-the native number it holds, and that number determines the encoded output. -/
-private def incrementByRelation : CertifiedMeaning represented represented :=
-  CertifiedMeaning.ofLiftFun (Rin := fun d w => d = some w) (Rout := fun e w => e = some w)
+/-- A correspondence from the meaning's relation to a native evaluator: a semantic value is related
+to the native number it holds, and that number determines the encoded output. -/
+private def incrementByRelation : Correspondence represented represented :=
+  Correspondence.ofLiftFun (Rin := fun d w => d = some w) (Rout := fun e w => e = some w)
     (eval := (· + 1)) (nativeIn := id) (nativeOut := id) (Option.map (· + 1)) (· + 1)
     (fun _ _ h => h ▸ rfl) (fun _ => rfl) (fun _ _ h => h) (fun _ => rfl)
 
-/-- The certified meaning and implementation are the ones supplied. -/
+/-- The meaning and implementation are the ones supplied. -/
 example (x : Nat) : incrementByRelation.meaning (some x) = some (x + 1) ∧
     incrementByRelation.implementation x = x + 1 := ⟨rfl, rfl⟩
 
-/-- A meaning certified by reading its results back: every encoded input has an encoded result,
-and `Option.getD` with any default is a left inverse of `some`. -/
-private def incrementByDecode : CertifiedMeaning represented represented :=
-  CertifiedMeaning.ofDecode (Option.map (· + 1)) (·.getD 0) (fun _ => rfl)
+/-- A correspondence from reading the meaning's results back: every encoded input has an encoded
+result, and `Option.getD` with any default is a left inverse of `some`. -/
+private def incrementByDecode : Correspondence represented represented :=
+  Correspondence.ofDecode (Option.map (· + 1)) (·.getD 0) (fun _ => rfl)
     (fun x => ⟨x + 1, rfl⟩)
 
 /-- Its implementation is the meaning, read back, and computes by unfolding. -/
@@ -61,9 +61,9 @@ example (x : Nat) : incrementByDecode.implementation x = x + 1 := rfl
 
 example : incrementByDecode.meaning = Option.map (· + 1) ∧
     incrementByDecode.implementation = fun x => (Option.map (· + 1) (some x)).getD 0 :=
-  ⟨CertifiedMeaning.ofDecode_meaning .., CertifiedMeaning.ofDecode_implementation ..⟩
+  ⟨Correspondence.ofDecode_meaning .., Correspondence.ofDecode_implementation ..⟩
 
-/-- The certificate transfers contracts like any other. -/
+/-- The correspondence transfers contracts like any other. -/
 example (x : Nat) : incrementByDecode.meaning (represented x) = represented (x + 1) :=
   incrementByDecode.correct x
 

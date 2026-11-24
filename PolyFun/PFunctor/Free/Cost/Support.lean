@@ -126,13 +126,6 @@ theorem cost_bind_le_support {β : Type v'} (x : FreeM P α) (f : α → FreeM P
 
 end Cost
 
-@[deprecated (since := "2026-11-20")]
-alias IsChargeBound.bind_of_le_supp := IsChargeBound.bind_of_le_support
-@[deprecated (since := "2026-11-20")] alias IsChargeBound.bind_supp := IsChargeBound.bind_support
-@[deprecated (since := "2026-11-20")]
-alias costWith_le_cost_add_supp := costWith_le_cost_add_support
-@[deprecated (since := "2026-11-20")] alias cost_bind_le_supp := cost_bind_le_support
-
 /-! ## Provenance -/
 
 /-- Every call of `x` is at a position in `S`. -/

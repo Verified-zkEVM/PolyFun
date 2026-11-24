@@ -119,9 +119,6 @@ theorem parallelSumMap_comp_parallelSumMap
         (secondRight ∘ₗ firstRight) := by
   ext operation answer <;> cases operation <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp :=
-  parallelSumMap_comp_parallelSumMap
-
 /-- Embed the left interface into its one-or-both parallel sum. -/
 def parallelSumLeft (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     Lens P (P ∥ Q) where
@@ -223,9 +220,6 @@ def parallelSumAssoc
     parallelSumComm Q P ∘ₗ parallelSumComm P Q = Lens.id (P ∥ Q) := by
   ext operation answer <;> cases operation <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive :=
-  parallelSumComm_comp_parallelSumComm
-
 theorem parallelSumComm_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
@@ -325,8 +319,6 @@ theorem parallelSumComm_hexagon_forward
     | left operation => cases operation <;> rfl
     | right operation => rfl
     | both operation rightOperation => cases operation <;> rfl
-
-@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon_forward
 
 /-- Triangle coherence for the explicit unitors and associator. -/
 theorem parallelSum_triangle

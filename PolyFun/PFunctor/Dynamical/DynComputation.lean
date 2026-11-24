@@ -88,8 +88,6 @@ def ofFn (f : α → β) : DynComputation.{uβ} p α β where
 
 @[simp] theorem ofFn_state (f : α → β) : (ofFn (p := p) f).State = β := rfl
 
-@[deprecated (since := "2026-10-19")] alias ofFn_State := ofFn_state
-
 @[simp] theorem ofFn_init (f : α → β) (input : α) :
     (ofFn (p := p) f).init input = f input := rfl
 
@@ -115,8 +113,6 @@ theorem pure_eq_ofFn (value : β) :
 
 @[simp] theorem pure_state (value : β) :
     (pure value : DynComputation.{uβ} p α β).State = β := rfl
-
-@[deprecated (since := "2026-10-19")] alias pure_State := pure_state
 
 @[simp] theorem pure_init (value : β) (input : α) :
     (pure value : DynComputation.{uβ} p α β).init input = value := rfl
@@ -172,8 +168,6 @@ def contramapInput {γ : Type uγ} (M : DynComputation.{u} p α β) (f : γ → 
 @[simp] theorem contramapInput_state {γ : Type uγ} (f : γ → α)
     (M : DynComputation.{u} p α β) : (M.contramapInput f).State = M.State := rfl
 
-@[deprecated (since := "2026-10-19")] alias contramapInput_State := contramapInput_state
-
 @[simp] theorem contramapInput_init {γ : Type uγ} (f : γ → α)
     (M : DynComputation.{u} p α β) (input : γ) :
     (M.contramapInput f).init input = M.init (f input) := rfl
@@ -196,8 +190,6 @@ abbrev setInit {γ : Type uγ} (M : DynComputation.{u} p α β)
 
 @[simp] theorem setInit_state {γ : Type uγ} (M : DynComputation.{u} p α β)
     (g : γ → M.State) : (M.setInit g).State = M.State := rfl
-
-@[deprecated (since := "2026-10-19")] alias setInit_State := setInit_state
 
 @[simp] theorem setInit_init {γ : Type uγ} (M : DynComputation.{u} p α β)
     (g : γ → M.State) (input : γ) : (M.setInit g).init input = g input := rfl
@@ -249,8 +241,6 @@ def mapResult {γ : Type uγ} (M : DynComputation.{u} p α β) (f : β → γ) :
 
 @[simp] theorem mapResult_state {γ : Type uγ} (f : β → γ)
     (M : DynComputation.{u} p α β) : (M.mapResult f).State = M.State := rfl
-
-@[deprecated (since := "2026-10-19")] alias mapResult_State := mapResult_state
 
 @[simp] theorem mapResult_init {γ : Type uγ} (f : β → γ)
     (M : DynComputation.{u} p α β) (input : α) :
@@ -318,8 +308,6 @@ def wrap {q : PFunctor.{uA₂, uB₂}} (M : DynComputation.{u} p α β)
 @[simp] theorem wrap_state {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
     (M : DynComputation.{u} p α β) : (M.wrap lens).State = M.State := rfl
 
-@[deprecated (since := "2026-10-19")] alias wrap_State := wrap_state
-
 @[simp] theorem wrap_init {q : PFunctor.{uA₂, uB₂}} (lens : Lens p q)
     (M : DynComputation.{u} p α β) (input : α) :
     (M.wrap lens).init input = M.init input := rfl
@@ -362,8 +350,6 @@ def dimap {γ : Type uγ} {δ : Type uδ} (M : DynComputation.{u} p α β)
 
 @[simp] theorem dimap_state {γ : Type uγ} {δ : Type uδ} (f : γ → α) (g : β → δ)
     (M : DynComputation.{u} p α β) : (M.dimap f g).State = M.State := rfl
-
-@[deprecated (since := "2026-10-19")] alias dimap_State := dimap_state
 
 @[simp] theorem dimap_init {γ : Type uγ} {δ : Type uδ} (f : γ → α) (g : β → δ)
     (M : DynComputation.{u} p α β) (input : γ) :
@@ -566,8 +552,6 @@ def seqComp {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
     (M₂ : DynComputation.{v} p β γ) :
     (M₁.seqComp M₂).State = (M₁.State ⊕ M₂.State) := rfl
 
-@[deprecated (since := "2026-10-19")] alias seqComp_State := seqComp_state
-
 @[simp] theorem seqComp_init {γ : Type uγ} (M₁ : DynComputation.{u} p α β)
     (M₂ : DynComputation.{v} p β γ) (input : α) :
     (M₁.seqComp M₂).init input = Sum.inl (M₁.init input) := rfl
@@ -741,8 +725,6 @@ abbrev ofStep {S : Type u} (stepFn : S → β ⊕ p.Obj S) (init : α → S) :
 @[simp] theorem ofStep_state {S : Type u} (stepFn : S → β ⊕ p.Obj S)
     (init : α → S) : (ofStep (p := p) stepFn init).State = S := rfl
 
-@[deprecated (since := "2026-10-19")] alias ofStep_State := ofStep_state
-
 @[simp] theorem ofStep_init {S : Type u} (stepFn : S → β ⊕ p.Obj S)
     (init : α → S) (input : α) :
     (ofStep (p := p) stepFn init).init input = init input := rfl
@@ -764,8 +746,6 @@ def ofResumption (semantics : α → Resumption p β) : DynComputation p α β w
 
 @[simp] theorem ofResumption_state (semantics : α → Resumption p β) :
     (ofResumption semantics).State = Resumption p β := rfl
-
-@[deprecated (since := "2026-10-19")] alias ofResumption_State := ofResumption_state
 
 @[simp] theorem ofResumption_init (semantics : α → Resumption p β) (input : α) :
     (ofResumption semantics).init input = semantics input := rfl
@@ -798,8 +778,6 @@ def ofFreeM (program : α → FreeM p β) : DynComputation p α β where
 
 @[simp] theorem ofFreeM_state (program : α → FreeM p β) :
     (ofFreeM program).State = FreeM p β := rfl
-
-@[deprecated (since := "2026-10-19")] alias ofFreeM_State := ofFreeM_state
 
 @[simp] theorem ofFreeM_init (program : α → FreeM p β) (input : α) :
     (ofFreeM program).init input = program input := rfl

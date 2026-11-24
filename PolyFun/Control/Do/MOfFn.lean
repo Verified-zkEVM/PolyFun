@@ -63,10 +63,3 @@ theorem Spec.mOfFn {n : ℕ} {f : Fin n → m α} (inv : MOfFnInvariant α Pred)
     exact step (k + 1) (Nat.succ_lt_succ hk) (Fin.cons a w)
 
 end Fin
-
-namespace Std.WP
-
-@[deprecated (since := "2026-11-16")] alias MOfFnInvariant := Fin.MOfFnInvariant
-@[deprecated (since := "2026-11-16")] alias Spec.mOfFn_fin := Fin.Spec.mOfFn
-
-end Std.WP

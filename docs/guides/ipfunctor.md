@@ -630,16 +630,16 @@ computations of a monad. A `CBVInterpretation` takes values in a monad but is st
 algebra: it interprets constructors, not the monad's computations.
 
 [`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
-lemma into a `Control.Semantics.CertifiedMeaning`. `Term.certifiedMeaning` certifies a term
+lemma into a `Control.Semantics.Correspondence`. `Term.correspondence` certifies a term
 with one free variable, its input, against a native implementation. It needs two more facts.
 The representation relates each encoded input to a native representative (`represents`), and a
 representative determines its encoded output (`determines`). Totality says that the evaluator
 returns the representative of the implementation's result (`total`). When the evaluator returns
 it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn` there.
 `Term.liftFun_denoteDomain` states the fundamental lemma as `Relator.LiftFun`, the premise of
-`CertifiedMeaning.ofLiftFun`, so a language with function sorts can certify a closed function
+`Correspondence.ofLiftFun`, so a language with function sorts can certify a closed function
 term through its relation at function sorts. When the meaning is read back by a decoder,
-`CertifiedMeaning.ofLiftFunDecode` certifies the decoded meaning, and a native representative of an
+`Correspondence.ofLiftFunDecode` certifies the decoded meaning, and a native representative of an
 output need only fix what each related result decodes to. The lazy-language tutorial certifies a
 program against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`. Its
 fuel-bounded evaluator unrolls `fix` from bottom and is related to the lazy meaning at every
@@ -880,8 +880,8 @@ The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a la
 meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
 `denoteDomain_map_closed`.
 
-`Stacked.Model.certifiedMeaning` certifies a term with one free value variable at a type
-assignment, under the premises of `Term.certifiedMeaning`. A total evaluator can be its own
+`Stacked.Model.correspondence` certifies a term with one free value variable at a type
+assignment, under the premises of `Term.correspondence`. A total evaluator can be its own
 implementation, so its totality premise holds by definition. The vectors tutorial encodes numbers
 and vectors of data faithfully and so certifies every term with one data input at every size
 assignment (`certifiedEvaluator`).
