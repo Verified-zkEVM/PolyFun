@@ -18,7 +18,10 @@ Checks for `PolyFun.PFunctor.Free.Cost.Sized` and `PolyFun.PFunctor.Free.Cost.Si
 * An exhaustive search over `2 ^ n` candidates makes one call per candidate. It has no polynomial
   envelope, but with its sizes capped at `N` it meets the fixed budget `2 ^ N`, and so a constant
   polynomial. Under the cap, it still does not meet a named envelope such as `(n + 1) ^ 2`.
-* The same search done in the uncharged view meets the zero envelope.
+* The same search done in the uncharged view meets the zero envelope, and so does the same search
+  with every call priced at `0`.
+* The search family has polynomial cost over all parameters when the size is the number `2 ^ κ` of
+  candidates, through a fixed budget per member (`CostAtMost.costWithin_of_le`).
 * A program that returns the answer of its call has no output-size envelope over every answer.
   Over the answers of its answering function, it returns `0`, also after composition.
 * A countdown that makes `n` calls on input `n` runs after a call that returns its answer. Both
@@ -29,9 +32,8 @@ Checks for `PolyFun.PFunctor.Free.Cost.Sized` and `PolyFun.PFunctor.Free.Cost.Si
   countdown after a call answered with `2 ^ n`, have no polynomial cost. So `PolyCostUnder.comp`
   also needs its output hypothesis.
 * Polynomial contracts chain through three list doublings.
-* Every function whose input type lies in the universe of its result type has a measured program
-  with polynomial cost under every size measure (`ofFun`). So the existential statement is no
-  evidence of efficiency.
+* Every function has a measured program with polynomial cost under every size measure (`ofFun`, or
+  a program whose view is the function). So the existential statement is no evidence of efficiency.
 -/
 
 public section
@@ -215,6 +217,12 @@ example (accept : ℕ → ℕ → Bool) :
     obtain ⟨p, hp⟩ := exists_charge_firstAccepted_eq (List.range (2 ^ n))
     exact ⟨n, (), le_rfl, p, (List.length_range ..).symm.trans hp.symm |>.le⟩
 
+/-- With the number of candidates as the size, it does, over all parameters. Each member has a fixed
+budget, at most the envelope at the size of its input. -/
+example (accept : ℕ → ℕ → Bool) : FamilyPolyCost (searchFamily accept) fun κ _ => 2 ^ κ :=
+  ⟨.X, fun _ => CostAtMost.costWithin_of_le (fun _ p =>
+    (charge_firstAccepted_le _ p).trans (List.length_range ..).le) fun _ => by simp⟩
+
 /-! ## The uncharged view -/
 
 /-- The same search, done in the uncharged view. -/
@@ -230,6 +238,23 @@ example (accept : ℕ → ℕ → Bool) :
       ¬ (search accept).PolyCost id :=
   ⟨realizes_ofFun _, searchOn_realizes ℕ id accept, costWithin_ofFun _ _,
     .of_costAtMost (costAtMost_ofFun _) _, search_not_polyCost accept⟩
+
+/-! ## Prices -/
+
+/-- The same search with every call priced at `0`. -/
+abbrev freeSearch (accept : ℕ → ℕ → Bool) : MeasuredProgram ℕ (Option ℕ) ℕ :=
+  (search accept).mapCost fun _ => 0
+
+/-- **The negative control for prices.** The zero-priced search makes the same calls and computes
+the same function as `search`. It meets the zero envelope, and `search` has no polynomial cost. A
+contract bounds the declared prices, and the program states them. -/
+example (accept : ℕ → ℕ → Bool) :
+    (freeSearch accept).Realizes (fun n => (List.range (2 ^ n)).find? (accept n)) ∧
+      (freeSearch accept).CostWithin id (fun _ => 0) ∧ (freeSearch accept).PolyCost id ∧
+      ¬ (search accept).PolyCost id :=
+  have h : (freeSearch accept).CostWithin id fun _ => 0 := fun _ p =>
+    (Path.charge_const_zero _ p).le
+  ⟨searchOn_realizes ℕ id accept, h, ⟨0, by simpa using h⟩, search_not_polyCost accept⟩
 
 /-! ## Per-kind counts -/
 
@@ -527,5 +552,24 @@ example {Input Result : Type} (f : Input → Result) (size : Input → ℕ) :
     ∃ M : MeasuredProgram Input Result ℕ, M.Realizes f ∧ M.PolyCost size ∧
       M.CostWithin size fun _ => 0 :=
   ⟨ofFun f, realizes_ofFun f, .of_costAtMost (costAtMost_ofFun f) size, costWithin_ofFun f size⟩
+
+/-- A program whose view is `f` and that returns its view. Its input type can lie in a larger
+universe than its result type. -/
+def viewProgram.{uI, u} {Input : Type uI} {Result : Type u} (f : Input → Result) :
+    MeasuredProgram Input Result ℕ where
+  View := Result
+  view := f
+  Op := PEmpty
+  spec _ _ := PEmpty
+  program v := pure v
+  answer _ o := o.elim
+  cost o := o.elim
+
+/-- The same holds when the input type lies in a larger universe than the result type. -/
+example (f : Type → Bool) (size : Type → ℕ) :
+    ∃ M : MeasuredProgram Type Bool ℕ, M.Realizes f ∧ M.PolyCost size ∧
+      M.CostWithin size fun _ => 0 :=
+  have h : (viewProgram f).CostWithin size fun _ => 0 := fun _ _ => le_rfl
+  ⟨viewProgram f, fun _ => rfl, ⟨0, by simpa using h⟩, h⟩
 
 end PolyFunTest.ChargeSized

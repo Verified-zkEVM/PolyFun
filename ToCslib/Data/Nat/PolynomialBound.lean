@@ -51,10 +51,10 @@ theorem PolynomiallyBounded.mono {f g : ℕ → ℕ} (hg : PolynomiallyBounded g
 
 /-- `2 ^ n` is not polynomially bounded. -/
 theorem not_polynomiallyBounded_two_pow : ¬ PolynomiallyBounded (2 ^ ·) := fun h => by
-  obtain ⟨d, hd⟩ := polynomiallyBounded_iff_isBigO.1 h
-  have ho : (fun n : ℕ => (2 : ℝ) ^ n) =o[atTop] fun n : ℕ => (2 : ℝ) ^ n := by
-    simpa using hd.trans_isLittleO
-      (isLittleO_pow_const_const_pow_of_one_lt d (by norm_num : (1 : ℝ) < 2))
-  exact Asymptotics.isLittleO_irrefl (.of_forall fun n => pow_ne_zero n two_ne_zero) ho
+  obtain ⟨c, d, hcd⟩ := polynomiallyBounded_iff_le.1 h
+  obtain ⟨n, hn⟩ := (Nat.eventually_const_mul_pow_le_two_pow (c + 1) d).exists
+  have hle := hn.trans (hcd n)
+  rw [add_one_mul] at hle
+  exact (Nat.lt_add_of_pos_right (by positivity)).not_ge hle
 
 end Cslib
