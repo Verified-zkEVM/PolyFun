@@ -15,8 +15,8 @@ public import Mathlib.CategoryTheory.Opposites
 The category `CountCertifiedCat ω` has as objects interfaces `P` with a vector charge
 `c : P.A → ι → ω` over a finite type of resources `ι`, and as morphisms `X ⟶ Y` the handlers
 implementing `X.P` by programs over `Y.P` certified by a one-shape Diller–Nahm morphism
-(`Handler.CountCertified`). Identities are the identity handlers certified by the counit, and
-composition is `Handler.CountCertified.comp`. Its laws are the laws of handler composition
+(`Handler.Counted`). Identities are the identity handlers certified by the counit, and
+composition is `Handler.Counted.comp`. Its laws are the laws of handler composition
 (`Handler.id_comp`, `Handler.comp_id`, `Handler.comp_assoc`) together with those of co-Kleisli
 composition (`Lens.bangComp_bangCounit`, `Lens.bangCounit_bangComp`, `Lens.bangComp_assoc`).
 
@@ -43,7 +43,7 @@ namespace PFunctor
 
 namespace Handler
 
-namespace CountCertified
+namespace Counted
 
 variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {ι : Type u} {ι' : Type u'}
   [Fintype ι] [DecidableEq ι'] {ω : Type w} [CommSemiring ω] [PartialOrder ω] [IsOrderedRing ω]
@@ -51,7 +51,7 @@ variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {ι : Type u} {ι
 
 omit [IsOrderedRing ω] in
 /-- Two certified handlers are equal when their handlers and their lenses are equal. -/
-theorem ext {D D' : CountCertified P Q c e} (hh : D.handler = D'.handler)
+theorem ext {D D' : Counted P Q c e} (hh : D.handler = D'.handler)
     (hl : D.lens = D'.lens) : D = D' := by
   cases D
   cases D'
@@ -59,7 +59,7 @@ theorem ext {D D' : CountCertified P Q c e} (hh : D.handler = D'.handler)
   cases hl
   rfl
 
-end CountCertified
+end Counted
 
 end Handler
 
@@ -90,13 +90,13 @@ variable (ω : Type w) [CommSemiring ω] [PartialOrder ω] [IsOrderedRing ω]
 implementing `X.P` by programs over `Y.P`, certified by a one-shape Diller–Nahm morphism from the
 resources of `Y` to those of `X`. -/
 instance instCategory : Category (CountCertifiedCat.{uA, uB, u, w} ω) where
-  Hom X Y := Handler.CountCertified X.P Y.P X.c Y.c
-  id X := Handler.CountCertified.id X.P X.c
+  Hom X Y := Handler.Counted X.P Y.P X.c Y.c
+  id X := Handler.Counted.id X.P X.c
   comp f g := g.comp f
-  id_comp _ := Handler.CountCertified.ext (Handler.comp_id _) (Lens.bangComp_bangCounit _)
-  comp_id _ := Handler.CountCertified.ext (Handler.id_comp _) (Lens.bangCounit_bangComp _)
+  id_comp _ := Handler.Counted.ext (Handler.comp_id _) (Lens.bangComp_bangCounit _)
+  comp_id _ := Handler.Counted.ext (Handler.id_comp _) (Lens.bangCounit_bangComp _)
   assoc _ _ _ :=
-    Handler.CountCertified.ext (Handler.comp_assoc _ _ _).symm (Lens.bangComp_assoc _ _ _)
+    Handler.Counted.ext (Handler.comp_assoc _ _ _).symm (Lens.bangComp_assoc _ _ _)
 
 /-- The summary functor: an interface with a vector charge goes to its resources, and a certified
 handler to its one-shape Diller–Nahm morphism, in the opposite category. -/
@@ -120,7 +120,7 @@ theorem isChargeBound_liftM_summary {X Y : CountCertifiedCat.{uA, uB, u, w} ω} 
     {α : Type uB} {x : FreeM X.P α} {u : X.ι → ω} (hx : x.IsChargeBound X.c u) :
     (x.liftM f.handler).IsChargeBound Y.c
       (Matrix.vecMul u (Matrix.of (Lens.demand ω ((summary ω).map f).unop))) :=
-  Handler.CountCertified.isChargeBound_liftM f hx
+  Handler.Counted.isChargeBound_liftM f hx
 
 /-- **The summary is multiplicative on demands.** The demand matrix of the summary of a composite
 is the product of the demand matrices of the summaries. -/
@@ -140,7 +140,7 @@ theorem isChargeBound_liftM_summary_comp {X Y Z : CountCertifiedCat.{uA, uB, u, 
     (x.liftM (f ≫ g).handler).IsChargeBound Z.c
       (Matrix.vecMul u (Matrix.of (Lens.demand (ι := X.ι) (ι' := Y.ι) ω ((summary ω).map f).unop) *
         Matrix.of (Lens.demand (ι := Y.ι) (ι' := Z.ι) ω ((summary ω).map g).unop))) :=
-  Handler.CountCertified.isChargeBound_liftM_comp g f hx
+  Handler.Counted.isChargeBound_liftM_comp g f hx
 
 end CountCertifiedCat
 
