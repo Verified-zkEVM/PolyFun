@@ -13,9 +13,9 @@ public import PolyFun.IPFunctor.Scoped.CostD.Semantics
 
 The cost of a term in an environment is the worst-case cost (`CostD.cost`) of its evaluation:
 the largest sum, along a branch of the evaluation, of the prices of the steps and the charges of
-the calls. A call of the operation `e` at an argument is charged by `q`. With the price `1` for a
-β-step and logarithmic prices for arithmetic on `ℕ`, this is the time of the weak call-by-value
-λ-calculus L of Forster and Kunze.
+the calls. A call of the operation `e` at an argument is charged by `q`. The steps are priced as
+in the weak call-by-value λ-calculus L of Forster, Kunze and Roth [FKR20]: the
+price `1` for a β-step and logarithmic prices for arithmetic on `ℕ`.
 
 ## Main definitions
 
@@ -26,6 +26,11 @@ the calls. A call of the operation `e` at an argument is charged by `q`. With th
 * `Tm.cost_var`, `Tm.cost_lam`, `Tm.cost_lit`: variables, abstractions and literals are free.
 * `Tm.cost_letE_of_eval`: a `letE` whose bound term evaluates to a value without a step costs
   one step plus its body.
+
+## References
+
+* [FKR20] Forster, Kunze and Roth, *The weak call-by-value λ-calculus is
+  reasonable for both time and space*, POPL 2020.
 -/
 
 @[expose] public section

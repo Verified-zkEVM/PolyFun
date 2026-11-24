@@ -18,9 +18,9 @@ reading is parametric in a `Machine`: how a call of the effect signature runs in
 step of a given price is recorded. A value of a function type is a Kleisli arrow
 `Val a → PFunctor.FreeM Q (Val b)` (`Val`).
 
-Steps are priced as in the weak call-by-value λ-calculus L of Forster and Kunze: an application,
-a `letE` (priced as the β-redex `(λx. b) e`), a `seq`, a branch of `case` and each iteration of
-`iter` cost one step of price `Price.step`; a primitive operation `p` at the argument `v` costs
+Steps are priced as in the weak call-by-value λ-calculus L of Forster, Kunze and Roth [FKR20]:
+an application, a `letE` (priced as the β-redex `(λx. b) e`), a `seq`, a branch of `case` and
+each iteration of `iter` cost one step of price `Price.step`; a primitive operation `p` at the argument `v` costs
 `Price.prim p v`, which carries a logarithmic price of arithmetic on `ℕ` when `ℕ` is a ground
 type. Variables, literals, abstractions, pairs, projections and injections are free.
 
@@ -30,13 +30,31 @@ The two instances are:
   every step (`Machine.timed`).
 * `Tm.den`: the denotation, into `E.toPFunctor`, without ticks (`Machine.untimed`).
 
+## Main definitions
+
+* `Val`: the values of D at a type, for programs over an interface `Q`.
+* `Price`, `Price.unit`: the prices of the steps, and the trivial price record.
+* `Machine`, `Machine.timed`, `Machine.untimed`: how calls run and how steps are recorded.
+* `iterT`, `coreCBV`, `queryCBV`, `cbv`: the call-by-value algebra of D.
+* `Tm.eval`, `Tm.den`: the evaluator and the denotation.
+
 ## Omitted constructors
 
-The constructors of CatCrypt's D over inductive types and dependent types (`mu`, `imu`, `pi`,
-`sig` with `con`, `fold`, `icon`, `ifold`, `ptab`, `papp`, `spair`, `scase`, `fcase`), the
-lists with `nil`, `cons`, `lcase` and `foldl`, `ite`, and the effects `sample`, `get`, `set`
-and `fail` are not part of this fragment. The effects are calls of an effect signature here
-(`query`); booleans enter as a ground type with `case` on `unit ⊕ unit`.
+The fragment has no
+
+* inductive or dependent types: `mu`, `imu`, `pi`, `sig` with `con`, `fold`, `icon`, `ifold`,
+  `ptab`, `papp`, `spair`, `scase`, `fcase`;
+* lists: `nil`, `cons`, `lcase`, `foldl`;
+* conditional `ite`;
+* effect constructors `sample`, `get`, `set`, `fail`.
+
+Effects are calls of an effect signature (`query`); booleans are a ground type, with `case` on
+`unit ⊕ unit`.
+
+## References
+
+* [FKR20] Forster, Kunze and Roth, *The weak call-by-value λ-calculus is
+  reasonable for both time and space*, POPL 2020.
 -/
 
 @[expose] public section

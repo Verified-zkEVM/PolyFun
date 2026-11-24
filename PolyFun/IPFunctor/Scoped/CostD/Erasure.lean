@@ -24,6 +24,14 @@ ordinary algebra whose carrier at a sort is the computations in `m` and whose bo
 receive their values by `pure` (`CBVInterpretation.toInterpretation`), with the same meaning
 (`Term.denote_toInterpretation`).
 
+## Main definitions
+
+* `Env.pureEach`, `CBVInterpretation.toInterpretation`: the environment of returned values and
+  the ordinary algebra of a call-by-value algebra.
+* `VRel`: the logical relation between values of the evaluator and of the denotation.
+* `RV`, `RC`: its lifts to a returned value and to a computation, against a computation of the
+  denotation.
+
 ## Main results
 
 * `Term.denote_toInterpretation`: the ordinary reading of `alg.toInterpretation` in an
@@ -31,6 +39,7 @@ receive their values by `pure` (`CBVInterpretation.toInterpretation`), with the 
 * `Tm.eval_erase_rel`: in related environments, the evaluator with its ticks erased and the
   denotation are related.
 * `Tm.erase_eval`: at a ground type, the evaluator with its ticks erased is the denotation.
+* `Tm.erase_eval_closed`: the same for a closed term.
 -/
 
 @[expose] public section

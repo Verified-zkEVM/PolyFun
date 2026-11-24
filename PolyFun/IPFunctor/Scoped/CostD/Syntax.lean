@@ -13,8 +13,8 @@ public import PolyFun.IPFunctor.Scoped.Sum
 
 D is a typed call-by-value λ-calculus with ground data, primitive operations, bounded iteration
 and the calls of an interface. Its cost model is that of the weak call-by-value λ-calculus of
-Forster and Kunze: time is the number of β-steps, extended with primitive operations and with the
-calls of the interface.
+Forster, Kunze and Roth [FKR20]: time is the number of β-steps, extended with
+primitive operations and with the calls of the interface.
 
 The ground types and the primitive operations are a parameter (`Ground`): a type `G` of codes, a
 denotation `den : G → Type u` and primitive operations `Prim g h` from `den g` to `den h`. The
@@ -40,6 +40,11 @@ The syntax of D is the sum (`ScopedSignature.sum`) of two signatures over these 
 * `Effect`, `Effect.toPFunctor`, `querySignature`: effect signatures, their interface and their
   binding signature.
 * `signature`: the binding signature of D; `Tm`: its terms, with smart constructors.
+
+## References
+
+* [FKR20] Forster, Kunze and Roth, *The weak call-by-value λ-calculus is
+  reasonable for both time and space*, POPL 2020.
 -/
 
 public section

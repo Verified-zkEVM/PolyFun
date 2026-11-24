@@ -455,6 +455,22 @@ on the codomain representation.
 
 Used in: `PolyFun/Realizability/Quantitative/Description.lean`.
 
+### FKR20 — Forster, Kunze, Roth, *The weak call-by-value λ-calculus is reasonable for both time and space*
+
+Yannick Forster, Fabian Kunze, and Marc Roth.
+*The Weak Call-By-Value λ-Calculus is Reasonable for Both Time and Space*.
+*Proceedings of the ACM on Programming Languages* 4(POPL), January 2020
+(47th ACM SIGPLAN Symposium on Principles of Programming Languages).
+DOI: <https://doi.org/10.1145/3371095>
+
+The number of β-steps of the weak call-by-value λ-calculus L is a reasonable
+time measure. The cost language D prices its steps as in L: one unit per
+β-step, extended with primitive operations and the calls of an interface.
+
+Used in: `PolyFun/IPFunctor/Scoped/CostD/Syntax.lean`,
+`PolyFun/IPFunctor/Scoped/CostD/Semantics.lean`,
+`PolyFun/IPFunctor/Scoped/CostD/Cost.lean`.
+
 ### DH11 — Dal Lago and Hofmann, *Realizability models and implicit complexity*
 
 Ugo Dal Lago and Martin Hofmann.
