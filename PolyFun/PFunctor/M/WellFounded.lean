@@ -106,8 +106,6 @@ def mapLens (lens : Lens P Q) : P.W → Q.W
       funext direction
       exact ih (first.toFunB position (second.toFunB (first.toFunA position) direction))
 
-@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
-
 /-- Regard a well-founded polynomial tree as an M-type tree. -/
 def toM : P.W → P.M
   | ⟨position, next⟩ =>

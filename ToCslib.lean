@@ -6,11 +6,16 @@ Authors: Devon Tuma, Quang Dao
 
 module
 
-public import ToCslib.Algebra.Polynomial
 public import ToCslib.Algebra.PolynomialGrowth
 public import ToCslib.Control.ForIn
+public import ToCslib.Control.Loop.Array
+public import ToCslib.Control.Loop.Attr
+public import ToCslib.Control.Loop.Basic
+public import ToCslib.Control.Loop.While
 public import ToCslib.Control.Monad.HomTransport
+public import ToCslib.Data.Array
 public import ToCslib.Data.BitVec
+public import ToCslib.Data.ByteArray
 public import ToCslib.Data.ENNReal.AddSupDistrib
 public import ToCslib.Data.Fin.Cases
 public import ToCslib.Data.Fin.Lattice

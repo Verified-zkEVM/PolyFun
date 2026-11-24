@@ -551,7 +551,7 @@ noncomputable def exceptTRight (ε : Type u) :
       by
         convert MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
           x y.run f gRun collapse using 1
-        all_goals rfl
+        rfl
 
 /-- Left `ExceptT` lift (interpreting exceptions as `⊥`). Explicit rather
 than global to avoid left/right transformer diamonds. -/
@@ -595,7 +595,7 @@ noncomputable def exceptTLeft (ε : Type u) :
       by
         convert MAlgRelOrdered.rwp_bind_le (m₁ := m₁) (m₂ := m₂) (l := l)
           x.run y fRun g collapse using 1
-        all_goals rfl
+        rfl
 
 end FailureInstances
 
@@ -655,7 +655,7 @@ means a theorem installs as a `local instance` just as a definition would; insta
 matching named algebra and its witness together at each verification boundary. -/
 
 /-- Strictness lifts through the named left `StateT` algebra. -/
-theorem strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
+theorem strictBind_stateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
     letI := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
     StrictBind (StateT σ m₁) m₂ (σ → l) := by
   let := stateTLeft (m₁ := m₁) (m₂ := m₂) (l := l) σ
@@ -669,7 +669,7 @@ theorem strictBindStateTLeft [StrictBind m₁ m₂ l] (σ : Type u) :
   rfl
 
 /-- Strictness lifts through the named right `StateT` algebra. -/
-theorem strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
+theorem strictBind_stateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
     letI := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
     StrictBind m₁ (StateT σ m₂) (σ → l) := by
   let := stateTRight (m₁ := m₁) (m₂ := m₂) (l := l) σ
@@ -683,7 +683,7 @@ theorem strictBindStateTRight [StrictBind m₁ m₂ l] (σ : Type u) :
   rfl
 
 /-- Strictness lifts through the named two-sided `StateT` algebra. -/
-theorem strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
+theorem strictBind_stateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
     letI := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
     StrictBind (StateT σ₁ m₁) (StateT σ₂ m₂) (σ₁ → σ₂ → l) := by
   let := stateTBoth (m₁ := m₁) (m₂ := m₂) (l := l) σ₁ σ₂
@@ -698,7 +698,7 @@ theorem strictBindStateTBoth [StrictBind m₁ m₂ l] (σ₁ σ₂ : Type u) :
   rfl
 
 /-- Strictness lifts through the named left `ReaderT` algebra. -/
-theorem strictBindReaderTLeft [StrictBind m₁ m₂ l] (ρ : Type u) :
+theorem strictBind_readerTLeft [StrictBind m₁ m₂ l] (ρ : Type u) :
     letI := readerTLeft (m₁ := m₁) (m₂ := m₂) (l := l) ρ
     StrictBind (ReaderT ρ m₁) m₂ (ρ → l) := by
   let := readerTLeft (m₁ := m₁) (m₂ := m₂) (l := l) ρ
@@ -712,7 +712,7 @@ theorem strictBindReaderTLeft [StrictBind m₁ m₂ l] (ρ : Type u) :
   rfl
 
 /-- Strictness lifts through the named right `ReaderT` algebra. -/
-theorem strictBindReaderTRight [StrictBind m₁ m₂ l] (ρ : Type u) :
+theorem strictBind_readerTRight [StrictBind m₁ m₂ l] (ρ : Type u) :
     letI := readerTRight (m₁ := m₁) (m₂ := m₂) (l := l) ρ
     StrictBind m₁ (ReaderT ρ m₂) (ρ → l) := by
   let := readerTRight (m₁ := m₁) (m₂ := m₂) (l := l) ρ
@@ -726,7 +726,7 @@ theorem strictBindReaderTRight [StrictBind m₁ m₂ l] (ρ : Type u) :
   rfl
 
 /-- Strictness lifts through the named two-sided `ReaderT` algebra. -/
-theorem strictBindReaderTBoth [StrictBind m₁ m₂ l] (ρ₁ ρ₂ : Type u) :
+theorem strictBind_readerTBoth [StrictBind m₁ m₂ l] (ρ₁ ρ₂ : Type u) :
     letI := readerTBoth (m₁ := m₁) (m₂ := m₂) (l := l) ρ₁ ρ₂
     StrictBind (ReaderT ρ₁ m₁) (ReaderT ρ₂ m₂) (ρ₁ → ρ₂ → l) := by
   let := readerTBoth (m₁ := m₁) (m₂ := m₂) (l := l) ρ₁ ρ₂

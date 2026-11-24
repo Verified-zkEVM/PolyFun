@@ -384,7 +384,10 @@ interpretation is a construction (`def`) or a `scoped` instance, because a globa
 `FreeM P` would compete with downstream instances on its reducible unfoldings, such as
 oracle-computation types. Install the provided interpretations `scoped` or `local` downstream. The
 writer interpretations follow the same rule: `WriterT.MonoidWP.instWPMonad` is scoped under
-`WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`.
+`WriterT.MonoidWP`, and `WriterT.AppendWP.instWPMonad` under `WriterT.AppendWP`. The
+`Prop`-valued facts of a reading (`ExactWPMonad`, `WPConjunctive`, `LawfulWPMonadAttach`) are
+global instances keyed on its construction, so they apply under a downstream scope that installs
+the same construction.
 
 A `@[spec]` rule stated for one reading is registered in the same scope, so `vcgen` finds
 `FreeM.Spec.lift` only under `open scoped PFunctor.FreeM.DemonicWP`, and the `WriterT` rules only
@@ -410,9 +413,14 @@ registered specification is left as a verification condition with
 `Triple`, `WPConjunctive`, and `LawfulWPMonadAttach` take their `WP` / `WPMonad` as
 instance-implicit parameters. Projecting (`h.le_wp`) or constructing (`⟨h⟩`, `refine ⟨…⟩`) a
 value whose interpretation is a *non-instance* construction (`MAlgOrdered.toWP α`,
-`MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Bind the
-construction first — `let inst := MAlgOrdered.toWP α` — so it is found as a local instance;
-`let`, not `have`, so it stays definitionally the term in the statement.
+`MonadAttach.toWPMonadDemonic`) makes Lean synthesize the instance afresh and fail. Use the lemmas
+of `PolyFun/Control/Monad/WPInstance.lean`, which take the interpretation as an explicit argument
+that the goal or the hypothesis determines: `WP.triple_iff _`, `WP.triple_of_le_wp _ h`,
+`(WP.wpConjunctive_iff _ x).mpr`, and `(WPMonad.lawfulWPMonadAttach_iff _).mpr`, or `.mp` to
+project. The resulting goals state the judgment through `inst.wp`, which the value lemma of the
+construction rewrites. To apply a lemma that expects the interpretation as an instance, bind the
+construction first, `letI := MAlgOrdered.toWP α`, so that it is found as a local instance and
+stays definitionally the term in the statement.
 
 ### `grind =` cannot index `ite`, `dite`, or thunked applicative operands
 
@@ -451,6 +459,16 @@ template. Specifications match the program syntactically, so state them on the c
 (`forM`, `forIn`) and reach the function spelling (`List.forM`) through its defining equation
 in the unfolding list: `vcgen [prog, List.forM_eq_forM]`.
 
+### An intrinsic `while` invariant that names `exit` stops `vcgen`
+
+The `invariant exit => …` clause of a `while` or `repeat` loop elaborates its body with a `have`
+that binds `exit`. `vcgen` matches the loop specification structurally and fails on it with
+"unexpected let-declaration term during structural definitional equality". Write the binder as
+`_` when the invariant does not need the flag, or leave the program unannotated and pass a
+`WhileInvariant` through `vcgen … invariants`, whose `inv true` case states what holds when the loop
+stops. A `Variant` passed this way needs its universe fixed by hand (`Variant.{0, 0, 0}`).
+`PolyFunTest/Do/LoopBridge.lean` shows each form.
+
 ### A `Set` literal ascribed as `SetM` is still a `Set`
 
 `SetM α := Set α` is a `def`, so `(({1, 2} : Set Nat) : SetM Nat)` elaborates to a term of type
@@ -461,35 +479,28 @@ find an occurrence" on such a term even though `exact` / `refine` (default trans
 it. Give the literal a `SetM`-typed name (`def choose (x : Nat) : SetM Nat := {x, x + 1}`), or
 apply the lemma by term (`refine (allOutputs_bind _ _ _).mpr ?_`).
 
-### `vcgen` matches specs structurally, so dependent value types need care
+### Verifying concrete free-program calls with `vcgen`
 
-`vcgen` applies an `@[spec]` lemma by matching its `wp` pattern against the goal with a
-structural matcher (`Lean.Meta.Sym`); only instance arguments are compared with `isDefEq`. A
-spec whose value type is dependent, such as `PFunctor.FreeM.Spec.lift` at `P.B a`, therefore
-applies wherever the goal's value type is syntactically `P.B a` — under `bind`, where the type
-comes from the operation — but not to an operation in tail position, where the elaborated
-triple already carries the normalized type (`Bool` for an `abbrev` interface): the candidate is
-listed and rejected ("No spec applicable"). Registering the unfolding
-`FreeM.lift a = FreeM.liftBind a pure` as an equation spec does not help, because `Spec.pure`
-then meets the same mismatch on the continuation. Use `vcgen -errorOnMissingSpec` and finish
-the residual `wp` goal by rewriting with `DemonicWP.wp_apply_eq` and
-`FreeM.allOutputs_lift (P := …)`, naming the interface explicitly because its direction type
-has been reduced on the concrete polynomial (see
-[`FreeM` nodes in simp normal form](#freem-nodes-in-simp-normal-form) and
-`PolyFunTest/Do/Loops.lean`), or state the program over a generic interface so the value type
-stays `P.B a`. Downstream interfaces whose `P.B a` reduces to their own type (an oracle spec's
-range, say) need their own `Spec.query`-style rule at that type for the same reason.
+Open the scope of the reading used by the triple. For example,
+`open scoped PFunctor.FreeM.DemonicWP` selects the universal reading of a free program
+and its call rule. In `PolyFunTest/Do/Loops.lean`, `vcgen` applies this rule both to a generic
+request returning `P.B a` and to a tail call whose response type reduces to `Bool`.
 
-The mismatch is in core's matching, not in PolyFun's rules: a `do` block that ends in a call over a
-reducible structure instance fails the same way with no PolyFun rule involved. Ending the block in
-`pure`, or ascribing the last call with `show FreeM P β from …`, also avoids it.
-
-On a concrete interface, a `simp` pass before `vcgen` causes the same mismatch: it reduces the
-value type of each call, so rules such as `Handler.withCharge_eq_modify` no longer match. Pass the
-rewriting equations (`FreeM.liftM_lift_bind'`, `FreeM.liftM_ite`, `FreeM.liftM_dite`,
-`FreeM.liftM_pure`) to `vcgen` as rules instead. Over a generic interface the value type stays
-`P.B a`, and a `simp` pass is harmless.
+To verify an instrumented handler on a concrete interface, pass the interpretation equations
+(`FreeM.liftM_lift_bind'`, `FreeM.liftM_ite`, `FreeM.liftM_dite`, and `FreeM.liftM_pure`)
+directly to `vcgen`. This keeps the request and its response type together during rewriting.
 
 A `WP` reading that a proof installs with `letI` is not used when `vcgen` builds rules from
 `Triple` specifications (`failed to synthesize WP`); install it with `attribute [local instance]`,
 as for `FreeM.budgetWPMonad`.
+
+### A rule for every spec states its condition through the spec's head
+
+`Spec.lift_lower` and `Spec.lift_upper` take the spec `Φ` from the reading's instance, by
+unification, and state the precondition of a call as `Φ a Q`. When the reading is defined from a
+named spec, such as `OpSpec.lintegral ν`, the condition `vcgen` leaves keeps that name:
+`OpSpec.lintegral ν a fun b => …`. When the reading is defined from the spec written out as a
+`fun`, the instantiated precondition beta-reduces to the body. The expectation readings of
+`PolyFun/PFunctor/Free/Measure/WP.lean` are defined from `fun a k => ∫⁻ b, k b ∂ν a` for this reason,
+so the condition is the integral itself, and lemmas stated with `∫⁻` apply to it without unfolding.
+`simp only [OpSpec.lintegral_apply]` unfolds the named form.

@@ -6,13 +6,13 @@ Authors: Bas Spitters
 
 module
 
-public import PolyFun.PFunctor.Handler.CertifiedVec
+public import PolyFun.PFunctor.Handler.Demand
 public import PolyFun.PFunctor.Free.Cost.Tactic
 
 /-!
 # Vector charges
 
-Checks for `PolyFun.PFunctor.Handler.CertifiedVec` on a program that makes two hash calls and one
+Checks for `PolyFun.PFunctor.Handler.Demand` on a program that makes two hash calls and one
 compression call:
 
 * its use vector over the two resources is `(2, 1)`, and the components of its worst-case vector
@@ -112,8 +112,8 @@ def byGates : Handler (FreeM Gate) Step := fun _ =>
 theorem byGates_isChargeBound (b : Unit) :
     (byGates b).IsChargeBound (fun _ _ => 1) (∑ j, (1 : ℕ) • gateDemand j) := by
   cost_bound [byGates]
-  all_goals simp only [Pi.le_def, Pi.add_apply, gateDemand]
-  all_goals decide
+  simp only [Pi.le_def, Pi.add_apply, gateDemand]
+  decide
 
 /-- Through both handlers the program runs within `28` gates. -/
 example : (prog.liftM (byGates.comp bySteps)).IsChargeBound (fun (_ : Unit) (_ : Unit) => 1)

@@ -35,9 +35,8 @@ moves upstream by changing its import prefix. PolyFunFrontier does the same one 
 
 ## Building
 
-The package uses cslib-frontier's Lean toolchain and its CSLib and Mathlib commits, which are
-newer than PolyFun's stable tags. PolyFun's own modules compile here on that toolchain; warnings
-are errors only in this package's modules.
+The package uses cslib-frontier's Lean toolchain and its CSLib and Mathlib commits. The PolyFun
+modules it imports compile on those pins. Warnings are errors in PolyFunFrontier's own modules.
 
 ```bash
 cd PolyFunFrontier

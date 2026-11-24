@@ -128,7 +128,7 @@ instance (priority := 20) instLawfulEvalDistSemanticsExcept {ε : Type u} :
 /-- An absent optional result makes every event impossible. -/
 @[simp, grind =]
 theorem Option.prEvent_none : prEvent (none : Option Prop) = 0 := by
-  rw [prEvent_def, Option.evalDist_none, Measure.coe_zero, Pi.zero_apply]
+  rw [prEvent_def, Option.evalDist_none, FunLike.coe_zero, Pi.zero_apply]
 
 /-- A present optional proposition has probability one exactly when it holds. -/
 @[simp, grind =]
@@ -152,7 +152,7 @@ theorem Option.prEvent_map_some {α : Type} (p : α → Prop) (x : α) [Decidabl
 @[simp, grind =]
 theorem Except.prEvent_error {ε : Type u} (error : ε) :
     prEvent (Except.error error : Except ε Prop) = 0 := by
-  rw [prEvent_def, Except.evalDist_error, Measure.coe_zero, Pi.zero_apply]
+  rw [prEvent_def, Except.evalDist_error, FunLike.coe_zero, Pi.zero_apply]
 
 /-- A successful exceptional proposition has probability one exactly when it holds. -/
 @[simp, grind =]

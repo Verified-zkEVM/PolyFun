@@ -143,8 +143,6 @@ theorem foldLens_comp_one :
     foldLens M l ∘ₗ one (P := P) = M.one :=
   Lens.ext _ _ (fun _ => rfl) fun _ => Subsingleton.elim _ _
 
-@[deprecated (since := "2026-10-19")] alias foldLens_comp_unit := foldLens_comp_one
-
 /-- `foldObjAt` sends free-tree grafting to bind in the extension monad. -/
 theorem foldObjAt_append_split {α : Type uB}
     (s : FreeM P PUnit.{uB + 1})
@@ -201,8 +199,6 @@ theorem foldLens_mul_obj
     SubstMonoid.Extension.bind,
     Function.comp_def] using h
 
-@[deprecated (since := "2026-10-19")] alias foldLens_mult_obj := foldLens_mul_obj
-
 /-- The free fold preserves substitution multiplication as a full lens,
 including its backward path map. -/
 theorem foldLens_comp_mul :
@@ -211,8 +207,6 @@ theorem foldLens_comp_mul :
   apply Lens.ext_mapObj
   rintro ⟨s, next⟩
   exact foldLens_mul_obj M l s next
-
-@[deprecated (since := "2026-10-19")] alias foldLens_comp_mult := foldLens_comp_mul
 
 /-- Extend a generator lens uniquely to a substitution-monoid homomorphism
 out of the free substitution monoid. -/
@@ -353,8 +347,6 @@ variable {R : PFunctor.{uA, uB}}
 theorem mapHom_comp_mapHom (lPQ : Lens P Q) (lQR : Lens Q R) :
     (mapHom lPQ).comp (mapHom lQR) = mapHom (lQR ∘ₗ lPQ) :=
   SubstMonoid.Hom.ext _ _ (map_comp_map lQR lPQ)
-
-@[deprecated (since := "2026-10-19")] alias mapHom_comp := mapHom_comp_mapHom
 
 /-- Evaluating a grafted free tree agrees on positions with multiplying the
 evaluated outer tree by the evaluated inner trees. -/

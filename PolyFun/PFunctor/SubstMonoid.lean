@@ -77,12 +77,6 @@ structure SubstMonoid where
 
 namespace SubstMonoid
 
-@[deprecated (since := "2026-10-19")] alias mult := mul
-@[deprecated (since := "2026-10-19")] alias unit := one
-@[deprecated (since := "2026-10-19")] alias unit_left := SubstMonoid.one_mul
-@[deprecated (since := "2026-10-19")] alias unit_right := SubstMonoid.mul_one
-@[deprecated (since := "2026-10-19")] alias assoc := SubstMonoid.mul_assoc
-
 /-! ## Morphisms -/
 
 /-- A homomorphism of substitution monoids. It is a lens on carriers that
@@ -95,9 +89,6 @@ structure Hom (M N : SubstMonoid.{uA, uB}) where
   /-- Preservation of multiplication. -/
   protected map_mul : toLens ∘ₗ M.mul =
     N.mul ∘ₗ (toLens ◃ₗ toLens)
-
-@[deprecated (since := "2026-10-19")] alias Hom.map_mult := Hom.map_mul
-@[deprecated (since := "2026-10-19")] alias Hom.map_unit := Hom.map_one
 
 instance {M N : SubstMonoid.{uA, uB}} :
     Coe (Hom M N) (Lens M.carrier N.carrier) :=

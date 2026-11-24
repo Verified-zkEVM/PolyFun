@@ -6,16 +6,15 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Do.Spec
-public import PolyFun.Control.Monad.Support.WP
-public import PolyFun.Control.Monad.Support.Instances
+public import PolyFun.Control.Monad.WriterT.WP
+public import PolyFunTest.Do.Fixtures
 public import Mathlib.Algebra.FreeMonoid.Basic
 
 /-!
 # `WriterT` on core's `vcgen`
 
 `WriterT.MonoidWP.instWPMonad` lifts a core interpretation through Mathlib's writer transformer with
-a log-indexed carrier. The `@[spec]` rules of `PolyFun.Control.Do.Spec` let `vcgen` step through
+a log-indexed carrier. The `@[spec]` rules registered in that scope let `vcgen` step through
 `tell`, lifted base computations, and `run`. The log is a free monoid so that what was written is
 visible as a list. The module acknowledges the tactic's experimental status with `set_option
 experimental.vcgen true`; `PolyFunTest.Do.Algebra` pins the diagnostic itself.
@@ -47,17 +46,16 @@ def logTwo (a b : Nat) : WriterT (FreeMonoid Nat) Id Nat := do
 example (a b : Nat) :
     ⦃ fun w => w = 1 ⦄ logTwo a b ⦃ fun r w => r = a + b ∧ w.toList = [a, b] ⦄ := by
   vcgen [logTwo]
-  simp_all
+  all_goals simp_all
 
 /- `run` starts from the empty log. -/
 example (a b : Nat) :
     ⦃ True ⦄ (logTwo a b).run ⦃ fun p => p.1 = a + b ∧ p.2.toList = [a, b] ⦄ := by
   vcgen [logTwo]
-  simp_all
+  all_goals simp_all
 
-/-- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
-local instance instWPMonadSetMDemonic : WPMonad SetM Prop EStack⟨⟩ :=
-  toWPMonadDemonic
+/- The demonic interpretation of `SetM`, lifted by the scoped writer interpretation. -/
+open scoped PolyFunTest.SetMDemonicWP
 
 /-- A nondeterministic choice between an element and its successor. -/
 def choose (x : Nat) : SetM Nat := ({x, x + 1} : Set Nat)

@@ -295,7 +295,7 @@ theorem initTime_le (realization : Realization bd) (n : ℕ) (value : input n) :
   rw [initTime, Polynomial.eval_comp]
   simp only [Polynomial.eval_add, Polynomial.eval_X]
   rw [bd.input.len_eq]
-  exact Polynomial.eval_le_eval (Nat.add_le_add_left (bd.input.wid_le n) n)
+  exact Polynomial.eval_mono _ (Nat.add_le_add_left (bd.input.wid_le n) n)
 
 /-- The parameter-substituted observation polynomial bounds every hidden state. -/
 theorem headTime_le (realization : Realization bd) (n : ℕ)
@@ -305,7 +305,7 @@ theorem headTime_le (realization : Realization bd) (n : ℕ)
   refine (realization.headCode.time_le n _).trans ?_
   rw [headTime, Polynomial.eval_comp]
   simp only [Polynomial.eval_add, Polynomial.eval_X]
-  exact Polynomial.eval_le_eval (Nat.add_le_add_left (realization.state.len_le n state) n)
+  exact Polynomial.eval_mono _ (Nat.add_le_add_left (realization.state.len_le n state) n)
 
 /-- The parameter-substituted transition polynomial bounds every flattened index,
 including mismatched tags on which `update?` is allowed to return `none`. -/
@@ -317,7 +317,7 @@ theorem updateTime_le (realization : Realization bd) (n : ℕ)
   refine (realization.updateCode.time_le n _).trans ?_
   rw [updateTime, Polynomial.eval_comp]
   simp only [Polynomial.eval_add, Polynomial.eval_X]
-  apply Polynomial.eval_le_eval
+  apply Polynomial.eval_mono _
   simp only [StrEncFam.pairVar_enc, List.length_append]
   rw [bd.index.len_eq]
   have stateLength := realization.state.len_le n step.1

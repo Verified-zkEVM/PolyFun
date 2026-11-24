@@ -114,8 +114,6 @@ def convolutionOneRaw (C : Comonoid.{cA, cB})
     ((fun _ => PUnit.unit) ⇆
       (fun pos _ => (PUnit.unit, C.counit.toFunB pos.2 PUnit.unit)))
 
-@[deprecated (since := "2026-10-19")] alias convolutionUnitRaw := convolutionOneRaw
-
 /-- The uncurried convolution multiplication. It copies the `C`-input,
 interchanges tensor with substitution, evaluates both internal-hom positions,
 and multiplies their `M`-outputs. -/
@@ -130,8 +128,6 @@ def convolutionMulRaw (C : Comonoid.{cA, cB})
         (ihom C.carrier M.carrier) C.carrier C.carrier ∘ₗ
       (Lens.id ((ihom C.carrier M.carrier) ◃
         (ihom C.carrier M.carrier)) ⊗ₗ C.comul))
-
-@[deprecated (since := "2026-10-19")] alias convolutionMultRaw := convolutionMulRaw
 
 /-! The following two factorization lemmas isolate the unit-universe
 comparison and reduce the action unit laws exactly to the counit laws of `C`.
@@ -314,17 +310,12 @@ theorem uncurry_convolution_one (C : Comonoid.{cA, cB})
     Lens.uncurry (convolution C M).one = convolutionOneRaw C M :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias uncurry_convolution_unit :=
-  uncurry_convolution_one
-
 /-- Uncurrying the convolution multiplication recovers its
 copy-interchange-evaluate-multiply semantic map. -/
 theorem uncurry_convolution_mul (C : Comonoid.{cA, cB})
     (M : SubstMonoid.{mA, mB}) :
     Lens.uncurry (convolution C M).mul = convolutionMulRaw C M :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias uncurry_convolution_mult := uncurry_convolution_mul
 
 end SubstMonoid
 end PFunctor

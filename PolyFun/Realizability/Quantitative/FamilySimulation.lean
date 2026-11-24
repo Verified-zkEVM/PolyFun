@@ -74,15 +74,15 @@ noncomputable def FamilyBound.famRealizer {S : Q₁.SimulatedBy Q₂ str}
     have hk : k ≤ n + k := Nat.le_add_left k n
     have hn : n ≤ n + k := Nat.le_add_right n k
     have hi : n + S.sizeLower.eval k ≤ n + k + S.sizeLower.eval (n + k) :=
-      Nat.add_le_add hn (Polynomial.eval_le_eval hk)
-    have ht := (F.time_le n (S.sizeLower.eval k)).trans (Polynomial.eval_le_eval hi)
-    have hd := (F.desc_le n).trans (Polynomial.eval_le_eval hn)
+      Nat.add_le_add hn (Polynomial.eval_mono _ hk)
+    have ht := (F.time_le n (S.sizeLower.eval k)).trans (Polynomial.eval_mono _ hi)
+    have hd := (F.desc_le n).trans (Polynomial.eval_mono _ hn)
     simp only [Polynomial.eval_comp, Polynomial.eval_add, Polynomial.eval_X]
     exact (h.time_le (F.wit n) k).trans
-      (Polynomial.eval_le_eval (Nat.add_le_add (Nat.add_le_add hk ht) hd))
+      (Polynomial.eval_mono _ (Nat.add_le_add (Nat.add_le_add hk ht) hd))
   desc := h.polynomial.comp F.desc
   desc_le n := by
     rw [Polynomial.eval_comp]
-    exact (h.desc_le (F.wit n)).trans (Polynomial.eval_le_eval (F.desc_le n))
+    exact (h.desc_le (F.wit n)).trans (Polynomial.eval_mono _ (F.desc_le n))
 
 end PFunctor.QuantitativeStepClass.SimulatedBy

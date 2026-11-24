@@ -336,9 +336,6 @@ theorem nonempty_diagonalFiller
     Nonempty (DiagonalFiller v f c g) :=
   ⟨verticalCartesianFiller v f c g hv hc comm⟩
 
-@[deprecated (since := "2026-10-19")] alias exists_verticalCartesianDiagonal :=
-  nonempty_diagonalFiller
-
 /-- The forward map of a diagonal filler is forced by the left triangle and
 the vertical position bijection. -/
 theorem diagonalFiller_toFunA_unique
@@ -411,9 +408,6 @@ theorem subsingleton_diagonalFiller
         have h₂ := verticalCartesianDiagonal_unique v f c g hv hc comm
           ⟨diagonal₂, left₂, right₂⟩
         grind
-
-@[deprecated (since := "2026-10-19")] alias subsingleton_verticalCartesianFillers :=
-  subsingleton_diagonalFiller
 
 /-! ## Closure of cartesian lenses under the polynomial operations
 

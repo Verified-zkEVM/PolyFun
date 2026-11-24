@@ -69,8 +69,6 @@ variable {P : PFunctor.{uA, uB}} {l : Type w}
 protected def Monotone [Preorder l] (Φ : OpSpec P l) : Prop :=
   ∀ (a : P.A) ⦃k k' : P.B a → l⦄, (∀ b, k b ≤ k' b) → Φ a k ≤ Φ a k'
 
-@[deprecated (since := "2026-10-19")] alias Mono := OpSpec.Monotone
-
 /-- The demonic ("all responses") spec on the `Prop` carrier: a call to `a`
 guarantees only that *every* response satisfies the continuation. -/
 def demonic (P : PFunctor.{uA, uB}) : OpSpec P Prop :=
@@ -258,8 +256,8 @@ theorem wpFold_le_wpFold_of_le [Preorder l] {Φ Ψ : OpSpec P l} (hΨ : Ψ.Monot
   | lift_bind a r ih => exact (h a _).trans (hΨ a ih)
 
 /-- **Comparing specs**, with the smaller spec monotone instead of the larger. -/
-theorem wpFold_le_wpFold_of_le' [Preorder l] {Φ Ψ : OpSpec P l} (hΦ : Φ.Monotone)
-    (h : ∀ a k, Φ a k ≤ Ψ a k) (x : FreeM P α) (post : α → l) :
+theorem wpFold_le_wpFold_of_le_of_monotone_left [Preorder l] {Φ Ψ : OpSpec P l}
+    (hΦ : Φ.Monotone) (h : ∀ a k, Φ a k ≤ Ψ a k) (x : FreeM P α) (post : α → l) :
     wpFold Φ x post ≤ wpFold Ψ x post := by
   induction x with
   | pure x => exact le_rfl

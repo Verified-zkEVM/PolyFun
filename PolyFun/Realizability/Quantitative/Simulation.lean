@@ -7,7 +7,8 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.Realizability.Quantitative.Polynomial
-public import ToCslib.Algebra.Polynomial
+public import Cslib.Foundations.Data.Polynomial.Monotone
+import Mathlib.Algebra.Order.Ring.Nat
 
 /-!
 # Polynomial simulation between quantitative backends
@@ -82,16 +83,16 @@ protected noncomputable def comp {str₂ : ∀ {A : Type u}, C₂.Str A → C₃
   sizeBound := S₂.sizeBound.comp S₁.sizeBound
   size_le a x := by
     rw [Polynomial.eval_comp]
-    exact (S₂.size_le (str a) x).trans (Polynomial.eval_le_eval (S₁.size_le a x))
+    exact (S₂.size_le (str a) x).trans (Polynomial.eval_mono _ (S₁.size_le a x))
   sizeLower := S₁.sizeLower.comp S₂.sizeLower
   size_ge a x := by
     rw [Polynomial.eval_comp]
-    exact (S₁.size_ge a x).trans (Polynomial.eval_le_eval (S₂.size_ge (str a) x))
+    exact (S₁.size_ge a x).trans (Polynomial.eval_mono _ (S₂.size_ge (str a) x))
   costBound r := (S₂.costBound (S₁.code r)).comp (S₁.sizeBound + S₁.costBound r)
   cost_le r x := by
     rw [Polynomial.eval_comp, Polynomial.eval_add]
-    exact (S₂.cost_le (S₁.code r) x).trans <| Polynomial.eval_le_eval <| Nat.add_le_add
-      ((S₁.size_le _ x).trans (Polynomial.eval_le_eval (Nat.le_add_right _ _)))
+    exact (S₂.cost_le (S₁.code r) x).trans <| Polynomial.eval_mono _ <| Nat.add_le_add
+      ((S₁.size_le _ x).trans (Polynomial.eval_mono _ (Nat.le_add_right _ _)))
       (S₁.cost_le r x)
 
 /-- Translate a polynomial certificate using both size comparisons and the fixed code's
@@ -115,13 +116,13 @@ noncomputable def polyRealizer (S : Q₁.SimulatedBy Q₂ str)
       omega
     simp only [FirstOrderPolynomial.eval_comp, FirstOrderPolynomial.eval_add,
       FirstOrderPolynomial.eval_ofNatPolynomial]
-    exact h1.trans (Polynomial.eval_le_eval h2)
+    exact h1.trans (Polynomial.eval_mono _ h2)
   outputSize_le x := by
     have h1 := S.size_le b (f x)
     have h2 : Q₁.size b (f x) ≤ r.outputSize.eval (S.sizeLower.eval (Q₂.size (str a) x)) :=
       (r.outputSize_le x).trans (r.outputSize.eval_monotone (S.size_ge a x))
     simp only [FirstOrderPolynomial.eval_comp, FirstOrderPolynomial.eval_ofNatPolynomial]
-    exact h1.trans (Polynomial.eval_le_eval h2)
+    exact h1.trans (Polynomial.eval_mono _ h2)
 
 end SimulatedBy
 

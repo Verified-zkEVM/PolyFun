@@ -6,14 +6,14 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFunTest.Do.Algebra
+public import PolyFunTest.Do.Fixtures
 public import PolyFun.Control.Monad.ExactWP
 
 /-!
 # Upper bounds on core's `vcgen` through the order dual
 
 An exact interpretation is sound on the order duals as well (`ExactWPMonad.dual`). The identity
-algebra of `PolyFunTest.Do.Algebra`, read in `ℕ∞ᵒᵈ`, is a core interpretation whose triples are
+algebra of `PolyFunTest.Do.Fixtures`, read in `ℕ∞ᵒᵈ`, is a core interpretation whose triples are
 upper bounds: `vcgen` decomposes a `do` block exactly as for lower bounds, and the remaining
 condition compares the program's value with the bound in the reversed order. The dual reading is
 exact again, and exactness is recovered from it (`ExactWPMonad.of_dual`). The module acknowledges
@@ -23,11 +23,11 @@ the tactic's experimental status with `set_option experimental.vcgen true`;
 
 public section
 
-open Std.WP MAlgOrdered OrderDual
+open Std.WP MAlgOrdered OrderDual PolyFunTest
 
 set_option experimental.vcgen true
 
-attribute [local instance] instMAlgOrderedDetENat
+attribute [local instance] Det.mAlgOrderedENat
 
 /-- The upper-bound reading of the identity algebra, installed locally. -/
 noncomputable local instance instWPMonadDetDual : WPMonad Det ℕ∞ᵒᵈ EStack⟨⟩ᵒᵈ :=

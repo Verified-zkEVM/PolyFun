@@ -6,12 +6,9 @@ Authors: Devon Tuma
 
 module
 
-public import PolyFun.Control.Monad.Algebra.WP
-public import PolyFun.Control.Monad.Support.WP
-public import PolyFun.Control.Monad.Support.Instances
+public import PolyFunTest.Do.Fixtures
 public import PolyFun.PFunctor.Free.Do
 public import PolyFun.Control.Monad.WriterT.WP
-public import Mathlib.Data.ENat.Lattice
 
 /-!
 # Exact weakest preconditions under `simp`
@@ -20,7 +17,8 @@ public import Mathlib.Data.ENat.Lattice
 core's transformer lifts over it, the demonic and angelic support readings, and the scoped
 free-program readings — and its equational set normalizes core's `wp` itself: after `simp`, goals
 keep core's head, with no algebra value or support judgment in the result. The base monad is
-a fresh copy of `Id` so that no global core instance competes with the local one.
+`Det` of `PolyFunTest.Do.Fixtures`, a fresh copy of `Id`, so that no global core instance competes
+with the one that its scope installs.
 -/
 
 public section
@@ -29,26 +27,7 @@ open Std.WP
 
 namespace PolyFunTest.Exact
 
-/-- A deterministic monad with no global weakest-precondition instance. -/
-@[expose]
-def Det (α : Type) : Type := α
-
-instance : Monad Det where
-  pure a := a
-  bind x f := f x
-
-instance : LawfulMonad Det :=
-  LawfulMonad.mk' Det (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl)
-
-/-- The identity ordered algebra on `Det` at the extended naturals. -/
-noncomputable local instance instMAlgOrderedDetENat : MAlgOrdered Det ℕ∞ where
-  μ x := x
-  μ_pure _ := rfl
-  μ_bind_mono _ _ h x := h x
-
-/-- Its core interpretation, installed locally. -/
-noncomputable local instance instWPMonadDetENat : WPMonad Det ℕ∞ EStack⟨⟩ :=
-  MAlgOrdered.toWPMonad
+open scoped PolyFunTest.Det.ENatWP
 
 /-! ## Instances -/
 
@@ -75,6 +54,8 @@ section Writer
 open scoped WriterT.MonoidWP
 variable {ω : Type} [Monoid ω]
 
+/-! Exactness of the writer reading is the global instance keyed on `WriterT.wpMonadOf`; the scope
+registers none of its own. -/
 example : ExactWPMonad (WriterT ω Det) (ω → ℕ∞) EStack⟨⟩ := inferInstance
 example {σ : Type} : ExactWPMonad (StateT σ (WriterT ω Det)) (σ → ω → ℕ∞) EStack⟨⟩ :=
   inferInstance
@@ -86,9 +67,22 @@ example (w₀ : ω) (post : PUnit → ω → ℕ∞) :
   rfl
 end Writer
 
+section WriterAppend
+open scoped WriterT.AppendWP
+
+example {β : Type} : ExactWPMonad (WriterT (List β) Det) (List β → ℕ∞) EStack⟨⟩ := inferInstance
+end WriterAppend
+
 section FreeDemonic
 open scoped PFunctor.FreeM.DemonicWP
 example (P : PFunctor.{0, 0}) : ExactWPMonad (PFunctor.FreeM P) Prop EStack⟨⟩ := inferInstance
+
+/-! The `Prop`-valued facts of the demonic reading are global instances keyed on
+`MonadAttach.toWPMonadDemonic`, so the scope finds them without registering its own. -/
+example (P : PFunctor.{0, 0}) {α : Type} (x : PFunctor.FreeM P α) : WPConjunctive x :=
+  inferInstance
+example (P : PFunctor.{0, 0}) : LawfulWPMonadAttach (PFunctor.FreeM P) Prop EStack⟨⟩ :=
+  inferInstance
 end FreeDemonic
 
 section FreeAngelic
@@ -152,14 +146,40 @@ example (a : Det Nat) (b : Nat → Det Nat) (post : Nat → ℕ∞) (c : ℕ∞)
   rw [ExactWPMonad.wp_bind]
   exact ha _ h
 
-/-- The demonic reading normalizes as a predicate transformer, not as its judgment. -/
+section Demonic
+
+open scoped PolyFunTest.SetMDemonicWP
+
+/-- The demonic reading normalizes as a predicate transformer, not as its judgment: `simp` drives
+core's `wp` inward through the program. -/
 example (x : SetM Nat) (f : Nat → SetM Nat) (p : Nat → Prop) :
-    (letI := MonadAttach.toWPMonadDemonic (m := SetM)
-     wp (x >>= f) p estack⟨⟩) =
-      (letI := MonadAttach.toWPMonadDemonic (m := SetM)
-       wp x (fun a => wp (f a) p estack⟨⟩) estack⟨⟩) := by
-  let := MonadAttach.toWPMonadDemonic (m := SetM.{0})
-  exact ExactWPMonad.wp_bind x f p estack⟨⟩
+    wp (x >>= fun a => (· + 1) <$> f a) p estack⟨⟩ =
+      wp x (fun a => wp (f a) (fun b => p (b + 1)) estack⟨⟩) estack⟨⟩ := by
+  simp
+
+/-- `simp` leaves the `wp` of an opaque program alone: `MonadAttach.toWPMonadDemonic_wp` is a
+lemma, not a normalization. -/
+example (x : SetM Nat) (p : Nat → Prop) (h : wp x p estack⟨⟩) : MonadAttach.AllOutputs p x := by
+  fail_if_success simp at h
+  exact h
+
+end Demonic
+
+section FreeDemonicNormalization
+
+open scoped PFunctor.FreeM.DemonicWP
+
+/-- The same under the demonic reading of free programs. -/
+example (P : PFunctor.{0, 0}) (x : PFunctor.FreeM P Nat) (p : Nat → Prop) :
+    wp ((· + 1) <$> x) p estack⟨⟩ = wp x (fun a => p (a + 1)) estack⟨⟩ := by
+  simp
+
+example (P : PFunctor.{0, 0}) (x : PFunctor.FreeM P Nat) (p : Nat → Prop)
+    (h : wp x p estack⟨⟩) : MonadAttach.AllOutputs p x := by
+  fail_if_success simp at h
+  exact h
+
+end FreeDemonicNormalization
 
 /-- The sum-elimination rule lets the two arms live in different universes. -/
 example {Prog : Type} {Value : Type} {Pred : Type} {EPred : Type} [Assertion Pred]
@@ -167,6 +187,6 @@ example {Prog : Type} {Value : Type} {Pred : Type} {EPred : Type} [Assertion Pre
     (f : γ → Prog) (g : δ → Prog) (post : Value → Pred) (epost : EPred) :
     wp (s.elim f g) post epost =
       s.elim (fun c => wp (f c) post epost) (fun d => wp (g d) post epost) := by
-  simp only [ExactWPMonad.wp_sum_elim]
+  simp only [Std.WP.wp_sum_elim]
 
 end PolyFunTest.Exact

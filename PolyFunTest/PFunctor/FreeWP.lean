@@ -79,7 +79,7 @@ example (post : Bool → Prop) :
 
 example (post : Bool → Prop) :
     wpFold chooseTrueSpec flipTwo post → wpFold (OpSpec.angelic coinP) flipTwo post :=
-  wpFold_le_wpFold_of_le' chooseTrueSpec_mono (fun _ _ h => ⟨true, h⟩) flipTwo post
+  wpFold_le_wpFold_of_le_of_monotone_left chooseTrueSpec_mono (fun _ _ h => ⟨true, h⟩) flipTwo post
 
 /-- The comparison is strict on this program: the deterministic fold holds where the demonic
 one fails. -/

@@ -8,6 +8,7 @@ module
 public import Mathlib.Logic.Relation
 public import Mathlib.Logic.Relator
 public import Cslib.Foundations.Semantics.LTS.Bisimulation
+import Mathlib.Data.Set.Finite.Range
 
 /-!
 # Simulation and bisimulation for labelled transition systems
@@ -206,6 +207,14 @@ variable (L : LTS.{uObs, uState, uMove} Obs)
 
 @[simp] theorem LTS.toLts_tr {s t : L.State} {label : Option Obs} :
     L.toLts.Tr s label t ↔ L.Step s label t := Iff.rfl
+
+/-- Finite move types give the relational projection finitely many successors at each label. -/
+theorem LTS.toLts_imageFinite_of_finite_moves [∀ s, Finite (L.Move s)] : L.toLts.ImageFinite := by
+  intro s label
+  apply Set.Finite.to_subtype
+  apply (Set.finite_range (L.next s)).subset
+  rintro t ⟨move, _, hnext⟩
+  exact ⟨move, hnext⟩
 
 /-- The silent closure is cslib's `τ`-closure. -/
 @[simp] theorem LTS.τSTr_toLts {s t : L.State} :
@@ -772,6 +781,16 @@ theorem strongBisimilar_iff {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
     StrongBisimilar L₁ L₂ s₁ s₂ ↔ Cslib.LTS.Bisimilarity L₁.toLts L₂.toLts s₁ s₂ :=
   ⟨fun ⟨rel, hb, hrel⟩ => ⟨rel, hrel, isStrongBisimulation_iff.mp hb⟩,
     fun ⟨rel, hrel, hb⟩ => ⟨rel, isStrongBisimulation_iff.mpr hb, hrel⟩⟩
+
+/-- For image-finite systems, strong bisimilarity holds exactly when the states match at every
+finite depth of CSLib's bisimulation approximation. -/
+theorem strongBisimilar_iff_forall_bisimilarityApprox {L₁ : LTS.{uObs, uState₁, uMove₁} Obs}
+    {L₂ : LTS.{uObs, uState₂, uMove₂} Obs} [L₁.toLts.ImageFinite] [L₂.toLts.ImageFinite]
+    {s₁ : L₁.State} {s₂ : L₂.State} :
+    StrongBisimilar L₁ L₂ s₁ s₂ ↔
+      ∀ n : ℕ, Cslib.LTS.BisimilarityApprox L₁.toLts L₂.toLts n s₁ s₂ :=
+  strongBisimilar_iff.trans (Cslib.LTS.BisimilarityApprox.omega_iff_bisimilarity.symm.trans
+    Cslib.LTS.BisimilarityApprox.omega_iff)
 
 /-! ### Correspondence of the weak spectrum -/
 

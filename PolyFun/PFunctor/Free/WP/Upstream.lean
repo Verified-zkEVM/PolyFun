@@ -89,7 +89,7 @@ theorem toUpperWPMonad_wp (Φ : OpSpec P l) (hΦ : Φ.Monotone) {α : Type v} (x
 instance instExactWPMonadToUpperWPMonad (Φ : OpSpec P l) (hΦ : Φ.Monotone) :
     @ExactWPMonad (FreeM P) lᵒᵈ EStack⟨⟩ᵒᵈ _ _ _ (Φ.toUpperWPMonad hΦ) :=
   letI := Φ.toWPMonad hΦ
-  ExactWPMonad.instExactWPMonadDual
+  ExactWPMonad.instDual
 
 end OpSpec
 
@@ -141,7 +141,7 @@ theorem wpFold_le_wp_liftM {Φ : OpSpec P l} (s : Handler n P)
     calc Φ a (fun b => wpFold Φ (r b) post)
         ≤ wp (s a) (fun b => wpFold Φ (r b) post) Lean.Order.bot := h a _
       _ ≤ wp (s a) (fun b => wp ((r b).liftM s) post Lean.Order.bot) Lean.Order.bot :=
-          WP.wp_consequence (s a) _ _ Lean.Order.bot fun b => ih b
+          WP.wp_monotone_post (x := s a) (eposts := Lean.Order.bot) fun b => ih b
       _ ≤ wp (s a >>= fun b => (r b).liftM s) post Lean.Order.bot :=
           WPMonad.bind_le_wp_bind (s a) _ post Lean.Order.bot
 

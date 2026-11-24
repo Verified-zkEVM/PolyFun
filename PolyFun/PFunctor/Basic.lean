@@ -38,17 +38,6 @@ section Basic
 instance : IsEmpty (A 0) := inferInstanceAs (IsEmpty PEmpty)
 instance instUniqueAOfNatOne : Unique (A 1) := inferInstanceAs (Unique PUnit)
 
-/-- Parse-only compatibility spelling of the monomial `A y^ B`.
-
-Kept in this foundational module so direct importers of `PFunctor.Basic` or
-`PFunctor.Lens.Basic` continue to elaborate while migrating to `y^`. -/
-scoped syntax:82 term:83 " X^ " term:82 : term
-
-scoped macro_rules
-  | `($A X^ $B) => `(PFunctor.monomial $A $B)
-
-@[deprecated (since := "2026-10-19")] alias representable := purePower
-
 /-- The **universe polynomial functor** `Σ (T : Type u), y^ T`: positions are types,
 and the directions at a position `T` are its elements. Its extension `univ.Obj S` is
 `Σ (T : Type u), T → S`, so a dynamical system over `univ` is a transition system that
@@ -90,41 +79,13 @@ section Sum
 `hAdd_A` and `hAdd_B`); both summands share the direction universe. The equations `add_B_inl`
 and `add_B_inr` are not simp lemmas, since `hAdd_B` and iota reduction already compute them. -/
 
-/-- The deprecated spelling of `P + Q`. It keeps the body and the `abbrev` transparency it had
-before it was deprecated, so instance search and reducible `simp` still compute
-`(sum P Q).B (.inl a)` to `P.B a`. cslib's `add` is only implicit-reducible, so a plain alias would
-not. -/
-@[deprecated add (since := "2026-10-19")]
-abbrev sum (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
-  ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩
-
-/-- The coproduct of two polynomial functors, with reducible direction projections. -/
-@[deprecated add (since := "2026-10-19")]
-def coprod (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) : PFunctor.{max uA₁ uA₂, uB} :=
-  ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩
-
-/-- The positions of the sum are the sum of its position types. -/
-@[simp, deprecated hAdd_A +typeChanged (since := "2026-10-19")]
-lemma sum_A (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
-    (sum P Q).A = (P.A ⊕ Q.A) := rfl
-
 /-- The directions of `P + Q` at a left position are those of `P`. -/
 lemma add_B_inl (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
     (P + Q).B (.inl a) = P.B a := rfl
 
-/-- The directions of the sum at a left position are those of `P`. -/
-@[simp, deprecated add_B_inl +typeChanged (since := "2026-10-19")]
-lemma sum_B_inl (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : P.A) :
-    (sum P Q).B (.inl a) = P.B a := rfl
-
 /-- The directions of `P + Q` at a right position are those of `Q`. -/
 lemma add_B_inr (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : Q.A) :
     (P + Q).B (.inr a) = Q.B a := rfl
-
-/-- The directions of the sum at a right position are those of `Q`. -/
-@[simp, deprecated add_B_inr +typeChanged (since := "2026-10-19")]
-lemma sum_B_inr (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) (a : Q.A) :
-    (sum P Q).B (.inr a) = Q.B a := rfl
 
 lemma add_def (P : PFunctor.{uA₁, uB}) (Q : PFunctor.{uA₂, uB}) :
     P + Q = ⟨P.A ⊕ Q.A, @Sum.rec P.A Q.A (fun _ => Type uB) P.B Q.B⟩ := rfl
@@ -236,11 +197,6 @@ def compNth (P : PFunctor.{uA, uB}) : Nat → PFunctor.{max uA uB, uB}
   | Nat.succ n => P ◃ compNth P n
 
 @[inherit_doc] scoped[PFunctor] infixl:85 " ◃^ " => compNth
-
-/-- Compatibility instance for the former `p ^ n` composition-power spelling.
-The canonical notation is `p ◃^ n`. -/
-instance instNatPowPFunctor : NatPow PFunctor.{max uA uB, uB} where
-  pow := compNth
 
 end Comp
 
@@ -357,10 +313,6 @@ instance [Inhabited B] : (monomial A B).Inhabited where
 
 end monomial
 
-/-- A polynomial with constant direction type `B` over the position type `A`. -/
-@[deprecated monomial (since := "2026-10-19")]
-abbrev ofConst (A : Type uA) (B : Type uB) : PFunctor.{uA, uB} := monomial A B
-
 /-- An equivalence between two polynomial functors `P` and `Q`, written `P ≃ₚ Q`, is given by an
 equivalence of the `A` types and an equivalence between the `B` types for each `a : A`. -/
 @[ext]
@@ -418,8 +370,6 @@ theorem symm_equivA_comp_equivA {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA�
     (e : P ≃ₚ Q) : e.symm.equivA ∘ e.equivA = id := by
   simp [Equiv.symm]
 
-@[deprecated (since := "2026-10-19")] alias symm_comp_self := symm_equivA_comp_equivA
-
 /-- Rewrite a dependent `Eq.rec` with identity to a cast on the argument. -/
 lemma eqRec_id_apply {α : Sort u} {β : α → Sort v}
     {a1 a0 : α} (h : a1 = a0) (x : β a0) :
@@ -476,8 +426,6 @@ lemma symm_equivB_equivB (e : P ≃ₚ Q) (a : P.A) (b : P.B a) :
     (a := e.equivA.symm (e.equivA a)) (a' := a)
     (ha := e.equivA.apply_symm_apply _) (b := b)
 
-@[deprecated (since := "2026-10-19")] alias forward_equivB_roundtrip := symm_equivB_equivB
-
 /-- Applying `symm.equivB` and then `equivB` gives a cast. -/
 lemma equivB_symm_equivB (e : P ≃ₚ Q) (a : Q.A)
     (b : Q.B a) :
@@ -488,8 +436,6 @@ lemma equivB_symm_equivB (e : P ≃ₚ Q) (a : Q.A)
     (((_root_.Equiv.cast _).trans
       (e.equivB (e.equivA.symm a)).symm) b) = _
   simp [_root_.Equiv.trans_apply]
-
-@[deprecated (since := "2026-10-19")] alias reverse_equivB_roundtrip := equivB_symm_equivB
 
 end Equiv
 

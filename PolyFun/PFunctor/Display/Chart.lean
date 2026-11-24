@@ -153,7 +153,5 @@ def ofChartTotalEquiv {Q : PFunctor.{uA', uB'}} (f : Chart Q P) :
       rfl
   right_inv := rfl
 
-@[deprecated (since := "2026-10-19")] alias ofChartEquiv := ofChartTotalEquiv
-
 end Display
 end PFunctor

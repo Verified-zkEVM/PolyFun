@@ -559,16 +559,16 @@ on the syntax polynomial, the input of `IFreeM.fold`. The ordered monad algebras
 logic, such as `MAlgOrdered`, are a different notion: they interpret the computations of a monad.
 
 [`Scoped.Certificate`](../../PolyFun/IPFunctor/Scoped/Certificate.lean) turns the fundamental
-lemma into a `Control.Semantics.CertifiedMeaning`. `Term.certifiedMeaning` certifies a term
+lemma into a `Control.Semantics.Correspondence`. `Term.correspondence` certifies a term
 with one free variable, its input, against a native implementation. It needs two more facts.
 The representation relates each encoded input to a native representative (`represents`), and a
 representative determines its encoded output (`determines`). Totality says that the evaluator
 returns the representative of the implementation's result (`total`). When the evaluator returns
 it only on some inputs, `Term.correspondsOn_denoteDomain` gives a `CorrespondsOn` there.
 `Term.liftFun_denoteDomain` states the fundamental lemma as `Relator.LiftFun`, the premise of
-`CertifiedMeaning.ofLiftFun`, so a language with function sorts can certify a closed function
+`Correspondence.ofLiftFun`, so a language with function sorts can certify a closed function
 term through its relation at function sorts. When the meaning is read back by a decoder,
-`CertifiedMeaning.ofLiftFunDecode` certifies the decoded meaning, and a native representative of an
+`Correspondence.ofLiftFunDecode` certifies the decoded meaning, and a native representative of an
 output need only fix what each related result decodes to. The lazy-language tutorial certifies a
 program against `(· + 2)` and composes it with a decoder into `DomainResult Empty ℕ`. Its
 fuel-bounded evaluator unrolls `fix` from bottom and is related to the lazy meaning at every
@@ -792,8 +792,8 @@ The [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean) relates a la
 meaning to a total evaluator with `denoteDomain_related`, and instantiates a size with
 `denoteDomain_map_closed`.
 
-`Stacked.Model.certifiedMeaning` certifies a term with one free value variable at a type
-assignment, under the premises of `Term.certifiedMeaning`. A total evaluator can be its own
+`Stacked.Model.correspondence` certifies a term with one free value variable at a type
+assignment, under the premises of `Term.correspondence`. A total evaluator can be its own
 implementation, so its totality premise holds by definition. The vectors tutorial encodes numbers
 and vectors of data faithfully and so certifies every term with one data input at every size
 assignment (`certifiedEvaluator`).
@@ -887,6 +887,50 @@ import` of the mirror's module. Lake does not track the JSON files a frontend re
 with an `input_file` or `input_dir` target in the library's `needs` when they change between
 builds.
 
+[`Import/Json.lean`](../../PolyFun/IPFunctor/Scoped/Import/Json.lean) gives a frontend located
+errors and a JSON decoder. A `Located` error has a `Location`: an origin, such as a file or a
+declaration, and the path from there to the offending value. It renders as
+`origin at a/b/c: message`. `JsonM σ` decodes with a state `σ`. Its combinators add to the path as
+they descend: `field` adds its key, and `elems` and `pair` add the position `[i]` of each element.
+`variant` reads a constructor written as a string or as an object with one field, and `unknown`
+refuses one that the decoder does not know, with or without an argument. `checkHeader` checks the
+format and version an input declares and reads its provenance fields. An elaborator keeps a
+`Location` as it descends (`Location.into`) and fails at it (`Location.fail`, or `Location.check`
+around a translation step), so decoding and elaboration errors point into the source with the same
+segments.
+
+[`Import/Registry.lean`](../../PolyFun/IPFunctor/Scoped/Import/Registry.lean) makes a prefix a
+registry. An import under `P` declares `P.manifest : Import.Manifest`, which records its input's
+format, version, provenance pairs and fingerprint, and records each frontend setting that shapes
+its declarations as `P.settings.k`. `Registry.plan` runs before the import adds anything. It
+refuses another input under `P`, a setting other than the recorded one, a declaration that would
+take the name of a bundle declaration, and an existing name that is not this import's declaration,
+as a witness constant such as its `source` shows. It skips the declarations of the same input that
+exist already, so importing the same input again adds nothing, and an import that reaches more of
+it adds the rest. On reuse, `Registry.bundle` gives the bundle declarations whose names do not
+exist yet, such as a table entry that only the later import reaches. `Select` chooses declarations
+by name, such as those that get equation lemmas, and refuses a name in `only` or `except` that is
+not a declaration of the import.
+
+[`Import/Env.lean`](../../PolyFun/IPFunctor/Scoped/Import/Env.lean) builds and reads the
+environments of imported declarations. A declaration is a term in the context of its dependencies'
+sorts, nearest first. `Scope.env` writes the environment of the dependencies' meanings as a chain
+of `Env.cons` over `Env.empty`. `Scope.liftRel` writes the proof of `Env.LiftRel` between two such
+environments from the dependencies' proofs. A frontend thus gives each declaration its meaning at
+its dependencies' meanings, and assembles the proof of the fundamental lemma for the kernel to
+check. `EnvReader` goes the other way: it reads the values of an explicit environment, the
+position of a variable, and the entry that a lookup of a chain of `Env.cons` reaches.
+
+[`Import/Apply.lean`](../../PolyFun/IPFunctor/Scoped/Import/Apply.lean) prints application
+equations. From `N.meaning_eq : N.meaning = r`, `ApplyPrinter.applyEquation` writes
+`∀ ns xs, apply (N.meaning ns) xs = r'`. It applies the outer abstractions of `r` to fresh
+variables, evaluates the type level, and reads environment lookups off. `logApplyEquation` prints
+the statement as a theorem to paste, with the proof `kernel_rfl`. When the right side wraps a
+dependency's meaning, the proof first rewrites by `N.meaning_eq`, so that the kernel does not
+unfold the dependency on both sides. The frontend supplies the type-level evaluator, the binder
+telescope, the application former, the wrapper test and an inliner. The printer is not trusted:
+the kernel checks the statement when it is pasted.
+
 The [toy JSON frontend](../../PolyFunTest/IPFunctor/Scoped/Import/Toy.lean) imports the
 [vectors tutorial](../../Examples/Tutorials/ScopedVectors.lean)'s language, inserting a coercion
 after each size instantiation. Its [fixtures](../../PolyFunTest/IPFunctor/Scoped/Import/ToyImport.lean)
@@ -894,8 +938,15 @@ cover acceptance by both proofs, auxiliary and bundle declarations, a compiled a
 definition that compiled code runs, equation lemmas, one of them on an auxiliary definition, a
 theorem whose proof term only the kernel checks, a wrong proof of that theorem, a wrong scheme and a
 mismatched source rejected in check mode, budgets that the kernel or the elaboration exhausts, a
-bundle that fits only with per-declaration scopes, and generated declarations that `#lint` skips
-beside a hand-written one it reports. In commit mode, neither a rejection in the middle of a
-bundle, nor a wrong proof of a theorem, nor a declaration that the kernel accepts and the code
-generator cannot compile leaves a declaration or an axiom behind. The
-validation wrapper's axiom sweep includes both modules.
+bundle that fits only with per-declaration scopes, generated declarations that `#lint` skips
+beside a hand-written one it reports, and decoding and elaboration errors at their paths. They
+cover the registry: a repeated import that adds nothing, an import of the whole file after part of
+it, and the refusals of another file, of other settings, of a hand-written declaration under the
+prefix, and of a declaration named like a bundle declaration. Declarations with dependencies get
+their meanings at the dependencies' meanings, and representation theorems assembled from the
+dependencies' theorems, also for two dependencies of different schemes. `#toy_apply` prints
+application equations, of a size-polymorphic declaration and of wrappers too, which `kernel_rfl`
+proves once pasted. In commit mode, neither a rejection in the middle of a bundle, nor a wrong
+proof of a theorem, nor a declaration that the kernel accepts and the code generator cannot compile
+leaves a declaration or an axiom behind. The validation wrapper's axiom sweep includes both
+modules.

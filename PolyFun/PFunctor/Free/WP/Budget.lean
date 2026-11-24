@@ -46,9 +46,12 @@ variable {P : PFunctor.{uA, uB}} {ω : Type uB} [Add ω] [LE ω]
 
 /-- The budget reading of a charge: free programs interpreted over predicates on the amount
 spent, with a call at `a` admitted when `s + c a ≤ B`. -/
-abbrev budgetWPMonad (c : P.A → ω) (B : ω) : WPMonad (FreeM P) (ω → Prop) EStack⟨⟩ :=
+@[instance_reducible]
+def budgetWPMonad (c : P.A → ω) (B : ω) : WPMonad (FreeM P) (ω → Prop) EStack⟨⟩ :=
   (OpSpec.budget c B).toWPMonad (OpSpec.budget_mono c B)
 
+/-- The budget reading's `wp` is the fold of the budget spec. Not `@[simp]`: core's `wp` is the
+normal form. -/
 theorem budgetWPMonad_wp (c : P.A → ω) (B : ω) {α : Type uB} (x : FreeM P α)
     (post : α → ω → Prop) (epost : EStack⟨⟩) :
     ((budgetWPMonad c B).toWP α).wp x post epost = wpFold (OpSpec.budget c B) x post :=
@@ -60,18 +63,8 @@ theorem isChargeBound_iff_triple [Zero ω] (c : P.A → ω) (B : ω) {α : Type 
     x.IsChargeBound c B s ↔
       @Triple (ω → Prop) EStack⟨⟩ (FreeM P α) α _ _ x ((budgetWPMonad c B).toWP α)
         (fun t => t = s) (fun _ t => t ≤ B) ⊥ := by
-  let := budgetWPMonad (P := P) c B
-  constructor
-  · intro h
-    refine ⟨fun t ht => ?_⟩
-    subst ht
-    change ((budgetWPMonad c B).toWP α).wp x (fun _ t => t ≤ B) ⊥ t
-    rw [budgetWPMonad_wp]
-    exact h
-  · intro h
-    have := h.le_wp s rfl
-    change ((budgetWPMonad c B).toWP α).wp x (fun _ t => t ≤ B) ⊥ s at this
-    rwa [budgetWPMonad_wp] at this
+  rw [WP.triple_iff, budgetWPMonad_wp]
+  exact ⟨fun h t ht => ht ▸ h, fun h => h s rfl⟩
 
 namespace Spec
 
@@ -83,8 +76,7 @@ theorem lift_budget (c : P.A → ω) (B : ω) (a : P.A) (Q : P.B a → ω → Pr
       ((budgetWPMonad c B).toWP _)
       (Lean.Order.meet (fun s => s + c a ≤ B) (Lean.Order.iInf fun b => fun s => Q b (s + c a)))
       Q E := by
-  let := budgetWPMonad (P := P) c B
-  refine ⟨fun s hs => ?_⟩
+  refine WP.triple_of_le_wp _ fun s hs => ?_
   rw [budgetWPMonad_wp, FreeM.wpFold_lift]
   simp only [Lean.Order.meet_apply, Lean.Order.iInf_apply] at hs
   have h₁ : Lean.Order.PartialOrder.rel _ _ := Lean.Order.meet_le_left (s + c a ≤ B)
@@ -121,17 +113,17 @@ theorem triple_liftM_id_withCharge_iff [AddMonoid ω] (c : P.A → ω) {α : Typ
       ∀ p : FreeM.Path x, post (FreeM.output x p) (s + FreeM.Path.charge c x p) := by
   rw [Triple.iff]
   have key : ∀ t, wp (x.liftM ((Handler.id P).withCharge c)) post ⊥ t ↔
-      ∀ z ∈ FreeM.supp ((x.liftM ((Handler.id P).withCharge c)).run t), post z.1 z.2 := by
+      ∀ z ∈ MonadAttach.support ((x.liftM ((Handler.id P).withCharge c)).run t), post z.1 z.2 := by
     intro t
-    rw [StateT.wp_apply_eq, FreeM.DemonicWP.wp_apply_eq,
-      MonadAttach.allOutputs_iff_forall_support, FreeM.support_eq_supp]
+    rw [StateT.wp_apply_eq, FreeM.DemonicWP.wp_eq_allOutputs,
+      MonadAttach.allOutputs_iff_forall_support]
   constructor
   · intro h p
-    exact (key s).1 (h s rfl) _ (by rw [supp_run_liftM_id_withCharge]; exact ⟨p, rfl⟩)
+    exact (key s).1 (h s rfl) _ (by rw [support_run_liftM_id_withCharge]; exact ⟨p, rfl⟩)
   · intro h t ht
     subst ht
     refine (key t).2 fun z hz => ?_
-    rw [supp_run_liftM_id_withCharge] at hz
+    rw [support_run_liftM_id_withCharge] at hz
     obtain ⟨p, rfl⟩ := hz
     exact h p
 

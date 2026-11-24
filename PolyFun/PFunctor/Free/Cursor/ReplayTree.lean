@@ -76,12 +76,9 @@ theorem Leaf.trace_path_branch {program : FreeM P α} {target : P.A} {ordinal : 
     (children : (i : Fin arity) → ReplayTree (occurrence.resume (answers i)))
     (i : Fin arity) (tail : Leaf (children i)) :
     Path.trace program (Leaf.path (tree := .branch occurrence arity answers children)
-      (.branch i tail)) = List.append occurrence.before
-        (⟨target, answers i⟩ :: Path.trace _ tail.path) :=
+      (.branch i tail)) = occurrence.before *
+        (FreeMonoid.of (α := P.Idx) ⟨target, answers i⟩ * Path.trace _ tail.path) :=
   occurrence.trace_plug (answers i) tail.path
-
-@[deprecated (since := "2026-10-19")] alias branch_trace := Leaf.trace_path_branch
-
 
 end ReplayTree
 end PFunctor.FreeM.Cursor

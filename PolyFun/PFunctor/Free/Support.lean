@@ -12,22 +12,23 @@ public import Mathlib.Data.Set.Finite.Lattice
 /-!
 # Exact Support of the Free Monad
 
-The free monad `FreeM P` carries a canonical `MonadAttach` instance: the possible outputs of
-a program are the leaf payloads reachable by choosing *some* direction at every operation
-node,
+The free monad `FreeM P` carries a canonical `MonadAttach` instance. Its return predicate
+`FreeM.CanReturn` is inductive: a leaf returns its value, and an operation node returns whatever
+one of its children returns.
 
-* `supp (pure x) = {x}`,
-* `supp (liftBind a r) = ⋃ b, supp (r b)`,
+* `CanReturn (pure x) x`,
+* `CanReturn (r b) a → CanReturn (liftBind op r) a`.
 
-and `attach` decorates each leaf with its reachability proof by structural recursion. Both
-are computable and axiom-free, so `MonadAttach.pbind` is available for well-founded
-recursion over free programs.
+The two constructors are the introduction rules of `ExactMonadAttach` read on free trees, where
+an operation can return each of its answers. `attach` decorates each leaf with a derivation of
+`CanReturn`, by structural recursion. Both are computable and axiom-free, so
+`MonadAttach.pbind` is available for well-founded recursion over free programs.
 
-The instance is lawful, and structural induction also proves the pure and bind introduction
-rules of `ExactMonadAttach`. `MonadAttach.support` on `FreeM P` reduces
-definitionally — `support (pure x) = {x}` and `support (liftBind a r) = ⋃ b, support (r b)`
-are both `rfl` — and the judgments `AllOutputs`/`SomeOutput`/`NoOutput` recurse structurally
-over trees.
+Because the predicate is inductive, neither the kernel nor the elaborator evaluates a program
+to decide or compare memberships in its support: `a ∈ support x` stops at `CanReturn x a`, and
+two such memberships are compared by comparing the programs. The structural equations
+`support (pure x) = {x}` and `support (liftBind a r) = ⋃ b, support (r b)` are theorems, and the
+judgments `AllOutputs`/`SomeOutput`/`NoOutput` recurse over trees through them.
 
 Two coherence results connect this to the rest of the library:
 `support_eq_range_output` identifies the support with the range of `FreeM.output` over the
@@ -45,95 +46,88 @@ open MonadAttach
 
 variable {P : PFunctor.{uA, uB}} {α β : Type v}
 
-/-- The structural support of a free tree: every direction of every operation node is
-possible. -/
-def supp : FreeM P α → Set α
-  | .pure a => {a}
-  | .liftBind _ r => ⋃ b, supp (r b)
+/-- `CanReturn x a`: some root-to-leaf path of `x` ends in a leaf with value `a`, where every
+direction of every operation node is available. -/
+inductive CanReturn : FreeM P α → α → Prop where
+  /-- A leaf returns its value. -/
+  | pure (a : α) : CanReturn (FreeM.pure a) a
+  /-- An operation node returns what one of its children returns. -/
+  | liftBind {op : P.A} {r : P.B op → FreeM P α} {a : α} (b : P.B op) :
+      CanReturn (r b) a → CanReturn (FreeM.liftBind op r) a
 
-/-- Reachability at a child is reachability at the node. -/
-theorem mem_supp_liftBind_of_mem {op : P.A} {r : P.B op → FreeM P α} {b : P.B op} {a : α}
-    (h : a ∈ supp (r b)) : a ∈ supp (FreeM.liftBind op r) :=
-  Set.mem_iUnion.mpr ⟨b, h⟩
+theorem canReturn_pure_iff {a b : α} : FreeM.CanReturn (FreeM.pure a : FreeM P α) b ↔ b = a :=
+  ⟨fun h => by cases h; rfl, fun h => h ▸ .pure a⟩
 
-/-- Attach the structural-support proof to every leaf, by structural recursion. -/
-def attachSupp : (x : FreeM P α) → FreeM P {a : α // a ∈ supp x}
-  | .pure a => .pure ⟨a, rfl⟩
+theorem canReturn_liftBind_iff {op : P.A} {r : P.B op → FreeM P α} {a : α} :
+    FreeM.CanReturn (FreeM.liftBind op r) a ↔ ∃ b, FreeM.CanReturn (r b) a :=
+  ⟨fun h => by cases h with | liftBind b h => exact ⟨b, h⟩, fun ⟨b, h⟩ => .liftBind b h⟩
+
+/-- Attach a derivation of `CanReturn` to every leaf, by structural recursion. -/
+def attachSupp : (x : FreeM P α) → FreeM P {a : α // FreeM.CanReturn x a}
+  | .pure a => .pure ⟨a, .pure a⟩
   | .liftBind op r => .liftBind op fun b =>
-      FreeM.map (fun z => ⟨z.1, mem_supp_liftBind_of_mem z.2⟩) (attachSupp (r b))
+      FreeM.map (fun z => ⟨z.1, .liftBind b z.2⟩) (attachSupp (r b))
 
 instance instMonadAttach : MonadAttach (FreeM P) where
-  CanReturn x a := a ∈ supp x
+  CanReturn := FreeM.CanReturn
   attach := attachSupp
 
-/-- The structural support is the strongest postcondition: anything reachable in a tree of
-refined values satisfies the refinement. -/
-theorem supp_map_imp {Q : α → Prop} (x : FreeM P {a : α // Q a}) {b : α} :
-    b ∈ supp (Subtype.val <$> x) → Q b := by
+/-- `CanReturn` is the strongest postcondition: anything a tree of refined values returns
+satisfies the refinement. -/
+theorem canReturn_map_val_imp {Q : α → Prop} (x : FreeM P {a : α // Q a}) {b : α} :
+    FreeM.CanReturn (Subtype.val <$> x) b → Q b := by
   induction x with
   | pure a => intro h; cases h; exact a.2
   | lift_bind op r ih =>
       intro h
-      change b ∈ supp (FreeM.liftBind op fun c => Subtype.val <$> r c) at h
-      obtain ⟨c, hc⟩ := Set.mem_iUnion.mp h
+      change FreeM.CanReturn (FreeM.liftBind op fun c => Subtype.val <$> r c) b at h
+      obtain ⟨c, hc⟩ := canReturn_liftBind_iff.mp h
       exact ih c hc
-
-@[deprecated (since := "2026-10-19")] alias supp_map := supp_map_imp
 
 theorem map_attachSupp (x : FreeM P α) : Subtype.val <$> attachSupp x = x := by
   induction x with
   | pure a => rfl
   | lift_bind op r ih =>
-      change FreeM.liftBind op (fun b => Subtype.val <$>
-        (FreeM.map (fun z => ⟨z.1, mem_supp_liftBind_of_mem z.2⟩) (attachSupp (r b)))) = _
-      congr 1
-      funext b
-      rw [show (Subtype.val <$> (FreeM.map
-        (fun z : {a // a ∈ supp (r b)} =>
-          (⟨z.1, mem_supp_liftBind_of_mem z.2⟩ :
-            {a // a ∈ supp (FreeM.liftBind op r)}))
-        (attachSupp (r b)))) = Subtype.val <$> attachSupp (r b) from
-        (FreeM.comp_map _ _ _).symm]
-      exact ih b
+      refine congrArg (FreeM.liftBind op) (funext fun b => ?_)
+      exact (FreeM.comp_map _ _ _).symm.trans (ih b)
 
 instance instExactMonadAttach : ExactMonadAttach (FreeM P) where
   map_attach := map_attachSupp _
-  canReturn_map_imp h := supp_map_imp _ h
-  canReturn_pure _ := rfl
+  canReturn_map_imp h := canReturn_map_val_imp _ h
+  canReturn_pure a := FreeM.CanReturn.pure a
   canReturn_bind {_ _ x _ _ _} ha hb := by
     induction x with
     | pure c => cases ha; exact hb
     | lift_bind op r ih =>
-        obtain ⟨c, hc⟩ := Set.mem_iUnion.mp ha
-        exact mem_supp_liftBind_of_mem (ih c hc)
+        obtain ⟨c, hc⟩ := canReturn_liftBind_iff.mp ha
+        exact FreeM.CanReturn.liftBind c (ih c hc)
 
-/-! ## Structural equations
+/-! ## Structural equations -/
 
-`MonadAttach.support` on `FreeM P` unfolds to `supp`, so the leaf and node equations hold by
-`rfl`. -/
+/-- The support of a leaf is the singleton of its value. The generic `MonadAttach.support_pure`
+is the `simp` form. -/
+protected theorem support_pure (a : α) : support (pure a : FreeM P α) = {a} :=
+  Set.ext fun _ => canReturn_pure_iff
 
-theorem support_eq_supp (x : FreeM P α) : support x = supp x := rfl
-
-@[simp]
-theorem support_pure' (a : α) : support (pure a : FreeM P α) = {a} := rfl
+theorem mem_support_liftBind {a : P.A} {r : P.B a → FreeM P α} {c : α} :
+    c ∈ support (FreeM.liftBind a r) ↔ ∃ b, c ∈ support (r b) :=
+  canReturn_liftBind_iff
 
 @[freeM_unfold]
 theorem support_liftBind (a : P.A) (r : P.B a → FreeM P α) :
-    support (FreeM.liftBind a r) = ⋃ b, support (r b) := rfl
+    support (FreeM.liftBind a r) = ⋃ b, support (r b) :=
+  Set.ext fun _ => mem_support_liftBind.trans Set.mem_iUnion.symm
 
 @[simp]
 theorem support_lift (a : P.A) :
     support (α := no_index (P.B a)) (FreeM.lift (P := P) a) = Set.univ :=
-  Set.eq_univ_of_forall fun c => Set.mem_iUnion.mpr ⟨c, rfl⟩
-
-theorem mem_support_liftBind {a : P.A} {r : P.B a → FreeM P α} {c : α} :
-    c ∈ support (FreeM.liftBind a r) ↔ ∃ b, c ∈ support (r b) :=
-  Set.mem_iUnion
+  Set.eq_univ_of_forall fun c => FreeM.CanReturn.liftBind c (FreeM.CanReturn.pure c)
 
 /-- A primitive operation followed by a continuation can return any child output. -/
 @[simp, freeM_unfold]
 theorem support_lift_bind (a : P.A) (r : P.B a → FreeM P α) :
-    support ((FreeM.lift a).bind (α := no_index (P.B a)) r) = ⋃ b, support (r b) := rfl
+    support ((FreeM.lift a).bind (α := no_index (P.B a)) r) = ⋃ b, support (r b) :=
+  support_liftBind a r
 
 /-- Mapping a free tree maps its reachable leaves, independently of result universes. -/
 @[simp]
@@ -230,7 +224,7 @@ theorem support_eq_range_output (s : FreeM P α) :
   induction s with
   | pure x =>
       ext c
-      simp only [support_pure', Set.mem_singleton_iff, Set.mem_range]
+      simp only [FreeM.support_pure, Set.mem_singleton_iff, Set.mem_range]
       exact ⟨fun h => ⟨⟨⟩, h.symm⟩, fun ⟨_, h⟩ => h.symm⟩
   | lift_bind a r ih =>
       change support (FreeM.liftBind a r) =
@@ -253,9 +247,9 @@ handler — the shape a support-as-fold presentation expects. -/
 theorem support_eq_liftM_univ {γ : Type uB} (x : FreeM P γ) :
     support x = SetM.run (x.liftM (fun _ => (Set.univ : SetM _))) := by
   induction x with
-  | pure a => rfl
+  | pure a => exact FreeM.support_pure a
   | lift_bind op r ih =>
-      change (⋃ b, supp (r b)) = SetM.run (_ >>= _)
+      rw [support_lift_bind]
       change _ = ⋃ b ∈ (Set.univ : Set (P.B op)), SetM.run ((r b).liftM _)
       simp only [Set.mem_univ, Set.iUnion_true]
       exact iSup_congr ih
