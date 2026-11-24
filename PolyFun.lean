@@ -443,6 +443,7 @@ public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Handler.Stateful.Link
 public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
+public import PolyFun.PFunctor.Handler.Summary
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Bang
 public import PolyFun.PFunctor.Lens.BangCofree
@@ -453,6 +454,7 @@ public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence
 public import PolyFun.PFunctor.Lens.Composite
+public import PolyFun.PFunctor.Lens.DillerNahm
 public import PolyFun.PFunctor.Lens.DirMonad
 public import PolyFun.PFunctor.Lens.Distributivity
 public import PolyFun.PFunctor.Lens.Duoidal
