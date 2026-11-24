@@ -12,14 +12,14 @@ public import Std.Internal.ForIn
 # Transport of loops along monad morphisms
 
 For lists, applying a monad morphism to a `forIn` or `forIn'` loop gives the loop with
-the morphism applied to each step. Cslib's `IsMonadHom.map_listMapM`,
-`IsMonadHom.map_listForM` and `IsMonadHom.map_listFoldlM` give the corresponding laws
-for the list traversals.
+the morphism applied to each step. The corresponding laws for `mapM`, `forM`, and `foldlM`
+are in `Cslib.Foundations.Control.Monad.IsMonadHom.List`.
 
 The container versions require the loops in both monads to traverse the list computed by
 `ForIn.toList`. For `forIn`, this is the `Std.Internal.PureForIn` hypothesis.
-The membership-aware `forIn'` uses `Std.Internal.PureForIn'` in both monads and
-`Std.Internal.LawfulMemForInId` for the container.
+The body of `forIn'` also receives a proof that its element belongs to the container.
+Transport uses `Std.Internal.PureForIn'` in both monads and `Std.Internal.LawfulMemForInId`
+to turn membership in the list into the proof expected by the body.
 -/
 
 public section
@@ -61,8 +61,8 @@ theorem map_listForIn {α : Type u₁} {β : Type u} (l : List α) (init : β)
 
 /-! ## Containers iterating over a list
 
-`Std.Internal.PureForIn` identifies the containers (arrays, ranges, iterators, …) whose loop is
-the loop over the list `ForIn.toList` computes; transport then reduces to the list case. -/
+The source and target loops both reduce to list loops over `ForIn.toList xs`, so the list
+transport laws apply. -/
 
 -- upstream candidate
 theorem map_forIn_of_pureForIn {ρ : Type w₁} {α : Type u₁} {β : Type u}
