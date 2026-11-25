@@ -112,13 +112,4 @@ theorem denote_weakenMany (alg : Interpretation σ V) {a : S} (t : σ.Term Γ a)
 
 end Term
 
-/-! ## Deprecated aliases -/
-
-namespace Env
-
-@[deprecated (since := "2026-11-07")] alias pull := rename
-@[deprecated (since := "2026-11-07")] alias pull_append := rename_append
-
-end Env
-
 end IPFunctor.ScopedSignature

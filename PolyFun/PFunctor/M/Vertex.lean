@@ -211,8 +211,6 @@ theorem castEquiv_symm_castEquiv {t t' : M P} (h : t = t')
   subst t'
   rfl
 
-@[deprecated (since := "2026-10-19")] alias castEquiv_symm_apply := castEquiv_symm_castEquiv
-
 /-- Transporting a vertex along a tree equality is heterogeneously equal to the
 original vertex. -/
 theorem castEquiv_heq {t t' : M P} (h : t = t') (vertex : Vertex t) :
@@ -262,8 +260,6 @@ theorem root_append (t : M P) (suffix : Vertex t) :
     append (.root t) suffix = suffix :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias append_root := root_append
-
 @[simp]
 theorem child_append {t : M P} (direction : P.B (M.head t))
     (next : Vertex (M.children t direction))
@@ -271,8 +267,6 @@ theorem child_append {t : M P} (direction : P.B (M.head t))
     append (.child direction next) suffix =
       .child direction (append next suffix) :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias append_child := child_append
 
 @[simp]
 theorem append_root_right {t : M P} (vertex : Vertex t) :
@@ -467,8 +461,6 @@ theorem castEquiv_root {t t' : M P} (h : t = t') :
   subst h
   rfl
 
-@[deprecated (since := "2026-10-19")] alias cast_root := castEquiv_root
-
 @[simp]
 theorem castEquiv_child {t t' : M P} (h : t = t')
     (direction : P.B (M.head t))
@@ -478,8 +470,6 @@ theorem castEquiv_child {t t' : M P} (h : t = t')
         (castEquiv (M.children_castDirection h direction) next) := by
   subst h
   rfl
-
-@[deprecated (since := "2026-10-19")] alias cast_child := castEquiv_child
 
 @[simp]
 theorem castEquiv_rfl {t : M P} (vertex : Vertex t) :
@@ -492,15 +482,11 @@ theorem depth_castEquiv {t t' : M P} (h : t = t') (vertex : Vertex t) :
   subst h
   rfl
 
-@[deprecated (since := "2026-10-19")] alias depth_cast := depth_castEquiv
-
 @[simp]
 theorem subtree_castEquiv {t t' : M P} (h : t = t') (vertex : Vertex t) :
     subtree (castEquiv h vertex) = subtree vertex := by
   subst h
   rfl
-
-@[deprecated (since := "2026-10-19")] alias subtree_cast := subtree_castEquiv
 
 /-- Structural implementation of vertex pullback.  The equality records that
 the current target subtree is the image of the current source subtree, so the

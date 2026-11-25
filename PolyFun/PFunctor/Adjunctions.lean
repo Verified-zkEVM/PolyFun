@@ -73,8 +73,6 @@ def Lens.fromZeroEquiv : Lens (0 : PFunctor.{uA₁, uB₁}) p ≃ PUnit where
   left_inv _ := Lens.ext _ _ (fun a => a.elim) (fun a => a.elim)
   right_inv _ := rfl
 
-@[deprecated (since := "2026-10-19")] alias homFromZero := Lens.fromZeroEquiv
-
 /-- **`1` is terminal** (Niu–Spivak Thm 5.4, `I = PUnit` case of
 `Poly(q, I) ≅ Set(q(1), I)`). The only lens into the unit polynomial functor is
 `Lens.terminal`, so the hom-set is a singleton. -/
@@ -83,8 +81,6 @@ def Lens.toOneEquiv : Lens p (1 : PFunctor.{uA₁, uB₁}) ≃ PUnit where
   invFun _ := Lens.terminal
   left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
-
-@[deprecated (since := "2026-10-19")] alias homToOne := Lens.toOneEquiv
 
 /-- **Representability of `y`** (Niu–Spivak Thm 5.4, `Poly(y, q) ≅ q(1)`). A
 lens `y ⇆ p` picks a single position of `p` via `toFunA PUnit.unit`, and its
@@ -95,8 +91,6 @@ def Lens.fromYEquiv : Lens y.{uA₁, uB₁} p ≃ p.A where
   left_inv _ := rfl
   right_inv _ := rfl
 
-@[deprecated (since := "2026-10-19")] alias homFromY := Lens.fromYEquiv
-
 /-- **Constants are right adjoint on positions** (Niu–Spivak Thm 5.4,
 `Poly(q, I) ≅ Set(q(1), I)`). A lens `p ⇆ C A` is exactly a function on
 positions `p.A → A`; its backward map is forced since `C A` has no directions. -/
@@ -105,8 +99,6 @@ def Lens.toConstEquiv {A : Type uA₂} : Lens p (C A : PFunctor.{uA₂, uB₁}) 
   invFun := Lens.toConst
   left_inv _ := Lens.ext _ _ (fun _ => rfl) fun _ => funext fun d => d.elim
   right_inv _ := rfl
-
-@[deprecated (since := "2026-10-19")] alias homToConst := Lens.toConstEquiv
 
 /-- **Principal monomial hom-iso** (Niu–Spivak Cor 5.15, at exponent `PUnit`).
 A lens `p ⇆ A·y` is a function on positions `p.A → A` together with a section
@@ -240,9 +232,6 @@ def tensorGlue (left : Lens (p ⊗ linear q.A) r) (right : Lens (linear p.A ⊗ 
   refine Lens.ext _ _ (fun _ => rfl) (fun pq => ?_)
   funext d
   exact Prod.eta (l.toFunB pq d)
-
-@[deprecated (since := "2026-10-19")] alias tensorGlue_leftView_rightView :=
-  tensorGlue_tensorLeftView_tensorRightView
 
 /-- The tensor-gluing universal property as an equivalence: lenses out of a
 tensor are exactly pairs of ordinary one-sided lenses whose position maps

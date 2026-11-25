@@ -84,6 +84,6 @@ example (n : ℕ) :
       = (Lens.id _ ◃ₗ (stateComonoid S).comulN n) ∘ₗ Lens.fixState := rfl
 
 /-- A fully concrete instance: `Bool` states. -/
-example : (stateComonoid Bool).IsStateSystem := isStateSystem_stateComonoid Bool
+example : (stateComonoid Bool).IsStateSystem := inferInstance
 
 end PFunctor

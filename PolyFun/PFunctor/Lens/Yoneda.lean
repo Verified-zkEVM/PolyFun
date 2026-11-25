@@ -107,21 +107,17 @@ def fromPurePowerEquiv {S : Type uB} {Q : PFunctor.{uA₂, uB₂}} :
   invFun x := (fun _ => x.fst) ⇆ fun _ => x.snd
   left_inv _ := rfl
   right_inv _ := rfl
-@[deprecated (since := "2026-10-19")] alias purePowerEquiv := fromPurePowerEquiv
 
 /-- The Yoneda bijection is natural in the target polynomial. -/
 @[simp] theorem fromPurePowerEquiv_comp {S : Type uB} {Q : PFunctor.{uA₂, uB₂}}
     {R : PFunctor.{uA₃, uB₃}} (g : Lens Q R) (l : Lens (y^S : PFunctor.{uA, uB}) Q) :
     fromPurePowerEquiv (g ∘ₗ l) = g.mapObj (fromPurePowerEquiv l) := rfl
-@[deprecated (since := "2026-10-19")] alias purePowerEquiv_comp := fromPurePowerEquiv_comp
 
 /-- The Yoneda bijection is natural in the representing set. -/
 theorem fromPurePowerEquiv_comp_purePowerMap {R : Type uB₁} {S : Type uB}
     {Q : PFunctor.{uA₂, uB₂}} (l : Lens (y^R : PFunctor.{uA₁, uB₁}) Q) (f : R → S) :
     fromPurePowerEquiv (l ∘ₗ (purePowerMap f : Lens (y^S : PFunctor.{uA, uB}) (y^R))) =
       Q.map f (fromPurePowerEquiv l) := rfl
-@[deprecated (since := "2026-10-19")]
-alias purePowerEquiv_comp_purePowerMap := fromPurePowerEquiv_comp_purePowerMap
 
 /-! ## Lenses as families of elements -/
 

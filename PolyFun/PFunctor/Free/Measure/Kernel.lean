@@ -60,6 +60,18 @@ noncomputable def runKernel (impl : KernelHandler P S) (program : FreeM P α) :
   toFun := runStateMeasure impl program
   measurable' := measurable_runStateMeasure impl program
 
+/-- If one report is obtained by processing another with `g`, a decision on the first report
+has the same terminal action law as the transported decision `d ∘ₖ g` on the second.
+The same transport works for every handler and program. -/
+theorem comp_runKernel_of_factor {Fine Coarse Action : Type*}
+    [MeasurableSpace Fine] [MeasurableSpace Coarse] [MeasurableSpace Action]
+    {fine : Kernel (α × S) Fine} {coarse : Kernel (α × S) Coarse}
+    (g : Kernel Fine Coarse) (h : coarse = g ∘ₖ fine) (d : Kernel Coarse Action)
+    (impl : KernelHandler P S) (program : FreeM P α) :
+    d ∘ₖ (coarse ∘ₖ runKernel impl program) =
+      (d ∘ₖ g) ∘ₖ (fine ∘ₖ runKernel impl program) := by
+  simp only [h, Kernel.comp_assoc]
+
 /-- Returning a value keeps the current state. -/
 @[simp]
 theorem runKernel_pure (impl : KernelHandler P S) (value : α) (state : S) :

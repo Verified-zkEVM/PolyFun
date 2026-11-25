@@ -35,9 +35,6 @@ theorem projectionN_comp_cofreeMate {S : Type u} {P : PFunctor.{u, u}}
       (CofreeP.extend (stateComonoid S) system).toLens = system.nStep n
   rw [CofreeP.projectionN_comp_extend, nStep_eq]
 
-@[deprecated (since := "2026-10-19")] alias cofreeMate_comp_projectionN :=
-  projectionN_comp_cofreeMate
-
 /-- At depth two, finite projection recovers the two-step system `Lens.speedup`
 after removing the innermost right composition unit. -/
 theorem projectionN_two_comp_cofreeMate
@@ -47,9 +44,6 @@ theorem projectionN_two_comp_cofreeMate
       Lens.speedup system :=
   (congrArg (fun lens => (Lens.id P ◃ₗ Lens.Equiv.compY.toLens) ∘ₗ lens)
     (projectionN_comp_cofreeMate system 2)).trans (nStep_two_eq_speedup system)
-
-@[deprecated (since := "2026-10-19")] alias cofreeMate_comp_projectionN_two :=
-  projectionN_two_comp_cofreeMate
 
 end DynSystem
 end PFunctor

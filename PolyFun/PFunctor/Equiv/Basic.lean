@@ -44,12 +44,6 @@ instance PSigma.isEmpty_left {α : Sort u} {β : α → Sort v} [inst : IsEmpty 
     IsEmpty ((a : α) ×' β a) where
   false := fun a => inst.elim a.1
 
-/-- A dependent pair over an empty first component is empty. -/
-@[deprecated PSigma.isEmpty_left (since := "2026-10-19")]
-instance instIsEmptySigma {α : Sort u} {β : α → Sort v} [inst : IsEmpty α] :
-    IsEmpty ((a : α) ×' β a) where
-  false := fun a => inst.elim a.1
-
 end find_home
 
 namespace PFunctor
@@ -389,12 +383,6 @@ variable (P : PFunctor.{uA₁, uB₁})
 def ulift : (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) ≃ₚ P where
   equivA := _root_.Equiv.ulift
   equivB := fun _ => _root_.Equiv.ulift
-
-/-- `P` is equivalent to its universe lift; the inverse direction of `Equiv.ulift`. -/
-@[deprecated ulift +typeChanged (since := "2026-10-19")]
-def uliftEquiv : P ≃ₚ (P.ulift : PFunctor.{max uA₁ u, max uB₁ v}) where
-  equivA := _root_.Equiv.ulift.symm
-  equivB := fun _ => _root_.Equiv.ulift.symm
 
 /-- Universe lifting is idempotent up to equivalence -/
 def uliftUliftEquiv : P.ulift.ulift ≃ₚ P.ulift where
