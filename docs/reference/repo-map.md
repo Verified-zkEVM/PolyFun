@@ -135,6 +135,7 @@ flowchart TD
   R --> AD[ComplexityBackends]
   T -.-> AD
   I --> SF[Algebraic folds and scoped syntax]
+  SF --> R
   SF --> EX[Optional examples]
   I --> EX
   IO --> EX

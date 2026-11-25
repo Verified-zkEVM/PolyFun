@@ -517,11 +517,12 @@ values, so entering a binder does not execute its body.
 
 A step class can specify which local computations are admissible. Fix a
 representation for every semantic sort. If each constructor preserves admissibility
-for arguments evaluated under admissible fresh bindings, and each free variable is
-an admissible function of the input, then so is the denotation of the whole fixed
-term. For binary operations on a represented pair, `Binary.fst` and `Binary.snd` read its two
-fields, and `Binary.app` combines subterms. `Binary.denote_admissible` applies to the whole
-expression, including nested operations and repeated uses of either variable.
+for arguments evaluated at fresh bindings computed admissibly from the input, and each
+free variable is an admissible function of the input, then so is the denotation of the
+whole fixed term. For binary operations on a represented pair, `Binary.fst` and `Binary.snd`
+read its two fields, and `Binary.app` combines subterms. If the class has products and every
+operation is admissible on the represented pair, `Binary.denote_admissible` applies to every
+fixed term in the two variables, including nested operations and repeated uses of either variable.
 See [scoped-term admissibility](../../PolyFun/Realizability/Scoped.lean).
 
 [`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
