@@ -15,9 +15,11 @@ import PolyFun.PFunctor.Resumption.DomainTruncate
 /-!
 # Expected charges of resumptions
 
-A resumption can accumulate charges without returning. Folding its finite query prefixes and
-then taking their supremum retains each incurred charge. A cutoff receives zero terminal credit.
-The step equation follows by monotone convergence on the joint answer-and-state kernel.
+A resumption can accumulate charges without returning. Its expected charge is the supremum of the
+folds of its finite query prefixes. A cutoff receives zero terminal credit. The step equation
+follows by monotone convergence on the joint answer-and-state kernel. It assumes countable answers
+with measurable singletons and state-measurable prices and terminal credit. Over other answer spaces
+the supremum can lie below the fold of a finite program.
 -/
 
 public section

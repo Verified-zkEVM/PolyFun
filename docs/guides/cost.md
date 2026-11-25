@@ -352,7 +352,8 @@ actual mass, so the calculation also applies when the total mass is less than on
 `Resumption.expectedCharge K c tree post` takes the supremum of the expected charges of finite
 truncations. A prefix earns `post` if it returns and zero terminal credit if it stops at a pending
 request. This distinguishes two prices for the same infinite sequence of requests. If only the
-first request costs one, the total is one. If every request costs one, the total is infinite.
+first request costs one, the total is one. If every request costs one, the total is infinite under
+a handler that always answers.
 
 With countable answer spaces having measurable singletons, measurable prices, and measurable
 terminal observations in the private state, `Resumption.expectedCharge_bind` prices a prefix
