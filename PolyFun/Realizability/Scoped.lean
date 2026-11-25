@@ -14,7 +14,8 @@ public import PolyFun.Realizability.StepClass
 
 Fix a representation for each semantic sort. An interpretation preserves admissibility when
 each constructor acts admissibly on argument meanings, including meanings under fresh binders.
-Then every fixed term denotes an admissible function of the input whenever its free variables do.
+Then every fixed term denotes an admissible function of the input whenever all variables of its
+context do.
 -/
 
 public section
@@ -37,7 +38,7 @@ variable {S : Type u} {σ : ScopedSignature.{u, v, w} S} {V : S → Type z}
 theorem Env.Admissible.empty : Env.Admissible C repr input (fun _ => Env.empty) :=
   fun _ x => nomatch x
 
-/-- A bound variable can read an admissible value computed from the input. -/
+/-- Binding a value computed admissibly from the input keeps an environment admissible. -/
 theorem Env.Admissible.cons {s : S} {ρ : ι → Env V Γ} {value : ι → V s}
     (hρ : Env.Admissible C repr input ρ) (hv : C.Hom input (repr s) value) :
     Env.Admissible C repr input (fun i => Env.cons (value i) (ρ i)) := by
@@ -46,7 +47,7 @@ theorem Env.Admissible.cons {s : S} {ρ : ι → Env V Γ} {value : ι → V s}
   | zero => exact hv
   | succ x => exact hρ x
 
-/-- Join the new block of bound variables to the enclosing environment. -/
+/-- Appending an admissible block of bindings keeps an environment admissible. -/
 theorem Env.Admissible.append {ξ : ι → Env V Δ} {ρ : ι → Env V Γ}
     (hξ : Env.Admissible C repr input ξ) (hρ : Env.Admissible C repr input ρ) :
     Env.Admissible C repr input (fun i => Env.append (ξ i) (ρ i)) := by
@@ -125,7 +126,8 @@ namespace Binary
     (op : Op) (p : A × A) : (term op).denote (algebra applyOp) (pairEnv p) = applyOp op p.1 p.2 :=
   rfl
 
-/-- Pair the two admissible arguments before applying their primitive operation. -/
+/-- The binary interpretation preserves admissibility when every operation is admissible on the
+represented pair. -/
 theorem preservesAdmissible {Op : Type v} {A : Type z} {applyOp : Op → A → A → A}
     {repr : C.Str A} [P : C.HasProd]
     (h : ∀ op, C.Hom (P.prod repr repr) repr (fun p => applyOp op p.1 p.2)) :
