@@ -7,8 +7,10 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.Measure.StatefulExpectedCharge
-public import PolyFun.PFunctor.Resumption.DomainTruncate
-public import PolyFun.PFunctor.Resumption.DomainLaws
+public import PolyFun.PFunctor.Resumption.Domain
+public import PolyFun.PFunctor.Resumption.Truncate
+import PolyFun.PFunctor.Resumption.DomainLaws
+import PolyFun.PFunctor.Resumption.DomainTruncate
 
 /-!
 # Expected charges of resumptions
