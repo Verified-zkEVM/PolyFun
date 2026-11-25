@@ -78,6 +78,14 @@ evaluating additive labels on those input weights with the sum obtained by trans
 labels forward with `Lens.mapObj` and evaluating them on the output weights.
 [Weighted directions](../../PolyFun/PFunctor/Lens/BangW.lean)
 
+For real-valued entries at a fixed shape, `Lens.euclideanGather` reads the coordinate selected by
+each output. It is continuous and linear, so its Fréchet derivative at every input is the
+same gather. When the input and output direction types are finite, the theorem
+`Lens.fderiv_euclideanGather_adjoint` identifies the Hilbert adjoint of that derivative with
+`Lens.bangWMap` on output weights. Import the [Euclidean lens module](../../PolyFun/PFunctor/Lens/BangW/Euclidean.lean)
+for these statements. The [tree example](../../Examples/Tutorials/TreeTensorEuclidean.lean) applies
+the result to a vector traversal and reads the adjoint from the prepared reverse buffer.
+
 ## Representables, Yoneda, and natural transformations
 
 `Lens.fromPurePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
