@@ -334,7 +334,8 @@ A client flips a fair coin and pays for a second flip only after heads. At one u
 its expected cost is `1 + 1/2 = 3/2`. Import `PolyFun.PFunctor.Free.Measure.FiniteKernel` and
 use `simp only [expected_cost]` together with the definitions of the program, its prices, and
 its coin kernel. The rules reduce each flip to its immediate charge and the weighted costs of
-its two continuations. `norm_num [expected_cost]` finishes the arithmetic.
+its two continuations. Adding `reduceIte` and `Bool.false_eq_true` selects the branch taken after
+each answer, and `norm_num` finishes the arithmetic.
 
 To prove an upper bound for the same program, select the charge's `OpSpec.toUpperWPMonad`
 locally and run `vcgen`. Use `simp only [wp_norm]` for the order on assertions, then

@@ -37,9 +37,12 @@ private def flipAgain : FreeM Coin Bool := do
 private noncomputable abbrev charge : OpSpec Coin (Unit → ℝ≥0∞) :=
   OpSpec.statefulExpectedCharge fair (fun _ _ => 1)
 
+/-- With the branches on each answer reduced, the set leaves only arithmetic. -/
 example : wpFold charge flipAgain (fun _ _ => 0) () = 1 + 2⁻¹ := by
-  simp only [flipAgain, charge, fair, expected_cost]
-  norm_num [expected_cost]
+  simp only [flipAgain, charge, fair, expected_cost, reduceIte, Bool.false_eq_true]
+  guard_target =
+    (1 : ℝ≥0∞) + (2⁻¹ : ℝ≥0∞) • (1 + (2⁻¹ : ℝ≥0∞) • (0 + 0) + 0) = 1 + 2⁻¹
+  norm_num
 
 section
 set_option experimental.vcgen true
@@ -55,10 +58,32 @@ example : ⦃ toDual (fun _ : Unit => (1 + 2⁻¹ : ℝ≥0∞)) ⦄ flipAgain
   vcgen
   simp only [wp_norm]
   intro s
-  simp only [OpSpec.toUpperWPMonad_wp, fair, expected_cost]
-  norm_num [expected_cost]
+  simp only [OpSpec.toUpperWPMonad_wp, fair, expected_cost, reduceIte, Bool.false_eq_true]
+  norm_num
 
 end
+
+/-- A stateless charge of a relabelled call against a point mass. -/
+example :
+    wpFold (OpSpec.expectedCharge (P := Coin) (fun _ => Measure.dirac true) (fun _ => 3))
+      (not <$> FreeM.lift ()) (fun b => if b then 5 else 7) = 10 := by
+  simp only [expected_cost, Bool.not_true, reduceIte, Bool.false_eq_true]
+  guard_target = (3 : ℝ≥0∞) + 7 = 10
+  norm_num
+
+/-- A deterministic kernel answers with its state and flips it: both calls of the client are
+charged, the second in the flipped state. -/
+example (c : Bool → ℝ≥0∞) (s : Bool) :
+    wpFold (OpSpec.statefulExpectedCharge (P := Coin)
+        (fun _ => Kernel.deterministic (fun s => (s, !s)) measurable_from_top) (fun _ => c))
+      (FreeM.liftBind () fun _ => FreeM.lift ()) (fun _ _ => 0) s = c s + c !s := by
+  simp only [expected_cost, add_zero]
+
+/-- A kernel with no mass charges the call and nothing after it. -/
+example (c : Bool → ℝ≥0∞) (post : Bool → Bool → ℝ≥0∞) (s : Bool) :
+    wpFold (OpSpec.statefulExpectedCharge (P := Coin) (fun _ => Kernel.const _ 0) (fun _ => c))
+      (FreeM.lift ()) post s = c s := by
+  simp only [expected_cost, add_zero]
 
 /-- Normalization leaves the joint continuation integral under an unspecified kernel. -/
 example (K : KernelHandler Coin Bool) (c : Coin.A → Bool → ℝ≥0∞) (k : Bool → Bool → ℝ≥0∞)
