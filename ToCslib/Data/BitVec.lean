@@ -10,12 +10,13 @@ public import Mathlib.Data.BitVec
 /-!
 # Overwriting a Single Bit of a Bitvector
 
-This file defines `BitVec.overwriteBit i b m`, the bitvector `m` with its `i`-th least
-significant bit replaced by `b`, together with its `getLsbD` description and the involution
-`(m, b) ↦ (m with bit i overwritten by b, original bit i of m)` on `BitVec n × Bool`.
-For an in-range position, the involution exchanges a separately supplied bit with the
-selected bit of the vector. It provides a bijection for downstream change-of-variables
-arguments; this module itself contains only deterministic bitvector operations and laws.
+`BitVec.overwriteBit i b m` writes `b` at position `i`, counting from the least significant bit.
+`BitVec.getLsbD_overwriteBit` describes the value read at any position after the write.
+
+When `i < n`, exchanging bit `i` of `m : BitVec n` with a separate Boolean is an involution on
+`BitVec n × Bool`. For a uniformly sampled pair, the swap preserves uniformity and puts the
+original bit at `i` in the Boolean coordinate. When `n ≤ i`, the write leaves `m` unchanged
+and `m.getLsbD i` returns `false`.
 -/
 
 public section
@@ -67,9 +68,8 @@ theorem getLsbD_overwriteBit (i j : ℕ) (b : Bool) (m : BitVec n) :
     rw [getLsbD_overwriteBit]
     split <;> simp_all
 
-/-- Pairing a bitvector with its `i`-th bit while overwriting that bit with the paired
-value is an involution on `BitVec n × Bool`. This is the change of variables that splits
-a uniform bitvector by the value of its `i`-th bit. -/
+/-- For `i < n`, swapping the `i`-th bit with the Boolean in a pair `(m, b)` twice
+recovers both `m` and `b`. -/
 theorem involutive_overwriteBit_pair {i : ℕ} (hi : i < n) :
     Function.Involutive fun p : BitVec n × Bool =>
       (overwriteBit i p.2 p.1, p.1.getLsbD i) := by
