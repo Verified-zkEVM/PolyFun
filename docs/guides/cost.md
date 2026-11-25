@@ -464,32 +464,43 @@ closure under eventual domination and the fact that `2 ^ n` is not polynomially 
   answers. An expensive path through a disallowed answer says nothing about that contract. A
   super-polynomial lower bound therefore refutes the corresponding contract. Under `Answered`, the
   run provides the path (`PolyCostUnder.polynomiallyBounded_of_le_charge_answered`).
-- The generic contracts use the supplied prices, addition and order. With natural-number prices, a
-  bound on the total price bounds the number of calls that have a price of at least one.
+- The generic contracts use the supplied prices, addition and order. Negative prices can cancel
+  earlier charges. A reversed order, such as that of `ℕᵒᵈ`, can accept a sum above the stated
+  budget in `ℕ`. Budgets can also hold for every kind over an infinite set of kinds while the
+  number of charged calls is unbounded. With natural-number prices, a bound on total price bounds
+  the number of calls priced at least one.
 - A fixed budget is a constant polynomial (`PolyCost.of_costAtMost`), and over finitely many
   parameters every family with fixed budgets has polynomial cost (`FamilyPolyCost.of_finite`). One
   budget that bounds every member also provides a constant envelope for an infinite family.
-  Member-specific budgets with no common bound can give a uniform polynomial contract when
-  one polynomial in the stated sizes bounds them. Over capped parameters, state the envelope
-  as a named function.
+  Member-specific budgets with no common bound give a uniform polynomial contract when one
+  polynomial in the stated sizes bounds them (`CostAtMost.costWithin_of_le`). A size measure may
+  read the parameter. If each member `M π` meets the budget `B π`, the family meets the identity
+  envelope under the size `fun π _ => B π`, also for an infinite family. With these sizes, the
+  contract says nothing about the growth of the budgets. Over capped parameters, a named envelope
+  such as `fun n => n ^ 2` can fail where a constant polynomial holds.
 - A program within a fixed budget meets every envelope that is at least that budget at the size of
   each input (`CostAtMost.costWithin_of_le`).
 
-The contracts keep the accounting boundary of measured programs. A program that searches in its view
-meets the zero envelope (`costWithin_ofFun`). With a size measure such as `2 ^ (encoding length)`,
-an exhaustive search that makes one call for each of `2 ^ (encoding length)` candidates meets a
-linear envelope. So `∃ M, M.Realizes f ∧ M.PolyCost size` holds for every `f` and every `size`, and
-says nothing about the efficiency of `f`. A program whose view is `f` and that returns its view is a
-witness. When the input type of `f` lies in the universe of its result type, `ofFun f` is another
-witness. The prices are part of the program. A program that prices every operation at `0`, for
-example `M.mapCost fun _ => 0`, keeps its run and meets the zero envelope. A contract is informative
-only with stated prices, such as a unit price for each call. A contract on a named program, with
-stated prices, a stated size measure and a stated envelope, bounds the total price of the declared
-operations of that program. It does not bound the work of the uncharged parts, and it does not check
-the size measure. `PolyFunTest/PFunctor/Charge/Sized.lean` checks both directions on a Horner
-evaluation and an exhaustive search. It also checks the zero-priced search. It checks the
-restricted composition on a countdown after a call that returns its answer and after a call
-answered with `2 ^ n`.
+The contracts keep the accounting boundary of measured programs. A program that searches in its
+view meets the zero envelope (`costWithin_ofFun`). For any function `f` and size measure `size`,
+a program whose view is `f` and that returns its view witnesses
+`∃ M, M.Realizes f ∧ M.PolyCost size`. When the input type lies in the universe of the result
+type, `ofFun f` gives another witness. So the existential statement is no evidence of efficiency.
+
+The prices are part of the program. Repricing the operations at `0` with `M.mapCost fun _ => 0`
+preserves the run and gives a zero charge. A contract is informative only with stated prices, such
+as a unit price for each call. The size measure is not checked. A search with one unit-price call
+per candidate meets a linear envelope in the number of candidates, even when that number is
+`2 ^ (encoding length)`. With a named program, stated prices, a stated size measure and a stated
+envelope, the contract bounds the total price of the declared operations. It does not bound the
+work of the uncharged parts.
+
+`PolyFunTest/PFunctor/Charge/Sized.lean` checks a contract that holds on Horner evaluation. On
+exhaustive search, it checks contracts that hold and contracts that fail. It also checks the search
+done in the view and the search priced at `0`. It checks that fixed member budgets used as sizes
+give the identity polynomial. It checks restricted composition on a countdown after a call that
+returns its answer. With the answer `0`, the composite costs `1`. With the answer `2 ^ n`, the
+composite has no polynomial cost.
 
 `Budgeted c B α` is the subtype of free programs within budget `B`. Graded by `Multiplicative ω`,
 it is a `GradedMonad`: `gbind` adds budgets.

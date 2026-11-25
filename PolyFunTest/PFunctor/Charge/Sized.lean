@@ -18,12 +18,19 @@ Checks for `PolyFun.PFunctor.Free.Cost.Sized` and `PolyFun.PFunctor.Free.Cost.Si
 * An exhaustive search over `2 ^ n` candidates makes one call per candidate. It has no polynomial
   envelope, but with its sizes capped at `N` it meets the fixed budget `2 ^ N`, and so a constant
   polynomial. Under the cap, it still does not meet a named envelope such as `(n + 1) ^ 2`.
+* Restricting the inputs of the full search to sizes at most `N` keeps its views. So the budget
+  `2 ^ N` fails over the views, and the per-input envelope `2 ^ N` holds.
 * The same search done in the uncharged view meets the zero envelope, and so does the same search
   with every call priced at `0`.
+* Over the finitely many parameters in `Fin 29`, the search family has polynomial cost. With sizes
+  `max 1 κ`, an exponential lower bound at every positive size refutes its uniform contract.
 * The search family has polynomial cost over all parameters when the size is the number `2 ^ κ` of
-  candidates, through a fixed budget per member (`CostAtMost.costWithin_of_le`).
+  candidates, through a fixed budget per member (`CostAtMost.costWithin_of_le`). Over any
+  parameters, fixed member budgets used as sizes give the identity polynomial.
 * A program that returns the answer of its call has no output-size envelope over every answer.
   Over the answers of its answering function, it returns `0`, also after composition.
+* A restriction that admits no answer leaves no completed path through a call. Under it, the
+  echo meets the envelope `0`. A restricted contract stays true when fewer answers are admitted.
 * A countdown that makes `n` calls on input `n` runs after a call that returns its answer. Both
   parts have polynomial cost, and the composite does not, over every answer. So `PolyCost.comp`
   needs its output hypothesis. Over the answers of the answering functions, the composite costs
@@ -225,6 +232,12 @@ budget, at most the envelope at the size of its input. -/
 example (accept : ℕ → ℕ → Bool) : FamilyPolyCost (searchFamily accept) fun κ _ => 2 ^ κ :=
   ⟨.X, fun _ => CostAtMost.costWithin_of_le (fun _ p =>
     (charge_firstAccepted_le _ p).trans (List.length_range ..).le) fun _ => by simp⟩
+
+/-- Over any parameters, a family whose members have fixed budgets meets the identity polynomial
+when the size of each member is its budget. The contract does not check the size measure. -/
+example {ι : Type} {Input Result : ι → Type} (M : ∀ π, MeasuredProgram (Input π) (Result π) ℕ)
+    (B : ι → ℕ) (h : ∀ π, (M π).CostAtMost (B π)) : FamilyPolyCost M fun π _ => B π :=
+  ⟨.X, fun π => (h π).costWithin_of_le fun _ => by simp⟩
 
 /-! ## The uncharged view -/
 

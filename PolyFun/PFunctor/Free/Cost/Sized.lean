@@ -65,29 +65,36 @@ over allowed answers, and compose along `CompAllows` (`PolyCostUnder.comp`,
 constant polynomial (`PolyCost.of_costAtMost`). A program within a uniform budget meets every
 envelope that is at least that budget at the size of each input (`CostAtMost.costWithin_of_le`).
 Over finitely many parameters, every family whose members have fixed budgets has polynomial cost
-(`FamilyPolyCost.of_finite`). Over capped parameters, the contract states the envelope as a named
-function, such as `fun n => n ^ 2`.
+(`FamilyPolyCost.of_finite`). A size measure may read the parameter. If each member `M π`
+meets the budget `B π`, the family meets the identity envelope under the size `fun π _ => B π`,
+also over infinitely many parameters. With these sizes, the contract says nothing about the
+growth of the budgets. Over capped parameters, a named envelope such as `fun n => n ^ 2` can fail
+where a constant polynomial holds.
 
 **What stays uncharged.** The contracts inherit the accounting boundary of `MeasuredProgram`. The
 view, the answering function and the code between calls are uncharged. A program can do an
-exhaustive search in its view and meet the envelope `0` (`costWithin_ofFun`). The size measure is
-not checked either. With a size such as `2 ^ (encoding length)`, an exhaustive search that makes one
-call for each of `2 ^ (encoding length)` candidates meets a linear envelope. The existential
-statement `∃ M, M.Realizes f ∧ M.PolyCost size` therefore holds for every function `f` and every
-size measure `size`, and is no evidence of efficiency. A witness is the program whose view is `f`
-and that returns its view. When the input type of `f` lies in the universe of its result type,
-`ofFun f` is another witness. The prices are part of the program. A program that prices every
-operation at `0`, for example `M.mapCost fun _ => 0`, keeps its run and meets the zero envelope. A
-contract is informative only with stated prices, such as a unit price for each call. A contract on a
-named program, with stated prices, a stated size measure and a stated envelope, bounds the total
-price of the declared operations of that program. It does not bound the work of the uncharged parts,
-and it does not check the size measure.
+exhaustive search in its view and meet the envelope `0` (`costWithin_ofFun`).
+
+**Existential contracts.** For every function `f` and size measure `size`, the program whose
+view is `f` and whose result is that view witnesses `∃ M, M.Realizes f ∧ M.PolyCost size`.
+When the input type lies in the universe of the result type, `ofFun f` is another witness.
+So the existential statement is no evidence of efficiency.
+
+**Prices and sizes.** The prices are part of the program. Repricing every operation to `0` with
+`M.mapCost fun _ => 0` preserves the run and gives a zero charge. A contract is informative only
+with stated prices, such as a unit price for each call. The size measure is not checked. Under the
+size `2 ^ (encoding length)`, a search over `2 ^ (encoding length)` candidates with one unit-price
+call per candidate meets a linear envelope. With a named program, stated prices, a stated size
+measure and a stated envelope, the contract bounds the total price of the declared operations.
 
 **Cost types.** `CostWithin` is stated for any ordered cost type, as `CostAtMost` is. The polynomial
-contracts use `ℕ` with its usual addition and order. `ℕ` is canonically ordered, so no refund call
-can pad a budget. A per-kind count in `K → ℕ` is read one kind at a time (`costWithin_pi_iff`,
-through `mapCost`). Over a finite set of kinds, the sum of the per-kind envelopes bounds the sum of
-the counts (`costWithin_finsetSum`).
+contracts use `ℕ` with its usual addition and order, so no price is negative. A generic cost type
+can admit negative prices that cancel earlier charges. It can also have a reversed order, such as
+that of `ℕᵒᵈ`, under which a total above the budget in `ℕ` meets the budget. A per-kind count in
+`K → ℕ` is read one kind at a time (`costWithin_pi_iff`, through `mapCost`). Infinitely many kinds
+can each stay within budget while the total number of charged calls grows without bound. Over a
+finite set of kinds, the sum of the per-kind envelopes bounds the sum of the counts
+(`costWithin_finsetSum`).
 -/
 
 @[expose] public section
@@ -662,7 +669,10 @@ variable {ι : Type uP} {Input : ι → Type uI} {Mid Result : ι → Type u}
 /-- One natural-number polynomial `q` bounds the charges of the declared operations of every member
 of a parameter-indexed family. On each input `i` of each member `M π`, every completed path, over
 every answer of every call, has a total price at most `q.eval (size π i)`. The view, the answering
-function and the code between calls are not charged. -/
+function and the code between calls are uncharged. The size measure may read the parameter, and
+the members may use different code. The contract does not check the size measure. If every
+member `M π` has a fixed budget `B π`, the family meets the contract with the identity polynomial
+under the size `fun π _ => B π`. -/
 def FamilyPolyCost (M : ∀ π, MeasuredProgram (Input π) (Result π) ℕ) (size : ∀ π, Input π → ℕ) :
     Prop :=
   ∃ q : Polynomial ℕ, ∀ π, (M π).CostWithin (size π) q.eval
