@@ -158,6 +158,10 @@ PolyFun by path and cslib-frontier by commit. It holds what needs cslib-frontier
 into `PolyFun/` once the cslib-frontier modules it uses reach CSLib. Nothing outside it imports
 `CslibFrontier` or `PolyFunFrontier`, and the root package never requires cslib-frontier
 (`scripts/check-modules.sh`), so PolyFun's dependents never resolve it.
+Within the nested package, `PFunctor/Free/Realization` interprets certified free programs as
+uniformly clocked probabilistic Turing machines. `Realizability/MultiTape` makes the deterministic
+multi-tape maps a step class with products. `IPFunctor/Scoped/PolyTime` uses this instance for
+local computations denoted by typed terms.
 
 PolyFun's measure interpretations live beside the constructions they interpret, in `Measure`
 companions: an area's main measure module is `<area>/Measure.lean`, and its other measure
