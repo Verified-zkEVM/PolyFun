@@ -16,7 +16,10 @@ answers `b` with `allows a b`. Including those answers back into `P.B a` is a le
 `Lens.restrict P allows : Lens P (P.restrict allows)`, identity on positions with injective maps of
 directions, so it is vertical in the sense of `PolyFun.PFunctor.Lens.Factorization`.
 `x.restrict allows` relabels a program along it: each call keeps its position, and its
-continuation is cut down to the allowed answers.
+continuation is cut down to the allowed answers. A smaller restriction is a further relabelling
+along `Lens.restrictInclusion` (`FreeM.mapLens_restrictInclusion`), and a restriction that admits
+every answer relabels back to the original program along `Lens.unrestrict`
+(`FreeM.mapLens_unrestrict`).
 
 A fold over the restricted program is a fold over the original whose spec reads the continuation
 only at allowed answers (`FreeM.wpFold_mapLens`). The demonic reading over the restricted program
@@ -43,6 +46,17 @@ def Lens.restrict (P : PFunctor.{uA, uB}) (allows : (a : P.A) → P.B a → Prop
     Lens P (P.restrict allows) :=
   id ⇆ fun _ b => b.1
 
+/-- The inclusion of the answers admitted by `allows'` among those admitted by `allows`, as a lens
+between the two restrictions of `P`. -/
+def Lens.restrictInclusion (P : PFunctor.{uA, uB}) {allows allows' : (a : P.A) → P.B a → Prop}
+    (h : ∀ a b, allows' a b → allows a b) : Lens (P.restrict allows) (P.restrict allows') :=
+  id ⇆ fun a b => ⟨b.1, h a b.1 b.2⟩
+
+/-- When `allows` admits every answer, the lens from its restriction back to `P`. -/
+def Lens.unrestrict (P : PFunctor.{uA, uB}) {allows : (a : P.A) → P.B a → Prop}
+    (h : ∀ a b, allows a b) : Lens (P.restrict allows) P :=
+  id ⇆ fun a b => ⟨b, h a b⟩
+
 namespace FreeM
 
 variable {P : PFunctor.{uA, uB}} {α : Type v}
@@ -52,6 +66,20 @@ and its continuation is cut down to the answers admitted by `allows`. -/
 protected def restrict (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α) :
     FreeM (P.restrict allows) α :=
   x.mapLens (Lens.restrict P allows)
+
+/-- Restricting to the answers admitted by `allows'` is restricting to those admitted by `allows`,
+then relabelling along the inclusion. -/
+theorem mapLens_restrictInclusion {allows allows' : (a : P.A) → P.B a → Prop}
+    (h : ∀ a b, allows' a b → allows a b) (x : FreeM P α) :
+    (x.restrict allows).mapLens (Lens.restrictInclusion P h) = x.restrict allows' := by
+  simp only [FreeM.restrict, mapLens_mapLens]
+  rfl
+
+/-- A restriction that admits every answer, relabelled back to `P`, is the original program. -/
+theorem mapLens_unrestrict {allows : (a : P.A) → P.B a → Prop} (h : ∀ a b, allows a b)
+    (x : FreeM P α) : (x.restrict allows).mapLens (Lens.unrestrict P h) = x := by
+  simp only [FreeM.restrict, mapLens_mapLens]
+  exact mapLens_id x
 
 /-- The demonic reading of the restricted program is the demonic reading over allowed answers. -/
 theorem wpFold_demonic_restrict_iff (allows : (a : P.A) → P.B a → Prop) (x : FreeM P α)

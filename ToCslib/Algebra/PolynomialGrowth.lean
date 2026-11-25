@@ -13,9 +13,11 @@ public import Mathlib.Analysis.SpecificLimits.Normed
 # Polynomial growth against `2 ^ n`
 
 Every fixed power, every constant multiple of a shifted power, and hence every natural-number
-polynomial is eventually dominated by `2 ^ n`; the polynomial bound is stated against `2 ^ (n / 4)`
-so that it can be fed to a machine-counting argument whose count at size `2 ^ (n / 4)` must stay
-below `2 ^ (2 ^ n)`. These are Mathlib candidates and import nothing from PolyFun.
+polynomial is eventually dominated by `2 ^ n`, through its bound by a constant multiple of a
+shifted power (`Polynomial.exists_eval_le_mul_add_one_pow`).
+The polynomial bound is stated against `2 ^ (n / 4)` so that it can be fed to a
+machine-counting argument whose count at size `2 ^ (n / 4)` must stay below `2 ^ (2 ^ n)`. These
+are Mathlib candidates and import nothing from PolyFun.
 -/
 
 public section
@@ -44,19 +46,25 @@ theorem Nat.eventually_const_mul_pow_le_two_pow (C k : ℕ) :
     _ = m ^ (k + 1) := by rw [pow_succ]; ring
     _ ≤ 2 ^ m := hm3
 
+-- upstream candidate: `Mathlib.Algebra.Polynomial.Eval.Degree`
+/-- A natural-number polynomial is at most a constant multiple of a power of the shifted argument:
+the sum of its coefficients times `(n + 1) ^ natDegree`. -/
+theorem Polynomial.exists_eval_le_mul_add_one_pow (p : Polynomial ℕ) :
+    ∃ c k : ℕ, ∀ n : ℕ, p.eval n ≤ c * (n + 1) ^ k := by
+  refine ⟨∑ i ∈ Finset.range (p.natDegree + 1), p.coeff i, p.natDegree, fun n => ?_⟩
+  rw [p.eval_eq_sum_range, Finset.sum_mul]
+  refine Finset.sum_le_sum fun i hi => ?_
+  rw [Finset.mem_range] at hi
+  exact Nat.mul_le_mul_left _ ((Nat.pow_le_pow_left (by omega) i).trans
+    (Nat.pow_le_pow_right (by omega) (by omega)))
+
 /-- **Polynomials are eventually dominated by `2 ^ (n / 4)`.** The exponent `n / 4` is the
 threshold fed to the machine count: fast enough to eventually exceed every polynomial
 description bound (this lemma), yet slow enough that the resulting machine count stays below
 `2 ^ (2 ^ n)` (`eventually_count_lt`). -/
 theorem Polynomial.eventually_eval_le_two_pow_div_four (p : Polynomial ℕ) :
     ∀ᶠ n in atTop, p.eval n ≤ 2 ^ (n / 4) := by
-  obtain ⟨C, k, hCk⟩ : ∃ C k : ℕ, ∀ n : ℕ, p.eval n ≤ C * (n + 1) ^ k := by
-    refine ⟨∑ i ∈ Finset.range (p.natDegree + 1), p.coeff i, p.natDegree, fun n => ?_⟩
-    rw [Polynomial.eval_eq_sum_range, Finset.sum_mul]
-    refine Finset.sum_le_sum fun i hi => ?_
-    rw [Finset.mem_range] at hi
-    exact Nat.mul_le_mul_left _ ((Nat.pow_le_pow_left (by omega) i).trans
-      (Nat.pow_le_pow_right (by omega) (by omega)))
+  obtain ⟨C, k, hCk⟩ := p.exists_eval_le_mul_add_one_pow
   have htend : Tendsto (fun n : ℕ => n / 4) atTop atTop :=
     Nat.tendsto_div_const_atTop (by norm_num)
   filter_upwards [htend.eventually (Nat.eventually_const_mul_pow_le_two_pow (C * 4 ^ k) k)]

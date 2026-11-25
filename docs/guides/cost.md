@@ -160,7 +160,10 @@ The calculus:
 - With subsingleton answers there is exactly one path (`forall_charge_le_iff_ofHandler`).
 - A program relabelled into a common interface, followed by relabelled continuations, has every
   path within the sum of the two path budgets (`charge_bind_mapLens_le`), over any presentation of
-  the common interface.
+  the common interface. Each of its paths splits into a path through the program and one through
+  the continuation at its output (`exists_charge_bind_mapLens`, `exists_output_bind_mapLens`), so
+  the continuation's budget is needed only at reachable outputs
+  (`charge_bind_mapLens_le_of_output`).
 - Charges of sums and coordinates distribute (`charge_finsetSum`, `charge_apply`), and
   `withPathCharge c x` runs `x` and returns the charge of the path taken, generalizing
   `withPathLength`.
@@ -393,6 +396,111 @@ free, so `ofFun f` realizes any `f` at cost `0`. A cost statement therefore name
 program instead of quantifying over one, and the uncharged parts are bounded one layer down. Prices
 do not depend on the view; for a family of inputs, fix the size measure and the budget envelope
 independently of the program, and prove growth separately.
+
+**Sized contracts** (`PolyFun/PFunctor/Free/Cost/Sized.lean`). A fixed budget says nothing about
+growth. A program whose completed paths have bounded cost meets some constant budget, and an
+exhaustive search over a capped set of inputs is such a program. `CostWithin size envelope` bounds
+every completed path of the program run on each input by the envelope at that input's size. The cost
+of a path is the sum of the prices of the declared operations it calls. A cost contract therefore
+bounds the total price of these calls and nothing else. `OutputWithin` bounds the size of results in
+the same way. Growth is a separate statement, `Cslib.PolynomiallyBounded`, with its polynomial form,
+closure under eventual domination and the fact that `2 ^ n` is not polynomially bounded, staged in
+`ToCslib/Data/Nat/PolynomialBound.lean`. The lemmas that relate it to the sized contracts are in
+`PolyFun/PFunctor/Free/Cost/Sized/Growth.lean`.
+
+- The contracts quantify over inputs and run each input's own view, as `Realizes` does, while
+  `CostAtMost` bounds every view. The size belongs to the input, which the contract fixes, and not
+  to the view, which the program chooses: a program could choose a view of large size, which makes
+  a monotone envelope easier to meet. Views that no input reaches are never run, so they need no
+  budget. `contramap` keeps the views of the original program, so a per-view budget cannot use a
+  restriction of the inputs, while the per-input contract can.
+- `PolyCost size` asks for a natural-number polynomial envelope, and `polyCost_iff` splits it into
+  an envelope of polynomial growth and a sized contract. `PolyOutput` is the same for result sizes,
+  and `FamilyPolyCost` and `FamilyPolyOutput` ask for one polynomial for a parameter-indexed family.
+  `PolyCost` and `FamilyPolyCost` bound the total price of the declared operations and do not bound
+  machine time.
+- Sized contracts compose when the inner program's results have an output-size envelope and the
+  outer envelope is monotone (`CostWithin.comp`, `OutputWithin.comp`, `PolyCost.comp`,
+  `PolyOutput.comp`, `FamilyPolyCost.comp`). They also survive `contramap`, and larger size measures
+  when the envelope is monotone (`CostWithin.mono_size`), as every polynomial envelope is
+  (`PolyCost.mono_size`).
+- The paths range over every answer of every call, not only over the answers of `answer`.
+  `CostWithinUnder allows` and `OutputWithinUnder allows` range over the program restricted to the
+  answers `allows` admits (`FreeM.restrict`). Under `Answered`, only the path of the run remains, so
+  the restricted contracts bound the run (`costWithinUnder_answered_iff`,
+  `outputWithinUnder_answered_iff`). Under `Answered` the contract takes the program's own `answer`
+  as given, and `answer` is uncharged, so it can do the work itself. Under `Answered`, the contract
+  bounds only the declared operations of the run. The cost of `answer` needs its own bound.
+  Admitting fewer answers keeps a restricted contract (`CostWithinUnder.mono_allows`), and under an
+  `allows` that admits the answers of `answer`, the contract bounds the run
+  (`CostWithinUnder.answered`). An `allows` that admits no answer leaves no completed path through a
+  call, so the contract constrains only the paths that make no call. Admitting every answer gives
+  the unrestricted contract (`costWithinUnder_true_iff`), so the unrestricted contracts imply the
+  restricted ones (`CostWithinUnder.of_costWithin`). The restricted ones compose along `CompAllows`
+  (`CostWithinUnder.comp`, `OutputWithinUnder.comp`), of which `Answered` is an instance
+  (`answered_comp`).
+- The polynomial classes have restricted forms, `PolyCostUnder`, `PolyOutputUnder`,
+  `FamilyPolyCostUnder` and `FamilyPolyOutputUnder`. Admitting every answer gives the unrestricted
+  class (`polyCostUnder_true_iff`, `polyOutputUnder_true_iff`, `familyPolyCostUnder_true_iff`),
+  and the unrestricted classes imply the restricted ones (`PolyCostUnder.of_polyCost`,
+  `PolyOutputUnder.of_polyOutput`). `PolyCostUnder` and `PolyOutputUnder` have `mono_allows` and
+  `mono_size`, and all four compose along `CompAllows` (`PolyCostUnder.comp`,
+  `PolyOutputUnder.comp`, `FamilyPolyCostUnder.comp`, `FamilyPolyOutputUnder.comp`).
+  `polyCostUnder_iff` relates `PolyCostUnder` to polynomial growth. Over every answer, an inner
+  program that returns a natural-number answer it receives, measured by its value, has no
+  output-size envelope. The composite can then fail `PolyCost` while its run is cheap, and
+  `PolyCost.comp` does not apply. Over `Answered`, `PolyCostUnder.comp` applies when the inner
+  results have a polynomial size over the answers of `answer`.
+- A per-kind count in `K → ℕ` is a contract for each kind (`costWithin_pi_iff`, through `mapCost`).
+  Over a finite set of kinds, the per-kind envelopes add up to an envelope of the sum of the counts
+  (`costWithin_finsetSum`).
+- If, for every sufficiently large `n`, some input of size at most `n` has a qualifying completed
+  path that costs at least `lower n`, a polynomial cost contract forces `lower` to be polynomially
+  bounded
+  (`PolyCost.polynomiallyBounded_of_le_charge`,
+  `PolyCostUnder.polynomiallyBounded_of_le_charge`,
+  `FamilyPolyCost.polynomiallyBounded_of_le_charge`). For a family, the witness also chooses a
+  member. For `PolyCostUnder`, the path must be a path of the program restricted to the allowed
+  answers. An expensive path through a disallowed answer says nothing about that contract. A
+  super-polynomial lower bound therefore refutes the corresponding contract. Under `Answered`, the
+  run provides the path (`PolyCostUnder.polynomiallyBounded_of_le_charge_answered`).
+- The generic contracts use the supplied prices, addition and order. Negative prices can cancel
+  earlier charges. A reversed order, such as that of `ℕᵒᵈ`, can accept a sum above the stated
+  budget in `ℕ`. Budgets can also hold for every kind over an infinite set of kinds while the
+  number of charged calls is unbounded. With natural-number prices, a bound on total price bounds
+  the number of calls priced at least one.
+- A fixed budget is a constant polynomial (`PolyCost.of_costAtMost`), and over finitely many
+  parameters every family with fixed budgets has polynomial cost (`FamilyPolyCost.of_finite`). One
+  budget that bounds every member also provides a constant envelope for an infinite family.
+  Member-specific budgets with no common bound give a uniform polynomial contract when one
+  polynomial in the stated sizes bounds them (`CostAtMost.costWithin_of_le`). A size measure may
+  read the parameter. If each member `M π` meets the budget `B π`, the family meets the identity
+  envelope under the size `fun π _ => B π`, also for an infinite family. With these sizes, the
+  contract says nothing about the growth of the budgets. Over capped parameters, a named envelope
+  such as `fun n => n ^ 2` can fail where a constant polynomial holds.
+- A program within a fixed budget meets every envelope that is at least that budget at the size of
+  each input (`CostAtMost.costWithin_of_le`).
+
+The contracts keep the accounting boundary of measured programs. A program that searches in its
+view meets the zero envelope (`costWithin_ofFun`). For any function `f` and size measure `size`,
+a program whose view is `f` and that returns its view witnesses
+`∃ M, M.Realizes f ∧ M.PolyCost size`. When the input type lies in the universe of the result
+type, `ofFun f` gives another witness. So the existential statement is no evidence of efficiency.
+
+The prices are part of the program. Repricing the operations at `0` with `M.mapCost fun _ => 0`
+preserves the run and gives a zero charge. A contract is informative only with stated prices, such
+as a unit price for each call. The size measure is not checked. A search with one unit-price call
+per candidate meets a linear envelope in the number of candidates, even when that number is
+`2 ^ (encoding length)`. With a named program, stated prices, a stated size measure and a stated
+envelope, the contract bounds the total price of the declared operations. It does not bound the
+work of the uncharged parts.
+
+`PolyFunTest/PFunctor/Charge/Sized.lean` checks a contract that holds on Horner evaluation. On
+exhaustive search, it checks contracts that hold and contracts that fail. It also checks the search
+done in the view and the search priced at `0`. It checks that fixed member budgets used as sizes
+give the identity polynomial. It checks restricted composition on a countdown after a call that
+returns its answer. With the answer `0`, the composite costs `1`. With the answer `2 ^ n`, the
+composite has no polynomial cost.
 
 `Budgeted c B α` is the subtype of free programs within budget `B`. Graded by `Multiplicative ω`,
 it is a `GradedMonad`: `gbind` adds budgets.

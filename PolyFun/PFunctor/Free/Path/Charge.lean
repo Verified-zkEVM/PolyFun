@@ -333,6 +333,61 @@ theorem charge_apply {ι : Type*} {ν : ι → Type w} [∀ i, AddMonoid (ν i)]
     change (c a + charge c (r b) p) i = c a i + charge _ (r b) p
     rw [Pi.add_apply, ih b p]
 
+/-- Every completed path through the relabelled program followed by the relabelled continuations
+has the output of a completed path through the continuation at the output of some completed path
+through the program. -/
+theorem exists_output_bind_mapLens {R : PFunctor.{uA₂, uB₂}} {β : Type v'}
+    {Q : α → PFunctor.{uA₃, uB₃}} (x : FreeM P α) (l : Lens P R) (y : (a : α) → FreeM (Q a) β)
+    (l' : (a : α) → Lens (Q a) R)
+    (q : Path (FreeM.bind (x.mapLens l) fun m => (y m).mapLens (l' m))) :
+    ∃ (p : Path x) (r : Path (y (output x p))), output _ q = output (y _) r := by
+  have key : ∀ m, m = output x (pullMapLens l x (splitBind (x.mapLens l) _ q).1) →
+      ∀ r : Path ((y m).mapLens (l' m)),
+        ∃ r' : Path (y (output x (pullMapLens l x (splitBind (x.mapLens l) _ q).1))),
+          output _ r = output _ r' := by
+    rintro m rfl r
+    exact ⟨pullMapLens (l' _) (y _) r, (output_pullMapLens _ _ r).symm⟩
+  obtain ⟨r, hr⟩ := key _ (output_pullMapLens l x _).symm (splitBind (x.mapLens l) _ q).2
+  exact ⟨_, r, (output_splitBind _ _ q).trans hr⟩
+
+/-- **Splitting relabelled sequencing.** A completed path through a program relabelled into a
+common interface, followed by relabelled continuations, is a completed path through the program
+and one through the continuation at its output. The outputs agree, and the charges add when the
+common charge agrees with the source charges along the relabellings. -/
+theorem exists_charge_bind_mapLens [AddMonoid ω] {R : PFunctor.{uA₂, uB₂}} {β : Type v'}
+    {Q : α → PFunctor.{uA₃, uB₃}} (x : FreeM P α) (l : Lens P R) (y : (a : α) → FreeM (Q a) β)
+    (l' : (a : α) → Lens (Q a) R) {c : P.A → ω} {d : (a : α) → (Q a).A → ω} {e : R.A → ω}
+    (hc : ∀ a, e (l.toFunA a) = c a) (hd : ∀ m a, e ((l' m).toFunA a) = d m a)
+    (q : Path (FreeM.bind (x.mapLens l) fun m => (y m).mapLens (l' m))) :
+    ∃ (p : Path x) (r : Path (y (output x p))),
+      charge e _ q = charge c x p + charge (d _) (y _) r ∧ output _ q = output (y _) r := by
+  have key : ∀ m, m = output x (pullMapLens l x (splitBind (x.mapLens l) _ q).1) →
+      ∀ r : Path ((y m).mapLens (l' m)),
+        ∃ r' : Path (y (output x (pullMapLens l x (splitBind (x.mapLens l) _ q).1))),
+          charge e _ r = charge (d _) (y _) r' ∧ output _ r = output _ r' := by
+    rintro m rfl r
+    refine ⟨pullMapLens (l' _) (y _) r, ?_, (output_pullMapLens _ _ r).symm⟩
+    rw [charge_pullMapLens, show e ∘ (l' _).toFunA = d _ from funext (hd _)]
+  obtain ⟨r, hr, ho⟩ := key _ (output_pullMapLens l x _).symm (splitBind (x.mapLens l) _ q).2
+  refine ⟨_, r, ?_, (output_splitBind _ _ q).trans ho⟩
+  rw [charge_splitBind, charge_pullMapLens, show e ∘ l.toFunA = c from funext hc, hr]
+
+/-- **Sequencing relabelled programs, at reachable results.** A program relabelled into a common
+interface, followed by relabelled continuations, has every completed path within the sum of the
+two path budgets, when the continuation's budget holds at the outputs of completed paths through
+the program and the common charge agrees with the source charges along the relabellings. -/
+theorem charge_bind_mapLens_le_of_output [AddMonoid ω] [Preorder ω] [AddLeftMono ω]
+    [AddRightMono ω] {R : PFunctor.{uA₂, uB₂}} {β : Type v'} {Q : α → PFunctor.{uA₃, uB₃}}
+    (x : FreeM P α) (l : Lens P R) (y : (a : α) → FreeM (Q a) β) (l' : (a : α) → Lens (Q a) R)
+    {c : P.A → ω} {d : (a : α) → (Q a).A → ω} {e : R.A → ω} {B₁ B₂ : ω}
+    (hc : ∀ a, e (l.toFunA a) = c a) (hd : ∀ m a, e ((l' m).toFunA a) = d m a)
+    (hx : ∀ p, charge c x p ≤ B₁)
+    (hy : ∀ p r, charge (d (output x p)) (y (output x p)) r ≤ B₂)
+    (q : Path (FreeM.bind (x.mapLens l) fun m => (y m).mapLens (l' m))) :
+    charge e _ q ≤ B₁ + B₂ := by
+  obtain ⟨p, r, hq, -⟩ := exists_charge_bind_mapLens x l y l' hc hd q
+  exact hq.trans_le (add_le_add (hx p) (hy p r))
+
 /-- **Sequencing relabelled programs.** A program relabelled into a common interface, followed by
 relabelled continuations, has every completed path within the sum of the two path budgets, when the
 common charge agrees with the source charges along the relabellings. -/
@@ -343,13 +398,8 @@ theorem charge_bind_mapLens_le [AddMonoid ω] [Preorder ω] [AddLeftMono ω] [Ad
     (hc : ∀ a, e (l.toFunA a) = c a) (hd : ∀ m a, e ((l' m).toFunA a) = d m a)
     (hx : ∀ p, charge c x p ≤ B₁) (hy : ∀ m p, charge (d m) (y m) p ≤ B₂)
     (q : Path (FreeM.bind (x.mapLens l) fun m => (y m).mapLens (l' m))) :
-    charge e _ q ≤ B₁ + B₂ := by
-  refine (charge_splitBind (c := e) (x.mapLens l) (fun m => (y m).mapLens (l' m)) q).trans_le
-    (add_le_add ?_ ?_)
-  · rw [charge_pullMapLens, show e ∘ l.toFunA = c from funext hc]
-    exact hx _
-  · rw [charge_pullMapLens, show e ∘ (l' _).toFunA = d _ from funext (hd _)]
-    exact hy _ _
+    charge e _ q ≤ B₁ + B₂ :=
+  charge_bind_mapLens_le_of_output x l y l' hc hd hx (fun _ => hy _) q
 
 section Refinement
 
