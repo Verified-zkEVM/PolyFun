@@ -137,13 +137,13 @@ rest (`Fin.iSup_succ`). Mathlib unfolds suprema over `Bool`, `Option` and sums b
 `cost_bound` uses it to evaluate worst-case costs over finite answer types. It belongs beside
 Mathlib's `iSup_bool_eq`.
 
-`ToCslib/Order/AddSupDistrib.lean` names the hypothesis that addition distributes over nonempty
-suprema (`AddSupDistrib`), with the `ℕ∞` and pointwise instances, and the constant supremum
-`iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves both separately for
-`ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`, `ENat.iSup_zero`, `ENNReal.iSup_zero`); the
-general forms belong in Mathlib's order library, with those as instances. Mathlib's
-`IsAddQuantale` is the version for every set, the empty one included, which fails in `ℕ∞`; the
-upstream form is the nonempty one.
+`ToCslib/Order/AddSupDistrib.lean` defines `AddSupDistrib`, the inequality
+`a + sSup s ≤ ⨆ b ∈ s, a + b` for nonempty `s`, with instances for `ℕ∞` and pointwise addition.
+It also proves `iSup_zero_eq_zero` in canonically ordered complete lattices. Mathlib proves the
+corresponding equalities for `ℕ∞` and `ℝ≥0∞` in `ENat.add_sSup`, `ENNReal.add_sSup`,
+`ENat.iSup_zero`, and `ENNReal.iSup_zero`. The general forms belong in Mathlib's order library.
+Mathlib's `IsAddQuantale` requires equality on both sides of addition for every set.
+On the empty set, its left addition law would force `a + 0 = 0` in `ℕ∞`.
 `ToCslib/Data/ENNReal/AddSupDistrib.lean` adds the `ℝ≥0∞` instance in a module of its own, so that
 PolyFun's core does not import the reals.
 

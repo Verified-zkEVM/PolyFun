@@ -9,26 +9,29 @@ module
 public import Mathlib.Data.ENat.Lattice
 
 /-!
-# Addition distributing over suprema
+# Bounding a sum by a supremum
 
-`AddSupDistrib ω` says that, in a complete lattice with an addition, adding on the left distributes
-over suprema of nonempty sets: `a + sSup s ≤ ⨆ b ∈ s, a + b`. The reverse inequality holds whenever
-addition is monotone. It holds in `ℕ∞` (from `ENat.add_sSup`) and pointwise in families. Mathlib
-proves the equation separately for `ℕ∞` and `ℝ≥0∞` (`ENat.add_sSup`, `ENNReal.add_sSup`); the
-class names the common hypothesis. Mathlib's `IsAddQuantale` asks for the equation on every set,
-the empty one included, where it reads `a + ⊥ = ⊥`. That fails in `ℕ∞`, whose bottom is `0`, so
-this class asks only for nonempty sets.
+Suppose a call incurs a charge `a` and its possible continuations have costs in a nonempty set
+`s`. If every `a + b` for `b ∈ s` is within budget, `AddSupDistrib` puts `a + sSup s` within
+the same budget. It supplies the inequality `a + sSup s ≤ ⨆ b ∈ s, a + b`. When
+`b ↦ a + b` is monotone, `b ≤ sSup s` for each `b ∈ s` gives the reverse inequality.
 
-`iSup_zero_eq_zero` is the constant supremum of `0` over a possibly empty index in a canonically
-ordered monoid, whose bottom is `0`. Mathlib has it for `ℕ∞` and `ℝ≥0∞` (`ENat.iSup_zero`,
-`ENNReal.iSup_zero`).
+Mathlib's `IsAddQuantale` requires equality even for the empty set, where it gives
+`a + ⊥ = ⊥`. In `ℕ∞` the bottom is `0`, so this would erase the charge of a call with no
+answers. For nonempty sets, `ENat.add_sSup` and `ENNReal.add_sSup` give equality in `ℕ∞`
+and `ℝ≥0∞`. The `AddSupDistrib` inequality also holds pointwise in families.
+
+`iSup_zero_eq_zero` uses the fact that `0` is the bottom element. The supremum of a family of
+zeros is therefore zero even when the index type is empty. See also `ENat.iSup_zero` and
+`ENNReal.iSup_zero`.
 -/
 
 public section
 
 universe w
 
-/-- Addition on the left distributes over suprema of nonempty sets. -/
+/-- For every `a` and nonempty set `s`, `a + sSup s` is at most the supremum of `a + b`
+over `b ∈ s`. -/
 class AddSupDistrib (ω : Type w) [Add ω] [CompleteLattice ω] : Prop where
   add_sSup_le (a : ω) {s : Set ω} (hs : s.Nonempty) : a + sSup s ≤ ⨆ b ∈ s, a + b
 
