@@ -270,7 +270,7 @@ namespace PublicCoinCounterpart
 One-agent public-coin counterpart syntax over a lens-executed tree, parameterized
 by an unbundled effect-like type constructor.
 
-Sender nodes observe the focal side's move. Receiver nodes expose the sampler
+Sender nodes purely observe the focal side's move. Receiver nodes expose the sampler
 and challenge-indexed continuation separately, which supports replay against a
 prescribed public path.
 -/
@@ -278,22 +278,22 @@ prescribed public path.
 def _root_.Interaction.SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart
     (m : Type uB₂ → Type uB₂) :
     SyntaxOver l PUnit (fun _ : P.A => Role) where
-  Node _ pos role Cont :=
+  Node _ pos role (Cont : Q.B (l.toFunA pos) → Type uB₂) :=
     match role with
-    | .sender => (d : Q.B (l.toFunA pos)) → m (Cont d)
+    | .sender => (d : Q.B (l.toFunA pos)) → Cont d
     | .receiver => m (Q.B (l.toFunA pos)) × ((d : Q.B (l.toFunA pos)) → Cont d)
 
 /-- Functorial shape for `SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart`. -/
 def _root_.Interaction.ShapeOver.TwoParty.PublicCoinCounterpart.counterpart
-    (m : Type uB₂ → Type uB₂) [Functor m] :
+    (m : Type uB₂ → Type uB₂) :
     ShapeOver l PUnit (fun _ : P.A => Role) where
   toSyntaxOver := SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart l m
   map := fun {_agent} {pos} {γ} {A} {_B} f node =>
     match γ with
     | .sender =>
-        let observe : (d : Q.B (l.toFunA pos)) → m (A d) := by
+        let observe : (d : Q.B (l.toFunA pos)) → A d := by
           simpa [SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart] using node
-        fun d => f d <$> observe d
+        fun d => f d (observe d)
     | .receiver =>
         let receive : m (Q.B (l.toFunA pos)) × ((d : Q.B (l.toFunA pos)) → A d) := by
           simpa [SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart] using node
@@ -311,9 +311,9 @@ def _root_.Interaction.StrategyOver.TwoParty.PublicCoinCounterpart.toCounterpart
   mapNode := fun {pos} {γ} {A} {B} f node =>
     match γ with
     | .sender =>
-        let observe : (d : Q.B (l.toFunA pos)) → m (A d) := by
+        let observe : (d : Q.B (l.toFunA pos)) → A d := by
           simpa [SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart] using node
-        (fun d => f d <$> observe d : (d : Q.B (l.toFunA pos)) → m (B d))
+        (fun d => pure (f d (observe d)) : (d : Q.B (l.toFunA pos)) → m (B d))
     | .receiver =>
         let receiver : m (Q.B (l.toFunA pos)) × ((d : Q.B (l.toFunA pos)) → A d) := by
           simpa [SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart] using node
