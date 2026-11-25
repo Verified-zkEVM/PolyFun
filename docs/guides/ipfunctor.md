@@ -515,6 +515,16 @@ and proves `denote_rename`, `denote_subst`, and `denote_substOne` once for every
 constructor algebra. Algebras receive argument meanings as functions of new bound
 values, so entering a binder does not execute its body.
 
+A step class can specify which local computations are admissible. Fix a
+representation for every semantic sort. If each constructor preserves admissibility
+for arguments evaluated at fresh bindings computed admissibly from the input, and each
+variable of the context is an admissible function of the input, then so is the denotation
+of the whole fixed term. For binary operations on a represented pair, `Binary.fst` and `Binary.snd`
+read its two fields, and `Binary.app` combines subterms. If the class has products and every
+operation is admissible on the represented pair, `Binary.denote_admissible` applies to every
+fixed term in the two variables, including nested operations and repeated uses of either variable.
+See [scoped-term admissibility](../../PolyFun/Realizability/Scoped.lean).
+
 [`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
 interprets a binding signature continuously. A `DomainInterpretation σ V` receives each
 argument as a continuous function of only the variables that argument binds, over an

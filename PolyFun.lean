@@ -531,4 +531,5 @@ public import PolyFun.Realizability.Quantitative.Strength
 public import PolyFun.Realizability.Quantitative.TraceCost
 public import PolyFun.Realizability.Quantitative.WordClass
 public import PolyFun.Realizability.Representation
+public import PolyFun.Realizability.Scoped
 public import PolyFun.Realizability.StepClass

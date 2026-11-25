@@ -76,6 +76,8 @@ graded, Dijkstra and relative monads and monad relations under `Control/Monad/`,
 lawfulness classes `LawfulMonadFunctor` and `LawfulMonadControl` under `Control/Lawful/`.
 `Control/Semantics/Correspondence` owns represented-data contract transfer and imports only
 Mathlib; `IPFunctor/Scoped/Certificate` imports it to certify scoped meanings.
+[`Realizability/Scoped`](../../PolyFun/Realizability/Scoped.lean) joins scoped interpretations
+to `StepClass` and proves admissibility by induction on the term.
 `Control/Transition` and `ITree/Transition` connect deterministic execution to
 resumable machines. Their frontend obligations are in the [interop guide](../guides/interop.md).
 `Logic/` holds small logic helpers and the `kernel_rfl` tactic, which leaves a definitional
@@ -133,6 +135,7 @@ flowchart TD
   R --> AD[ComplexityBackends]
   T -.-> AD
   I --> SF[Algebraic folds and scoped syntax]
+  SF --> R
   SF --> EX[Optional examples]
   I --> EX
   IO --> EX
