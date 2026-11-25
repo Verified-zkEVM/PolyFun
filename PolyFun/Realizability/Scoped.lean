@@ -32,10 +32,10 @@ variable {S : Type u} {σ : ScopedSignature.{u, v, w} S} {V : S → Type z}
 /-- Every variable lookup is an admissible function of the input. -/
 @[expose] def Env.Admissible (C : StepClass.{z, r}) (repr : (s : S) → C.Str (V s))
     (input : C.Str ι) (ρ : ι → Env V Γ) : Prop :=
-  ∀ {s} (x : ScopedVar Γ s), C.Hom input (repr s) (fun i => ρ i s x)
+  ∀ ⦃s⦄ (x : ScopedVar Γ s), C.Hom input (repr s) (fun i => ρ i s x)
 
 theorem Env.Admissible.empty : Env.Admissible C repr input (fun _ => Env.empty) :=
-  fun x => nomatch x
+  fun _ x => nomatch x
 
 /-- A bound variable can read an admissible value computed from the input. -/
 theorem Env.Admissible.cons {s : S} {ρ : ι → Env V Γ} {value : ι → V s}
@@ -54,10 +54,11 @@ theorem Env.Admissible.append {ξ : ι → Env V Δ} {ρ : ι → Env V Γ}
   | nil => exact hρ
   | cons s Δ ih =>
     exact Env.Admissible.cons
-      (ih (ξ := fun i a x => ξ i a (.succ x)) (fun x => hξ (.succ x))) (hξ .zero)
+      (ih (ξ := fun i a x => ξ i a (.succ x)) (fun _ x => hξ (.succ x))) (hξ .zero)
 
-/-- Each constructor preserves admissibility when its arguments can be evaluated at
-every admissible assignment to their bound variables. -/
+/-- Each constructor acts admissibly on arguments that are admissible at every assignment to
+their bound variables computed admissibly from the same input. The premise does not make an
+argument admissible jointly in the input and its bound variables. -/
 @[expose] def Interpretation.PreservesAdmissible (alg : Interpretation σ V)
     (C : StepClass.{z, r}) (repr : (s : S) → C.Str (V s)) : Prop :=
   ∀ {ι : Type z} (input : C.Str ι) {s} (op : σ.Op s)
@@ -131,19 +132,13 @@ theorem preservesAdmissible {Op : Type v} {A : Type z} {applyOp : Op → A → A
     Interpretation.PreservesAdmissible (σ := signature Op) (algebra applyOp) C
       (fun _ => repr) := by
   intro ι input s op args hargs
-  exact C.comp_mem (P.pair_mem (hargs false (fun _ => Env.empty) (fun x => nomatch x))
-    (hargs true (fun _ => Env.empty) (fun x => nomatch x))) (h op)
+  exact C.comp_mem (P.pair_mem (hargs false (fun _ => Env.empty) Env.Admissible.empty)
+    (hargs true (fun _ => Env.empty) Env.Admissible.empty)) (h op)
 
 /-- Reading either variable of a pair is an admissible projection. -/
 theorem pairEnv_admissible {A : Type z} {repr : C.Str A} [P : C.HasProd] :
-    Env.Admissible C (fun _ => repr) (P.prod repr repr) pairEnv := by
-  intro s x
-  cases x with
-  | zero => exact P.fst_mem repr repr
-  | succ x =>
-    cases x with
-    | zero => exact P.snd_mem repr repr
-    | succ x => nomatch x
+    Env.Admissible C (fun _ => repr) (P.prod repr repr) pairEnv :=
+  (Env.Admissible.empty.cons (P.snd_mem repr repr)).cons (P.fst_mem repr repr)
 
 /-- Every fixed two-variable term denotes an admissible function of a represented pair. -/
 theorem denote_admissible {Op : Type v} {A : Type z} {applyOp : Op → A → A → A}
@@ -152,13 +147,6 @@ theorem denote_admissible {Op : Type v} {A : Type z} {applyOp : Op → A → A �
     (t : (signature Op).Term [(), ()] ()) :
     C.Hom (P.prod repr repr) repr (fun p => t.denote (algebra applyOp) (pairEnv p)) :=
   t.denote_admissible (preservesAdmissible h) pairEnv_admissible
-
-/-- A single operation reads both variables from the represented pair. -/
-theorem denote_term_admissible {Op : Type v} {A : Type z} {applyOp : Op → A → A → A}
-    {repr : C.Str A} [P : C.HasProd]
-    (h : ∀ op, C.Hom (P.prod repr repr) repr (fun p => applyOp op p.1 p.2)) (op : Op) :
-    C.Hom (P.prod repr repr) repr (fun p => (term op).denote (algebra applyOp) (pairEnv p)) :=
-  denote_admissible h (term op)
 
 end Binary
 
