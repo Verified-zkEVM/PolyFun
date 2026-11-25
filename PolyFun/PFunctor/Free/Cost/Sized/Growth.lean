@@ -17,7 +17,7 @@ This file relates them to `Cslib.PolynomiallyBounded`, the growth predicate on f
 
 - A polynomial contract is a sized contract with an envelope of polynomial growth
   (`polyCost_iff`, `polyCostUnder_iff`, `familyPolyCost_iff`).
-- A lower bound on some completed path at every size is then polynomially bounded
+- A lower bound on some completed path at each sufficiently large size is polynomially bounded
   (`PolyCost.polynomiallyBounded_of_le_charge`, `PolyCostUnder.polynomiallyBounded_of_le_charge`,
   `FamilyPolyCost.polynomiallyBounded_of_le_charge`), so an exponential lower bound refutes the
   contract. Over `Answered`, the lower bound is on the path of the run
@@ -30,7 +30,7 @@ universe u uI uP
 
 namespace PFunctor.FreeM.MeasuredProgram
 
-open Cslib
+open Cslib Filter
 
 variable {Input : Type uI} {Result : Type u} {size : Input → ℕ}
 
@@ -58,46 +58,46 @@ theorem polyCostUnder_iff {M : MeasuredProgram Input Result ℕ}
     exact ⟨q, h.mono hq⟩
 
 /-- **Lower bounds refute polynomial cost.** If the program has a polynomial contract and, at every
-size `n`, some input of size at most `n` has a completed path costing at least `lower n`, then
-`lower` is polynomially bounded. -/
+sufficiently large `n`, some input of size at most `n` has a completed path costing at least
+`lower n`, then `lower` is polynomially bounded. -/
 theorem PolyCost.polynomiallyBounded_of_le_charge {M : MeasuredProgram Input Result ℕ}
     (h : M.PolyCost size) {lower : ℕ → ℕ}
-    (hlower : ∀ n, ∃ i, size i ≤ n ∧ ∃ p : Path (M.program (M.view i)),
+    (hlower : ∀ᶠ n in atTop, ∃ i, size i ≤ n ∧ ∃ p : Path (M.program (M.view i)),
       lower n ≤ Path.charge M.cost (M.program (M.view i)) p) :
     PolynomiallyBounded lower := by
   obtain ⟨q, hq⟩ := h
-  refine (polynomiallyBounded_eval q).mono (Filter.Eventually.of_forall fun n => ?_)
-  obtain ⟨i, hi, p, hp⟩ := hlower n
+  refine (polynomiallyBounded_eval q).mono (hlower.mono fun n hn => ?_)
+  obtain ⟨i, hi, p, hp⟩ := hn
   exact hp.trans ((hq i p).trans (q.eval_mono hi))
 
 /-- **Lower bounds refute polynomial cost over allowed answers.** If the program has a polynomial
-contract over allowed answers and, at every size `n`, some input of size at most `n` has a
-completed path of the restricted program costing at least `lower n`, then `lower` is polynomially
-bounded. -/
+contract over allowed answers and, at every sufficiently large `n`, some input of size at most `n`
+has a completed path of the restricted program costing at least `lower n`, then `lower` is
+polynomially bounded. -/
 theorem PolyCostUnder.polynomiallyBounded_of_le_charge {M : MeasuredProgram Input Result ℕ}
     {allows : (v : M.View) → (o : M.Op) → M.spec v o → Prop} (h : M.PolyCostUnder allows size)
     {lower : ℕ → ℕ}
-    (hlower : ∀ n, ∃ i, size i ≤ n ∧
+    (hlower : ∀ᶠ n in atTop, ∃ i, size i ≤ n ∧
       ∃ p : Path ((M.program (M.view i)).restrict (allows (M.view i))),
         lower n ≤ Path.charge M.cost _ p) :
     PolynomiallyBounded lower := by
   obtain ⟨q, hq⟩ := h
-  refine (polynomiallyBounded_eval q).mono (Filter.Eventually.of_forall fun n => ?_)
-  obtain ⟨i, hi, p, hp⟩ := hlower n
+  refine (polynomiallyBounded_eval q).mono (hlower.mono fun n hn => ?_)
+  obtain ⟨i, hi, p, hp⟩ := hn
   exact hp.trans ((hq i p).trans (q.eval_mono hi))
 
 /-- **Lower bounds on the run refute polynomial cost over `Answered`.** If the program has a
-polynomial contract over the answers of `answer` and, at every size `n`, the run of some input of
-size at most `n` costs at least `lower n`, then `lower` is polynomially bounded. -/
+polynomial contract over the answers of `answer` and, at every sufficiently large `n`, some input
+of size at most `n` has a run costing at least `lower n`, then `lower` is polynomially bounded. -/
 theorem PolyCostUnder.polynomiallyBounded_of_le_charge_answered
     {M : MeasuredProgram Input Result ℕ} (h : M.PolyCostUnder M.Answered size) {lower : ℕ → ℕ}
-    (hlower : ∀ n, ∃ i, size i ≤ n ∧ lower n ≤
+    (hlower : ∀ᶠ n in atTop, ∃ i, size i ≤ n ∧ lower n ≤
       Path.charge M.cost _ (Path.ofHandler (M.answer (M.view i)) (M.program (M.view i)))) :
     PolynomiallyBounded lower := by
   obtain ⟨q, hq⟩ := h
   have hrun := costWithinUnder_answered_iff.1 hq
-  refine (polynomiallyBounded_eval q).mono (Filter.Eventually.of_forall fun n => ?_)
-  obtain ⟨i, hi, hp⟩ := hlower n
+  refine (polynomiallyBounded_eval q).mono (hlower.mono fun n hn => ?_)
+  obtain ⟨i, hi, hp⟩ := hn
   exact hp.trans ((hrun i).trans (q.eval_mono hi))
 
 section Family
@@ -105,17 +105,17 @@ section Family
 variable {ι : Type uP} {Input : ι → Type uI} {Result : ι → Type u}
 
 /-- **Lower bounds refute polynomial cost of a family.** If the family has a polynomial contract
-and, at every size `n`, some member has an input of size at most `n` with a completed path costing
-at least `lower n`, then `lower` is polynomially bounded. -/
+and, at every sufficiently large `n`, some member has an input of size at most `n` with a
+completed path costing at least `lower n`, then `lower` is polynomially bounded. -/
 theorem FamilyPolyCost.polynomiallyBounded_of_le_charge
     {M : ∀ π, MeasuredProgram (Input π) (Result π) ℕ} {size : ∀ π, Input π → ℕ}
     (h : FamilyPolyCost M size) {lower : ℕ → ℕ}
-    (hlower : ∀ n, ∃ π i, size π i ≤ n ∧ ∃ p : Path ((M π).program ((M π).view i)),
+    (hlower : ∀ᶠ n in atTop, ∃ π i, size π i ≤ n ∧ ∃ p : Path ((M π).program ((M π).view i)),
       lower n ≤ Path.charge (M π).cost ((M π).program ((M π).view i)) p) :
     PolynomiallyBounded lower := by
   obtain ⟨q, hq⟩ := h
-  refine (polynomiallyBounded_eval q).mono (Filter.Eventually.of_forall fun n => ?_)
-  obtain ⟨π, i, hi, p, hp⟩ := hlower n
+  refine (polynomiallyBounded_eval q).mono (hlower.mono fun n hn => ?_)
+  obtain ⟨π, i, hi, p, hp⟩ := hn
   exact hp.trans ((hq π i p).trans (q.eval_mono hi))
 
 /-- A family has polynomial cost exactly when its members' sized contracts share one envelope of

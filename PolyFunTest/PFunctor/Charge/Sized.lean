@@ -38,7 +38,7 @@ Checks for `PolyFun.PFunctor.Free.Cost.Sized` and `PolyFun.PFunctor.Free.Cost.Si
 
 public section
 
-open PFunctor PFunctor.FreeM PFunctor.FreeM.MeasuredProgram Cslib
+open PFunctor PFunctor.FreeM PFunctor.FreeM.MeasuredProgram Cslib Filter
 
 namespace PolyFunTest.ChargeSized
 
@@ -166,9 +166,10 @@ example (N : ℕ) (accept : ℕ → ℕ → Bool) :
 
 /-- **The negative control.** Over all sizes, no polynomial envelope holds. -/
 theorem search_not_polyCost (accept : ℕ → ℕ → Bool) : ¬ (search accept).PolyCost id := fun h =>
-  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge fun n => by
-    obtain ⟨p, hp⟩ := exists_charge_firstAccepted_eq (List.range (2 ^ n))
-    exact ⟨n, le_rfl, p, (List.length_range ..).symm.trans hp.symm |>.le⟩
+  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge <|
+    Eventually.of_forall fun n => by
+      obtain ⟨p, hp⟩ := exists_charge_firstAccepted_eq (List.range (2 ^ n))
+      exact ⟨n, le_rfl, p, (List.length_range ..).symm.trans hp.symm |>.le⟩
 
 /-- **A named envelope is informative under the cap.** At size `6`, the search makes `64` calls
 on its rejecting path, more than `(6 + 1) ^ 2`. -/
@@ -210,12 +211,14 @@ example (accept : ℕ → ℕ → Bool) :
   .of_finite (B := fun κ : Fin 29 => 2 ^ (κ : ℕ)) (fun _ _ p =>
     (charge_firstAccepted_le _ p).trans (List.length_range ..).le) _
 
-/-- Over all parameters, it does not. -/
+/-- With sizes starting at one, an exponential lower bound at every positive size still
+refutes the uniform polynomial contract. -/
 example (accept : ℕ → ℕ → Bool) :
-    ¬ FamilyPolyCost (searchFamily accept) fun κ _ => κ := fun h =>
-  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge fun n => by
-    obtain ⟨p, hp⟩ := exists_charge_firstAccepted_eq (List.range (2 ^ n))
-    exact ⟨n, (), le_rfl, p, (List.length_range ..).symm.trans hp.symm |>.le⟩
+    ¬ FamilyPolyCost (searchFamily accept) fun κ _ => max 1 κ := fun h =>
+  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge <|
+    (eventually_ge_atTop 1).mono fun n hn => by
+      obtain ⟨p, hp⟩ := exists_charge_firstAccepted_eq (List.range (2 ^ n))
+      exact ⟨n, (), max_le hn le_rfl, p, (List.length_range ..).symm.trans hp.symm |>.le⟩
 
 /-- With the number of candidates as the size, it does, over all parameters. Each member has a fixed
 budget, at most the envelope at the size of its input. -/
@@ -459,11 +462,12 @@ theorem charge_ofHandler_firstAccepted_false (l : List ℕ) :
 so it has no polynomial cost over the answers of its answering function. -/
 theorem search_false_not_polyCostUnder :
     ¬ (search fun _ _ => false).PolyCostUnder (search fun _ _ => false).Answered id := fun h =>
-  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge_answered fun n =>
-    ⟨n, le_rfl, by
-      change _ ≤ Path.charge (fun _ => 1) (firstAccepted _) (Path.ofHandler (fun _ => false) _)
-      rw [charge_ofHandler_firstAccepted_false, List.length_range]
-      rfl⟩
+  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge_answered <|
+    Eventually.of_forall fun n =>
+      ⟨n, le_rfl, by
+        change _ ≤ Path.charge (fun _ => 1) (firstAccepted _) (Path.ofHandler (fun _ => false) _)
+        rw [charge_ofHandler_firstAccepted_false, List.length_range]
+        rfl⟩
 
 /-- One call, whose answering function answers `2 ^ n` on input `n`. -/
 abbrev blowup : MeasuredProgram ℕ ℕ ℕ where
@@ -482,16 +486,17 @@ theorem blowup_polyCost : blowup.PolyCost id :=
 polynomial cost over the answers of the answering functions. -/
 theorem comp_blowup_not_polyCostUnder :
     ¬ (countdown.comp blowup).PolyCostUnder (countdown.comp blowup).Answered id := fun h =>
-  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge_answered fun n => by
-    have key : ∀ m (p : Path ((ticks m).mapLens (outerLens countdown blowup n m))),
-        Path.charge (countdown.comp blowup).cost _ p = m := fun m p =>
-      (Path.charge_pullMapLens (outerLens countdown blowup n m) (ticks m) p).trans
-        (charge_ticks m _)
-    have e : Path.charge (countdown.comp blowup).cost ((countdown.comp blowup).program n)
-        (Path.ofHandler ((countdown.comp blowup).answer n) ((countdown.comp blowup).program n)) =
-          1 + 2 ^ n :=
-      congrArg (1 + ·) (key _ _)
-    exact ⟨n, le_rfl, e ▸ Nat.le_add_left _ _⟩
+  not_polynomiallyBounded_two_pow <| h.polynomiallyBounded_of_le_charge_answered <|
+    Eventually.of_forall fun n => by
+      have key : ∀ m (p : Path ((ticks m).mapLens (outerLens countdown blowup n m))),
+          Path.charge (countdown.comp blowup).cost _ p = m := fun m p =>
+        (Path.charge_pullMapLens (outerLens countdown blowup n m) (ticks m) p).trans
+          (charge_ticks m _)
+      have e : Path.charge (countdown.comp blowup).cost ((countdown.comp blowup).program n)
+          (Path.ofHandler ((countdown.comp blowup).answer n) ((countdown.comp blowup).program n)) =
+            1 + 2 ^ n :=
+        congrArg (1 + ·) (key _ _)
+      exact ⟨n, le_rfl, e ▸ Nat.le_add_left _ _⟩
 
 /-- **`PolyCostUnder.comp` needs its output hypothesis, also over `Answered`.** -/
 example : ¬ ∀ (outer : MeasuredProgram ℕ Unit ℕ) (inner : MeasuredProgram ℕ ℕ ℕ),

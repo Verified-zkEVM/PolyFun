@@ -65,8 +65,7 @@ over allowed answers, and compose along `CompAllows` (`PolyCostUnder.comp`,
 constant polynomial (`PolyCost.of_costAtMost`). A program within a uniform budget meets every
 envelope that is at least that budget at the size of each input (`CostAtMost.costWithin_of_le`).
 Over finitely many parameters, every family whose members have fixed budgets has polynomial cost
-(`FamilyPolyCost.of_finite`). The polynomial contract of a named program is therefore informative
-only over unbounded sizes. Over capped parameters, the contract states the envelope as a named
+(`FamilyPolyCost.of_finite`). Over capped parameters, the contract states the envelope as a named
 function, such as `fun n => n ^ 2`.
 
 **What stays uncharged.** The contracts inherit the accounting boundary of `MeasuredProgram`. The
@@ -84,11 +83,11 @@ named program, with stated prices, a stated size measure and a stated envelope, 
 price of the declared operations of that program. It does not bound the work of the uncharged parts,
 and it does not check the size measure.
 
-**Cost types.** `CostWithin` is stated for any ordered cost type, as `CostAtMost` is. The
-polynomial contracts use `ℕ`, a counting cost type: canonically ordered, with the usual order and
-addition, so no refund call can pad a budget. A per-kind count in `K → ℕ` is read one kind at a
-time (`costWithin_pi_iff`, through `mapCost`). Over a finite set of kinds, the sum of the
-per-kind envelopes bounds the sum of the counts (`costWithin_finsetSum`).
+**Cost types.** `CostWithin` is stated for any ordered cost type, as `CostAtMost` is. The polynomial
+contracts use `ℕ` with its usual addition and order. `ℕ` is canonically ordered, so no refund call
+can pad a budget. A per-kind count in `K → ℕ` is read one kind at a time (`costWithin_pi_iff`,
+through `mapCost`). Over a finite set of kinds, the sum of the per-kind envelopes bounds the sum of
+the counts (`costWithin_finsetSum`).
 -/
 
 @[expose] public section

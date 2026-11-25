@@ -454,8 +454,9 @@ closure under eventual domination and the fact that `2 ^ n` is not polynomially 
 - A per-kind count in `K → ℕ` is a contract for each kind (`costWithin_pi_iff`, through `mapCost`).
   Over a finite set of kinds, the per-kind envelopes add up to an envelope of the sum of the counts
   (`costWithin_finsetSum`).
-- If, for every `n`, some input of size at most `n` has a qualifying completed path that costs at
-  least `lower n`, a polynomial cost contract forces `lower` to be polynomially bounded
+- If, for every sufficiently large `n`, some input of size at most `n` has a qualifying completed
+  path that costs at least `lower n`, a polynomial cost contract forces `lower` to be polynomially
+  bounded
   (`PolyCost.polynomiallyBounded_of_le_charge`,
   `PolyCostUnder.polynomiallyBounded_of_le_charge`,
   `FamilyPolyCost.polynomiallyBounded_of_le_charge`). For a family, the witness also chooses a
@@ -463,10 +464,14 @@ closure under eventual domination and the fact that `2 ^ n` is not polynomially 
   answers. An expensive path through a disallowed answer says nothing about that contract. A
   super-polynomial lower bound therefore refutes the corresponding contract. Under `Answered`, the
   run provides the path (`PolyCostUnder.polynomiallyBounded_of_le_charge_answered`).
+- The generic contracts use the supplied prices, addition and order. With natural-number prices, a
+  bound on the total price bounds the number of calls that have a price of at least one.
 - A fixed budget is a constant polynomial (`PolyCost.of_costAtMost`), and over finitely many
-  parameters every family with fixed budgets has polynomial cost (`FamilyPolyCost.of_finite`). The
-  polynomial contract of a named program is therefore informative only over unbounded sizes. Over
-  capped parameters, state the envelope as a named function.
+  parameters every family with fixed budgets has polynomial cost (`FamilyPolyCost.of_finite`). One
+  budget that bounds every member also provides a constant envelope for an infinite family.
+  Member-specific budgets with no common bound can give a uniform polynomial contract when
+  one polynomial in the stated sizes bounds them. Over capped parameters, state the envelope
+  as a named function.
 - A program within a fixed budget meets every envelope that is at least that budget at the size of
   each input (`CostAtMost.costWithin_of_le`).
 
