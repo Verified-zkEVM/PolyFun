@@ -37,6 +37,7 @@ public import ToCslib.MeasureTheory.Measure.Subprobability
 public import ToCslib.Order.AddSupDistrib
 public import ToCslib.Order.Admissible
 public import ToCslib.Order.DiscreteOmegaCompletePartialOrder
+public import ToCslib.Order.Finpartition
 public import ToCslib.Order.LeanOrder
 public import ToCslib.Order.OmegaCompletePartialOrder
 public import ToCslib.Order.PrefixRecursion

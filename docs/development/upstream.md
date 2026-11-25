@@ -21,6 +21,16 @@ graphs, search, and testing. They do not introduce another interaction model.
 Their pins are recorded in the manifest; their README files live under
 `.lake/packages/` after dependency setup.
 
+## Finite partitions
+
+Mathlib supplies `Finpartition` and the Stirling numbers of the second kind.
+`Finpartition.allWithCard n k` enumerates the partitions of `Fin n` with exactly
+`k` parts. It inserts each element into an occupied part or starts a fresh part.
+The resulting list contains every such partition once and has length `Nat.stirlingSecond n k`.
+The enumeration uses the standard Mathlib partition type and preserves its global instances.
+The implementation and its cardinality theorem use only Mathlib.
+[Enumeration](../../ToCslib/Order/Finpartition.lean) · [Mathlib sources](../../REFERENCES.md#finite-partitions)
+
 ## Integration contracts
 
 - **Polynomial constructions:** CSLib's
