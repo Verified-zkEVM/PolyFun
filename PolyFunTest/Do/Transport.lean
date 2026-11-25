@@ -29,8 +29,8 @@ def flipTwo : FreeM coinP Bool := do
   pure (a && b)
 
 /-- A nonidentity handler: interpret every free query as `true` in `Id`. -/
-def chooseTrue : Handler Id coinP :=
-  fun _ => true
+def chooseTrue : Handler Id coinP where
+  toFun _ := true
 
 local instance instHandlerWP : WPMonad (FreeM coinP) Prop EStack⟨⟩ :=
   FreeM.wpMonadOfHandler chooseTrue

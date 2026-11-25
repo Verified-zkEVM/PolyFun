@@ -37,14 +37,16 @@ namespace Handler
 
 /-- The identity free handler for a polynomial interface. -/
 @[implicit_reducible]
-def id (P : PFunctor.{uA, u}) : Handler (FreeM P) P :=
-  fun a => FreeM.lift a
+def id (P : PFunctor.{uA, u}) : Handler (FreeM P) P where
+  toFun a := FreeM.lift a
+
+@[simp] theorem id_apply (P : PFunctor.{uA, u}) (a : P.A) : Handler.id P a = FreeM.lift a := rfl
 
 /-- Regard a polynomial lens as the one-operation free handler that issues
 the mapped operation and translates its answer through the lens. -/
 def ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
-    (f : Lens P Q) : Handler (FreeM Q) P :=
-  fun a => FreeM.liftBind (f.toFunA a) fun answer =>
+    (f : Lens P Q) : Handler (FreeM Q) P where
+  toFun a := FreeM.liftBind (f.toFunA a) fun answer =>
     FreeM.pure (f.toFunB a answer)
 
 @[simp] theorem ofLens_apply
@@ -74,8 +76,8 @@ the target monad's universes remain independent. -/
 @[implicit_reducible]
 def comp {m : Type u → Type v} [Monad m] {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
     (second : Handler m Q) (first : Handler (FreeM Q) P) :
-    Handler m P :=
-  fun a => (first a).liftM second
+    Handler m P where
+  toFun a := (first a).liftM second
 
 @[simp]
 theorem comp_apply {m : Type u → Type v} [Monad m] {P : PFunctor.{uA, u}}
@@ -104,8 +106,15 @@ the lens. -/
 theorem comp_ofLens {m : Type u → Type v} [Monad m] [LawfulMonad m] {P : PFunctor.{uA, u}}
     {Q : PFunctor.{uA', u}} (second : Handler m Q) (l : Lens P Q) :
     second.comp (ofLens l) = second.comapLens l := by
-  funext a
+  ext a
   exact bind_pure_comp _ _
+
+/-- Interpreting a program relabelled along a lens interprets the original program through the
+handler pulled back along the lens: `FreeM.liftM_mapLens` at a `Handler`. -/
+theorem liftM_mapLens {m : Type u → Type v} [Monad m] [LawfulMonad m] {P : PFunctor.{uA, u}}
+    {Q : PFunctor.{uA', u}} (h : Handler m Q) (l : Lens P Q) {α : Type u} (x : FreeM P α) :
+    (x.mapLens l).liftM h = x.liftM (h.comapLens l) :=
+  FreeM.liftM_mapLens l h x
 
 /-- Bundled form of `liftM_ofLens`: the fold of the one-operation handler of a lens is
 `FreeM.mapLensHom`. -/
@@ -117,14 +126,14 @@ theorem liftMHom_ofLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} (l : Len
 theorem id_comp {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u}}
     (first : Handler (FreeM Q) P) :
     (id Q).comp first = first := by
-  funext a
+  ext a
   exact FreeM.liftM_lift_eq_self (first a)
 
 @[simp]
 theorem comp_id {m : Type u → Type v} [Monad m] [LawfulMonad m] {P : PFunctor.{uA, u}}
     (second : Handler m P) :
     second.comp (id P) = second := by
-  funext a
+  ext a
   exact FreeM.liftM_lift second a
 
 /-- Running a program through a composite handler runs it through `first`, then
@@ -143,7 +152,7 @@ theorem comp_assoc {m : Type u → Type v} [Monad m] [LawfulMonad m]
     (second : Handler (FreeM R) Q)
     (first : Handler (FreeM Q) P) :
     (third.comp second).comp first = third.comp (second.comp first) := by
-  funext a
+  ext a
   exact (FreeM.liftM_comp (first a) second third).symm
 
 end Handler

@@ -28,13 +28,13 @@ open _root_.PFunctor
 abbrev counter : PFunctor.{0, 0} := ⟨Unit, fun _ => Nat⟩
 
 /-- The base handler: answer with the count and increment it. -/
-def counting : Handler.Stateful Option Nat counter :=
-  fun _ n => some (n, n + 1)
+def counting : Handler.Stateful Option Nat counter where
+  toFun _ n := some (n, n + 1)
 
 /-- The decorated handler keeps `(n, d)` with `d` meant to be `2 * n`, answers `d / 2`, and
 advances both components. -/
-def halving : Handler.Stateful Option (Nat × Nat) counter :=
-  fun _ s => some (s.2 / 2, (s.1 + 1, s.2 + 2))
+def halving : Handler.Stateful Option (Nat × Nat) counter where
+  toFun _ s := some (s.2 / 2, (s.1 + 1, s.2 + 2))
 
 /-- Forgetting the redundant component projects `halving` onto `counting` on the states where
 `d = 2 * n`. -/

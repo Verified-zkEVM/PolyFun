@@ -64,7 +64,8 @@ def publishArtifacts {rules : Rules} {metadata : Metadata} (directory : FilePath
 
 /-- Execute the polynomial operations through real Lean IO. -/
 def ioHandler (config : Configuration) (directory : FilePath) :
-    PFunctor.Handler IO (Effects config) := fun effect => match effect with
+    PFunctor.Handler IO (Effects config) where
+  toFun effect := match effect with
   | .read state => attempt (Terminal.readAction state)
   | .judge request => attempt (Terminal.judgment request)
   | .tell text => attempt (Terminal.print (text ++ "\n"))

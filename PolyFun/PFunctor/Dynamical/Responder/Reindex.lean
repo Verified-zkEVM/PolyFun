@@ -178,7 +178,7 @@ theorem toStateful_reindex
     {State : Type uB}
     (f : Handler (FreeM Q) P)
     (R : Responder State Q) :
-    (reindex f R).toStateful = fun query state => R.runFree (f query) state :=
+    (reindex f R).toStateful = ⟨fun query state => R.runFree (f query) state⟩ :=
   rfl
 
 @[simp]

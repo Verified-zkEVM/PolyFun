@@ -135,11 +135,11 @@ example :
     Responder.respondDisplayed_toDisplayedBehavior_next contract responder Invariant displayed
       false initialWitness query false
 
-def oneCall : Handler (FreeM Interface) Interface :=
-  fun _ => FreeM.lift query
+def oneCall : Handler (FreeM Interface) Interface where
+  toFun _ := FreeM.lift query
 
-def twoCalls : Handler (FreeM Interface) Interface :=
-  fun _ => .liftBind query fun _ => FreeM.lift query
+def twoCalls : Handler (FreeM Interface) Interface where
+  toFun _ := .liftBind query fun _ => FreeM.lift query
 
 def displayedOneCall : Display.Handler contract contract oneCall :=
   fun _ precondition =>

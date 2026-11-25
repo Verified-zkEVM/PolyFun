@@ -44,11 +44,11 @@ def call (port : Bool) : FreeM (PFunctor.sigma (Dom .choose)) Bool :=
 /-- The first box queries its left port. A `true` response selects a second
 query at the right port; a `false` response returns immediately. -/
 def implementation : (b : Box) →
-    (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a)
-  | .choose, _ => do
+    PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b)
+  | .choose => ⟨fun _ => do
       let answer ← call false
-      if answer then call true else pure false
-  | .stop, _ => pure true
+      if answer then call true else pure false⟩
+  | .stop => ⟨fun _ => pure true⟩
 
 /-- Proof-relevant contracts: every operation carries one Boolean witness for
 each response. -/
@@ -211,11 +211,10 @@ example (evidence : Bool) :
 def noInterface (i : PEmpty) : PFunctor := PEmpty.elim i
 
 def noHandler (i : PEmpty) :
-    (a : (noInterface i).A) → FreeM Interface ((noInterface i).B a) :=
+    PFunctor.Handler (FreeM Interface) (noInterface i) :=
   PEmpty.elim i
 
-def emptyHandler : (a : (PFunctor.sigma noInterface).A) →
-    FreeM Interface ((PFunctor.sigma noInterface).B a) :=
+def emptyHandler : PFunctor.Handler (FreeM Interface) (PFunctor.sigma noInterface) :=
   PFunctor.Handler.sigma noHandler
 
 example (a : (PFunctor.sigma noInterface).A) : False :=
@@ -223,11 +222,12 @@ example (a : (PFunctor.sigma noInterface).A) : False :=
 
 def oneInterface (_ : Unit) := Interface
 
-def oneHandler (_ : Unit) (a : Interface.A) : FreeM Interface (Interface.B a) :=
-  FreeM.lift a
+def oneHandler (_ : Unit) : PFunctor.Handler (FreeM Interface) Interface where
+  toFun a := FreeM.lift a
 
 example (a : Interface.A) :
-    PFunctor.Handler.sigma oneHandler ⟨(), a⟩ = oneHandler () a :=
+    PFunctor.Handler.sigma oneHandler (⟨(), a⟩ : (PFunctor.sigma oneInterface).A) =
+      oneHandler () a :=
   rfl
 
 /-! The public producers preserve all advertised universe separation. -/
@@ -266,7 +266,7 @@ def universeDisplayedSigmaHandler {I : Type uInputs}
     {P : I → PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i))
     (T : Display.{uA', uB', uC', uD'} Q)
-    {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
+    {f : (i : I) → PFunctor.Handler (FreeM Q) (P i)}
     (df : (i : I) → Display.Handler (S i) T (f i)) :
     Display.Handler (Display.sigma S) T (PFunctor.Handler.sigma f) :=
   Display.Handler.sigma S T df

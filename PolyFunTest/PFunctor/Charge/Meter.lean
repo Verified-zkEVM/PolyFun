@@ -41,7 +41,8 @@ def twoReqs : FreeM Req Unit := do
   FreeM.lift (P := Req) 2
 
 /-- Answer every request. -/
-def ok : Handler Id Req := fun _ => ()
+def ok : Handler Id Req where
+  toFun _ := ()
 
 /-! ## Writer and state meters -/
 
@@ -65,7 +66,8 @@ example : ((twoReqs.liftM (ok.withCharge word)).run (.of 99)).run.2 ≠
 /-! ## A counter beside a stateful handler -/
 
 /-- A stateful handler that adds each request to its state. -/
-def summing : Handler.Stateful Id ℕ Req := fun a => StateT.mk fun s => ((), s + a)
+def summing : Handler.Stateful Id ℕ Req where
+  toFun a := StateT.mk fun s => ((), s + a)
 
 /-- From state `5` and counter `[99]`, the extended handler ends at state `8` and counter
 `[99, 1, 2]`. -/
@@ -88,7 +90,8 @@ example : (((Handler.Stateful.extend summing fun a _ _ _ total => total + word a
 /-! ## Failure in the base monad -/
 
 /-- Fail on request `2`. -/
-def failOnTwo : Handler Option Req := fun a => if a = 2 then none else some ()
+def failOnTwo : Handler Option Req where
+  toFun a := if a = 2 then none else some ()
 
 /-- A failure discards the charges already made, in the state meter and in the writer meter. -/
 example : (twoReqs.liftM (failOnTwo.withCharge word)).run (.of 99) = none := rfl

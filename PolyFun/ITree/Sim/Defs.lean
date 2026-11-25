@@ -65,8 +65,8 @@ then interprets those `F`-programs over `G`.
 Composition is maximally universe-polymorphic. Its pointwise weak identity and
 pure-renaming laws are stated in `PolyFun.ITree.Sim.Facts`.
 -/
-def comp (second : Handler F G) (first : Handler E F) : Handler E G :=
-  fun a => simulate second (first a)
+def comp (second : Handler F G) (first : Handler E F) : Handler E G where
+  toFun a := simulate second (first a)
 
 @[simp] theorem comp_apply (second : Handler F G) (first : Handler E F) (a : E.A) :
     second.comp first a = simulate second (first a) := rfl
@@ -77,7 +77,7 @@ theorem comp_case {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uEB}}
     (outer : Handler G H) (left : Handler E G) (right : Handler F G) :
     outer.comp (Handler.case_ left right) =
       Handler.case_ (outer.comp left) (outer.comp right) := by
-  funext a
+  ext a : 1
   cases a <;> rfl
 
 end Handler

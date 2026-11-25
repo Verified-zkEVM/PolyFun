@@ -21,7 +21,7 @@ namespace PFunctor
 
 /-- Position, direction, and effect universes remain independent. -/
 example {q : PFunctor.{u, v}} {m : Type v → Type w}
-    (h : (a : q.A) → m (q.B a)) : Handler m q := h
+    (h : (a : q.A) → m (q.B a)) : Handler m q := ⟨h⟩
 
 /-! ## Coproduct transparency -/
 

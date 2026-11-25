@@ -50,7 +50,7 @@ def loggedHandler (config : Configuration) : Handler LoggedMemory (Effects confi
 theorem forget_loggedHandler (config : Configuration) :
     Handler.mapTarget (fun value => forgetLog value) (loggedHandler config) =
       memoryHandler config := by
-  funext effect
+  ext effect : 1
   simp only [Handler.mapTarget, loggedHandler, Handler.withTraceAppend_apply,
     forgetLog, WriterT.eraseHom_apply]
   rfl

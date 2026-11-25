@@ -248,16 +248,20 @@ theorem lensMapComp
 
 abbrev Step : PFunctor.{0, 0} := ⟨Bool, fun _ => PUnit⟩
 
-def firstLeft : Handler (FreeM Step) Step := fun _ =>
-  FreeM.liftBind false fun _ => FreeM.liftBind true FreeM.pure
+def firstLeft : Handler (FreeM Step) Step where
+  toFun _ :=
+    FreeM.liftBind false fun _ => FreeM.liftBind true FreeM.pure
 
-def firstRight : Handler (FreeM Step) Step := fun _ => FreeM.lift false
+def firstRight : Handler (FreeM Step) Step where
+  toFun _ := FreeM.lift false
 
-def secondLeft : Handler (FreeM Step) Step
+def secondLeft : Handler (FreeM Step) Step where
+  toFun
   | false => FreeM.pure PUnit.unit
   | true => FreeM.lift true
 
-def secondRight : Handler (FreeM Step) Step := fun _ => FreeM.lift false
+def secondRight : Handler (FreeM Step) Step where
+  toFun _ := FreeM.lift false
 
 def rootOperation {E : Type} : FreeM (Step ∥ Step) E →
     Option (ParallelChoice Bool Bool)
@@ -284,13 +288,13 @@ theorem handler_parallel_comp_fails :
       Handler.parallel (secondLeft.comp firstLeft)
         (secondRight.comp firstRight) := by
   intro equality
-  cases congrArg rootOperation (congrFun equality (ParallelChoice.both false false))
+  cases congrArg rootOperation (Handler.congr_fun equality (ParallelChoice.both false false))
 
 /-- `Handler.parallelSeq` sequences a joint request left first, and its log records that order. -/
 example :
     (Handler.parallelSeq (m := StateM (List String)) (P := P) (Q := Q)
-      (fun b => do modify (· ++ ["left"]); pure (!b))
-      (fun _ => do modify (· ++ ["right"]); pure 7) (.both true PUnit.unit)).run [] =
+      ⟨fun b => do modify (· ++ ["left"]); pure (!b)⟩
+      ⟨fun _ => do modify (· ++ ["right"]); pure 7⟩ (.both true PUnit.unit)).run [] =
       ((false, 7), ["left", "right"]) := rfl
 
 end PFunctor.ParallelFreeCanary

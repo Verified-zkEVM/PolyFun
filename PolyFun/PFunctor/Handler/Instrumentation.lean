@@ -33,8 +33,8 @@ variable {m : Type u → Type v} {n : Type u → Type w}
 -- Keep this structural adapter transparent: dependent handler result types
 -- frequently need its pointwise reduction during elaboration.
 @[expose] def liftTarget (n : Type u → Type w) [MonadLiftT m n]
-    (handler : Handler m P) : Handler n P :=
-  fun operation => liftM (handler operation)
+    (handler : Handler m P) : Handler n P where
+  toFun operation := liftM (handler operation)
 
 @[simp]
 theorem liftTarget_apply (n : Type u → Type w) [MonadLiftT m n]
@@ -56,8 +56,8 @@ target monad's transformer order; for example, `WriterT` over `Option` discards
 the log together with a failed result. The inserted effect's value is
 discarded. -/
 def preInsert [Monad n] [MonadLiftT m n] {α : Type u}
-    (handler : Handler m P) (before : P.A → n α) : Handler n P :=
-  fun operation => before operation *> liftM (handler operation)
+    (handler : Handler m P) (before : P.A → n α) : Handler n P where
+  toFun operation := before operation *> liftM (handler operation)
 
 @[simp, grind =]
 theorem preInsert_apply [Monad n] [MonadLiftT m n] {α : Type u}
@@ -72,8 +72,8 @@ The inserted effect may depend on the response and is skipped if the
 underlying handler fails. Its result is discarded. -/
 def postInsert [Monad n] [MonadLiftT m n] {α : Type u}
     (handler : Handler m P) (after : (operation : P.A) → P.B operation → n α) :
-    Handler n P :=
-  fun operation => do
+    Handler n P where
+  toFun operation := do
     let response ← liftM (handler operation)
     let _ ← after operation response
     return response

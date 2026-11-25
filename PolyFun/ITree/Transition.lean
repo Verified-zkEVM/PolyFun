@@ -52,7 +52,8 @@ variable {S R : Type u}
   | .inr state => .paused (.inr state)
 
 /-- Unit transitions have a unique answer and introduce no external effect. -/
-@[expose] def tickHandler : Handler Id PFunctor.y.{u, u} := fun _ => PUnit.unit
+@[expose, simps] def tickHandler : Handler Id PFunctor.y.{u, u} where
+  toFun _ := PUnit.unit
 
 /-- The machine runner preserves the exact transition result or residual at every budget. -/
 theorem runChunk_toMachine (next : Transition S R) (fuel : Nat) (state : S) :

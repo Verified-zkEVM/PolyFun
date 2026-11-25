@@ -42,12 +42,12 @@ example :
       ⟨.unit, fun _ _ => contract.leaf (fun _ : Nat => PUnit.{1}) 8 .unit⟩ :=
   rfl
 
-def identityHandler : Handler contract contract (fun a => FreeM.lift a) :=
+def identityHandler : Handler contract contract ⟨fun a => FreeM.lift a⟩ :=
   Handler.id contract
 
 example :
     contract.liftM contract oneStep oneStepData
-      (fun a => FreeM.lift a) identityHandler = oneStepData :=
+      ⟨fun a => FreeM.lift a⟩ identityHandler = oneStepData :=
   rfl
 
 /-! The following example is deliberately non-constant in every local index:
@@ -235,7 +235,7 @@ example :
     dependentContract.transport (fun _ : Nat => Nat)
         (FreeM.liftM_lift_eq_self dependentTree)
         (dependentContract.liftM dependentContract dependentTree dependentTreeData
-          (fun a => FreeM.lift a) (Handler.id dependentContract)) =
+          ⟨fun a => FreeM.lift a⟩ (Handler.id dependentContract)) =
       dependentTreeData :=
   dependentContract.liftM_id dependentTree dependentTreeData
 
@@ -245,14 +245,14 @@ example :
           (fun a => FreeM.lift a))
         (dependentContract.liftM dependentContract dependentTree
           (dependentContract.liftM dependentContract dependentTree dependentTreeData
-            (fun a => FreeM.lift a) (Handler.id dependentContract))
-          (fun a => FreeM.lift a) (Handler.id dependentContract)) =
+            ⟨fun a => FreeM.lift a⟩ (Handler.id dependentContract))
+          ⟨fun a => FreeM.lift a⟩ (Handler.id dependentContract)) =
       dependentContract.liftM dependentContract dependentTree dependentTreeData
-        (fun a => (FreeM.lift a).liftM fun a => FreeM.lift a)
+        ⟨fun a => (FreeM.lift a).liftM fun a => FreeM.lift a⟩
         ((Handler.id dependentContract).comp (Handler.id dependentContract)) :=
   dependentContract.liftM_comp dependentContract dependentContract
-    dependentTree dependentTreeData (fun a => FreeM.lift a)
-      (Handler.id dependentContract) (fun a => FreeM.lift a)
+    dependentTree dependentTreeData ⟨fun a => FreeM.lift a⟩
+      (Handler.id dependentContract) ⟨fun a => FreeM.lift a⟩
       (Handler.id dependentContract)
 
 /-! A three-interface canary for handler composition order.  The first
@@ -283,11 +283,11 @@ abbrev targetDisplay : Display.{0, 0, 0, 0} HandlerTarget where
   position _ := Nat
   direction _ _ _ := PUnit
 
-def firstProgram (a : HandlerSource.A) : FreeM HandlerMiddle (HandlerSource.B a) :=
-  FreeM.lift (P := HandlerMiddle) (if a then 10 else 20)
+def firstProgram : PFunctor.Handler (FreeM HandlerMiddle) HandlerSource where
+  toFun a := FreeM.lift (P := HandlerMiddle) (if a then 10 else 20)
 
-def secondProgram (a : HandlerMiddle.A) : FreeM HandlerTarget (HandlerMiddle.B a) :=
-  FreeM.lift (P := HandlerTarget) (a + 100)
+def secondProgram : PFunctor.Handler (FreeM HandlerTarget) HandlerMiddle where
+  toFun a := FreeM.lift (P := HandlerTarget) (a + 100)
 
 def firstDisplayedHandler : Handler sourceDisplay middleDisplay firstProgram :=
   fun a c =>
@@ -301,7 +301,7 @@ def secondDisplayedHandler : Handler middleDisplay targetDisplay secondProgram :
 
 def composedDisplayedHandler :
     Handler sourceDisplay targetDisplay
-      (fun a => (firstProgram a).liftM secondProgram) :=
+      ⟨fun a => (firstProgram a).liftM secondProgram⟩ :=
   secondDisplayedHandler.comp firstDisplayedHandler
 
 example :
@@ -333,9 +333,9 @@ example (t : FreeM P E)
 
 example (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first)
-    (second : (a : Q.A) → FreeM R (Q.B a))
+    (second : PFunctor.Handler (FreeM R) Q)
     (dsecond : Handler T U second) :=
   S.liftM_comp T U t d first dfirst second dsecond
 
@@ -343,15 +343,15 @@ example (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (g : E → FreeM P E')
     (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x))
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first) :=
   S.liftM_bind T t d g dg first dfirst
 
-example (first : (a : P.A) → FreeM Q (P.B a))
+example (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first) (a : P.A) (c : S.position a) :=
   Handler.id_comp_apply dfirst a c
 
-example (first : (a : P.A) → FreeM Q (P.B a))
+example (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first) (a : P.A) (c : S.position a) :=
   Handler.comp_id_apply dfirst a c
 
@@ -380,10 +380,12 @@ abbrev largeResponseDisplay : Display.{0, 1, 0, 0} LargeResponseInterface where
   position _ := PUnit
   direction _ _ _ := PUnit
 
-def heterogeneousProgram (_ : SmallResponseInterface.A) : FreeM LargeResponseInterface Bool :=
-  .pure true
+def heterogeneousProgram :
+    PFunctor.Handler (FreeM LargeResponseInterface) SmallResponseInterface where
+  toFun _ := .pure true
 
-def heterogeneousHandler : Handler smallResponseDisplay largeResponseDisplay heterogeneousProgram :=
+def heterogeneousHandler :
+    Handler smallResponseDisplay largeResponseDisplay heterogeneousProgram :=
   fun _ _ => largeResponseDisplay.leaf (fun _ : Bool => Nat) true 7
 
 example :
@@ -396,13 +398,13 @@ variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB'}}
   (T : Display.{uA', uB', uC', uD'} Q)
   {E E' : Type uB} {F : E → Type uF} {G : E' → Type uG}
 
-example (first : (a : P.A) → FreeM Q (P.B a))
+example (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first) : Handler S T first :=
   dfirst
 
 example (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first) :=
   S.liftM T t d first dfirst
 
@@ -410,7 +412,7 @@ example (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (g : E → FreeM P E')
     (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x))
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first) :=
   S.liftM_bind T t d g dg first dfirst
 
@@ -426,18 +428,18 @@ variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA', uB}}
   {E : Type uB} {F : E → Type uF}
 
 example
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first)
-    (second : (a : Q.A) → FreeM R (Q.B a))
+    (second : PFunctor.Handler (FreeM R) Q)
     (dsecond : Handler T U second) :
-    Handler S U (fun a ↦ (first a).liftM second) :=
+    Handler S U ⟨fun a ↦ (first a).liftM second⟩ :=
   dsecond.comp dfirst
 
 example (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first)
-    (second : (a : Q.A) → FreeM R (Q.B a))
+    (second : PFunctor.Handler (FreeM R) Q)
     (dsecond : Handler T U second) :=
   S.liftM_comp T U t d first dfirst second dsecond
 

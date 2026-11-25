@@ -26,8 +26,9 @@ open PFunctor Handler
 abbrev Key : PFunctor := ⟨Bool, fun _ => Bool⟩
 
 /-- Each state answers its own key with the other Boolean. -/
-def partialAnswer (state : Bool) : Handler Option Key := fun key =>
-  if key = state then some (!state) else none
+def partialAnswer (state : Bool) : Handler Option Key where
+  toFun key :=
+    if key = state then some (!state) else none
 
 /-- Query the first answer. -/
 def adaptive : FreeM Key Bool := do
@@ -58,7 +59,7 @@ theorem adaptive_settled_by_decoder {d : Unit → Handler Option Key}
 
 /-- One request distinguishes the histories when a decoder must replay misses as well. -/
 theorem no_exact_decoder : ¬ ∃ d : Unit → Handler Option Key,
-    Hint.Valid (fun t a c => partialAnswer t a = c) (fun _ => ()) d := by
+    Hint.Valid (fun t a c => partialAnswer t a = c) (fun _ => ()) fun h => d h := by
   rintro ⟨d, hd⟩
   have runs := (Hint.exact_iff_liftM (P := Key) _ _ _).1 hd
   have collision := (runs false (FreeM.lift (P := Key) false)).trans
@@ -67,7 +68,7 @@ theorem no_exact_decoder : ¬ ∃ d : Unit → Handler Option Key,
 
 /-- Two different settled answers to the same request prevent every shared decoder. -/
 theorem conflicting_answers : ¬ ∃ d : Unit → Handler Option Key,
-    Hint.PreservesSettled (fun t _ => some t) (fun _ => ()) d := by
+    Hint.PreservesSettled (fun t => ⟨fun _ => some t⟩) (fun _ => ()) d := by
   intro hd
   have consistent := (Hint.exists_preservesSettled_iff (P := Key) _ _).1 hd
   exact Bool.false_ne_true (consistent false true rfl false false true rfl rfl)

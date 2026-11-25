@@ -32,13 +32,15 @@ def twoRequests : PFunctor.FreeM Request (Nat × Nat) := do
   return (first, second)
 
 /-- This handler answers a request by incrementing it. -/
-def increment : PFunctor.Handler Id Request := fun n => n + 1
+def increment : PFunctor.Handler Id Request where
+  toFun n := n + 1
 
 example : twoRequests.liftM increment = (4, 5) := rfl
 -- END README
 
 /-- A different interpretation of the same requests. -/
-def double : PFunctor.Handler Id Request := fun n => 2 * n
+def double : PFunctor.Handler Id Request where
+  toFun n := 2 * n
 
 /-- Changing the handler also changes the second request. -/
 theorem twoRequests_double : twoRequests.liftM double = (6, 12) := rfl

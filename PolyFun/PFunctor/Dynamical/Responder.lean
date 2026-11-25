@@ -152,8 +152,9 @@ variable {q : PFunctor.{uA, u}} {S : Type u}
 
 /-- Read a responder as a stateful handler: answer the query from the current
 state and thread the next state. -/
-def toStateful (R : Responder S q) : Handler.Stateful Id S q :=
-  fun a s => (R.answer s a, R.next s a)
+@[simps]
+def toStateful (R : Responder S q) : Handler.Stateful Id S q where
+  toFun a s := (R.answer s a, R.next s a)
 
 /-- Bundle a stateful handler as a responder. -/
 def ofStateful (h : Handler.Stateful Id S q) : Responder S q :=

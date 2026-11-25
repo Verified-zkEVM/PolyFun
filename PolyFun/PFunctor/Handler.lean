@@ -35,18 +35,59 @@ namespace PFunctor
 position (a Kleisli section of `q`). With `m := Id` this is an ordinary
 dependent choice of one direction at every position, while a probabilistic
 monad gives a randomized choice. -/
-abbrev Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) :=
-  (a : q.A) → m (q.B a)
+structure Handler (m : Type u → Type v) (q : PFunctor.{uA, u}) : Type (max uA v) where
+  /-- The computation answering each position. Write `h a` for `h.toFun a`. -/
+  toFun : (a : q.A) → m (q.B a)
 
 namespace Handler
+
+section Coercion
+
+variable {m : Type u → Type v} {q : PFunctor.{uA, u}}
+
+/-- A handler applies like the function of its answers. The coercion is the projection itself, so
+`h a` is indexed by the interface `q` alone. A `DFunLike` instance would also index it by the domain
+`q.A` and by the answer family, which `simp` does not match at a literal interface. -/
+instance : CoeFun (Handler m q) (fun _ => (a : q.A) → m (q.B a)) where
+  coe := toFun
+
+run_meta Lean.Meta.registerCoercion ``toFun (some { numArgs := 3, coercee := 2, type := .coeFun })
+
+initialize_simps_projections Handler (toFun → apply)
+
+/-- Handlers with equal answers at every position are equal. -/
+@[ext] protected theorem ext {f g : Handler m q} (h : ∀ a, f a = g a) : f = g := by
+  cases f
+  cases g
+  exact congrArg mk (funext h)
+
+@[simp] theorem mk_apply (f : (a : q.A) → m (q.B a)) (a : q.A) :
+    (mk f : Handler m q) a = f a := rfl
+
+theorem toFun_injective : Function.Injective (toFun : Handler m q → _) :=
+  fun _ _ h => Handler.ext (congrFun h)
+
+@[simp] theorem toFun_inj {f g : Handler m q} : f.toFun = g.toFun ↔ f = g :=
+  toFun_injective.eq_iff
+
+protected theorem congr_fun {f g : Handler m q} (h : f = g) (a : q.A) : f a = g a := h ▸ rfl
+
+/-- A handler is the same data as its answer function. -/
+@[simps] def equivFun : Handler m q ≃ ((a : q.A) → m (q.B a)) where
+  toFun h := h
+  invFun f := ⟨f⟩
+  left_inv _ := rfl
+  right_inv _ := rfl
+
+end Coercion
 
 /-- Postcompose every answer computation of a handler by a polymorphic map
 between target type constructors. No monad laws are needed for this basic
 change-of-target operation. -/
 def mapTarget {m : Type u → Type v} {n : Type u → Type w}
     {q : PFunctor.{uA, u}} (transform : ∀ {α : Type u}, m α → n α)
-    (handler : PFunctor.Handler m q) : PFunctor.Handler n q :=
-  fun position => transform (handler position)
+    (handler : PFunctor.Handler m q) : PFunctor.Handler n q where
+  toFun position := transform (handler position)
 
 @[simp, grind =] theorem mapTarget_apply {m : Type u → Type v} {n : Type u → Type w}
     {q : PFunctor.{uA, u}} (transform : ∀ {α : Type u}, m α → n α)
@@ -76,8 +117,8 @@ variable {m : Type u → Type v} [Functor m] {P : PFunctor.{uA, u}} {Q : PFuncto
 
 /-- Pull a handler back along a lens. A request `a` of `P` is answered by `handler` at the
 request `l.toFunA a` of `Q`, and the answer is translated back by `l.toFunB a`. -/
-def comapLens (handler : PFunctor.Handler m Q) (l : Lens P Q) : PFunctor.Handler m P :=
-  fun a => l.toFunB a <$> handler (l.toFunA a)
+def comapLens (handler : PFunctor.Handler m Q) (l : Lens P Q) : PFunctor.Handler m P where
+  toFun a := l.toFunB a <$> handler (l.toFunA a)
 
 @[simp, grind =] theorem comapLens_apply (handler : PFunctor.Handler m Q) (l : Lens P Q)
     (a : P.A) : comapLens handler l a = l.toFunB a <$> handler (l.toFunA a) :=
@@ -86,14 +127,14 @@ def comapLens (handler : PFunctor.Handler m Q) (l : Lens P Q) : PFunctor.Handler
 /-- Pulling a handler back along the identity lens returns the handler. -/
 @[simp] theorem comapLens_id [LawfulFunctor m] (handler : PFunctor.Handler m P) :
     comapLens handler (Lens.id P) = handler := by
-  funext a
+  ext a
   exact id_map (handler a)
 
 /-- Pulling a handler back along a composite lens pulls it back along each lens in turn. -/
 theorem comapLens_comp [LawfulFunctor m] {R : PFunctor.{uA', u}}
     (handler : PFunctor.Handler m R) (l₂ : Lens Q R) (l₁ : Lens P Q) :
     comapLens handler (l₂ ∘ₗ l₁) = comapLens (comapLens handler l₂) l₁ := by
-  funext a
+  ext a
   exact comp_map (l₂.toFunB (l₁.toFunA a)) (l₁.toFunB a)
     (handler (l₂.toFunA (l₁.toFunA a)))
 
@@ -105,7 +146,7 @@ theorem mapTarget_comapLens {n : Type u → Type w} [Functor n]
       transform (f <$> x) = f <$> transform x)
     (handler : PFunctor.Handler m Q) (l : Lens P Q) :
     mapTarget transform (comapLens handler l) = comapLens (mapTarget transform handler) l := by
-  funext a
+  ext a
   exact htransform _ _
 
 end comapLens
@@ -123,8 +164,8 @@ abbrev Stateful (m : Type u → Type v) (S : Type u)
 /-- Combine monadic handlers for an indexed family into a handler for its
 indexed coproduct. -/
 def sigma {I : Type uI} {P : I → PFunctor.{uA, u}} {m : Type u → Type v}
-    (f : (i : I) → PFunctor.Handler m (P i)) : PFunctor.Handler m (PFunctor.sigma P) :=
-  fun a => f (PFunctor.sigma.fst a) (PFunctor.sigma.snd a)
+    (f : (i : I) → PFunctor.Handler m (P i)) : PFunctor.Handler m (PFunctor.sigma P) where
+  toFun a := f (PFunctor.sigma.fst a) (PFunctor.sigma.snd a)
 
 @[simp]
 theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, u}} {m : Type u → Type v}

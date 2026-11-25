@@ -56,23 +56,25 @@ variable {P : PFunctor.{u, u}} [DecidableEq P.A]
 
 /-- The memoizing handler: a call at `a` recorded in the cache is answered from it, and a new call
 is forwarded once to `P` and its answer recorded. -/
-def cache : Stateful (FreeM P) (List (Σ a, P.B a)) P := fun a => StateT.mk fun c =>
-  match c.dlookup a with
-  | some b => pure (b, c)
-  | none => FreeM.liftBind a fun b => pure (b, ⟨a, b⟩ :: c)
+@[simps -isSimp]
+def cache : Stateful (FreeM P) (List (Σ a, P.B a)) P where
+  toFun a := StateT.mk fun c =>
+    match c.dlookup a with
+    | some b => pure (b, c)
+    | none => FreeM.liftBind a fun b => pure (b, ⟨a, b⟩ :: c)
 
 namespace cache
 
 /-- A recorded call is answered from the cache without a call. -/
 theorem run_apply_of_dlookup_eq_some {a : P.A} {c : List (Σ a, P.B a)} {b : P.B a}
     (h : c.dlookup a = some b) : (cache a).run c = pure (b, c) := by
-  simp [cache, StateT.run_mk, h]
+  simp [cache_apply, StateT.run_mk, h]
 
 /-- A new call is forwarded once and its answer recorded. -/
 theorem run_apply_of_dlookup_eq_none {a : P.A} {c : List (Σ a, P.B a)}
     (h : c.dlookup a = none) :
     (cache a).run c = FreeM.liftBind a fun b => pure (b, ⟨a, b⟩ :: c) := by
-  simp [cache, StateT.run_mk, h]
+  simp [cache_apply, StateT.run_mk, h]
 
 /-- A call recorded in the cache is charged nothing by a fresh charge relative to the keys. -/
 theorem freshCharge_cons_of_mem {ω : Type w} [AddCommMonoid ω] (e : P.A → ω)

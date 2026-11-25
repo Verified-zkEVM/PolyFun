@@ -79,7 +79,7 @@ def chargedLoop (n : ℕ) : StateT ℕ (FreeM Coin) Unit := do
 
 theorem chargedLoop_spec (n : ℕ) :
     ⦃ fun s => s = 0 ⦄ chargedLoop n ⦃ fun _ s => s = 2 * n ⦄ := by
-  vcgen [chargedLoop, Handler.id] invariants
+  vcgen [chargedLoop, Handler.id_apply] invariants
     · fun pref _ _ s => s = 2 * pref.length
   all_goals simp_all
   omega
@@ -98,7 +98,7 @@ theorem loopCalls_spend (c : P.A → ℕ) (a : P.A) (n : ℕ) :
     ⦃ fun s => s = 0 ⦄ (loopCalls a n).liftM ((Handler.id P).withCharge c)
       ⦃ fun _ s => s ≤ n * c a ⦄ := by
   simp only [loopCalls, FreeM.liftM_bind, FreeM.liftM_forIn, FreeM.liftM_lift', FreeM.liftM_pure]
-  vcgen [Handler.id] invariants
+  vcgen [Handler.id_apply] invariants
     · fun pref _ _ s => s = pref.length * c a
   all_goals simp_all [Nat.succ_mul]
 
@@ -121,7 +121,7 @@ example (c : P.A → ℕ) (a : P.A) (b : Bool) :
     ⦃ fun s => s = 0 ⦄ (branchy a b).liftM ((Handler.id P).withCharge c)
       ⦃ fun _ s => s ≤ 2 * c a ⦄ := by
   unfold branchy
-  vcgen [FreeM.liftM_lift_bind', FreeM.liftM_ite, FreeM.liftM_pure, Handler.id]
+  vcgen [FreeM.liftM_lift_bind', FreeM.liftM_ite, FreeM.liftM_pure, Handler.id_apply]
   all_goals simp_all
   all_goals omega
 

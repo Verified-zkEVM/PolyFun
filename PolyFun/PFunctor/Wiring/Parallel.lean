@@ -35,8 +35,7 @@ variable {inputInterface : Inputs → PFunctor.{uA, uB}}
 /-- Evaluate two independent wirings and combine their handlers in parallel.
 The duplicated external-input interface prevents implicit contraction. -/
 def evalParallel
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     {leftOutput rightOutput : PFunctor.{uA, uB}}
     (left : Wiring Boxes Arity Dom Cod Inputs inputInterface leftOutput)
     (right : Wiring Boxes Arity Dom Cod Inputs inputInterface rightOutput) :
@@ -46,8 +45,7 @@ def evalParallel
   Handler.parallel (eval implementation left) (eval implementation right)
 
 @[simp] theorem evalParallel_left
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     {leftOutput rightOutput : PFunctor.{uA, uB}}
     (left : Wiring Boxes Arity Dom Cod Inputs inputInterface leftOutput)
     (right : Wiring Boxes Arity Dom Cod Inputs inputInterface rightOutput)
@@ -57,8 +55,7 @@ def evalParallel
         (eval implementation left operation) := rfl
 
 @[simp] theorem evalParallel_right
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     {leftOutput rightOutput : PFunctor.{uA, uB}}
     (left : Wiring Boxes Arity Dom Cod Inputs inputInterface leftOutput)
     (right : Wiring Boxes Arity Dom Cod Inputs inputInterface rightOutput)
@@ -68,8 +65,7 @@ def evalParallel
         (eval implementation right operation) := rfl
 
 @[simp] theorem evalParallel_both
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     {leftOutput rightOutput : PFunctor.{uA, uB}}
     (left : Wiring Boxes Arity Dom Cod Inputs inputInterface leftOutput)
     (right : Wiring Boxes Arity Dom Cod Inputs inputInterface rightOutput)
@@ -86,8 +82,7 @@ def evalDisplayedParallel
     (codDisplay : (b : Boxes) → Display.{uA, uB, uC, uD} (Cod b))
     (inputDisplay : (i : Inputs) →
       Display.{uA, uB, uC, uD} (inputInterface i))
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (displayedImplementation : (b : Boxes) →
       Display.Handler (codDisplay b) (Display.sigma (domDisplay b))
         (implementation b))

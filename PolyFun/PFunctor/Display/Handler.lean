@@ -15,7 +15,7 @@ public import PolyFun.PFunctor.Handler.Free
 This file supplies the display-level counterpart of a free-monad handler. If
 
 ```text
-f : (a : P.A) → FreeM Q (P.B a)
+f : PFunctor.Handler (FreeM Q) P
 ```
 
 implements every operation of `P` as a `Q`-program, then
@@ -46,7 +46,7 @@ abbrev Handler
     {Q : PFunctor.{uA', uB'}}
     (S : Display.{uA, uB, uC, uD} P)
     (T : Display.{uA', uB', uC', uD'} Q)
-    (f : (a : P.A) → FreeM Q (P.B a)) :=
+    (f : PFunctor.Handler (FreeM Q) P) :=
   (a : P.A) → (c : S.position a) →
     FreeM.Displayed (T.toDisplayedAlgebra (S.direction a c)) (f a)
 
@@ -59,7 +59,7 @@ def liftM
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
-    (f : (a : P.A) → FreeM Q (P.B a))
+    (f : PFunctor.Handler (FreeM Q) P)
     (df : Handler S T f) :
     FreeM.Displayed (T.toDisplayedAlgebra F) (t.liftM f) :=
   match t, d with
@@ -75,7 +75,7 @@ theorem liftM_pure
     (T : Display.{uA', uB', uC', uD'} Q)
     {E : Type uB} {F : E → Type uF}
     (x : E) (d : ULift.{max uC uB uD} (F x))
-    (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
+    (f : PFunctor.Handler (FreeM Q) P) (df : Handler S T f) :
     S.liftM T (pure x) d f df = T.leaf F x d.down :=
   rfl
 
@@ -87,7 +87,7 @@ theorem liftM_liftBind
     (a : P.A) (rest : P.B a → FreeM P E) (c : S.position a)
     (children : (b : P.B a) → S.direction a c b →
       FreeM.Displayed (S.toDisplayedAlgebra F) (rest b))
-    (f : (a : P.A) → FreeM Q (P.B a)) (df : Handler S T f) :
+    (f : PFunctor.Handler (FreeM Q) P) (df : Handler S T f) :
     S.liftM T (FreeM.liftBind a rest) ⟨c, children⟩ f df =
       T.bind (f a) (df a c) (fun b => (rest b).liftM f)
         (fun b e => S.liftM T (rest b) (children b e) f df) :=
@@ -103,12 +103,13 @@ theorem liftM_congr
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
-    {f g : (a : P.A) → FreeM Q (P.B a)}
+    {f g : PFunctor.Handler (FreeM Q) P}
     (h : f = g)
     (df : Handler S T f) (dg : Handler S T g)
     (hd : (a : P.A) → (c : S.position a) →
-      T.transport (S.direction a c) (congrFun h a) (df a c) = dg a c) :
-    T.transport F (congrArg (t.liftM ·) h) (S.liftM T t d f df) =
+      T.transport (S.direction a c) (PFunctor.Handler.congr_fun h a) (df a c) = dg a c) :
+    T.transport F (congrArg (fun k : PFunctor.Handler (FreeM Q) P => t.liftM k) h)
+        (S.liftM T t d f df) =
       S.liftM T t d g dg := by
   subst g
   have hdf : df = dg := by
@@ -140,7 +141,7 @@ def comp
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB', uC'', uD''} R}
-    {f : (a : P.A) → FreeM Q (P.B a)} {g : (a : Q.A) → FreeM R (Q.B a)}
+    {f : PFunctor.Handler (FreeM Q) P} {g : PFunctor.Handler (FreeM R) Q}
     (second : Handler T U g) (first : Handler S T f) :
     Handler S U (PFunctor.Handler.comp g f) :=
   fun a c => T.liftM U (f a) (first a c) g second
@@ -151,7 +152,7 @@ theorem comp_apply
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB', uC'', uD''} R}
-    {f : (a : P.A) → FreeM Q (P.B a)} {g : (a : Q.A) → FreeM R (Q.B a)}
+    {f : PFunctor.Handler (FreeM Q) P} {g : PFunctor.Handler (FreeM R) Q}
     (second : Handler T U g) (first : Handler S T f)
     (a : P.A) (c : S.position a) :
     second.comp first a c = T.liftM U (f a) (first a c) g second :=
@@ -173,7 +174,7 @@ theorem liftM_id
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t) :
     S.transport F (FreeM.liftM_lift_eq_self t)
-        (S.liftM S t d (fun a => FreeM.lift a) (Handler.id S)) = d := by
+        (S.liftM S t d (PFunctor.Handler.id P) (Handler.id S)) = d := by
   induction t with
   | pure x =>
       cases d
@@ -186,21 +187,21 @@ theorem liftM_id
         (liftM_id_eq ((FreeM.lift a).bind rest))]
       change S.transport F (liftM_id_eq (FreeM.liftBind a rest))
           ⟨c, fun b e =>
-            S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
+            S.liftM S (rest b) (children b e) (PFunctor.Handler.id P)
               (Handler.id S)⟩ = ⟨c, children⟩
       have htransport :
           S.transport F (liftM_id_eq (FreeM.liftBind a rest))
               ⟨c, fun b e =>
-                S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
+                S.liftM S (rest b) (children b e) (PFunctor.Handler.id P)
                   (Handler.id S)⟩ =
             ⟨c, fun b e =>
               S.transport F (liftM_id_eq (rest b))
-                (S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
+                (S.liftM S (rest b) (children b e) (PFunctor.Handler.id P)
                   (Handler.id S))⟩ := by
         convert S.transport_liftBind F a
           (funext fun b => liftM_id_eq (rest b)) c
           (fun b e =>
-            S.liftM S (rest b) (children b e) (fun a => FreeM.lift a)
+            S.liftM S (rest b) (children b e) (PFunctor.Handler.id P)
               (Handler.id S)) using 1
         -- The transported node goal simplifies to a reflexive `Iff`, which
         -- `congr` does not close.
@@ -216,7 +217,7 @@ theorem liftM_id
 private theorem liftM_bind_eq
     {Q : PFunctor.{uA', uB'}}
     {E E' : Type uB}
-    (f : (a : P.A) → FreeM Q (P.B a)) (g : E → FreeM P E') :
+    (f : PFunctor.Handler (FreeM Q) P) (g : E → FreeM P E') :
     (t : FreeM P E) →
       (t.bind g).liftM f = (t.liftM f).bind fun x => (g x).liftM f
   | .pure _ => rfl
@@ -237,7 +238,7 @@ theorem liftM_bind
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
     (g : E → FreeM P E')
     (dg : (x : E) → F x → FreeM.Displayed (S.toDisplayedAlgebra G) (g x))
-    (f : (a : P.A) → FreeM Q (P.B a))
+    (f : PFunctor.Handler (FreeM Q) P)
     (df : Handler S T f) :
     T.transport G (FreeM.liftM_bind f t g)
         (S.liftM T (t.bind g) (S.bind t d g dg) f df) =
@@ -314,8 +315,8 @@ theorem liftM_bind
 private theorem liftM_comp_eq
     {Q : PFunctor.{uA', uB}} {R : PFunctor.{uA'', uB'}}
     {E : Type uB}
-    (first : (a : P.A) → FreeM Q (P.B a))
-    (second : (a : Q.A) → FreeM R (Q.B a)) :
+    (first : PFunctor.Handler (FreeM Q) P)
+    (second : PFunctor.Handler (FreeM R) Q) :
     (t : FreeM P E) →
       (t.liftM first).liftM second =
         t.liftM (fun a => (first a).liftM second)
@@ -335,15 +336,15 @@ theorem liftM_comp
     {E : Type uB} {F : E → Type uF}
     (t : FreeM P E)
     (d : FreeM.Displayed (S.toDisplayedAlgebra F) t)
-    (first : (a : P.A) → FreeM Q (P.B a))
+    (first : PFunctor.Handler (FreeM Q) P)
     (dfirst : Handler S T first)
-    (second : (a : Q.A) → FreeM R (Q.B a))
+    (second : PFunctor.Handler (FreeM R) Q)
     (dsecond : Handler T U second) :
     U.transport F
         (FreeM.liftM_comp (P := P) (Q := Q) (m := FreeM R) t first second)
         (T.liftM U (t.liftM first) (S.liftM T t d first dfirst)
           second dsecond) =
-      S.liftM U t d (fun a => (first a).liftM second)
+      S.liftM U t d (PFunctor.Handler.comp second first)
         (dsecond.comp dfirst) := by
   induction t with
   | pure x =>
@@ -370,7 +371,7 @@ theorem liftM_comp
           (T.liftM U (first a) (dfirst a c) second dsecond)
           (fun b => (rest b).liftM fun a => (first a).liftM second)
           (fun b e => S.liftM U (rest b) (children b e)
-            (fun a => (first a).liftM second) (dsecond.comp dfirst))
+            (PFunctor.Handler.comp second first) (dsecond.comp dfirst))
       have firstStep :
           U.transport F (FreeM.liftM_bind second (first a) k)
               (T.liftM U ((first a).bind k)
@@ -392,7 +393,7 @@ theorem liftM_comp
                 (S.liftM T (rest b) (children b e) first dfirst)
                 second dsecond) =
             S.liftM U (rest b) (children b e)
-              (fun a => (first a).liftM second) (dsecond.comp dfirst) := by
+              (PFunctor.Handler.comp second first) (dsecond.comp dfirst) := by
         rw [U.transport_proof_irrel F (congrFun childEq b)
           (FreeM.liftM_comp (rest b) first second)]
         exact ih b (children b e)
@@ -427,7 +428,7 @@ theorem id_comp_apply
     {Q : PFunctor.{uA', uB}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB, uC', uD'} Q}
-    {f : (a : P.A) → FreeM Q (P.B a)}
+    {f : PFunctor.Handler (FreeM Q) P}
     (first : Handler S T f) (a : P.A) (c : S.position a) :
     T.transport (S.direction a c) (FreeM.liftM_lift_eq_self (f a))
         ((Handler.id T).comp first a c) = first a c :=
@@ -439,7 +440,7 @@ theorem comp_id_apply
     {Q : PFunctor.{uA', uB'}}
     {S : Display.{uA, uB, uC, uD} P}
     {T : Display.{uA', uB', uC', uD'} Q}
-    {f : (a : P.A) → FreeM Q (P.B a)}
+    {f : PFunctor.Handler (FreeM Q) P}
     (first : Handler S T f) (a : P.A) (c : S.position a) :
     T.transport (S.direction a c) (FreeM.liftM_lift f a)
         (first.comp (Handler.id S) a c) = first a c := by
@@ -455,9 +456,9 @@ theorem comp_assoc_apply
     {T : Display.{uA', uB, uC', uD'} Q}
     {U : Display.{uA'', uB, uC'', uD''} R}
     {W : Display.{uA''', uB', uC''', uD'''} V}
-    {f : (a : P.A) → FreeM Q (P.B a)}
-    {g : (a : Q.A) → FreeM R (Q.B a)}
-    {h : (a : R.A) → FreeM V (R.B a)}
+    {f : PFunctor.Handler (FreeM Q) P}
+    {g : PFunctor.Handler (FreeM R) Q}
+    {h : PFunctor.Handler (FreeM V) R}
     (first : Handler S T f) (second : Handler T U g)
     (third : Handler U W h) (a : P.A) (c : S.position a) :
     W.transport (S.direction a c)
@@ -516,7 +517,7 @@ theorem transport_apply
     (displayedPosition : S.position operation) :
     (transport h df) operation displayedPosition =
       T.transport (S.direction operation displayedPosition)
-        (congrFun h operation) (df operation displayedPosition) := by
+        (PFunctor.Handler.congr_fun h operation) (df operation displayedPosition) := by
   cases h
   rfl
 
@@ -531,7 +532,7 @@ theorem id_comp
         ((Display.Handler.id T).comp first) = first := by
   funext operation displayedPosition
   rw [transport_apply, T.transport_proof_irrel (S.direction operation displayedPosition)
-    (congrFun (PFunctor.Handler.id_comp f) operation)
+    (PFunctor.Handler.congr_fun (PFunctor.Handler.id_comp f) operation)
     (FreeM.liftM_lift_eq_self (f operation))]
   exact id_comp_apply first operation displayedPosition
 
@@ -546,7 +547,7 @@ theorem comp_id
         (first.comp (Display.Handler.id S)) = first := by
   funext operation displayedPosition
   rw [transport_apply, T.transport_proof_irrel (S.direction operation displayedPosition)
-    (congrFun (PFunctor.Handler.comp_id f) operation)
+    (PFunctor.Handler.congr_fun (PFunctor.Handler.comp_id f) operation)
     (FreeM.liftM_lift f operation)]
   exact comp_id_apply first operation displayedPosition
 
@@ -569,7 +570,7 @@ theorem comp_assoc
   rw [transport_apply]
   let hpoint := FreeM.liftM_comp (f operation) g h
   rw [W.transport_proof_irrel (S.direction operation displayedPosition)
-    (congrFun (PFunctor.Handler.comp_assoc h g f) operation) hpoint.symm]
+    (PFunctor.Handler.congr_fun (PFunctor.Handler.comp_assoc h g f) operation) hpoint.symm]
   have hforward := comp_assoc_apply first second third operation displayedPosition
   rw [← hforward]
   exact W.transport_symm_transport (S.direction operation displayedPosition) hpoint

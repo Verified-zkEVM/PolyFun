@@ -72,8 +72,8 @@ end Interp
 
 /-- The handler that answers each event by the corresponding lifted tree. Interpreting through
 it leaves every event in place, up to the monad lift. -/
-def liftHandler {n : Type u → Type v} [MonadLiftT (ITree E) n] : PFunctor.Handler n E :=
-  fun a => monadLift (lift a)
+def liftHandler {n : Type u → Type v} [MonadLiftT (ITree E) n] : PFunctor.Handler n E where
+  toFun a := monadLift (lift a)
 
 @[simp] theorem liftHandler_apply {n : Type u → Type v} [MonadLiftT (ITree E) n] (a : E.A) :
     (liftHandler (n := n) : PFunctor.Handler n E) a = monadLift (lift a) :=

@@ -54,8 +54,8 @@ variable {I₁ : PFunctor.{uI₁, u}} {I₂ : PFunctor.{uI₂, u}}
 /-! ### Transport along state equivalences -/
 
 /-- Transport a stateful handler along an equivalence of states. -/
-def stateCongr [Functor m] (e : S ≃ T) (h : Stateful m S E) : Stateful m T E :=
-  fun a => StateT.mk fun t => Prod.map _root_.id e <$> (h a).run (e.symm t)
+def stateCongr [Functor m] (e : S ≃ T) (h : Stateful m S E) : Stateful m T E where
+  toFun a := StateT.mk fun t => Prod.map _root_.id e <$> (h a).run (e.symm t)
 
 @[simp] theorem stateCongr_apply_run [Functor m] (e : S ≃ T) (h : Stateful m S E) (a : E.A)
     (t : T) : (stateCongr e h a).run t = Prod.map _root_.id e <$> (h a).run (e.symm t) := rfl
@@ -107,7 +107,7 @@ theorem run_link [Monad m] [LawfulMonad m] (outer : Stateful (FreeM M) S E)
 theorem link_assoc [Monad m] [LawfulMonad m] (a : Stateful (FreeM M) S E)
     (b : Stateful (FreeM I) T M) (c : Stateful m U I) :
     (a.link b).link c = stateCongr (_root_.Equiv.prodAssoc S T U).symm (a.link (b.link c)) := by
-  funext q
+  ext q : 1
   refine StateT.ext fun ⟨⟨s, t⟩, u⟩ => ?_
   simp only [link_apply_run, stateCongr_apply_run, _root_.Equiv.symm_symm,
     _root_.Equiv.prodAssoc_apply, run_link, run_map, Functor.map_map]
@@ -118,7 +118,7 @@ gains a trivial component. -/
 theorem link_lift_id (a : Stateful (FreeM M) S E) :
     a.link (lift (S := PUnit.{u + 1}) (Handler.id M)) =
       stateCongr (_root_.Equiv.prodPUnit S).symm a := by
-  funext q
+  ext q : 1
   refine StateT.ext fun ⟨s, ⟨⟩⟩ => ?_
   have hid : ((a q).run s).liftM (Handler.id M) = (a q).run s := FreeM.liftM_lift_eq_self _
   simp only [link_apply_run, stateCongr_apply_run, run_lift_handler, hid, Functor.map_map,
@@ -130,7 +130,7 @@ gains a trivial component. -/
 theorem lift_id_link [Monad m] [LawfulMonad m] (a : Stateful m S E) :
     (lift (S := PUnit.{u + 1}) (Handler.id E)).link a =
       stateCongr (_root_.Equiv.punitProd S).symm a := by
-  funext q
+  ext q : 1
   refine StateT.ext fun ⟨⟨⟩, s⟩ => ?_
   change (fun r : (E.B q × PUnit) × S => (r.1.1, (r.1.2, r.2))) <$>
       a.run (FreeM.lift q >>= fun d => pure (d, PUnit.unit)) s = _
@@ -145,7 +145,7 @@ theorem reindex_eq_link [Monad m] [LawfulMonad m] (impl : Handler (FreeM M) E)
     (h : Stateful m S M) :
     h.reindex impl =
       stateCongr (_root_.Equiv.punitProd S) ((lift (S := PUnit.{u + 1}) impl).link h) := by
-  funext q
+  ext q : 1
   refine StateT.ext fun s => ?_
   simp only [stateCongr_apply_run, _root_.Equiv.punitProd_symm_apply, link_apply_run, lift,
     StateT.run_lift, reindex_apply, bind_pure_comp, run_map, Functor.map_map]
@@ -155,8 +155,8 @@ theorem reindex_eq_link [Monad m] [LawfulMonad m] (impl : Handler (FreeM M) E)
 
 /-- Relabel the imports of a package along a lens: each answer program is transported by
 `FreeM.mapLens`. -/
-def mapLens (l : Lens I J) (h : Stateful (FreeM I) S E) : Stateful (FreeM J) S E :=
-  fun a => StateT.mk fun s => ((h a).run s).mapLens l
+def mapLens (l : Lens I J) (h : Stateful (FreeM I) S E) : Stateful (FreeM J) S E where
+  toFun a := StateT.mk fun s => ((h a).run s).mapLens l
 
 @[simp] theorem mapLens_apply_run (l : Lens I J) (h : Stateful (FreeM I) S E) (a : E.A)
     (s : S) : (h.mapLens l a).run s = ((h a).run s).mapLens l := rfl
@@ -180,7 +180,7 @@ theorem run_mapLens (l : Lens I J) (h : Stateful (FreeM I) S E) {α : Type u} :
 theorem mapLens_link (l : Lens I J) (outer : Stateful (FreeM M) S E)
     (inner : Stateful (FreeM I) T M) :
     (outer.link inner).mapLens l = outer.link (inner.mapLens l) := by
-  funext q
+  ext q : 1
   refine StateT.ext fun ⟨s, t⟩ => ?_
   simp only [mapLens_apply_run, link_apply_run, run_mapLens, FreeM.mapLens_map]
 
@@ -209,7 +209,7 @@ handler on the first state component and keeps the second. -/
 theorem run_sum_mapLens_inl [Monad m] [LawfulMonad m] (f : Stateful m T₁ M₁)
     (g : Stateful m T₂ M₂) {α : Type u} (x : FreeM M₁ α) (t₁ : T₁) (t₂ : T₂) :
     (sum f g).run (x.mapLens Lens.inl) (t₁, t₂) = Prod.map _root_.id (·, t₂) <$> f.run x t₁ := by
-  rw [run, FreeM.liftM_mapLens]
+  rw [run, Handler.liftM_mapLens]
   refine (run_map_eq_of_apply_map_eq f _ (·, t₂) (fun a s => ?_) x t₁).symm
   rw [comapLens_apply, StateT.run_map]
   change _ = (fun p => (p.1, p.2)) <$> (Prod.map _root_.id (·, t₂) <$> (f a).run s)
@@ -220,7 +220,7 @@ handler on the second state component and keeps the first. -/
 theorem run_sum_mapLens_inr [Monad m] [LawfulMonad m] (f : Stateful m T₁ M₁)
     (g : Stateful m T₂ M₂) {α : Type u} (x : FreeM M₂ α) (t₁ : T₁) (t₂ : T₂) :
     (sum f g).run (x.mapLens Lens.inr) (t₁, t₂) = Prod.map _root_.id (t₁, ·) <$> g.run x t₂ := by
-  rw [run, FreeM.liftM_mapLens]
+  rw [run, Handler.liftM_mapLens]
   refine (run_map_eq_of_apply_map_eq g _ (t₁, ·) (fun a s => ?_) x t₂).symm
   rw [comapLens_apply, StateT.run_map]
   change _ = (fun p => (p.1, p.2)) <$> (Prod.map _root_.id (t₁, ·) <$> (g a).run s)
@@ -233,7 +233,7 @@ theorem sumMap_link_sum [Monad m] [LawfulMonad m]
     (i₁ : Stateful m T₁ M₁) (i₂ : Stateful m T₂ M₂) :
     (sumMap o₁ o₂).link (sum i₁ i₂) =
       stateCongr (_root_.Equiv.prodProdProdComm S₁ T₁ S₂ T₂) (sum (o₁.link i₁) (o₂.link i₂)) := by
-  funext q
+  ext q : 1
   rcases q with q | q <;> refine StateT.ext fun ⟨⟨s₁, s₂⟩, ⟨t₁, t₂⟩⟩ => ?_
   · simp only [link_apply_run, sumMap_inl_run, sum_inl_run, stateCongr_apply_run, run_map,
       run_sum_mapLens_inl, Functor.map_map, _root_.Equiv.prodProdProdComm_symm,

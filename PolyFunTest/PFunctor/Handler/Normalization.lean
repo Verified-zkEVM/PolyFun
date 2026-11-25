@@ -23,8 +23,8 @@ namespace PFunctor.Handler.Normalization.Examples
 
 abbrev Query : PFunctor.{0, 0} := Bool y^ Nat
 
-def answerAndAdvance : Handler.Stateful Option Nat Query :=
-  fun query state =>
+def answerAndAdvance : Handler.Stateful Option Nat Query where
+  toFun query state :=
     Bool.rec (some (state + 20, state + 2))
       (some (state + 10, state + 1)) query
 

@@ -46,8 +46,8 @@ open AssemblyTests (boundary echo)
     Handler (StateT Unit Id) (whole.effect node) := by
   intro node
   rcases node with node | node
-  · rcases node with node | node <;> exact fun operation => operation.elim
-  · exact fun operation => operation.elim
+  · rcases node with node | node <;> exact ⟨fun operation => operation.elim⟩
+  · exact ⟨fun operation => operation.elim⟩
 
 /-- The graph equality retains the context's actual identity. -/
 theorem factorization : whole.reindex (Diagram.parContextLeftEquiv Unit Unit Unit) = factored :=

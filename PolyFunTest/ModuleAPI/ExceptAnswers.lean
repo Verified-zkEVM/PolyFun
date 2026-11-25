@@ -34,7 +34,8 @@ namespace PolyFunTest.ExceptAnswers
 /-- The answer type depends on the operation. -/
 abbrev signature : PFunctor.{0, 0} := ⟨Bool, fun | true => Bool | false => Nat⟩
 
-private def handler : Handler (ExceptT String (StateM Nat)) signature := fun
+private def handler : Handler (ExceptT String (StateM Nat)) signature where
+  toFun
   | true => ExceptT.mk fun count => (.error "stopped", count + 1)
   | false => ExceptT.mk fun count => (.ok 7, count + 1)
 

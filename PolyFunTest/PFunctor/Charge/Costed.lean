@@ -47,12 +47,14 @@ theorem scale_apply (k n : ℕ) : scale k n = k * n :=
   rfl
 
 /-- Each hash query is two compression calls. -/
-def hashByCompress : Handler (FreeM Compress) Hash := fun _ => do
+def hashByCompress : Handler (FreeM Compress) Hash where
+  toFun _ := do
   let _ ← FreeM.lift (P := Compress) ()
   FreeM.lift (P := Compress) ()
 
 /-- Each compression call is three steps. -/
-def compressBySteps : Handler (FreeM Step) Compress := fun _ => do
+def compressBySteps : Handler (FreeM Step) Compress where
+  toFun _ := do
   let _ ← FreeM.lift (P := Step) ()
   let _ ← FreeM.lift (P := Step) ()
   FreeM.lift (P := Step) ()
@@ -128,7 +130,8 @@ example (x : FreeM Hash Bool) (q : ℕ) (hx : x.IsChargeBound (fun _ => 1) q) :
 /-! ## Stateful packages -/
 
 /-- Each compression call is three steps; the package also counts compressions. -/
-def countingSteps : Stateful (FreeM Step) ℕ Compress := fun _ count => do
+def countingSteps : Stateful (FreeM Step) ℕ Compress where
+  toFun _ count := do
   let _ ← FreeM.lift (P := Step) ()
   let _ ← FreeM.lift (P := Step) ()
   let b ← FreeM.lift (P := Step) ()

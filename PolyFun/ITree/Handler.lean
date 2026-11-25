@@ -6,6 +6,7 @@ Authors: Quang Dao
 module
 
 public import PolyFun.ITree.Basic
+public import PolyFun.PFunctor.Handler
 public import PolyFun.PFunctor.Lens.Basic
 
 /-! # Event handlers
@@ -50,10 +51,9 @@ Concretely, for each event name `a : E.A` we choose an interaction tree of
 type `ITree F (E.B a)` returning the answer expected by the source signature.
 
 This is the Lean version of Rocq's `Handler E F := E ~> itree F`. -/
-@[reducible]
-def Handler (E : PFunctor.{uEA, uEB}) (F : PFunctor.{uFA, uFB}) :
+abbrev Handler (E : PFunctor.{uEA, uEB}) (F : PFunctor.{uFA, uFB}) :
     Type (max uEA uEB uFA uFB) :=
-  ∀ a : E.A, ITree F (E.B a)
+  PFunctor.Handler (ITree F) E
 
 namespace Handler
 
@@ -62,9 +62,9 @@ variable {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uFB}}
 
 /-- The trivial handler that interprets each `E`-event as itself, i.e. the
 single-step `lift` from `PolyFun.ITree.Basic`. -/
-@[implicit_reducible]
-def id (E : PFunctor.{uEA, uEB}) : Handler E E :=
-  fun a => lift a
+@[implicit_reducible, simps]
+def id (E : PFunctor.{uEA, uEB}) : Handler E E where
+  toFun a := lift a
 
 /-- Promote a polynomial-functor lens to a handler that performs a pure
 renaming. For each source event `a : E.A`, the handler issues the renamed
@@ -73,8 +73,8 @@ arity map.
 
 There are no extra silent steps and no extra queries: this is the canonical
 "event-renaming" handler. -/
-def ofLens (φ : PFunctor.Lens E F) : Handler E F :=
-  fun a => query (φ.toFunA a) (fun b => pure (φ.toFunB a b))
+def ofLens (φ : PFunctor.Lens E F) : Handler E F where
+  toFun a := query (φ.toFunA a) (fun b => pure (φ.toFunB a b))
 
 @[simp] theorem ofLens_id (E : PFunctor.{uEA, uEB}) :
     ofLens (PFunctor.Lens.id E) = id E := rfl
@@ -89,7 +89,8 @@ signature remain independent. -/
 def case_ {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uEB}}
     (left : Handler.{uEA, uEB, uGA, uGB} E G)
     (right : Handler.{uFA, uEB, uGA, uGB} F G) :
-    Handler.{max uEA uFA, uEB, uGA, uGB} (E + F) G
+    Handler.{max uEA uFA, uEB, uGA, uGB} (E + F) G where
+  toFun
   | .inl a => left a
   | .inr a => right a
 
@@ -108,7 +109,7 @@ lenses. -/
 theorem case_ofLens {E : PFunctor.{uEA, uEB}} {F : PFunctor.{uFA, uEB}}
     (left : PFunctor.Lens E G) (right : PFunctor.Lens F G) :
     case_ (ofLens left) (ofLens right) =
-      ofLens (PFunctor.Lens.sumPair left right) := by funext a; cases a <;> rfl
+      ofLens (PFunctor.Lens.sumPair left right) := by ext a; cases a <;> rfl
 
 end Handler
 

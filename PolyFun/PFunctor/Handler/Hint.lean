@@ -44,7 +44,7 @@ variable {P : PFunctor.{w, z}}
 /-- The decoded partial handler supplies the same answer whenever the hidden handler answers. -/
 abbrev PreservesSettled (source : T → Handler Option P) (hint : T → H)
     (decode : H → Handler Option P) : Prop :=
-  Valid (fun t a c => ∀ b, source t a = some b → c = some b) hint decode
+  Valid (fun t a c => ∀ b, source t a = some b → c = some b) hint fun h => decode h
 
 /-- Preserving settled answers is equivalent to preserving every settled adaptive program.
 Single-request programs give the reverse implication. -/
@@ -64,11 +64,11 @@ theorem preservesSettled_iff_liftM (source : T → Handler Option P) (hint : T �
 including programs whose evaluation fails. -/
 theorem exact_iff_liftM (source : T → Handler Option P) (hint : T → H)
     (decode : H → Handler Option P) :
-    Valid (fun t a c => source t a = c) hint decode ↔
+    Valid (fun t a c => source t a = c) hint (fun h => decode h) ↔
       ∀ t {α : Type z} (x : FreeM P α), x.liftM (source t) = x.liftM (decode (hint t)) := by
   constructor
   · intro h t α x
-    rw [show source t = decode (hint t) from funext (h t)]
+    rw [show source t = decode (hint t) from Handler.ext (h t)]
   · intro h t a
     simpa only [FreeM.liftM_lift] using h t (FreeM.lift a)
 
@@ -85,7 +85,8 @@ theorem exists_preservesSettled_iff (source : T → Handler Option P) (hint : T 
     rw [he] at hs
     exact Option.some.inj (hs.symm.trans (hd t' a b' hb'))
   · intro consistent
-    apply (exists_valid_iff _ _).2
+    refine (fun ⟨d, hd⟩ => ⟨fun h => ⟨d h⟩, hd⟩ : (∃ decode, Valid _ _ decode) → _)
+      ((exists_valid_iff (fun t a c => ∀ b, source t a = some b → c = some b) hint).2 ?_)
     intro s a
     by_cases available : ∃ b, ∃ t, hint t = s ∧ source t a = some b
     · obtain ⟨b, t, ht, hb⟩ := available

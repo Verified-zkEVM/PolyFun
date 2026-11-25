@@ -53,12 +53,12 @@ end Generic
 abbrev counter : PFunctor.{0, 0} := ⟨Unit, fun _ => Nat⟩
 
 /-- Answer one request by asking the counter twice and adding the two answers. -/
-def twice : Handler (FreeM counter) counter :=
-  fun _ => FreeM.liftBind () fun a => FreeM.liftBind () fun b => FreeM.pure (a + b)
+def twice : Handler (FreeM counter) counter where
+  toFun _ := FreeM.liftBind () fun a => FreeM.liftBind () fun b => FreeM.pure (a + b)
 
 /-- A counter in the state monad: answer with the count, then increment it. -/
-def tick : Handler (StateM Nat) counter :=
-  fun _ => modifyGet fun n => (n, n + 1)
+def tick : Handler (StateM Nat) counter where
+  toFun _ := modifyGet fun n => (n, n + 1)
 
 /-- Ask for two answers and return both, in order. -/
 def twoQueries : FreeM counter (Nat × Nat) :=

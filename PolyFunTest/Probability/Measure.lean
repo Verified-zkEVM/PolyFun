@@ -93,8 +93,7 @@ noncomputable example {Boxes : Type 1} {Inputs : Type 2} {Arity : Boxes → Type
     [∀ a, MeasurableSpace ((PFunctor.sigma inputInterface).B a)]
     [∀ a, Countable ((PFunctor.sigma inputInterface).B a)]
     [∀ a, MeasurableSingletonClass ((PFunctor.sigma inputInterface).B a)]
-    (implementation : (b : Boxes) → (a : (Cod b).A) →
-      FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (services : KernelHandler (PFunctor.sigma inputInterface) ℕ)
     (wiring : Wiring Boxes Arity Dom Cod Inputs inputInterface output) (a : output.A)
     [MeasurableSpace (output.B a)] : Kernel ℕ (output.B a × ℕ) :=

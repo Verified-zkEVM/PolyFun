@@ -35,8 +35,7 @@ def Inputs := PUnit
 
 def inputInterface (_ : Inputs) : PFunctor := Step
 
-def implementation (box : Boxes) : (operation : (Cod box).A) →
-    FreeM (PFunctor.sigma (Dom box)) ((Cod box).B operation) :=
+def implementation (box : Boxes) : Handler (FreeM (PFunctor.sigma (Dom box))) (Cod box) :=
   nomatch box
 
 def inputWiring : Wiring Boxes Arity Dom Cod Inputs inputInterface Step :=

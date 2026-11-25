@@ -39,7 +39,8 @@ namespace PolyFunTest.ChargeHandlers
 abbrev Coin : PFunctor := ⟨Unit, fun _ => Bool⟩
 
 /-- Implement each call by two calls, returning the second answer. -/
-def doubled : Handler (FreeM Coin) Coin := fun _ => do
+def doubled : Handler (FreeM Coin) Coin where
+  toFun _ := do
   let _ ← FreeM.lift (P := Coin) ()
   FreeM.lift (P := Coin) ()
 
@@ -75,7 +76,8 @@ example {α : Type} (x : FreeM Coin α) (n : ℕ) (hx : x.IsChargeBound (fun _ =
   exact h2.liftM doubled fun _ => by cost_bound [doubled]
 
 /-- A counting handler: each call increments a counter and makes two calls. -/
-def counted : Handler (StateT ℕ (FreeM Coin)) Coin := fun a => do
+def counted : Handler (StateT ℕ (FreeM Coin)) Coin where
+  toFun a := do
   modify (· + 1)
   StateT.lift (doubled a)
 
@@ -88,7 +90,8 @@ example {α : Type} (x : FreeM Coin α) (n : ℕ) (hx : x.IsChargeBound (fun _ =
 def chgN : Coin.A → ℕ := fun _ => 2
 
 /-- Always answer `true`. -/
-def answer : Handler Id Coin := fun _ => true
+def answer : Handler Id Coin where
+  toFun _ := true
 
 def flips : FreeM Coin Bool := do
   let b ← FreeM.lift (P := Coin) ()
@@ -128,7 +131,8 @@ example : ((flips.liftM (answer.withBudget chgN 3)).run 0).run = none := rfl
 
 abbrev Keys : PFunctor.{0, 0} := ⟨ℕ, fun _ => Bool⟩
 
-def answerTrue : Handler Id Keys := fun _ => true
+def answerTrue : Handler Id Keys where
+  toFun _ := true
 
 def twoKeys : FreeM Keys Bool := do
   let _ ← FreeM.lift (P := Keys) 1
@@ -147,8 +151,9 @@ example :
 /-! ## A caching handler -/
 
 /-- Answer a key from the cache when it has been seen, otherwise query it and remember it. -/
-def cached : Handler (StateT (Finset ℕ) (FreeM Keys)) Keys := fun k cache =>
-  if k ∈ cache then pure (true, cache)
+def cached : Handler (StateT (Finset ℕ) (FreeM Keys)) Keys where
+  toFun k cache :=
+    if k ∈ cache then pure (true, cache)
   else (fun b => (b, insert k cache)) <$> FreeM.lift (P := Keys) k
 
 theorem cached_step (a : ℕ) (σ₁ : Finset ℕ) (r : Path ((cached a).run σ₁)) :

@@ -77,7 +77,7 @@ variable {m : Type → Type} {result : Type} {Δ Δ₁ Δ₂ Γ : PortBoundary}
 /-- A persistent bidirectional relay with no local effects and charged receive/send steps. -/
 @[expose] def idWire (Γ : PortBoundary) :
     HandledAssembly m (PortBoundary.tensor (PortBoundary.swap Γ) Γ) result :=
-  atom (Assembly.relay Γ) fun operation => operation.elim
+  atom (Assembly.relay Γ) ⟨fun operation => operation.elim⟩
 
 /-- The operation-only theory of finite handled assemblies. -/
 @[expose] def theory (m : Type → Type) (result : Type) : OpenTheory.{1} where

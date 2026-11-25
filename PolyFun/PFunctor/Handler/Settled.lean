@@ -108,7 +108,7 @@ theorem output_ofHandler_eq_of_liftM_eq_some (p : Handler Option P) (choose : (a
     {x : FreeM P α} {v : α} (hx : x.liftM p = some v) :
     output x (Path.ofHandler choose x) = v := by
   rw [output_ofHandler]
-  exact liftM_eq_pure_of_liftM_eq_some (m := Id) p choose hchoose hx
+  exact liftM_eq_pure_of_liftM_eq_some (m := Id) p ⟨choose⟩ hchoose hx
 
 end FreeM
 

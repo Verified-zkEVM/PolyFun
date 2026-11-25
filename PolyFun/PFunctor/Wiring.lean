@@ -64,21 +64,19 @@ variable {Inputs : Type uInputs} {inputInterface : Inputs → PFunctor.{uA, uB}}
 /-- Evaluate a recursive wiring to a free handler from its output to the
 indexed coproduct of external inputs. -/
 def eval
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a)) :
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b)) :
     {output : PFunctor.{uA, uB}} →
       Wiring Boxes Arity Dom Cod Inputs inputInterface output →
-      (a : output.A) → FreeM (PFunctor.sigma inputInterface) (output.B a)
-  | _, .input i => fun a =>
-      FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a)
-  | _, .box b children => fun a =>
+      PFunctor.Handler (FreeM (PFunctor.sigma inputInterface)) output
+  | _, .input i => ⟨fun a =>
+      FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a)⟩
+  | _, .box b children => ⟨fun a =>
       (implementation b a).liftM
-        (PFunctor.Handler.sigma fun port => eval implementation (children port))
+        (PFunctor.Handler.sigma fun port => eval implementation (children port))⟩
 
 @[simp]
 theorem eval_input
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (i : Inputs) (a : (inputInterface i).A) :
     eval implementation (.input i) a =
       FreeM.lift (P := PFunctor.sigma inputInterface) (PFunctor.sigma.mk i a) :=
@@ -86,8 +84,7 @@ theorem eval_input
 
 @[simp]
 theorem eval_box
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (b : Boxes)
     (children : (port : Arity b) →
       Wiring Boxes Arity Dom Cod Inputs inputInterface (Dom b port))
@@ -133,8 +130,7 @@ def evalDisplayed
     (codDisplay : (b : Boxes) → Display.{uA, uB, uC, uD} (Cod b))
     (inputDisplay : (i : Inputs) →
       Display.{uA, uB, uC, uD} (inputInterface i))
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (displayedImplementation : (b : Boxes) →
       Display.Handler (codDisplay b) (Display.sigma (domDisplay b))
         (implementation b)) :
@@ -158,8 +154,7 @@ theorem evalDisplayed_input
     (codDisplay : (b : Boxes) → Display.{uA, uB, uC, uD} (Cod b))
     (inputDisplay : (i : Inputs) →
       Display.{uA, uB, uC, uD} (inputInterface i))
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (displayedImplementation : (b : Boxes) →
       Display.Handler (codDisplay b) (Display.sigma (domDisplay b))
         (implementation b))
@@ -176,8 +171,7 @@ theorem evalDisplayed_box
     (codDisplay : (b : Boxes) → Display.{uA, uB, uC, uD} (Cod b))
     (inputDisplay : (i : Inputs) →
       Display.{uA, uB, uC, uD} (inputInterface i))
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (displayedImplementation : (b : Boxes) →
       Display.Handler (codDisplay b) (Display.sigma (domDisplay b))
         (implementation b))
@@ -340,8 +334,7 @@ end Displayed
 outer wiring, then interpret each former external input by its replacement. -/
 theorem eval_substitute
     {Inputs' : Type uInputs'} {inputInterface' : Inputs' → PFunctor.{uA, uB}}
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (replacement : (i : Inputs) →
       Wiring Boxes Arity Dom Cod Inputs' inputInterface' (inputInterface i))
     {output : PFunctor.{uA, uB}}
@@ -375,8 +368,7 @@ theorem evalDisplayed_substitute
     {Inputs' : Type uInputs'} {inputInterface' : Inputs' → PFunctor.{uA, uB}}
     (inputDisplay' : (i : Inputs') →
       Display.{uA, uB, uC, uD} (inputInterface' i))
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (displayedImplementation : (b : Boxes) →
       Display.Handler (codDisplay b) (Display.sigma (domDisplay b))
         (implementation b))
@@ -430,12 +422,12 @@ theorem evalDisplayed_substitute
           implementation displayedImplementation
             (Displayed.substitute domDisplay codDisplay inputDisplay inputDisplay'
               replacement displayedReplacement (displayedChildren port)))
-      let childEq : (fun x => (first x).liftM second) = final := by
-        funext x
+      let childEq : PFunctor.Handler.comp second first = final := by
+        ext x : 1
         exact eval_substitute implementation replacement (children x.1) x.2
       let totalEq :=
         (FreeM.liftM_comp (implementation b a) first second).trans
-          (congrArg ((implementation b a).liftM ·) childEq)
+          (congrArg (fun k : PFunctor.Handler _ _ => (implementation b a).liftM k) childEq)
       rw [(Display.sigma inputDisplay').transport_proof_irrel
         ((codDisplay b).direction a c)
         (eval_substitute implementation replacement (.box b children) a)
@@ -447,7 +439,7 @@ theorem evalDisplayed_substitute
       calc
         _ = (Display.sigma inputDisplay').transport
               ((codDisplay b).direction a c)
-              (congrArg ((implementation b a).liftM ·) childEq)
+              (congrArg (fun k : PFunctor.Handler _ _ => (implementation b a).liftM k) childEq)
               ((Display.sigma inputDisplay').transport
                 ((codDisplay b).direction a c)
                 (FreeM.liftM_comp (implementation b a) first second)
@@ -455,10 +447,11 @@ theorem evalDisplayed_substitute
           ((Display.sigma inputDisplay').transport_trans
             ((codDisplay b).direction a c)
             (FreeM.liftM_comp (implementation b a) first second)
-            (congrArg ((implementation b a).liftM ·) childEq) _).symm
+            (congrArg (fun k : PFunctor.Handler _ _ => (implementation b a).liftM k)
+              childEq) _).symm
         _ = (Display.sigma inputDisplay').transport
               ((codDisplay b).direction a c)
-              (congrArg ((implementation b a).liftM ·) childEq)
+              (congrArg (fun k : PFunctor.Handler _ _ => (implementation b a).liftM k) childEq)
               ((dsecond.comp dfirst).comp (displayedImplementation b) a c) := by
           congr 1
           exact Display.Handler.comp_assoc_apply
@@ -470,7 +463,7 @@ theorem evalDisplayed_substitute
             (dsecond.comp dfirst) dfinal (fun x dx => by
               rw [(Display.sigma inputDisplay').transport_proof_irrel
                 ((Display.sigma (domDisplay b)).direction x dx)
-                (congrFun childEq x)
+                (PFunctor.Handler.congr_fun childEq x)
                 (eval_substitute implementation replacement (children x.1) x.2)]
               exact ih x.1 x.2 dx)
 

@@ -319,11 +319,11 @@ theorem toHandler_comp_apply
     (second : Display.Lens T₀ U₀ g₀) (first : Display.Lens S₀ T₀ f₀)
     (a : P₀.A) (c : S₀.position a) :
     U₀.transport (S₀.direction a c)
-        (congrFun (PFunctor.Handler.ofLens_comp g₀ f₀) a)
+        (PFunctor.Handler.congr_fun (PFunctor.Handler.ofLens_comp g₀ f₀) a)
         ((comp second first).toHandler a c) =
       (second.toHandler.comp first.toHandler) a c := by
   rw [U₀.transport_proof_irrel (S₀.direction a c)
-    (congrFun (PFunctor.Handler.ofLens_comp g₀ f₀) a) rfl]
+    (PFunctor.Handler.congr_fun (PFunctor.Handler.ofLens_comp g₀ f₀) a) rfl]
   rfl
 
 /-- Conversion of a composite fiberwise lens is displayed-handler

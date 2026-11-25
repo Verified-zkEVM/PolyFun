@@ -29,7 +29,7 @@ open Interaction.Open PFunctor ReactiveProcess DynSystem OpenSyntax
     .liftBind (.effect ()) fun bit => .pure (.returned bit)
 
 @[expose] def agent (value : Bool) : HandledAssembly Id PortBoundary.empty Bool :=
-  HandledAssembly.atom readBit fun _ => value
+  HandledAssembly.atom readBit ⟨fun _ => value⟩
 
 /-- The machines, states, and routes alone do not distinguish the two interpretations. -/
 example : (agent false).diagram.toDiagram = (agent true).diagram.toDiagram := rfl
@@ -58,7 +58,7 @@ example (value : Bool) :
   cases value <;> rfl
 
 @[expose] def partialAgent : HandledAssembly Option PortBoundary.empty Bool :=
-  HandledAssembly.atom readBit fun _ => none
+  HandledAssembly.atom readBit ⟨fun _ => none⟩
 
 /-- The outer option records failure of the interpreter, distinct from an unfinished prefix. -/
 example : partialAgent.tokenObservation () 0 = some none := rfl

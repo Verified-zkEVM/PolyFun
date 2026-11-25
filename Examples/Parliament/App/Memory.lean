@@ -50,8 +50,8 @@ structure Memory where
   mismatchReadback : Bool := false
 
 /-- Interpret the same polynomial effects used by the real IO application. -/
-def memoryHandler (config : Configuration) : PFunctor.Handler (StateM Memory) (Effects config) :=
-  fun effect => match effect with
+def memoryHandler (config : Configuration) : PFunctor.Handler (StateM Memory) (Effects config) where
+  toFun effect := match effect with
   | .read _ => do
       let memory ← get
       match memory.actions with

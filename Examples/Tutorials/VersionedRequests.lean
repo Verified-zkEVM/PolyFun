@@ -52,7 +52,8 @@ def transition (cell : Cell) : (request : Request) → Store.B request × Cell
     if cell.version = expected then (true, ⟨cell.version + 1, value⟩) else (false, cell)
 
 /-- StateT is just one interpretation of the pure service transition. -/
-def service : Handler (StateM Cell) Store := fun request cell => transition cell request
+def service : Handler (StateM Cell) Store where
+  toFun request cell := transition cell request
 
 /-- Each client obtains its own version, then attempts one update. -/
 def client (text : String) : FreeM Store Bool := do

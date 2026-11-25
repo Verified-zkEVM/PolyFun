@@ -35,8 +35,8 @@ def matter : (CofreeP MatterP).A :=
   M.corec (fun history : List (Fin 3) =>
     ⟨history.length, fun direction => direction :: history⟩) []
 
-def deterministicHandler : Handler Id (PatternP ⊗ MatterP) :=
-  fun _ => (true, 2)
+def deterministicHandler : Handler Id (PatternP ⊗ MatterP) where
+  toFun _ := (true, 2)
 
 /-- A concrete handler run pins the paired direction order and both levels of
 the dependent pattern-path/matter-vertex result. -/

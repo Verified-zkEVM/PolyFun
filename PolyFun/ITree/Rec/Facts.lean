@@ -278,7 +278,7 @@ upstream ITree handler `mrecursive`. -/
 @[implicit_reducible]
 def recursiveHandler :
     Handler (D + E : PFunctor.{max uDA uEA, uB}) E :=
-  Handler.case_ (mutualRec body) (Handler.id E)
+  Handler.case_ ⟨mutualRec body⟩ (Handler.id E)
 
 @[simp] theorem recursiveHandler_inl (d : D.A) :
     recursiveHandler body (.inl d) = mutualRec body d := rfl

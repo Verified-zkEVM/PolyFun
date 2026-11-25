@@ -31,7 +31,8 @@ def program : Process Effects PortBoundary.empty Unit Nat :=
     .liftBind (.effect true) fun n ↦ .pure (.returned n)
 
 /-- State and failure are ambient capabilities explicitly selected by the handler. -/
-def handler : Handler (StateT Nat Option) Effects
+def handler : Handler (StateT Nat Option) Effects where
+  toFun
   | false, n => some ((), n + 1)
   | true, n => some (n, n)
 
@@ -44,7 +45,8 @@ example : ((do
     return outcome () last).run 7) = some (some (.returned 8), 8) := rfl
 
 /-- Transformer order deliberately retains the first effect when the resumed read fails. -/
-def failingHandler : Handler (ExceptT String (StateM Nat)) Effects
+def failingHandler : Handler (ExceptT String (StateM Nat)) Effects where
+  toFun
   | false => modify (· + 1)
   | true => throw "read failed"
 

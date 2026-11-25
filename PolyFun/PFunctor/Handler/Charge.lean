@@ -123,8 +123,8 @@ variable {m : Type uB → Type v} {ω : Type uB}
 
 /-- Instrument a handler with a charge: a call at `a` adds `c a` to the amount spent, kept as
 state, and then runs the handler. -/
-def withCharge [Functor m] [Add ω] (h : Handler m P) (c : P.A → ω) : Handler (StateT ω m) P :=
-  fun a s => (fun b => (b, s + c a)) <$> h a
+def withCharge [Functor m] [Add ω] (h : Handler m P) (c : P.A → ω) : Handler (StateT ω m) P where
+  toFun a s := (fun b => (b, s + c a)) <$> h a
 
 @[simp]
 theorem run_withCharge [Functor m] [Add ω] (h : Handler m P) (c : P.A → ω) (a : P.A) (s : ω) :
@@ -188,8 +188,8 @@ theorem support_run_liftM_id_withCharge [AddMonoid ω] (c : P.A → ω) {α : Ty
 /-- Instrument a handler with a charge in a writer: a call at `a` writes `c a`. The log lives in
 `Multiplicative ω`, so it accumulates the sum of the charges. -/
 def withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) :
-    Handler (WriterT (Multiplicative ω) m) P :=
-  fun a => WriterT.mk ((fun b => (b, Multiplicative.ofAdd (c a))) <$> h a)
+    Handler (WriterT (Multiplicative ω) m) P where
+  toFun a := WriterT.mk ((fun b => (b, Multiplicative.ofAdd (c a))) <$> h a)
 
 @[simp]
 theorem run_withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) (a : P.A) :
@@ -199,7 +199,7 @@ theorem run_withChargeW [Functor m] (h : Handler m P) (c : P.A → ω) (a : P.A)
 /-- Charging in a writer is writer tracing of the charge, logged before each call. -/
 theorem withChargeW_eq_withTraceBefore [Monad m] [LawfulMonad m] [AddMonoid ω] (h : Handler m P)
     (c : P.A → ω) : h.withChargeW c = h.withTraceBefore fun a => Multiplicative.ofAdd (c a) := by
-  funext a
+  ext a
   apply WriterT.ext
   simp [withTraceBefore_apply, run_withChargeW, MonadWriter.tell]
 
@@ -248,9 +248,10 @@ theorem support_run_liftM_id_withChargeW [AddMonoid ω] (c : P.A → ω) {α : T
 
 /-- Run a handler under a budget: a call at `a` that would bring the amount spent above `B`
 fails; any other call is charged and run. -/
+@[simps]
 def withBudget [Monad m] [Add ω] [LE ω] [DecidableLE ω] (h : Handler m P) (c : P.A → ω)
-    (B : ω) : Handler (StateT ω (OptionT m)) P :=
-  fun a s => if s + c a ≤ B then OptionT.lift ((fun b => (b, s + c a)) <$> h a) else failure
+    (B : ω) : Handler (StateT ω (OptionT m)) P where
+  toFun a s := if s + c a ≤ B then OptionT.lift ((fun b => (b, s + c a)) <$> h a) else failure
 
 /-- A program within budget never meets the budget gate: running it under `withBudget` is running
 it under `withCharge`. -/
@@ -271,9 +272,10 @@ theorem run_liftM_withBudget_of_isChargeBound [Monad m] [LawfulMonad m] [Add ω]
 /-- Run a handler under a budget with a fallback: a call at `a` that would bring the amount spent
 above `B` is answered by `fallback a` without being charged or run; any other call is charged and
 run. -/
+@[simps]
 def withBudgetOr [Monad m] [Add ω] [LE ω] [DecidableLE ω] (h : Handler m P) (c : P.A → ω)
-    (B : ω) (fallback : (a : P.A) → P.B a) : Handler (StateT ω m) P :=
-  fun a s => if s + c a ≤ B then (fun b => (b, s + c a)) <$> h a else pure (fallback a, s)
+    (B : ω) (fallback : (a : P.A) → P.B a) : Handler (StateT ω m) P where
+  toFun a s := if s + c a ≤ B then (fun b => (b, s + c a)) <$> h a else pure (fallback a, s)
 
 /-- A program within budget never reaches the fallback: running it under `withBudgetOr` is running
 it under `withCharge`. -/

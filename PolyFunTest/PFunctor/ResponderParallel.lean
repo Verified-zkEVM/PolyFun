@@ -158,11 +158,13 @@ example :
 /-! Nonidentity compatibility canaries distinguish both handler components,
 the one-sided coproduct embedding, and responder-state handoff. -/
 
-def leftNegatingHandler : Handler (FreeM Left) Left := fun query =>
-  FreeM.liftBind (!query) fun answer => FreeM.pure (!answer)
+def leftNegatingHandler : Handler (FreeM Left) Left where
+  toFun query :=
+    FreeM.liftBind (!query) fun answer => FreeM.pure (!answer)
 
-def rightTwoCallHandler : Handler (FreeM Right) Right := fun _ =>
-  FreeM.liftBind PUnit.unit fun first =>
+def rightTwoCallHandler : Handler (FreeM Right) Right where
+  toFun _ :=
+    FreeM.liftBind PUnit.unit fun first =>
     FreeM.liftBind PUnit.unit fun second => FreeM.pure (first + second)
 
 def reindexedParallel :=

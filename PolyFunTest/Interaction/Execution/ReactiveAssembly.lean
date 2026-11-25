@@ -53,7 +53,7 @@ example (value : Bool) : compiled value = (environment value).plug echo := rfl
 @[expose] def impl (value : Bool) :
     (node : (compiled value).Node) → Handler (StateT Unit Id) ((network value).effect node) := by
   intro node
-  rcases node with node | node <;> exact fun operation => operation.elim
+  rcases node with node | node <;> exact ⟨fun operation => operation.elim⟩
 
 /-- Both directions carry the environment's actual Boolean through the compiled routes. -/
 example (value : Bool) :
@@ -93,7 +93,7 @@ example (value : Bool) :
     (node : (relayed value).Node) →
       Handler (StateT Unit Id) ((relayNetwork value).effect node) := by
   intro node
-  rcases node with node | node | node <;> exact fun operation => operation.elim
+  rcases node with node | node | node <;> exact ⟨fun operation => operation.elim⟩
 
 /-- The identity relay correctly forwards in both directions when its work is funded. -/
 example (value : Bool) :

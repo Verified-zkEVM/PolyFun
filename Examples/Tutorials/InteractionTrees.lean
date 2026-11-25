@@ -63,12 +63,14 @@ example (s : Nat) :
   interpState_weakBisim_interp bump s
 
 /-- Ticks are acknowledged; state events are left in place, lifted into the option layer. -/
-def acknowledge : PFunctor.Handler (OptionT (ITree (StateE Nat))) Sig
+def acknowledge : PFunctor.Handler (OptionT (ITree (StateE Nat))) Sig where
+  toFun
   | .inl e => liftHandler e
   | .inr () => Pure.pure ()
 
 /-- Ticks are refused with `failure`; state events are left in place, as by `acknowledge`. -/
-def refuse : PFunctor.Handler (OptionT (ITree (StateE Nat))) Sig
+def refuse : PFunctor.Handler (OptionT (ITree (StateE Nat))) Sig where
+  toFun
   | .inl e => liftHandler e
   | .inr () => failure
 
