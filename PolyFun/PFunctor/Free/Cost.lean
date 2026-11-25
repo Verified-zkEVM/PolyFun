@@ -183,8 +183,8 @@ defaults to `0`.
 The bound is relative to an accounting boundary: it charges the calls of `x` and nothing else.
 The code between calls, the answers and the handler or machine that produces them are free at
 this layer, and are bounded one layer down (`docs/guides/cost.md`, "Accounting boundary"). Read as
-a resource contract, it needs a canonically ordered cost type: with negative prices, refund calls
-make any budget reachable. -/
+a resource contract, it needs a cost type in which adding a cost never decreases it: with negative
+prices, refund calls make any budget reachable ("Bounds as contracts" in the same guide). -/
 def IsChargeBound (x : FreeM P α) (c : P.A → ω) (B : ω) (spent : ω := 0) : Prop :=
   wpFold (OpSpec.budget c B) x (fun _ s => s ≤ B) spent
 
