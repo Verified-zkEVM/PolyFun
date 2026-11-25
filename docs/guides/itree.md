@@ -313,16 +313,15 @@ interprets finite cutoff leaves as bottom and proves that the increasing
 truncation folds have the full denotation as their supremum. These theorems
 do not require finite branching or a uniform finite depth for a well-founded tree.
 
-[`DomainResult.generateStep_fix_eq`](../../PolyFun/Control/Domain/PrefixRecursion.lean)
-solves a finite recursive array by its strict-prefix equations. The generator
-must expose its outer constructor; entries may still be bottom or errors.
-`Function.UsesPrefix` expresses that coordinate `i` observes only coordinates
-strictly before `i`, over any well-founded order of coordinates, and yields uniqueness
-without requiring total entries.
-`generateStep_fix_eq_prefixRecursion` connects the least fixed point to the
-well-founded `Function.prefixRecursion` in `ToCslib/Order/PrefixRecursion.lean`.
-Self-dependent equations and generators that demand the whole array before
-returning its constructor do not satisfy this contract.
+`DomainResult.generateStep body` wraps the generated array in `value`, so even an array with
+a divergent first entry has an outer constructor. To apply `DomainResult.generateStep_fix_eq`,
+supply a solution of `body (value xs) = xs` and prove that coordinate `i` depends only on entries
+before `i`. Well-founded induction then makes the solution unique. An equation such as
+`xs[0] = xs[0]` would leave the first entry undetermined. When the body on `value xs` is given by
+continuous steps on `Fin i.val`, `generateStep_fix_eq_prefixRecursion` gives the solution directly.
+The lazy-language tutorial uses this to solve `xs = [first, xs[0] + 1, xs[1] + 1]` for any
+`first`, including bottom. [Generator equations](../../PolyFun/Control/Domain/PrefixRecursion.lean)
+and [worked example](../../Examples/Tutorials/LazyLanguages.lean).
 
 A recursive lazy sequence is a fixed point in stream form,
 `X = mk n fun i => step i fun j => index j X`. Its step is productive below `n`
