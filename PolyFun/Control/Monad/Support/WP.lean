@@ -160,12 +160,6 @@ instance instLawfulWPMonadAttachToWPMonadDemonic :
     have h : AllOutputs (fun a => ⌜P a⌝) x := Lean.Order.of_top_le_prop hwp
     simpa only [Lean.Order.CompleteLattice.ofProp_prop_eq] using h a hcan
 
-@[deprecated (since := "2026-11-16")]
-alias toWPMonadDemonic_wpConjunctive := instWPConjunctiveToWPMonadDemonic
-
-@[deprecated (since := "2026-11-16")]
-alias toWPMonadDemonic_lawfulWPMonadAttach := instLawfulWPMonadAttachToWPMonadDemonic
-
 end Demonic
 
 section Angelic

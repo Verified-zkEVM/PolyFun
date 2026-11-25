@@ -85,10 +85,10 @@ def orderingLens (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
 `Σ _ : p.B a, q.B b` and the plain product `p.B a × q.B b`. In duoidal terms,
 `⊗` and `◃` carry the *same* directions; they differ only in how positions are
 packaged. -/
-theorem orderingLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
-    (orderingLens p q).IsCartesian := fun _ab =>
-  Function.bijective_iff_has_inverse.mpr
-    ⟨fun uv => ⟨uv.1, uv.2⟩, fun _ => rfl, fun _ => rfl⟩
+instance orderingLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (q : PFunctor.{uA₂, uB₂}) :
+    (orderingLens p q).IsCartesian where
+  bijective _ := Function.bijective_iff_has_inverse.mpr
+      ⟨fun uv => ⟨uv.1, uv.2⟩, fun _ => rfl, fun _ => rfl⟩
 
 /-- Naturality of the ordering lens in both polynomial arguments. -/
 @[simp]
@@ -128,12 +128,12 @@ def duoidalLens (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
 
 /-- The interchange lens is cartesian: its backward map is the middle-four
 permutation on direction pairs. -/
-theorem duoidalLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
+instance duoidalLens_isCartesian (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{uA₂, uB₂})
     (q : PFunctor.{uA₃, uB₃}) (q' : PFunctor.{uA₄, uB₄}) :
-    (duoidalLens p p' q q').IsCartesian := fun _ =>
-  Function.bijective_iff_has_inverse.mpr
-    ⟨fun dir => ⟨(dir.1.1, dir.2.1), (dir.1.2, dir.2.2)⟩,
-      fun _ => rfl, fun _ => rfl⟩
+    (duoidalLens p p' q q').IsCartesian where
+  bijective _ := Function.bijective_iff_has_inverse.mpr
+      ⟨fun dir => ⟨(dir.1.1, dir.2.1), (dir.1.2, dir.2.2)⟩,
+        fun _ => rfl, fun _ => rfl⟩
 
 /-- Full four-variable naturality of duoidal interchange. -/
 @[simp]
@@ -174,8 +174,6 @@ theorem tensorUnitMap_one_mul :
         Lens.id y.{uA, uB}) =
       Equiv.yTensor.toLens := rfl
 
-@[deprecated (since := "2026-10-19")] alias tensorUnitMap_unit_left := tensorUnitMap_one_mul
-
 /-- Right unitality of the tensor-unit multiplication. -/
 theorem tensorUnitMap_mul_one :
     (tensorUnitMap :
@@ -183,8 +181,6 @@ theorem tensorUnitMap_mul_one :
       (Lens.id y.{uA, uB} ⊗ₗ
         (unitComparison : Lens y.{uA, uB} y.{uA, uB})) =
       Equiv.tensorY.toLens := rfl
-
-@[deprecated (since := "2026-10-19")] alias tensorUnitMap_unit_right := tensorUnitMap_mul_one
 
 /-- Associativity of the tensor-unit multiplication. -/
 theorem tensorUnitMap_mul_assoc :
@@ -199,8 +195,6 @@ theorem tensorUnitMap_mul_assoc :
           Lens (y.{uA, uB} ⊗ y.{uA, uB}) y.{uA, uB})) ∘ₗ
         Equiv.tensorAssoc.toLens := rfl
 
-@[deprecated (since := "2026-10-19")] alias tensorUnitMap_assoc := tensorUnitMap_mul_assoc
-
 /-- Left counitality of the composition-unit comultiplication. -/
 theorem compUnitMap_counit_comul :
     (Equiv.yComp (P := y.{uA, uB})).toLens ∘ₗ
@@ -211,8 +205,6 @@ theorem compUnitMap_counit_comul :
             Lens y.{uA, uB} y.{max uA uB, uB})) =
       Lens.id y.{uA, uB} := rfl
 
-@[deprecated (since := "2026-10-19")] alias compUnitMap_counit_left := compUnitMap_counit_comul
-
 /-- Right counitality of the composition-unit comultiplication. -/
 theorem compUnitMap_comul_counit :
     (Equiv.compY (P := y.{uA, uB})).toLens ∘ₗ
@@ -222,8 +214,6 @@ theorem compUnitMap_comul_counit :
           (unitComparison :
             Lens y.{uA, uB} y.{max uA uB, uB})) =
       Lens.id y.{uA, uB} := rfl
-
-@[deprecated (since := "2026-10-19")] alias compUnitMap_counit_right := compUnitMap_comul_counit
 
 /-- Coassociativity of the composition-unit comultiplication. -/
 theorem compUnitMap_comul_assoc :
@@ -243,8 +233,6 @@ theorem compUnitMap_comul_assoc :
         (compUnitMap ∘ₗ
           (unitComparison :
             Lens y.{uA, uB} y.{max uA uB, uB})) := rfl
-
-@[deprecated (since := "2026-10-19")] alias compUnitMap_coassoc := compUnitMap_comul_assoc
 
 /-- Left-composition-unit coherence for duoidal interchange. Interchanging a pair of
 left-unital composites and then combining their two unit components agrees
@@ -319,9 +307,6 @@ def Equiv.tensorTensorTensorComm (p : PFunctor.{uA₁, uB₁}) (p' : PFunctor.{u
     (fun _ ((a, b), (c, d)) => ((a, c), (b, d)))
   left_inv := rfl
   right_inv := rfl
-
-@[deprecated (since := "2026-10-19")] alias Equiv.tensorMiddleFour :=
-  Equiv.tensorTensorTensorComm
 
 /-- `orderingLens : (⊗) ⇒ (◃)` preserves the binary multiplication:
 ordering each pair and then interchanging phases agrees with first applying the

@@ -101,8 +101,6 @@ theorem tail_mapLens (lens : Lens F G) (tree : CofreeC F α) :
   rw [← M.mapLens_comp]
   rfl
 
-@[deprecated (since := "2026-10-19")] alias mapLens_comp := mapLens_mapLens
-
 /-- Comonad counit: extract the label at the root of a cofree tree, i.e. its `head`. -/
 def extract (t : CofreeC F α) : α :=
   head t

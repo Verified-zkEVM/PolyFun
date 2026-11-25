@@ -155,8 +155,6 @@ theorem of_isMonadHom {m : Type u → Type v} {Pred : Type w} {EPred : Type w'} 
   of_eq (fun a post epost => congrArg (fun t => PredTrans.apply t post epost) (h.map_pure a))
     (fun x f post epost => congrArg (fun t => PredTrans.apply t post epost) (h.map_bind x f))
 
-@[deprecated (since := "2026-11-16")] alias ofIsMonadHom := of_isMonadHom
-
 /-! ## Exactness as soundness on the dual -/
 
 section Dual
@@ -306,9 +304,6 @@ theorem wp_dite (c : Prop) [Decidable c] (x : c → Prog) (y : ¬c → Prog)
     wp (if h : c then x h else y h) post epost =
       if h : c then wp (x h) post epost else wp (y h) post epost :=
   Std.WP.wp_dite c x y post epost
-
-@[deprecated (since := "2026-11-16")] alias wp_option_elim := Std.WP.wp_option_elim
-@[deprecated (since := "2026-11-16")] alias wp_sum_elim := Std.WP.wp_sum_elim
 
 end ExactWPMonad
 

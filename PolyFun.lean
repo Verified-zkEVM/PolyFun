@@ -4,6 +4,7 @@ public import PolyFun.Complexity.SecondOrderPolynomial
 public import PolyFun.Complexity.SecondOrderPolynomial.NatPolynomial
 public import PolyFun.Control.Bisimulation
 public import PolyFun.Control.Coalgebra
+public import PolyFun.Control.Coalgebra.Category
 public import PolyFun.Control.Comonad.Basic
 public import PolyFun.Control.Comonad.Instances
 public import PolyFun.Control.Do.MOfFn
@@ -235,6 +236,7 @@ public import PolyFun.Interaction.Interface
 public import PolyFun.Interaction.Multiparty.Broadcast
 public import PolyFun.Interaction.Multiparty.Core
 public import PolyFun.Interaction.Multiparty.Directed
+public import PolyFun.Interaction.Multiparty.Measure
 public import PolyFun.Interaction.Multiparty.Observation
 public import PolyFun.Interaction.Multiparty.ObservationProfile
 public import PolyFun.Interaction.Multiparty.Profile
@@ -308,8 +310,8 @@ public import PolyFun.PFunctor.Cofree.Polynomial
 public import PolyFun.PFunctor.Cofree.Universal
 public import PolyFun.PFunctor.Comonoid
 public import PolyFun.PFunctor.Comonoid.Category
+public import PolyFun.PFunctor.Comonoid.StateTensor
 public import PolyFun.PFunctor.Comonoid.Tensor
-public import PolyFun.PFunctor.Deprecated
 public import PolyFun.PFunctor.Display
 public import PolyFun.PFunctor.Display.Basic
 public import PolyFun.PFunctor.Display.Category
@@ -426,11 +428,12 @@ public import PolyFun.PFunctor.Free.WP.Cost
 public import PolyFun.PFunctor.Free.WP.StatefulFrame
 public import PolyFun.PFunctor.Free.WP.Upstream
 public import PolyFun.PFunctor.Handler
-public import PolyFun.PFunctor.Handler.Certified
-public import PolyFun.PFunctor.Handler.CertifiedUnder
-public import PolyFun.PFunctor.Handler.CertifiedVec
+public import PolyFun.PFunctor.Handler.CacheMeter
 public import PolyFun.PFunctor.Handler.Charge
+public import PolyFun.PFunctor.Handler.Costed
+public import PolyFun.PFunctor.Handler.CostedOn
 public import PolyFun.PFunctor.Handler.CountMat
+public import PolyFun.PFunctor.Handler.Demand
 public import PolyFun.PFunctor.Handler.Free
 public import PolyFun.PFunctor.Handler.Hint
 public import PolyFun.PFunctor.Handler.Instrumentation
@@ -446,6 +449,7 @@ public import PolyFun.PFunctor.Handler.Stateful.Combinators
 public import PolyFun.PFunctor.Handler.Stateful.Link
 public import PolyFun.PFunctor.Handler.Stateful.Projection
 public import PolyFun.PFunctor.Handler.Sum
+public import PolyFun.PFunctor.Handler.Summary
 public import PolyFun.PFunctor.InternalHom
 public import PolyFun.PFunctor.Lens.Bang
 public import PolyFun.PFunctor.Lens.BangCofree
@@ -456,6 +460,7 @@ public import PolyFun.PFunctor.Lens.Basic
 public import PolyFun.PFunctor.Lens.Cartesian
 public import PolyFun.PFunctor.Lens.Coherence
 public import PolyFun.PFunctor.Lens.Composite
+public import PolyFun.PFunctor.Lens.DillerNahm
 public import PolyFun.PFunctor.Lens.DirMonad
 public import PolyFun.PFunctor.Lens.Distributivity
 public import PolyFun.PFunctor.Lens.Duoidal

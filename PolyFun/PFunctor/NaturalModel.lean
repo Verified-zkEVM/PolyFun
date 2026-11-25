@@ -77,8 +77,8 @@ variable {P Q : PFunctor.{u, u}}
 def toLens (l : CartLens P Q) : Lens P Q := ⟨l.toFunA, fun a => (l.fibEquiv a).symm⟩
 
 /-- The lens of a cartesian map is cartesian: its backward maps are bijections. -/
-theorem toLens_isCartesian (l : CartLens P Q) : l.toLens.IsCartesian :=
-  fun a => (l.fibEquiv a).symm.bijective
+instance toLens_isCartesian (l : CartLens P Q) : l.toLens.IsCartesian where
+  bijective a := (l.fibEquiv a).symm.bijective
 
 /-- The cartesian map of a cartesian lens, with the inverses of its backward maps as the fibre
 equivalences. -/

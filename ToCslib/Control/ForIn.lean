@@ -11,11 +11,11 @@ public import Init.Data.Vector.Lemmas
 /-!
 # Effect-free loops over `Option` and `Vector`
 
-Core's `Std.Internal.PureForIn` classes identify the containers whose `for` loop is the loop
-over the list `ForIn.toList` computes, which is what the loop specifications of the
-weakest-precondition layer and the transport of loops along monad morphisms reduce to. Core
-supplies instances for lists, arrays, ranges, slices, and iterators; this file adds `Option`
-(a loop of at most one iteration) and `Vector`, whose loop is its array's.
+A loop over `none` takes no steps, a loop over `some a` visits `a` once, and a loop over a
+`Vector` visits its entries in array order. For each container the `PureForIn` and `PureForIn'`
+instances express these loops as loops over its `toList`. This lets loop transport and
+weakest-precondition proofs use the corresponding list laws, including when the loop body
+uses a proof of membership.
 -/
 
 public section

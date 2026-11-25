@@ -254,8 +254,6 @@ that layer. This mirrors the constructor/destructor equation for `PFunctor.M`. -
   rw [PFunctor.M.dest_mk, unpack_pack]
   exact viewMap_ofM_toM layer
 
-@[deprecated (since := "2026-11-12")] alias shape'_mk := shape'_ofShape
-
 @[simp] theorem ofShape_shape' (tree : ITree F α) : ofShape (shape' tree) = tree := by
   apply toM_injective
   unfold ofShape shape'

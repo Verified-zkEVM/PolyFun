@@ -172,10 +172,13 @@ example (tr : PathAlong ownership protocol)
         (projectPathAlong ownership (suffix (projectPathAlong ownership protocol tr)) tail) :=
   PathAlong.projectPathAlong_append ownership protocol suffix tr tail
 
--- The output map consumes only a functor, even across the package boundary.
-example {m : Type → Type} [Functor m] (p : PublicCoinCounterpart ownership m protocol
+-- Replay and output mapping work for an arbitrary challenge effect.
+example {m : Type → Type} (p : PublicCoinCounterpart ownership m protocol
     (fun _ => Nat)) : PublicCoinCounterpart ownership m protocol (fun _ => Bool) :=
   PublicCoinCounterpart.mapOutput (fun _ n => n == 7) p
+
+example {m : Type → Type} (p : PublicCoinCounterpart ownership m protocol (fun _ => Nat))
+    (tr : PathAlong ownership protocol) : Nat := PublicCoinCounterpart.replay p tr
 
 example : TwoParty.Role.swap .sender = .receiver := TwoParty.Role.swap_sender
 
