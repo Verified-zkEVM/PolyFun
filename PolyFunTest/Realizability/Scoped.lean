@@ -59,15 +59,13 @@ private theorem preserves {combine : Nat → Nat → Nat} (h : combine 0 0 = 0) 
   intro ι base s op args hargs
   cases op with
   | letE =>
-    apply hargs true (fun i => Env.single (args false i Env.empty))
-    intro a x
-    cases x with
-    | zero => exact hargs false (fun _ => Env.empty) (fun x => nomatch x)
-    | succ x => nomatch x
+    exact hargs true (fun i => Env.single (args false i Env.empty))
+      (Env.Admissible.empty.cons (hargs false (fun _ => Env.empty) Env.Admissible.empty))
   | binary =>
     change combine (args false base Env.empty) (args true base Env.empty) = 0
-    have hf : args false base Env.empty = 0 := hargs false (fun _ => Env.empty) (fun x => nomatch x)
-    have ht : args true base Env.empty = 0 := hargs true (fun _ => Env.empty) (fun x => nomatch x)
+    have hf : args false base Env.empty = 0 :=
+      hargs false (fun _ => Env.empty) Env.Admissible.empty
+    have ht : args true base Env.empty = 0 := hargs true (fun _ => Env.empty) Env.Admissible.empty
     rw [hf, ht, h]
 
 /-- Bind the second input, then use the first input and the freshly bound value in order. -/
@@ -84,6 +82,39 @@ example : term.denote (algebra Nat.add) (Binary.pairEnv (9, 4)) = 13 := rfl
 example (combine : Nat → Nat → Nat) (h : combine 0 0 = 0) :
     pointed.Hom (0, 0) 0 (fun p => term.denote (algebra combine) (Binary.pairEnv p)) :=
   term.denote_admissible (preserves h) (Binary.pairEnv_admissible (C := pointed))
+
+/-! ## The hypotheses are needed -/
+
+/-- An operation that moves the basepoint gives the same term an inadmissible meaning. -/
+example : ¬ pointed.Hom (0, 0) 0
+    (fun p => term.denote (algebra fun x y => x + y + 1) (Binary.pairEnv p)) :=
+  fun h => absurd h (by decide)
+
+/-- The inadmissible meaning refutes the hypothesis on constructors. -/
+example : ¬ Interpretation.PreservesAdmissible (σ := sig) (algebra fun x y => x + y + 1) pointed
+    (fun _ => 0) :=
+  fun h => absurd (term.denote_admissible h (Binary.pairEnv_admissible (C := pointed)))
+    (by decide)
+
+/-- A free variable that misses the basepoint is an inadmissible term. -/
+example : ¬ Env.Admissible pointed (fun _ : Unit => (0 : Nat)) (0 : Nat)
+    (fun _ => Env.single (a := ()) (1 : Nat)) :=
+  fun h => absurd ((Term.var (σ := sig) .zero).denote_admissible
+    (preserves (combine := Nat.add) rfl) h) (by decide)
+
+/-- Evaluate the body of a local assignment at a value away from the basepoint. -/
+private def shiftedLet : Interpretation sig (fun _ => Nat)
+  | _, .letE, args => args true (Env.single (args false Env.empty + 1))
+  | _, .binary, args => args false Env.empty + args true Env.empty
+
+/-- Evaluating the body at an inadmissible assignment refutes the hypothesis on constructors. -/
+example : ¬ Interpretation.PreservesAdmissible shiftedLet pointed (fun _ => 0) := fun h =>
+  absurd ((Term.node Op.letE fun
+      | false => .var .zero
+      | true => .var .zero : sig.Term [(), ()] ()).denote_admissible h
+    (Binary.pairEnv_admissible (C := pointed))) (by decide)
+
+/-! ## Binary terms -/
 
 /-- Use the second variable once at each level of a nested operation. -/
 private def nested : (Binary.signature Unit).Term [(), ()] () :=
