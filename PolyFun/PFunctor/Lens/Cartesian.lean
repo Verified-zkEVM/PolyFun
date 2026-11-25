@@ -39,12 +39,9 @@ is the intersection of the two: `toFunA` is a bijection AND every
 cartesian lens whose position map is not a bijection (e.g.
 `Lens.inl : Lens P (P + Q)`) is not an `Equiv`.
 
-The downstream consumer of this file is `LawfulSubSpec` in
-`VCVio/OracleComp/Coercions/SubSpec.lean`: a `LawfulSubSpec` is by
-definition the predicate "the underlying
-`Lens spec.toPFunctor superSpec.toPFunctor` is cartesian", which is the
-exact condition needed to pull the uniform distribution on
-`superSpec.Range` back through a sub-spec embedding without distortion.
+In VCVio, `LawfulSubSpec` supplies a bijective backward map at each query.
+Its underlying lens is therefore cartesian, so the uniform distribution on
+each finite response type pulls back to the uniform distribution on the source responses.
 -/
 
 @[expose] public section
@@ -61,17 +58,25 @@ variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 `l.toFunB a : Q.B (l.toFunA a) → P.B a` is a bijection. Equivalently,
 `l` is a cartesian morphism in the fibration `Poly → Set` of polynomial
 functors over their position sets. -/
-def IsCartesian (l : Lens P Q) : Prop :=
-  ∀ a, Function.Bijective (l.toFunB a)
+class IsCartesian (l : Lens P Q) : Prop where
+  /-- The backward map is bijective at each source position. -/
+  bijective (a : P.A) : Function.Bijective (l.toFunB a)
 
 namespace IsCartesian
 
 @[simp]
-theorem id (P : PFunctor.{uA, uB}) : (Lens.id P).IsCartesian := fun _ => Function.bijective_id
+instance id (P : PFunctor.{uA, uB}) : (Lens.id P).IsCartesian where
+  bijective _ := Function.bijective_id
 
 theorem comp {l₁ : Lens Q R} {l₂ : Lens P Q}
     (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) :
-    (l₁ ∘ₗ l₂).IsCartesian := fun a => (h₂ a).comp (h₁ (l₂.toFunA a))
+    (l₁ ∘ₗ l₂).IsCartesian where
+  bijective a := (h₂.bijective a).comp (h₁.bijective (l₂.toFunA a))
+
+instance {l₁ : Lens Q R} {l₂ : Lens P Q}
+    [h₁ : l₁.IsCartesian] [h₂ : l₂.IsCartesian] :
+    (l₁ ∘ₗ l₂).IsCartesian :=
+  comp h₁ h₂
 
 end IsCartesian
 
@@ -83,40 +88,67 @@ We collect the witnesses here so that downstream classes (notably
 
 namespace IsCartesian
 
-theorem inl {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
-    (Lens.inl : Lens.{uA₁, uB, max uA₁ uA₂, uB} P (P + Q)).IsCartesian := fun _ =>
-  Function.bijective_id
+instance inl {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
+    (Lens.inl : Lens.{uA₁, uB, max uA₁ uA₂, uB} P (P + Q)).IsCartesian where
+  bijective _ := Function.bijective_id
 
-theorem inr {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
-    (Lens.inr : Lens.{uA₂, uB, max uA₁ uA₂, uB} Q (P + Q)).IsCartesian := fun _ =>
-  Function.bijective_id
+instance inr {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}} :
+    (Lens.inr : Lens.{uA₂, uB, max uA₁ uA₂, uB} Q (P + Q)).IsCartesian where
+  bijective _ := Function.bijective_id
 
 theorem sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
     {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}}
     {l₁ : Lens P R} {l₂ : Lens Q W}
     (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) :
-    (l₁ ⊎ₗ l₂).IsCartesian
-  | Sum.inl a => h₁ a
-  | Sum.inr a => h₂ a
+    (l₁ ⊎ₗ l₂).IsCartesian where
+  bijective
+    | Sum.inl a => h₁.bijective a
+    | Sum.inr a => h₂.bijective a
+
+instance {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    [h₁ : l₁.IsCartesian] [h₂ : l₂.IsCartesian] :
+    (l₁ ⊎ₗ l₂).IsCartesian :=
+  sumMap h₁ h₂
 
 theorem sumPair {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB₃}} {l₁ : Lens P R} {l₂ : Lens Q R}
     (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) :
-    (Lens.sumPair l₁ l₂).IsCartesian
-  | Sum.inl a => h₁ a
-  | Sum.inr a => h₂ a
+    (Lens.sumPair l₁ l₂).IsCartesian where
+  bijective
+    | Sum.inl a => h₁.bijective a
+    | Sum.inr a => h₂.bijective a
+
+instance {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
+    {R : PFunctor.{uA₃, uB₃}} {l₁ : Lens P R} {l₂ : Lens Q R}
+    [h₁ : l₁.IsCartesian] [h₂ : l₂.IsCartesian] :
+    (Lens.sumPair l₁ l₂).IsCartesian :=
+  sumPair h₁ h₂
 
 theorem sigmaMap {I : Type v}
     {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFunctor.{uA₂, uB₂}}
     {l : ∀ i, Lens (F i) (G i)} (hl : ∀ i, (l i).IsCartesian) :
-    (Lens.sigmaMap l).IsCartesian
-  | ⟨i, fa⟩ => hl i fa
+    (Lens.sigmaMap l).IsCartesian where
+  bijective | ⟨i, fa⟩ => (hl i).bijective fa
+
+instance {I : Type v}
+    {F : I → PFunctor.{uA₁, uB₁}} {G : I → PFunctor.{uA₂, uB₂}}
+    {l : ∀ i, Lens (F i) (G i)} [hl : ∀ i, (l i).IsCartesian] :
+    (Lens.sigmaMap l).IsCartesian :=
+  sigmaMap hl
 
 theorem sigmaExists {I : Type v}
     {F : I → PFunctor.{uA₁, uB₁}} {R : PFunctor.{uA₂, uB₂}}
     {l : ∀ i, Lens (F i) R} (hl : ∀ i, (l i).IsCartesian) :
-    (Lens.sigmaExists l).IsCartesian
-  | ⟨i, fa⟩ => hl i fa
+    (Lens.sigmaExists l).IsCartesian where
+  bijective | ⟨i, fa⟩ => (hl i).bijective fa
+
+instance {I : Type v}
+    {F : I → PFunctor.{uA₁, uB₁}} {R : PFunctor.{uA₂, uB₂}}
+    {l : ∀ i, Lens (F i) R} [hl : ∀ i, (l i).IsCartesian] :
+    (Lens.sigmaExists l).IsCartesian :=
+  sigmaExists hl
 
 end IsCartesian
 
@@ -134,8 +166,9 @@ def sigmaInj {I : Type v} {F : I → PFunctor.{uA, uB}} (j : I) :
 
 namespace IsCartesian
 
-theorem sigmaInj {I : Type v} {F : I → PFunctor.{uA, uB}} (j : I) :
-    (Lens.sigmaInj (F := F) j).IsCartesian := fun _ => Function.bijective_id
+instance sigmaInj {I : Type v} {F : I → PFunctor.{uA, uB}} (j : I) :
+    (Lens.sigmaInj (F := F) j).IsCartesian where
+  bijective _ := Function.bijective_id
 
 end IsCartesian
 
