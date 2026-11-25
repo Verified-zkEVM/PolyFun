@@ -382,6 +382,25 @@ call from earlier answers. For a setup cost shared across calls, use
 `FreeM.wpFold_statefulExpectedCharge_le_of_potential` with an invariant preserved almost surely
 and a measurable potential. See also the [measure fold](probability.md).
 
+### Computing finite expected costs
+
+A client flips a fair coin and pays for a second flip only after heads. At one unit per flip,
+its expected cost is `1 + 1/2 = 3/2`. Import `PolyFun.PFunctor.Free.Measure.FiniteKernel` and
+use `simp only [expected_cost]` together with the definitions of the program, its prices, and
+its coin kernel. The rules reduce each flip to its immediate charge and the weighted costs of
+its two continuations. Adding `reduceIte` and `Bool.false_eq_true` selects the branch taken after
+each answer, and `norm_num` finishes the arithmetic.
+
+To prove an upper bound for the same program, select the charge's `OpSpec.toUpperWPMonad`
+locally and run `vcgen`. Use `simp only [wp_norm]` for the order on assertions, then
+`OpSpec.toUpperWPMonad_wp` and `expected_cost` to evaluate the remaining expectation.
+The [fair-coin regression](../../PolyFunTest/Do/ExpectedCost.lean) gives both proofs.
+
+For a symbolic kernel, `expected_cost` leaves the integral over the answer and next state.
+When the chosen request's answers and the state are finite with measurable singletons, rewrite
+with `OpSpec.statefulExpectedCharge_eq_sum` to expose a finite table. Each entry uses its
+actual mass, so the calculation also applies when the total mass is less than one.
+
 ## Layers and costed implementations
 
 A cost argument usually spans layers. A specification is priced by its calls, an algorithm

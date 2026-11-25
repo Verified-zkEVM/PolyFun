@@ -112,8 +112,10 @@ theorem isStateSystem_iff_target_bijective :
     let e := _root_.Equiv.cast
       (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
     change Function.Bijective ((C.comul.toFunA c).2 ∘ e)
-    exact Function.Bijective.comp (h c) e.bijective
-  · intro h c
+    exact Function.Bijective.comp (h.bijective c) e.bijective
+  · intro h
+    constructor
+    intro c
     let e := _root_.Equiv.cast
       (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
     have hTarget := h c

@@ -12,12 +12,12 @@ public import PolyFun.PFunctor.Lens.Factorization
 
 Regression tests: every lens factors as vertical-then-cartesian recovering the
 original, the two legs land in their classes, and a concrete cartesian lens
-(`inl`) is displayed vertical exactly when its position map is a bijection.
+(`inl`) fails to be vertical when the right summand has a position.
 -/
 
 @[expose] public section
 
-universe u
+universe u v w z
 
 namespace PFunctor
 
@@ -28,10 +28,10 @@ example (l : Lens P Q) : Lens.factorCart l ∘ₗ Lens.factorVert l = l :=
   Lens.factorCart_comp_factorVert l
 
 /-- The vertical leg is vertical. -/
-example (l : Lens P Q) : (Lens.factorVert l).IsVertical := Lens.factorVert_isVertical l
+example (l : Lens P Q) : (Lens.factorVert l).IsVertical := inferInstance
 
 /-- The cartesian leg is cartesian. -/
-example (l : Lens P Q) : (Lens.factorCart l).IsCartesian := Lens.factorCart_isCartesian l
+example (l : Lens P Q) : (Lens.factorCart l).IsCartesian := inferInstance
 
 section Orthogonality
 
@@ -80,7 +80,25 @@ example : (Lens.id P).IsVertical := Lens.IsVertical.id P
 
 /-- `inl : P ⇆ P + Q` is cartesian but not vertical (its position map `Sum.inl`
 is injective but not surjective when `Q` has positions). -/
-example : (Lens.inl : Lens P (P + Q)).IsCartesian := Lens.IsCartesian.inl
+example : (Lens.inl : Lens P (P + Q)).IsCartesian := inferInstance
+
+example (q : Q.A) : ¬ (Lens.inl : Lens P (P + Q)).IsVertical := by
+  intro h
+  obtain ⟨a, ha⟩ := h.bijective.surjective (Sum.inr q)
+  cases ha
+
+section Inference
+
+variable {X : PFunctor.{u, v}} {Y : PFunctor.{w, z}} (l : Lens X Y)
+
+example [l.IsCartesian] : ((Lens.id Y ∘ₗ l) ⊎ₗ l).IsCartesian := inferInstance
+example [l.IsVertical] : ((Lens.id Y ∘ₗ l) ⊎ₗ l).IsVertical := inferInstance
+
+example {I : Type u} {F : I → PFunctor.{w, v}} {G : I → PFunctor.{u, z}}
+    (f : ∀ i, Lens (F i) (G i)) [∀ i, (f i).IsCartesian] :
+    (Lens.sigmaMap f).IsCartesian := inferInstance
+
+end Inference
 
 section Closure
 

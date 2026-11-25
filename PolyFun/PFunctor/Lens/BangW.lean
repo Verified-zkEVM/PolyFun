@@ -12,16 +12,15 @@ public import Mathlib.LinearAlgebra.Finsupp.LinearCombination
 /-!
 # The weighted exponential on lenses
 
-The weighted exponential `bangW S P` of a polynomial functor `P`, for a commutative semiring `S`,
-has the positions of `P` and, at a position `a`, the finitely supported weightings `P.B a →₀ S` of
-directions as directions. The counit sends a direction to its weighting of weight one, and the
-comultiplication sends a weighting of weightings to its weighted sum.
+At each position `a`, the directions of `bangW S P` are finitely supported weights
+`P.B a →₀ S`. When the weights form an additive commutative monoid, a lens sends each
+output weight back to the input direction it reads, adding weights that reach the same input.
+`Lens.liftAddHom_bangWMap` relates this operation to the forward action on labels.
 
-`bangW S` satisfies the comonad laws of a lens-level exponential for every semiring `S` and every
-universe of `S`. Its directions live in the universe `max uB w`, where `S : Type w`, so it is an
-endofunctor of `LensCat.{uA, uB}` only when `S` lives in the universe of directions `uB`:
-`LensCat.bangWFunctor` and `LensCat.bangWComonad` carry this restriction, and the laws themselves
-do not.
+For commutative semiring weights, the counit places a weight of one on a direction and the
+comultiplication takes a weighted sum of weightings. These operations give a comonad. The
+lens laws hold for weights in any universe. The bundled functor and comonad take weights
+in the universe of directions so their target is the same lens category.
 
 ## Main definitions
 
@@ -46,34 +45,26 @@ open CategoryTheory
 
 namespace PFunctor
 
-variable (S : Type w) [CommSemiring S]
+variable (S : Type w)
 
 /-- The weighted exponential: the positions of `P`, and at a position the finitely supported
 weightings of the directions of `P` at it. Its directions live in `max uB w`, where `S : Type w`;
 the comonad on `LensCat.{uA, uB}` therefore requires `S` in the universe of directions `uB`. -/
-abbrev bangW (P : PFunctor.{uA, uB}) : PFunctor.{uA, max uB w} := ⟨P.A, fun a => P.B a →₀ S⟩
+abbrev bangW [Zero S] (P : PFunctor.{uA, uB}) : PFunctor.{uA, max uB w} :=
+  ⟨P.A, fun a => P.B a →₀ S⟩
 
 namespace Lens
 
 variable {S}
+section Additive
+
+variable [AddCommMonoid S]
 variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
 
 /-- The action of the weighted exponential on a lens: the weights are pushed along the backward
 map. -/
 noncomputable def bangWMap (l : Lens P Q) : Lens (bangW S P) (bangW S Q) :=
   l.toFunA ⇆ fun a w => Finsupp.mapDomain (l.toFunB a) w
-
-variable (S) in
-/-- The counit of the weighted exponential: a direction demands itself with weight one. -/
-noncomputable def bangWCounit (P : PFunctor.{uA, uB}) : Lens (bangW S P) P :=
-  id ⇆ fun _ d => Finsupp.single d 1
-
-variable (S) in
-/-- The comultiplication of the weighted exponential: a weighting of weightings demands their
-weighted sum. -/
-noncomputable def bangWComult (P : PFunctor.{uA, uB}) :
-    Lens (bangW S P) (bangW S (bangW S P)) :=
-  id ⇆ fun _ ww => Finsupp.linearCombination S id ww
 
 /-- The weighted exponential preserves identities. -/
 theorem bangWMap_id : bangWMap (S := S) (Lens.id P) = Lens.id (bangW S P) :=
@@ -87,6 +78,31 @@ theorem bangWMap_comp (m : Lens Q R) (l : Lens P Q) :
     change Finsupp.mapDomain (l.toFunB a ∘ m.toFunB (l.toFunA a)) w =
       Finsupp.mapDomain (l.toFunB a) (Finsupp.mapDomain (m.toFunB (l.toFunA a)) w)
     exact Finsupp.mapDomain_comp
+
+/-- Evaluating additive labels on the accumulated input weights gives the same total as
+evaluating the labels transported by `mapObj` on the output weights. -/
+theorem liftAddHom_bangWMap {T : Type*} [AddCommMonoid T]
+    (l : Lens P Q) (x : P.Obj (S →+ T)) (w : Q.B (l.toFunA x.fst) →₀ S) :
+    Finsupp.liftAddHom x.snd ((bangWMap (S := S) l).toFunB x.fst w) =
+      Finsupp.liftAddHom (l.mapObj x).snd w :=
+  Finsupp.sum_mapDomain_index_addMonoidHom x.snd
+
+end Additive
+
+variable [CommSemiring S]
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA₃, uB₃}}
+
+variable (S) in
+/-- The counit of the weighted exponential: a direction demands itself with weight one. -/
+noncomputable def bangWCounit (P : PFunctor.{uA, uB}) : Lens (bangW S P) P :=
+  id ⇆ fun _ d => Finsupp.single d 1
+
+variable (S) in
+/-- The comultiplication of the weighted exponential: a weighting of weightings demands their
+weighted sum. -/
+noncomputable def bangWComult (P : PFunctor.{uA, uB}) :
+    Lens (bangW S P) (bangW S (bangW S P)) :=
+  id ⇆ fun _ ww => Finsupp.linearCombination S id ww
 
 /-- The counit of the weighted exponential is natural. -/
 theorem bangWCounit_natural (l : Lens P Q) :
@@ -135,7 +151,7 @@ namespace LensCat
 
 /-- The weighted exponential as an endofunctor of the category of lenses, for weights in the
 universe of directions. -/
-noncomputable def bangWFunctor (S : Type uB) [CommSemiring S] :
+noncomputable def bangWFunctor (S : Type uB) [AddCommMonoid S] :
     LensCat.{uA, uB} ⥤ LensCat.{uA, uB} where
   obj X := LensCat.of (bangW S X.toPFunctor)
   map f := Lens.bangWMap f

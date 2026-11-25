@@ -41,7 +41,7 @@ decoration still determines which participant owns each move.
 
 This module also contains a public-coin counterpart syntax. An executable
 counterpart samples a receiver move together with its continuation as one
-opaque action; `SyntaxOver.TwoParty.PublicCoinCounterpart.counterpartSpec` exposes the
+opaque action; `SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart` exposes the
 sampler and challenge-indexed continuation separately:
 
 - `sample : m X` — how the next public challenge is chosen
@@ -330,7 +330,7 @@ for verifier-side Fiat-Shamir: given a prescribed challenge `x`, there is no
 way to recover the continuation for `x` unless that continuation is exposed
 separately.
 
-`SyntaxOver.TwoParty.PublicCoinCounterpart.counterpartSpec` factors each receiver node into:
+`SyntaxOver.TwoParty.PublicCoinCounterpart.counterpart` factors each receiver node into:
 - `sample : m X` — how the verifier samples the next public challenge
 - `next : (x : X) → ...` — how the rest of the verifier depends on that challenge
 
@@ -346,10 +346,8 @@ def counterpartSyntax (m : Type u → Type u) :
 Local syntax-forgetting map from replayable public-coin counterparts to
 ordinary executable counterparts.
 
-At sender nodes the observer continuation is unchanged except for the recursive
-translation. At receiver nodes the explicit sampler/continuation pair is
-packed into the ordinary monadic action that samples a challenge and returns
-the translated continuation for that challenge.
+At sender nodes the translated continuation is returned with `pure`. At receiver nodes
+the ordinary monadic action samples a challenge and returns its translated continuation.
 -/
 def toCounterpartHom {m : Type u → Type u} [Monad m] :
     StrategyOver.Hom (counterpartSyntax m) PUnit.unit
@@ -359,7 +357,7 @@ def toCounterpartHom {m : Type u → Type u} [Monad m] :
 
 /-- Functorial output map for public-coin counterparts. The challenge samplers
 are unchanged; only the terminal output carried by continuations is mapped. -/
-def mapOutput {m : Type u → Type u} [Functor m] :
+def mapOutput {m : Type u → Type u} :
     {spec : TypeTree.{u}} → {roles : RoleDecoration spec} →
     {A B : PFunctor.FreeM.Path spec → Type u} →
     (∀ tr, A tr → B tr) →
@@ -388,16 +386,14 @@ def toCounterpart {m : Type u → Type u} [Monad m] :
 messages are read from the path; receiver samplers are ignored and the
 stored continuation family is followed at the recorded challenge. -/
 @[expose]
-def replay {m : Type u → Type u} [Monad m] :
+def replay {m : Type u → Type u} :
     {spec : TypeTree.{u}} → {roles : RoleDecoration spec} →
     {Output : PFunctor.FreeM.Path spec → Type u} →
     StrategyOver (counterpartSyntax m) PUnit.unit spec roles Output →
-    (tr : PFunctor.FreeM.Path spec) → m (Output tr)
-  | .done, _, _, c, _ => pure c
+    (tr : PFunctor.FreeM.Path spec) → Output tr
+  | .done, _, _, c, _ => c
   | .node _ _, ⟨.sender, _⟩, _, observe, ⟨x, tr⟩ =>
-      do
-        let next ← observe x
-        replay next tr
+      replay (observe x) tr
   | .node _ _, ⟨.receiver, _⟩, _, ⟨_, next⟩, ⟨x, tr⟩ =>
       replay (next x) tr
 

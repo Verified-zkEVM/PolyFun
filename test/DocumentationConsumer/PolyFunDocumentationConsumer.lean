@@ -14,7 +14,7 @@ import Examples.Tutorials.InteractionTrees
 import Examples.Tutorials.ParallelReports
 import Examples.Tutorials.VersionedRequests
 import Examples.Tutorials.UpdatePolicies
-import PolyFun.PFunctor.Free.Measure.StatefulExpectedCharge
+import PolyFun.PFunctor.Free.Measure.FiniteKernel
 import PolyFun.PFunctor.Handler.Sum
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
@@ -172,10 +172,13 @@ example (tr : PathAlong ownership protocol)
         (projectPathAlong ownership (suffix (projectPathAlong ownership protocol tr)) tail) :=
   PathAlong.projectPathAlong_append ownership protocol suffix tr tail
 
--- The output map consumes only a functor, even across the package boundary.
-example {m : Type → Type} [Functor m] (p : PublicCoinCounterpart ownership m protocol
+-- Replay and output mapping work for an arbitrary challenge effect.
+example {m : Type → Type} (p : PublicCoinCounterpart ownership m protocol
     (fun _ => Nat)) : PublicCoinCounterpart ownership m protocol (fun _ => Bool) :=
   PublicCoinCounterpart.mapOutput (fun _ n => n == 7) p
+
+example {m : Type → Type} (p : PublicCoinCounterpart ownership m protocol (fun _ => Nat))
+    (tr : PathAlong ownership protocol) : Nat := PublicCoinCounterpart.replay p tr
 
 example : TwoParty.Role.swap .sender = .receiver := TwoParty.Role.swap_sender
 
@@ -237,3 +240,29 @@ example {α : Type} (client : FreeM Tick α) (reward : α → Bool → ℝ≥0�
   cases warm <;> simp [price]
 
 end StatefulCostConsumer
+
+namespace FiniteExpectedCostConsumer
+
+open MeasureTheory PFunctor
+open scoped ENNReal
+
+private abbrev Mixed : PFunctor.{0, 0} := ⟨Bool, fun | true => Bool | false => ℕ⟩
+
+local instance : ∀ a, MeasurableSpace (Mixed.B a)
+  | true => ⊤
+  | false => ⊥
+
+/-- The finite request can be expanded even when the other request has infinitely many
+answers and only the trivial measurable sets. -/
+example (K : KernelHandler Mixed Unit) (c : Bool → Unit → ℝ≥0∞) (k : Bool → Unit → ℝ≥0∞) :
+    OpSpec.statefulExpectedCharge K c true k () =
+      c true () + ∑ z : Bool × Unit, k z.1 z.2 * K true () {z} :=
+  OpSpec.statefulExpectedCharge_eq_sum (P := Mixed) K c true k ()
+
+/-- The same interface supports cost calculations on requests with infinitely many answers. -/
+example (K : KernelHandler Mixed Unit) (c : Bool → Unit → ℝ≥0∞) (k : ℕ → Unit → ℝ≥0∞) :
+    FreeM.wpFold (OpSpec.statefulExpectedCharge K c) (FreeM.lift false) k () =
+      c false () + ∫⁻ z, k z.1 z.2 ∂K false () := by
+  simp only [expected_cost]
+
+end FiniteExpectedCostConsumer

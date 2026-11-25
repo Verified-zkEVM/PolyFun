@@ -92,30 +92,19 @@ theorem isSimulation_graph {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂ p} (
   exact (congr_heq (hupdate st₁) (eqRec_heq _ d)).symm
 
 /-- A coalgebra morphism between the state coalgebras of two `p`-systems is a
-functional simulation: its graph is a simulation. The coalgebra structures are
-the systems' own (`DynSystem.coalg`), supplied locally, because instance
-synthesis cannot recover a system from its state set. -/
+functional simulation: its graph is a simulation. -/
 theorem isSimulation_graph_coalgHom {S₂' : Type u₁}
-    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
-    letI := D₁.coalg
-    letI := D₂.coalg
-    ∀ f : Coalg.Hom p.Obj S₁ S₂',
-      IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) := by
-  let _ := D₁.coalg
-  let _ := D₂.coalg
-  exact fun f => isSimulation_graph f fun st => (congrFun f.comm st).symm
+    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p}
+    (f : Coalg.Hom D₁.coalg D₂.coalg) :
+    IsSimulation D₁ D₂ (fun st₁ st₂ => f st₁ = st₂) :=
+  isSimulation_graph f fun st => (congrFun f.comm st).symm
 
 /-- Coalgebra morphisms preserve behaviour trees. -/
 theorem behavior_coalgHom {S₂' : Type u₁}
-    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p} :
-    letI := D₁.coalg
-    letI := D₂.coalg
-    ∀ f : Coalg.Hom p.Obj S₁ S₂',
-      ∀ st : S₁, D₂.behavior (f st) = D₁.behavior st := by
-  let _ := D₁.coalg
-  let _ := D₂.coalg
-  exact fun f st =>
-    (behavior_eq_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
+    {D₁ : DynSystem S₁ p} {D₂ : DynSystem S₂' p}
+    (f : Coalg.Hom D₁.coalg D₂.coalg) (st : S₁) :
+    D₂.behavior (f st) = D₁.behavior st :=
+  (behavior_eq_of_isSimulation (isSimulation_graph_coalgHom f) rfl).symm
 
 end DynSystem
 
