@@ -28,12 +28,17 @@ Checks for `PolyFun.PFunctor.Free.Cost.Count`:
 * On `ℕ`, let `a ≤ b` hold when `a = b` or `b = 0`. Under this partial order, three unit-price
   queries meet the budget `0`. The order has no counting instance. Every counting instance on `ℕ`
   excludes that budget.
+* A counting instance on `ℕ` can double the total. Its counting contracts are the same.
+* Over no kinds, every program meets the budget `0` and every total is `0`.
+* A program with a free operation makes more calls than its total, so the bound on all calls needs
+  nonzero prices. The bound on the calls of nonzero price is attained.
 * The example with per-kind prices counts two hash queries and one group operation. The total of
-  its budget bounds all of its calls.
+  its budget bounds all of its calls. It fails a budget with the same total and one hash query.
 * The budget `1` for each of `n` kinds has a finite total, but these totals exceed every bound.
   For every family over `Fin n → ℕ`, a uniform bound on the totals bounds the calls of nonzero
   price on every completed path of every member. When every price is nonzero, it bounds all
   calls.
+* Inputs, results and costs live in independent universes.
 
 `PolyFunTest/PFunctor/Charge/Basic.lean` rejects the other contract hazards next to the examples
 that show them.
@@ -101,6 +106,32 @@ example : ¬ CanonicallyOrderedAdd {n : ℕ // n ≠ 1} := fun _ => by
 
 end NeOne
 
+/-! ## Totals -/
+
+/-- Natural numbers, with every cost counted twice. -/
+@[instance_reducible]
+noncomputable def doubled : CountCost ℕ where
+  Kind := Unit
+  count := (Finsupp.singleAddHom ()).comp (nsmulAddMonoidHom 2)
+  count_le_count_iff := Finsupp.single_le_single.trans (by simp)
+
+/-- The total depends on the instance. -/
+example : @CountCost.total ℕ _ _ doubled 5 = 10 := by
+  rw [@CountCost.total_apply ℕ _ _ doubled]
+  exact Finsupp.degree_single () 10
+
+/-- The counting contract does not depend on the instance. -/
+example (M : MeasuredProgram ℕ Bool ℕ) (B : ℕ) :
+    @MeasuredProgram.CountAtMost ℕ Bool ℕ _ _ doubled M B ↔ M.CountAtMost B :=
+  (@MeasuredProgram.countAtMost_iff_costAtMost ℕ Bool ℕ _ _ doubled M B).trans
+    MeasuredProgram.countAtMost_iff_costAtMost.symm
+
+/-- Over no kinds, every program meets the budget `0`: no call has a nonzero price. -/
+example (M : MeasuredProgram ℕ Bool (Empty → ℕ)) : M.CountAtMost 0 :=
+  fun _ _ => CountCost.count_le_count_iff.2 (Subsingleton.elim _ _).le
+
+example (B : Empty → ℕ) : CountCost.total B = 0 := by simp
+
 /-! ## An oracle on an infinite domain -/
 
 /-- Queries to a random oracle on `ℕ`, one answer bit each. -/
@@ -156,6 +187,43 @@ example (v : Unit) (p : Path (twice.program v)) : Path.length _ p ≤ 6 := by
 /-- Every call of the composite is charged, so no smaller budget holds. -/
 example : ¬ twice.CountAtMost 5 := fun h =>
   absurd (h.costAtMost () ⟨true, true, true, true, true, true, ⟨⟩⟩) (by decide)
+
+/-! ## Free operations -/
+
+/-- One priced query (`true`), then one free lookup (`false`). -/
+def queryThenLookup : MeasuredProgram Unit Bool ℕ where
+  View := Unit
+  view := id
+  Op := Bool
+  spec _ _ := Bool
+  program _ := do
+    let _ ← FreeM.lift (P := ⟨Bool, fun _ => Bool⟩) true
+    FreeM.lift (P := ⟨Bool, fun _ => Bool⟩) false
+  answer _ _ := true
+  cost o := if o then 1 else 0
+
+theorem queryThenLookup_countAtMost : queryThenLookup.CountAtMost 1 :=
+  MeasuredProgram.CostAtMost.countAtMost fun _ p => by
+    rcases p with ⟨_, _, ⟨⟩⟩
+    exact le_rfl
+
+/-- The free lookup is a call, so a budget of total `1` does not bound the number of calls. -/
+example : ¬ ∀ (v : Unit) (p : Path (queryThenLookup.program v)),
+    Path.length _ p ≤ CountCost.total 1 := fun h =>
+  absurd (h () ⟨true, true, ⟨⟩⟩) (by rw [CountCost.total_nat]; decide)
+
+/-- The budget bounds the calls of nonzero price. -/
+example (v : Unit) (p : Path (queryThenLookup.program v)) :
+    Path.charge ({o | queryThenLookup.cost o ≠ 0}.indicator 1) _ p ≤ 1 := by
+  simpa using queryThenLookup_countAtMost.charge_indicator_le_total v p
+
+/-- The query is a call of nonzero price, so the bound is attained. -/
+example (v : Unit) (p : Path (queryThenLookup.program v)) :
+    Path.charge ({o | queryThenLookup.cost o ≠ 0}.indicator 1) _ p = 1 := by
+  rcases p with ⟨_, _, ⟨⟩⟩
+  change Set.indicator {o : Bool | queryThenLookup.cost o ≠ 0} (1 : Bool → ℕ) true +
+    (Set.indicator {o : Bool | queryThenLookup.cost o ≠ 0} (1 : Bool → ℕ) false + 0) = 1
+  simp [queryThenLookup]
 
 /-! ## Coarse orders
 
@@ -238,6 +306,23 @@ example (v : ℕ) (p : Path (hashHashGroup.program v)) : Path.length _ p ≤ 3 :
   have h := hashHashGroup_countAtMost.length_le_total (fun o => by simp [hashHashGroup]) v p
   simpa [hashGroupBudget] using h
 
+/-- The counts along a path are within the budget kind by kind, so their total is within its total,
+which is attained. -/
+example (v : ℕ) (p : Path (hashHashGroup.program v)) :
+    CountCost.total (Path.charge hashHashGroup.cost _ p) ≤ 3 := by
+  simpa [hashGroupBudget] using hashHashGroup_countAtMost.total_charge_le v p
+
+example (v : ℕ) (p : Path (hashHashGroup.program v)) :
+    CountCost.total (Path.charge hashHashGroup.cost _ p) = 3 := by
+  rcases p with ⟨_, _, _, ⟨⟩⟩
+  rw [CountCost.total_pi]
+  rfl
+
+/-- A budget with the same total but one hash fails: the contract compares each kind. -/
+example : ¬ hashHashGroup.CountAtMost fun b => if b then 1 else 2 := fun h =>
+  absurd (CountCost.count_le_count_iff.1
+    (h (0 : ℕ) ⟨(0 : ℕ), (0 : ℕ), (0 : ℕ), ⟨⟩⟩) true) (by decide)
+
 /-! ## Families -/
 
 /-- Each member's budget has a finite total, but the totals grow with the number of kinds. -/
@@ -258,5 +343,14 @@ example {M : (n : ℕ) → MeasuredProgram Unit Bool (Fin n → ℕ)} {B : (n : 
     (v : (M n).View) (p : Path ((M n).program v)) :
     Path.charge ({o | (M n).cost o ≠ 0}.indicator 1) ((M n).program v) p ≤ N :=
   ((h n).charge_indicator_le_total v p).trans (hB n)
+
+/-! ## Universes -/
+
+/-- Inputs, results and costs live in independent universes. -/
+example {Input : Type 1} {Result : Type 2} {ω : Type 3} [AddMonoid ω] [PartialOrder ω]
+    [CountCost ω] {M : MeasuredProgram Input Result ω} {B : ω} (h : M.CountAtMost B)
+    (hcost : ∀ o, M.cost o ≠ 0) (v : M.View) (p : Path (M.program v)) :
+    Path.length (M.program v) p ≤ CountCost.total B :=
+  h.length_le_total hcost v p
 
 end PolyFunTest.ChargeCount
