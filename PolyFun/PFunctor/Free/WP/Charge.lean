@@ -216,29 +216,28 @@ variable {P : PFunctor.{uA, uB}}
 
 section Under
 
-variable {α : Type uB}
+variable {α : Type v}
 
 /-- A natural-number budget `n` bounds the charge fold of a call at `a` iff `c a ≤ n` and
 `n - c a` bounds the charge fold of the continuation at every allowed answer. -/
 theorem wpFold_chargeUnder_liftBind_le_iff (c : P.A → ℕ) (allows : (a : P.A) → P.B a → Prop)
-    (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) :
-    wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (FreeM.liftBind a r)
-        (fun _ => 0) ≤ n ↔
+    (a : P.A) (r : P.B a → FreeM P α) (n : ℕ) {post : α → ℕ∞} :
+    wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (FreeM.liftBind a r) post ≤ n ↔
       c a ≤ n ∧ ∀ b, allows a b →
-        wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) (fun _ => 0) ≤
+        wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) post ≤
           ((n - c a : ℕ) : ℕ∞) := by
   rw [wpFold_liftBind, OpSpec.chargeUnder_apply]
   constructor
   · intro h
     have hc : c a ≤ n := by exact_mod_cast le_self_add.trans h
     refine ⟨hc, fun b hb => ?_⟩
-    have h' : (c a : ℕ∞) + wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b)
-        (fun _ => 0) ≤ (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by
+    have h' : (c a : ℕ∞) + wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) post ≤
+        (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by
       rw [← Nat.cast_add, Nat.add_sub_cancel' hc]
       refine le_trans ?_ h
       gcongr
       exact le_iSup₂_of_le (f := fun b (_ : allows a b) =>
-        wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) fun _ => 0) b hb le_rfl
+        wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) post) b hb le_rfl
     exact (ENat.add_le_add_iff_left (ENat.natCast_ne_top _)).1 h'
   · rintro ⟨hc, hr⟩
     calc _ ≤ (c a : ℕ∞) + ((n - c a : ℕ) : ℕ∞) := by gcongr; exact iSup₂_le hr
@@ -270,7 +269,8 @@ theorem wpFold_chargeUnder_liftBind_const_add {R : Type w} [CompleteLattice R] [
 
 /-- With every answer allowed, a bound on the charge fold is the subtractive roll bound: the
 `chargeUnder` form of `isRollBound_iff_wpFold_charge`. -/
-theorem isRollBound_iff_wpFold_chargeUnder_true (c : P.A → ℕ) (x : FreeM P α) (n : ℕ) :
+theorem isRollBound_iff_wpFold_chargeUnder_true {α : Type uB} (c : P.A → ℕ) (x : FreeM P α)
+    (n : ℕ) :
     IsRollBound x n (fun a b => c a ≤ b) (fun a b => b - c a) ↔
       wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) fun _ _ => True) x (fun _ => 0) ≤
         n := by
@@ -285,7 +285,7 @@ bounds of its parts, so that a bound computed clause by clause is a term of `ℕ
 
 section Rule
 
-variable {X Y : Type v}
+variable {X : Type v} {Y : Type z}
 
 /-- A return charges nothing. -/
 theorem wpFold_chargeUnder_pure_le (c : P.A → ℕ) (allows : (a : P.A) → P.B a → Prop) (x : X)
@@ -297,27 +297,27 @@ theorem wpFold_chargeUnder_pure_le (c : P.A → ℕ) (allows : (a : P.A) → P.B
 /-- A call at `a` is bounded by a bound `m` of its charge plus a bound `n` of its continuation at
 every allowed answer. -/
 theorem wpFold_chargeUnder_liftBind_le (c : P.A → ℕ) (allows : (a : P.A) → P.B a → Prop)
-    (a : P.A) (r : P.B a → FreeM P X) (m n : ℕ) (hc : c a ≤ m)
+    (a : P.A) (r : P.B a → FreeM P X) (m n : ℕ) {post : X → ℕ∞} (hc : c a ≤ m)
     (hr : ∀ b, allows a b →
-      wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) (fun _ => 0) ≤ (n : ℕ∞)) :
-    wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (FreeM.liftBind a r)
-      (fun _ => 0) ≤ ((m + n : ℕ) : ℕ∞) := by
+      wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (r b) post ≤ (n : ℕ∞)) :
+    wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (FreeM.liftBind a r) post ≤
+      ((m + n : ℕ) : ℕ∞) := by
   rw [wpFold_liftBind, OpSpec.chargeUnder_apply, Nat.cast_add]
   exact add_le_add (by exact_mod_cast hc) (iSup₂_le hr)
 
 /-- The bind clause with natural-number bounds: a bound `m` of `x` and a bound `n` of `f a` at
-every return `a` satisfying the leaf invariant `I` of `x` add to a bound of `x.bind f`. -/
+every return `a` satisfying the leaf invariant `I` of `x` add to a bound of `x.bind f`. Only `x`
+is bounded at the postcondition `0`. -/
 theorem wpFold_chargeUnder_bind_le_add (c : P.A → ℕ) (allows : (a : P.A) → P.B a → Prop)
-    (x : FreeM P X) (f : X → FreeM P Y) (I : X → Prop) (m n : ℕ)
+    (x : FreeM P X) (f : X → FreeM P Y) (I : X → Prop) (m n : ℕ) {post : Y → ℕ∞}
     (hx : wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) x (fun _ => 0) ≤ (m : ℕ∞))
     (hf : ∀ a, I a →
-      wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (f a) (fun _ => 0) ≤ (n : ℕ∞))
+      wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (f a) post ≤ (n : ℕ∞))
     (hI : wpFold (OpSpec.demonicUnder allows) x I) :
-    wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (x.bind f) (fun _ => 0) ≤
+    wpFold (OpSpec.chargeUnder (fun a => (c a : ℕ∞)) allows) (x.bind f) post ≤
       ((m + n : ℕ) : ℕ∞) := by
-  rw [Nat.cast_add]
-  exact (costUnder_bind_le_of_wpFold (c := fun a => (c a : ℕ∞)) hI).trans
-    (add_le_add hx (iSup₂_le hf))
+  rw [wpFold_bind', Nat.cast_add]
+  exact (wpFold_chargeUnder_le_costUnder_add hI _).trans (add_le_add hx (iSup₂_le hf))
 
 /-- A call whose continuation ignores the answer keeps the leaf invariant of the continuation. -/
 theorem wpFold_demonicUnder_liftBind_const (allows : (a : P.A) → P.B a → Prop) (a : P.A)
