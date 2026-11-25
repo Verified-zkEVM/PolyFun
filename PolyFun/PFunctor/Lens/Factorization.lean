@@ -61,43 +61,58 @@ variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunct
 /-- A lens `l : Lens P Q` is **vertical** when its forward map on positions
 `l.toFunA` is a bijection. Together with `IsCartesian`, the two classes meet in
 the isomorphisms. -/
-def IsVertical (l : Lens P Q) : Prop :=
-  Function.Bijective l.toFunA
+class IsVertical (l : Lens P Q) : Prop where
+  /-- The forward map on positions is bijective. -/
+  bijective : Function.Bijective l.toFunA
 
 namespace IsVertical
 
 @[simp]
-theorem id (P : PFunctor.{uA, uB}) : (Lens.id P).IsVertical :=
-  Function.bijective_id
+instance id (P : PFunctor.{uA, uB}) : (Lens.id P).IsVertical where
+  bijective := Function.bijective_id
 
 theorem comp {l₁ : Lens Q R} {l₂ : Lens P Q}
-    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ∘ₗ l₂).IsVertical :=
-  show Function.Bijective (l₁.toFunA ∘ l₂.toFunA) from Function.Bijective.comp h₁ h₂
+    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ∘ₗ l₂).IsVertical where
+  bijective := h₁.bijective.comp h₂.bijective
+
+instance {l₁ : Lens Q R} {l₂ : Lens P Q}
+    [h₁ : l₁.IsVertical] [h₂ : l₂.IsVertical] : (l₁ ∘ₗ l₂).IsVertical :=
+  comp h₁ h₂
 
 /-- Verticality is closed under the coproduct `⊎ₗ`: the position map of
 `l₁ ⊎ₗ l₂` is `Sum.map l₁.toFunA l₂.toFunA`, bijective when both legs are. -/
 theorem sumMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
     {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}}
     {l₁ : Lens P R} {l₂ : Lens Q W}
-    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊎ₗ l₂).IsVertical :=
-  Function.Bijective.sumMap h₁ h₂
+    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊎ₗ l₂).IsVertical where
+  bijective := Function.Bijective.sumMap h₁.bijective h₂.bijective
+
+instance {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₁}}
+    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₃}}
+    {l₁ : Lens P R} {l₂ : Lens Q W}
+    [h₁ : l₁.IsVertical] [h₂ : l₂.IsVertical] : (l₁ ⊎ₗ l₂).IsVertical :=
+  sumMap h₁ h₂
+
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+  {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+  {l₁ : Lens P R} {l₂ : Lens Q W}
 
 /-- Verticality is closed under the categorical product `×ₗ`: the position map of
 `l₁ ×ₗ l₂` is `Prod.map l₁.toFunA l₂.toFunA`, bijective when both legs are. -/
-theorem prodMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
-    {l₁ : Lens P R} {l₂ : Lens Q W}
-    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ×ₗ l₂).IsVertical :=
-  Function.Bijective.prodMap h₁ h₂
+theorem prodMap (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ×ₗ l₂).IsVertical where
+  bijective := Function.Bijective.prodMap h₁.bijective h₂.bijective
+
+instance [h₁ : l₁.IsVertical] [h₂ : l₂.IsVertical] : (l₁ ×ₗ l₂).IsVertical :=
+  prodMap h₁ h₂
 
 /-- Verticality is closed under the tensor product `⊗ₗ`: the position map of
 `l₁ ⊗ₗ l₂` agrees with that of `l₁ ×ₗ l₂` (`Prod.map` on positions), so it is
 bijective when both legs are. -/
-theorem tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
-    {l₁ : Lens P R} {l₂ : Lens Q W}
-    (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊗ₗ l₂).IsVertical :=
-  Function.Bijective.prodMap h₁ h₂
+theorem tensorMap (h₁ : l₁.IsVertical) (h₂ : l₂.IsVertical) : (l₁ ⊗ₗ l₂).IsVertical where
+  bijective := Function.Bijective.prodMap h₁.bijective h₂.bijective
+
+instance [h₁ : l₁.IsVertical] [h₂ : l₂.IsVertical] : (l₁ ⊗ₗ l₂).IsVertical :=
+  tensorMap h₁ h₂
 
 end IsVertical
 
@@ -125,12 +140,12 @@ theorem factorCart_comp_factorVert (l : Lens P Q) :
     factorCart l ∘ₗ factorVert l = l := rfl
 
 /-- The vertical leg is vertical. -/
-theorem factorVert_isVertical (l : Lens P Q) : (factorVert l).IsVertical :=
-  Function.bijective_id
+instance factorVert_isVertical (l : Lens P Q) : (factorVert l).IsVertical where
+  bijective := Function.bijective_id
 
 /-- The cartesian leg is cartesian. -/
-theorem factorCart_isCartesian (l : Lens P Q) : (factorCart l).IsCartesian :=
-  fun _ => Function.bijective_id
+instance factorCart_isCartesian (l : Lens P Q) : (factorCart l).IsCartesian where
+  bijective _ := Function.bijective_id
 
 /-! ## Orthogonality
 
@@ -162,7 +177,7 @@ structure DiagonalFiller {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB�
 
 /-- The position equivalence carried by a vertical lens. -/
 noncomputable def verticalPositionEquiv (v : Lens P Q) (hv : v.IsVertical) : P.A ≃ Q.A :=
-  _root_.Equiv.ofBijective v.toFunA hv
+  _root_.Equiv.ofBijective v.toFunA hv.bijective
 
 @[simp] theorem verticalPositionEquiv_apply (v : Lens P Q) (hv : v.IsVertical) (p : P.A) :
     verticalPositionEquiv v hv p = v.toFunA p := rfl
@@ -174,7 +189,7 @@ noncomputable def verticalPositionEquiv (v : Lens P Q) (hv : v.IsVertical) : P.A
 /-- The backward-fiber equivalence carried by a cartesian lens at a position. -/
 noncomputable def cartesianDirectionEquiv (c : Lens P Q) (hc : c.IsCartesian) (p : P.A) :
     Q.B (c.toFunA p) ≃ P.B p :=
-  _root_.Equiv.ofBijective (c.toFunB p) (hc p)
+  _root_.Equiv.ofBijective (c.toFunB p) (hc.bijective p)
 
 @[simp] theorem cartesianDirectionEquiv_apply (c : Lens P Q) (hc : c.IsCartesian)
     (p : P.A) (q : Q.B (c.toFunA p)) :
@@ -195,9 +210,9 @@ identifies the directions there with those of `a`. -/
 def ofDirectionEquiv (r : (a : P.A) → Σ b : Q.A, Q.B b ≃ P.B a) : Lens P Q :=
   (fun a => (r a).1) ⇆ fun a => (r a).2
 
-theorem ofDirectionEquiv_isCartesian (r : (a : P.A) → Σ b : Q.A, Q.B b ≃ P.B a) :
-    (ofDirectionEquiv r).IsCartesian :=
-  fun a => (r a).2.bijective
+instance ofDirectionEquiv_isCartesian (r : (a : P.A) → Σ b : Q.A, Q.B b ≃ P.B a) :
+    (ofDirectionEquiv r).IsCartesian where
+  bijective a := (r a).2.bijective
 
 /-- Cartesian lenses are exactly the choices, at each position of `P`, of a position of `Q`
 together with an equivalence of directions. The inverse is `ofDirectionEquiv`, which is
@@ -418,38 +433,42 @@ bijection when both legs are cartesian. -/
 
 namespace IsCartesian
 
+variable {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
+  {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
+  {l₁ : Lens P R} {l₂ : Lens Q W}
+
 /-- Cartesianness is closed under the categorical product `×ₗ`: the fiber of
 `l₁ ×ₗ l₂` at `pq` is `Sum.map (l₁.toFunB pq.1) (l₂.toFunB pq.2)`. -/
-theorem prodMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
-    {l₁ : Lens P R} {l₂ : Lens Q W}
-    (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ×ₗ l₂).IsCartesian := fun pq => by
-  have hfib : (l₁ ×ₗ l₂).toFunB pq = Sum.map (l₁.toFunB pq.1) (l₂.toFunB pq.2) := by
-    funext d; cases d <;> rfl
-  rw [hfib]
-  exact Function.Bijective.sumMap (h₁ pq.1) (h₂ pq.2)
+theorem prodMap (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ×ₗ l₂).IsCartesian where
+  bijective pq := by
+    have hfib : (l₁ ×ₗ l₂).toFunB pq = Sum.map (l₁.toFunB pq.1) (l₂.toFunB pq.2) := by
+      funext d; cases d <;> rfl
+    rw [hfib]
+    exact Function.Bijective.sumMap (h₁.bijective pq.1) (h₂.bijective pq.2)
+
+instance [h₁ : l₁.IsCartesian] [h₂ : l₂.IsCartesian] : (l₁ ×ₗ l₂).IsCartesian :=
+  prodMap h₁ h₂
 
 /-- Cartesianness is closed under the tensor product `⊗ₗ`: the fiber of
 `l₁ ⊗ₗ l₂` at `pq` is `Prod.map (l₁.toFunB pq.1) (l₂.toFunB pq.2)`. -/
-theorem tensorMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
-    {l₁ : Lens P R} {l₂ : Lens Q W}
-    (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ⊗ₗ l₂).IsCartesian := fun pq =>
-  Function.Bijective.prodMap (h₁ pq.1) (h₂ pq.2)
+theorem tensorMap (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ⊗ₗ l₂).IsCartesian where
+  bijective pq := Function.Bijective.prodMap (h₁.bijective pq.1) (h₂.bijective pq.2)
+
+instance [h₁ : l₁.IsCartesian] [h₂ : l₂.IsCartesian] : (l₁ ⊗ₗ l₂).IsCartesian :=
+  tensorMap h₁ h₂
 
 /-- Cartesianness is closed under the composition `◃ₗ` (Niu–Spivak Prop 6.88):
 the fiber of `l₁ ◃ₗ l₂` at `⟨pa, pq⟩` sends `⟨rb, wc⟩` to
 `⟨l₁.toFunB pa rb, l₂.toFunB (pq (l₁.toFunB pa rb)) wc⟩`, a dependent
 `Sigma`-congruence built from the base bijection `l₁.toFunB pa` and the fiber
 bijections `l₂.toFunB _`. -/
-theorem compMap {P : PFunctor.{uA₁, uB₁}} {Q : PFunctor.{uA₂, uB₂}}
-    {R : PFunctor.{uA₃, uB₃}} {W : PFunctor.{uA₄, uB₄}}
-    {l₁ : Lens P R} {l₂ : Lens Q W}
-    (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ◃ₗ l₂).IsCartesian := by
-  rintro ⟨pa, pq⟩
-  exact (_root_.Equiv.sigmaCongr (β₂ := fun pb => Q.B (pq pb))
-    (_root_.Equiv.ofBijective _ (h₁ pa))
-    (fun rb => _root_.Equiv.ofBijective _ (h₂ (pq (l₁.toFunB pa rb))))).bijective
+theorem compMap (h₁ : l₁.IsCartesian) (h₂ : l₂.IsCartesian) : (l₁ ◃ₗ l₂).IsCartesian where
+  bijective | ⟨pa, pq⟩ => (_root_.Equiv.sigmaCongr (β₂ := fun pb => Q.B (pq pb))
+      (_root_.Equiv.ofBijective _ (h₁.bijective pa))
+      (fun rb => _root_.Equiv.ofBijective _ (h₂.bijective (pq (l₁.toFunB pa rb))))).bijective
+
+instance [h₁ : l₁.IsCartesian] [h₂ : l₂.IsCartesian] : (l₁ ◃ₗ l₂).IsCartesian :=
+  compMap h₁ h₂
 
 end IsCartesian
 
@@ -459,37 +478,38 @@ namespace Equiv
 
 /-- The forward lens of a lens equivalence is vertical: its inverse lens
 supplies the inverse of its position map. -/
-@[simp] theorem toLens_isVertical (e : P ≃ₗ Q) : e.toLens.IsVertical := by
-  apply Function.bijective_iff_has_inverse.mpr
-  exact ⟨e.invLens.toFunA,
-    fun a => congrFun (congrArg Lens.toFunA e.left_inv) a,
-    fun b => congrFun (congrArg Lens.toFunA e.right_inv) b⟩
+@[simp] instance toLens_isVertical (e : P ≃ₗ Q) : e.toLens.IsVertical where
+  bijective := by
+    apply Function.bijective_iff_has_inverse.mpr
+    exact ⟨e.invLens.toFunA,
+      fun a => congrFun (congrArg Lens.toFunA e.left_inv) a,
+      fun b => congrFun (congrArg Lens.toFunA e.right_inv) b⟩
 
 /-- The forward lens of a lens equivalence is cartesian. The two inverse lens
 laws make each backward fiber map bijective. -/
-@[simp] theorem toLens_isCartesian (e : P ≃ₗ Q) : e.toLens.IsCartesian := by
-  intro a
-  have hleft : (e.invLens ∘ₗ e.toLens).IsCartesian := by
-    rw [e.left_inv]
-    exact IsCartesian.id P
-  have hright : (e.toLens ∘ₗ e.invLens).IsCartesian := by
-    rw [e.right_inv]
-    exact IsCartesian.id Q
-  constructor
-  · have hinj : Function.Injective
-        (e.toLens.toFunB (e.invLens.toFunA (e.toLens.toFunA a))) :=
-      Function.Injective.of_comp (hright (e.toLens.toFunA a)).1
-    have hA : e.invLens.toFunA (e.toLens.toFunA a) = a :=
-      congrFun (congrArg Lens.toFunA e.left_inv) a
-    exact hA ▸ hinj
-  · exact Function.Surjective.of_comp (hleft a).2
+@[simp] instance toLens_isCartesian (e : P ≃ₗ Q) : e.toLens.IsCartesian where
+  bijective a := by
+    have hleft : (e.invLens ∘ₗ e.toLens).IsCartesian := by
+      rw [e.left_inv]
+      exact IsCartesian.id P
+    have hright : (e.toLens ∘ₗ e.invLens).IsCartesian := by
+      rw [e.right_inv]
+      exact IsCartesian.id Q
+    constructor
+    · have hinj : Function.Injective
+          (e.toLens.toFunB (e.invLens.toFunA (e.toLens.toFunA a))) :=
+        Function.Injective.of_comp (hright.bijective (e.toLens.toFunA a)).1
+      have hA : e.invLens.toFunA (e.toLens.toFunA a) = a :=
+        congrFun (congrArg Lens.toFunA e.left_inv) a
+      exact hA ▸ hinj
+    · exact Function.Surjective.of_comp (hleft.bijective a).2
 
 /-- The inverse lens of a lens equivalence is vertical. -/
-@[simp] theorem invLens_isVertical (e : P ≃ₗ Q) : e.invLens.IsVertical :=
+@[simp] instance invLens_isVertical (e : P ≃ₗ Q) : e.invLens.IsVertical :=
   e.symm.toLens_isVertical
 
 /-- The inverse lens of a lens equivalence is cartesian. -/
-@[simp] theorem invLens_isCartesian (e : P ≃ₗ Q) : e.invLens.IsCartesian :=
+@[simp] instance invLens_isCartesian (e : P ≃ₗ Q) : e.invLens.IsCartesian :=
   e.symm.toLens_isCartesian
 
 end Equiv
@@ -502,8 +522,8 @@ lens equivalence. -/
 noncomputable def equivOfVerticalCartesian (l : Lens P Q)
     (hv : l.IsVertical) (hc : l.IsCartesian) : P ≃ₗ Q :=
   PFunctor.Equiv.toLensEquiv
-    { equivA := _root_.Equiv.ofBijective l.toFunA hv
-      equivB := fun a => (_root_.Equiv.ofBijective (l.toFunB a) (hc a)).symm }
+    { equivA := _root_.Equiv.ofBijective l.toFunA hv.bijective
+      equivB := fun a => (_root_.Equiv.ofBijective (l.toFunB a) (hc.bijective a)).symm }
 
 @[simp] theorem equivOfVerticalCartesian_toLens (l : Lens P Q)
     (hv : l.IsVertical) (hc : l.IsCartesian) :

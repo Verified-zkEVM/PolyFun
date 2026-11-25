@@ -12,11 +12,10 @@ meta import ToCslib.Data.Fin.MOfFn
 /-!
 # Compiled finite case analysis
 
-Compiled code reads the last entry of four nested chains of 64 entries: built with `Fin.cons`,
-with `Matrix.vecCons`, by recursion through `Fin.cases`, and collected by `Fin.mOfFn` in `Option`.
-Core's `Fin.cases` evaluates every earlier case, so each read would take time exponential in the
-depth, and the `#eval`s below would not finish. The compiler simplifications of
-`ToCslib.Data.Fin.Cases` select the case directly, so each read takes time linear in the depth.
+The `#eval` checks exercise the compiler simplifications from `ToCslib.Data.Fin.Cases` at
+depth 64, where repeatedly evaluating discarded induction hypotheses would be expensive.
+The last entry evaluates to `63` for chains built with `Fin.cons`, `Matrix.vecCons`, and
+`Fin.cases`, and to `some 63` after collecting the entries with `Fin.mOfFn` in `Option`.
 -/
 
 public section

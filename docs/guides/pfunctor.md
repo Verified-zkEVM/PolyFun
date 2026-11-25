@@ -70,6 +70,14 @@ the shape of input/output transformers and of proof-system context lenses, are
 built with `Lens.ofMonomial`, `monomialMapFst`, and `monomialMapSnd` in
 [`Lens/Monomial.lean`](../../PolyFun/PFunctor/Lens/Monomial.lean).
 
+A lens can also carry weights backward. For each output direction with nonzero weight,
+`Lens.bangWMap` adds that weight to the input direction selected by the lens. The input and
+output direction types can be infinite because each weighting has finite support. For weights
+in an additive commutative monoid, `Lens.liftAddHom_bangWMap` identifies the sum obtained by
+evaluating additive labels on those input weights with the sum obtained by transporting the
+labels forward with `Lens.mapObj` and evaluating them on the output weights.
+[Weighted directions](../../PolyFun/PFunctor/Lens/BangW.lean)
+
 ## Representables, Yoneda, and natural transformations
 
 `Lens.fromPurePowerEquiv : Lens (y^S) Q ≃ Q.Obj S` is the Yoneda lemma for polynomials, and
@@ -86,7 +94,9 @@ of exactly one lens (`Lens.existsUnique_mapObj`), namely `Lens.ofNatural η`
 the sum of the representables at its directions (`Equiv.sigmaPurePower`) and defines the
 pure-power (the book's representable), constant, linear, and monomial classes up to `≃ₚ`. `isPurePower_iff`,
 `isConstant_iff`, `isLinear_iff`, and `isMonomial_iff` characterize them by positions and
-directions.
+directions. Lean infers `IsPurePower (y^A)` for every exponent `A`. For any
+`h : IsPurePower P`, `h.exists_equiv` gives the existence of an exponent and a polynomial
+equivalence.
 
 [`Lens/Universal.lean`](../../PolyFun/PFunctor/Lens/Universal.lean) states the universal
 properties of sums and products as hom-set equivalences (`Lens.sigmaEquiv`, `Lens.piEquiv` with
@@ -129,6 +139,20 @@ vertical–cartesian factorization system of
 `MorphismProperty`: `LensCat.vertical` and `LensCat.cartesian` are multiplicative, every lens
 factors through them (`HasFactorization`), a `Lens.DiagonalFiller` is a `CommSq.LiftStruct`, and
 the isomorphisms of `LensCat` are the lenses in both classes.
+
+For a given lens, Lean can infer `Lens.IsCartesian` and `Lens.IsVertical` through composition
+and polynomial operations. This example uses `PolyFun.PFunctor.Lens.Factorization`.
+
+```lean
+open PFunctor
+
+example {P Q : PFunctor} (l : Lens P Q) [l.IsCartesian] :
+    ((Lens.id Q ∘ₗ l) ⊎ₗ l).IsCartesian := inferInstance
+```
+
+For a cartesian witness `h`, use `h.bijective a` for the bijection on directions at position
+`a`. A vertical witness provides `h.bijective` on positions. The explicit closure lemmas such
+as `h₁.comp h₂` also accept proofs directly.
 
 [`Category/MonoEpi.lean`](../../PolyFun/PFunctor/Category/MonoEpi.lean) characterizes the
 monomorphisms and epimorphisms of `LensCat`. A lens is a monomorphism exactly when it is
