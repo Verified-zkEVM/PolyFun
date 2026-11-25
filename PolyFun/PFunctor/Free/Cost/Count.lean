@@ -45,7 +45,7 @@ function and the code between calls are not charged, and an operation of price `
 
 In a family of programs, every member can meet its contract while the totals of the budgets grow
 without bound. An example is `n` kinds at count `1` each. A uniform bound on the totals of the
-budgets bounds the calls of the whole family.
+budgets bounds the calls of nonzero price on every completed path of every member.
 -/
 
 @[expose] public section
@@ -88,7 +88,8 @@ protected theorem eq_zero_of_add_eq_zero {a b : ω} (h : a + b = 0) : a = 0 := b
   rw [map_zero]
   exact (Finsupp.add_eq_zero_iff _ _).1 hc |>.1
 
-/-- The total count of all kinds: the degree of the counts. -/
+/-- The total count of all kinds is the degree of the counts. It depends on the chosen
+`CountCost` instance. For every instance, the total of a nonzero cost is positive. -/
 noncomputable def total : ω →+ ℕ :=
   Finsupp.degree.comp count
 

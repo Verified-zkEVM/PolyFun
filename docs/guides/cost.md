@@ -223,12 +223,15 @@ and the order of a submonoid of natural-number counts.
   some `c` with `b = a + c`. Neither class contains the other. `ℕ∞` is canonically ordered but not
   a counting cost type. `{n : ℕ // n ≠ 1}` is a counting cost type but not canonically ordered.
   The total of a cost, `CountCost.total`, is the `Finsupp.degree` of its counts. It is monotone
-  (`total_le_total`) and zero only at zero (`total_eq_zero_iff`).
+  (`total_le_total`) and zero only at zero (`total_eq_zero_iff`). Different `CountCost`
+  instances on the same type can assign different totals. `CountAtMost` does not depend on the
+  instance (`countAtMost_iff_costAtMost`).
 - No hazard above is a counting cost type. Under any partial order, `ℤ`, and so signed weights,
   fails `eq_zero_of_add_eq_zero`. The reversed order fails `le_self_add`. Some nonzero cost is its
   own double (`1` under `max` addition, `⊤` in `ℕ∞`), so its total is zero, under any partial
   order. Pointwise counts over infinitely many kinds are excluded by `nonempty_countCost_pi_iff`.
-  `PolyFunTest/PFunctor/Charge/Basic.lean` proves each rejection next to its hazard.
+  `PolyFunTest/PFunctor/Charge/Basic.lean` proves the other rejections next to their hazards.
+  `PolyFunTest/PFunctor/Charge/Count.lean` rejects `ℕ∞`.
 
 `MeasuredProgram.CountAtMost B` is the contract form of `CostAtMost B`. On every completed path
 of every view's program, the count of each kind is at most its count in `B`. In a counting cost
@@ -245,7 +248,8 @@ type it is equivalent to `CostAtMost B` (`countAtMost_iff_costAtMost`), so the l
   infinite type, such as the queries to a random oracle on an infinite domain.
 - For a family whose kinds depend on a parameter, each member's budget has a finite total. The
   totals can still grow without bound: `n` kinds at count `1` each have total `n`. A uniform bound
-  on the totals of the budgets bounds the calls of the whole family.
+  on the totals of the budgets bounds the calls of nonzero price on every completed path of every
+  member.
 - The contract bounds only the charges of the program's declared operations. The view, the
   answering function and the code between calls are not charged, and an operation of price `0` is
   free. So `ofFun f` meets the contract `0` for every `f`.
@@ -254,8 +258,8 @@ A definition stated with `CostAtMost` does not use a `[CountCost ω]` binder, an
 `unusedArguments` linter flags the binder. `CountAtMost` uses the instance. So a contract that
 requires a counting cost type is stated with `CountAtMost`.
 
-`PolyFunTest/PFunctor/Charge/Count.lean` checks the instances, coarse orders, an oracle on `ℕ`,
-the transfer laws on a composite, per-kind counts and the family bound.
+`PolyFunTest/PFunctor/Charge/Count.lean` checks the instances, an oracle on `ℕ`, the transfer
+laws on a composite, coarse orders, per-kind counts and the family bound.
 
 ## Laws
 
