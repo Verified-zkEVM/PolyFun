@@ -393,6 +393,8 @@ public import PolyFun.PFunctor.Free.Measure
 public import PolyFun.PFunctor.Free.Measure.EvalDist
 public import PolyFun.PFunctor.Free.Measure.Expectation
 public import PolyFun.PFunctor.Free.Measure.ExpectedCharge
+public import PolyFun.PFunctor.Free.Measure.FiniteKernel
+public import PolyFun.PFunctor.Free.Measure.FiniteKernel.Attr
 public import PolyFun.PFunctor.Free.Measure.Kernel
 public import PolyFun.PFunctor.Free.Measure.Kernel.Handler
 public import PolyFun.PFunctor.Free.Measure.Kernel.Transport
