@@ -95,7 +95,8 @@ instance instFintypePos (s : Shape) : Fintype (Pos s) :=
     inorder.toFunB s i = indexEquiv s i := rfl
 
 /-- Every direction has a unique flat index for the specified shape. -/
-theorem inorder_isCartesian : inorder.IsCartesian := fun s => (indexEquiv s).bijective
+instance inorder_isCartesian : inorder.IsCartesian where
+  bijective s := (indexEquiv s).bijective
 
 private def pushEntries {α : Type*} : (s : Shape) → (Pos s → α) → Array α → Array α
   | .leaf, x, acc => acc.push (x .atLeaf)
