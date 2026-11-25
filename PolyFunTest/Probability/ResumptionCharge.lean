@@ -16,8 +16,9 @@ Even infinite terminal credit has no effect on this client because it never retu
 bounds the setup cost of every client. An adaptive client pays for its second request in the state
 left by its first.
 
-Agreement with the fold of a finite program needs answers with measurable singletons. Over a
-coarser answer space, a client that always returns can lose its whole terminal payoff.
+Agreement with the fold of a finite program can fail for answers without measurable singletons.
+Over a coarser answer space, a client that always returns, after a number of requests that has no
+bound, can lose its whole terminal payoff.
 -/
 
 public section
@@ -101,11 +102,22 @@ example (next : Unit → Resumption Tick Unit) :
   simp
 
 /-- A finite program still receives its terminal credit at the state where it returns. -/
-example (program : FreeM Tick Unit) (post : Unit → Bool → ℝ≥0∞) :
-    expectedCharge service setup program.toResumption post =
-      FreeM.wpFold (OpSpec.statefulExpectedCharge service setup) program post :=
-  expectedCharge_toResumption service setup (fun _ => Measurable.of_discrete) program post
-    (fun _ => Measurable.of_discrete)
+example (post : Unit → Bool → ℝ≥0∞) :
+    expectedCharge service setup (FreeM.lift (P := Tick) ()).toResumption post false =
+      1 + post () true := by
+  rw [expectedCharge_toResumption service setup (fun _ => Measurable.of_discrete) _ post
+    (fun _ => Measurable.of_discrete)]
+  simp [setup, service, KernelHandler.ofFun, Kernel.deterministic_apply]
+
+private noncomputable def half : KernelHandler Tick Unit :=
+  fun _ => Kernel.const _ ((2⁻¹ : ℝ≥0∞) • Measure.dirac ((), ()))
+
+/-- A request answered with mass one half pays its price in full and half of its terminal credit. -/
+example : expectedCharge half (fun _ _ => 1) (Resumption.lift (p := Tick) ()) (fun _ _ => 1) () =
+    1 + 2⁻¹ := by
+  rw [Resumption.lift, expectedCharge_query (P := Tick) _ _ (fun _ => measurable_const) _ _ _
+    (fun _ => measurable_const)]
+  simp [half]
 
 /-! ## Potential bounds -/
 
@@ -121,20 +133,20 @@ example (tree : Resumption Tick Unit) (post : Unit → Bool → ℝ≥0∞) (s :
   rintro ⟨⟩ (_ | _) _ <;>
     simp [service, setup, credit, KernelHandler.ofFun, Kernel.deterministic_apply]
 
-/-- The client that never returns attains this bound from the state before setup. -/
-example (post : Unit → Bool → ℝ≥0∞) :
-    expectedCharge service setup ticks (fun r t => post r t + credit t) false =
-      expectedCharge service (fun _ _ => 0) ticks post false + credit false := by
+private theorem expectedCharge_free_ticks (post : Unit → Bool → ℝ≥0∞) (s : Bool) :
+    expectedCharge service (fun _ _ => 0) ticks post s = 0 := by
+  change (⨆ n, prefixCost (fun _ _ => 0) post n s) = 0
   have h (n : ℕ) (t : Bool) : prefixCost (fun _ _ => 0) post n t = 0 := by
     induction n generalizing t with
     | zero => exact prefix_zero ..
     | succ n ih => simp [prefix_succ, ih]
-  rw [expectedCharge_setup_ticks]
-  change 1 = (⨆ n, prefixCost (fun _ _ => 0) post n false) + credit false
-  simp [h, credit]
+  simp [h]
 
-/-- Without credit, the price premise fails in the state before setup. -/
-example : ¬ setup () false ≤ 0 := by simp [setup]
+/-- The client that never returns attains this bound from the state before setup. -/
+example (post : Unit → Bool → ℝ≥0∞) :
+    expectedCharge service setup ticks (fun r t => post r t + credit t) false =
+      expectedCharge service (fun _ _ => 0) ticks post false + credit false := by
+  simp [expectedCharge_setup_ticks, expectedCharge_free_ticks, credit]
 
 /-- Setup is free in the ready state, which the service never leaves. -/
 example (tree : Resumption Tick Unit) :
@@ -147,6 +159,11 @@ example (tree : Resumption Tick Unit) :
     simp [service, KernelHandler.ofFun, Kernel.deterministic_apply]
   · rintro ⟨⟩ s rfl
     simp [setup]
+
+/-- That bound fails in the other state, which its invariant excludes. -/
+example : ¬ expectedCharge service setup ticks (fun _ _ => 0) false ≤
+    expectedCharge service (fun _ _ => 0) ticks (fun _ _ => 0) false := by
+  simp [expectedCharge_setup_ticks, expectedCharge_free_ticks]
 
 /-! ## Sequencing -/
 
