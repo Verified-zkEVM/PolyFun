@@ -102,6 +102,7 @@ public import PolyFun.IPFunctor.Notation.Deterministic
 public import PolyFun.IPFunctor.Notation.Indexed
 public import PolyFun.IPFunctor.Scoped.Adequacy
 public import PolyFun.IPFunctor.Scoped.Basic
+public import PolyFun.IPFunctor.Scoped.CBVInterpretation
 public import PolyFun.IPFunctor.Scoped.Certificate
 public import PolyFun.IPFunctor.Scoped.ConstantFamily
 public import PolyFun.IPFunctor.Scoped.Domain
@@ -122,13 +123,16 @@ public import PolyFun.IPFunctor.Scoped.Import.Quote
 public import PolyFun.IPFunctor.Scoped.Import.Registry
 public import PolyFun.IPFunctor.Scoped.Import.Submit
 public import PolyFun.IPFunctor.Scoped.Interpretation
+public import PolyFun.IPFunctor.Scoped.Measure
 public import PolyFun.IPFunctor.Scoped.Reindex
 public import PolyFun.IPFunctor.Scoped.Renaming
 public import PolyFun.IPFunctor.Scoped.Size
 public import PolyFun.IPFunctor.Scoped.Stacked
 public import PolyFun.IPFunctor.Scoped.StackedInterpretation
 public import PolyFun.IPFunctor.Scoped.Substitution
+public import PolyFun.IPFunctor.Scoped.Sum
 public import PolyFun.IPFunctor.Scoped.Transport
+public import PolyFun.IPFunctor.Scoped.Uses
 public import PolyFun.ITree.Basic
 public import PolyFun.ITree.Bisim.Bind
 public import PolyFun.ITree.Bisim.CrossSignature
