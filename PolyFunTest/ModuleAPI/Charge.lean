@@ -8,16 +8,19 @@ module
 
 import PolyFun.PFunctor.Charge
 import PolyFun.PFunctor.Free.Cost
+import PolyFun.PFunctor.Free.Cost.Count
 import PolyFun.PFunctor.Free.Cost.Value
 import PolyFun.PFunctor.Free.Cost.Measured
 
 /-!
 # Ordinary-import canaries for charges and charge bounds
 
-A charge pulled back along a lens is the composite lens, a charge bound unfolds call by call, the
-worst-case cost is the fold of the charge reading, and a measured program precomposed with a map
-on inputs runs on the mapped input. These are definitional, and the examples check that they stay
-so through ordinary imports, with positions and directions in independent universes.
+A charge pulled back along a lens is the composite lens. A charge bound unfolds call by call,
+and the worst-case cost folds the charge reading. Precomposing a measured program with an input
+map runs the program on the mapped input. The examples check these definitional equations through
+ordinary imports. The counting example uses the public conversion from a program budget to
+a path length bound. Positions, directions, inputs, results and costs can lie in independent
+universes.
 -/
 
 universe uA uB uA₂ uB₂ uE w v
@@ -52,5 +55,11 @@ example [Add ω] [Zero ω] [CompleteLattice ω] (c : P.A → ω) (x : FreeM P α
 example {Input Input' Result : Type v} (M : FreeM.MeasuredProgram Input Result ω)
     (g : Input' → Input) (i : Input') : (M.contramap g).run i = M.run (g i) :=
   rfl
+
+example {Input : Type uA} {Result : Type v} [AddMonoid ω] [PartialOrder ω] [CountCost ω]
+    {f : Input → Result} (b : FreeM.BudgetedProgram f ω) (v : b.program.View)
+    (p : FreeM.Path (b.program.program v)) (hc : ∀ a, b.program.cost a ≠ 0) :
+    FreeM.Path.length (b.program.program v) p ≤ CountCost.total b.budget :=
+  b.costAtMost.countAtMost.length_le_total hc v p
 
 end PolyFunTest.ModuleAPI.Charge

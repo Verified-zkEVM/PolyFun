@@ -7,6 +7,7 @@ Authors: Devon Tuma
 module
 
 public import PolyFun.PFunctor.Free.Cost
+public import PolyFun.PFunctor.Free.Cost.Count
 public import Mathlib.Algebra.Order.Monoid.Prod
 public import Mathlib.Algebra.Order.Sub.Prod
 
@@ -23,6 +24,8 @@ Checks for `PolyFun.PFunctor.Free.Cost` and for the lens transport of roll bound
 * a non-additive roll bound transports along a lens into a sum;
 * contracts need care: a per-kind budget over infinitely many kinds does not bound total use, and
   with a negative price a refund call meets a budget the work alone would exceed;
+* none of the contract hazards is a counting cost type, so the counting contract rejects each of
+  them;
 * a bound restricted to allowed answers holds where the unrestricted one fails, matches the
   restricted roll bound and transfers through a handler, and a lens that answers only some
   directions can hide calls from a bound.
@@ -216,6 +219,10 @@ example : spread.IsChargeBound (fun k => Pi.single k 1) (fun _ => (1 : ℕ)) := 
 example : ¬ spread.IsChargeBound (fun _ => (1 : ℕ)) 1 := by
   simp [spread]
 
+/-- Pointwise counts over infinitely many kinds are not a counting cost type. -/
+example : IsEmpty (CountCost (Kinds.A → ℕ)) :=
+  not_nonempty_iff.1 fun h => (CountCost.nonempty_countCost_pi_iff.1 h).false
+
 /-- A call costing `5`, preceded by a refund of `5`. -/
 def refundThenWork : FreeM Two Bool := do
   let _ ← FreeM.lift (P := Two) false
@@ -228,12 +235,22 @@ def refundPrice (b : Two.A) : ℤ := if b then 5 else -5
 example : refundThenWork.IsChargeBound refundPrice 0 := by
   simp [refundThenWork, refundPrice]
 
+/-- Under any partial order, integers are not a counting cost type: the refund cancels the work.
+This also rejects the signed weights of `PolyFunTest/PFunctor/Charge/Paths.lean`. -/
+example (order : PartialOrder ℤ) : IsEmpty (@CountCost ℤ _ order) :=
+  ⟨fun _ => absurd (CountCost.add_eq_zero.1
+    (show refundPrice true + refundPrice false = 0 by decide)).1 (by decide)⟩
+
 /-- Under the reversed order, every program meets the budget `0`: `≤` no longer bounds use. -/
 example (x : FreeM Coin Bool) (s : ℕᵒᵈ) :
     x.IsChargeBound (fun _ => OrderDual.toDual (1 : ℕ)) (OrderDual.toDual 0) s := by
   induction x using FreeM.rec generalizing s with
   | pure a => exact Nat.zero_le _
   | liftBind a r ih => exact ⟨Nat.zero_le _, fun b => ih b _⟩
+
+/-- The reversed order is not a counting cost type: a call lowers the amount spent. -/
+example : IsEmpty (CountCost ℕᵒᵈ) :=
+  ⟨fun _ => absurd (CountCost.le_self_add (OrderDual.toDual 0) (OrderDual.toDual 1)) (by decide)⟩
 
 /-- `ℕ` with `max` as its addition. -/
 structure MaxNat where
@@ -244,6 +261,10 @@ instance : Add MaxNat := ⟨fun a b => ⟨max a.val b.val⟩⟩
 instance : LE MaxNat := ⟨fun a b => a.val ≤ b.val⟩
 instance : Zero MaxNat := ⟨⟨0⟩⟩
 
+instance : AddZeroClass MaxNat where
+  zero_add a := congrArg MaxNat.mk (Nat.zero_max a.val)
+  add_zero a := congrArg MaxNat.mk (Nat.max_zero a.val)
+
 /-- With `max` as addition, a budget bounds only the largest price: every program, however many
 calls it makes, meets the budget `1` at price `1`. -/
 example (x : FreeM Coin Bool) : x.IsChargeBound (fun _ => (⟨1⟩ : MaxNat)) ⟨1⟩ := by
@@ -253,6 +274,15 @@ example (x : FreeM Coin Bool) : x.IsChargeBound (fun _ => (⟨1⟩ : MaxNat)) �
   | pure a => exact fun _ hs => hs
   | liftBind a r ih =>
     exact fun s hs => ⟨max_le hs le_rfl, fun b => ih b _ (max_le hs le_rfl)⟩
+
+/-- Under any partial order, `max` addition is not a counting cost type. The price `⟨1⟩` equals
+its double, so its total is `0`, but the price is not `0`. -/
+example (order : PartialOrder MaxNat) : IsEmpty (@CountCost MaxNat _ order) := ⟨fun _ => by
+  have h : CountCost.total (⟨1⟩ : MaxNat) = CountCost.total (⟨1⟩ + ⟨1⟩ : MaxNat) :=
+    congrArg _ (congrArg MaxNat.mk (max_self 1).symm)
+  rw [map_add] at h
+  exact absurd ((CountCost.total_eq_zero_iff (a := (⟨1⟩ : MaxNat))).1 (by omega))
+    fun h => absurd (congrArg MaxNat.val h) (by decide)⟩
 
 /-! ## Restricted answers -/
 

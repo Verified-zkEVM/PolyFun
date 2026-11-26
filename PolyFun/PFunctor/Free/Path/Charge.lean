@@ -115,6 +115,16 @@ theorem length_eq_charge_one (x : FreeM P α) (p : Path x) :
     rcases p with ⟨b, p⟩
     rw [length_liftBind, charge_liftBind, ih, add_comm]
 
+/-- A larger charge at every call gives a larger charge along every completed path. -/
+theorem charge_mono [Add ω] [Zero ω] [Preorder ω] [AddLeftMono ω] [AddRightMono ω]
+    {d : P.A → ω} (h : ∀ a, c a ≤ d a) (x : FreeM P α) (p : Path x) :
+    charge c x p ≤ charge d x p := by
+  induction x using FreeM.rec with
+  | pure a => exact le_rfl
+  | liftBind a r ih =>
+    rcases p with ⟨b, p⟩
+    exact add_le_add (h a) (ih b p)
+
 section Ordered
 
 variable [AddMonoid ω] [Preorder ω] {B s : ω}
