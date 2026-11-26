@@ -22,7 +22,7 @@ direction map is `update` (how an incoming direction `p.B (expose s)` evolves th
 state); both are provided as definitional accessors under the dynamical names.
 Equivalently, repackaging `expose` / `update` as `out : S → p.Obj S`
 (`DynSystem.out`) exhibits a dynamical system as an F-coalgebra of the extension
-functor of `p`, with a `Coalg p.Obj` instance: dynamical systems are the
+functor of `p`, via `DynSystem.coalg`: dynamical systems are the
 coalgebras of polynomial functors.
 
 * `PFunctor.DynSystem S p` — a `p`-dynamical system with state set `S`, i.e. a
@@ -99,9 +99,7 @@ def out (s : DynSystem S p) (st : S) : p.Obj S := ⟨s.expose st, s.update st⟩
 @[simp] theorem out_snd (s : DynSystem S p) (st : S) (d : p.B (s.expose st)) :
     (s.out st).2 d = s.update st d := rfl
 
-/-- Every dynamical system is an F-coalgebra of its interface's extension functor.
-Not an instance: the system `s` does not appear in the type `Coalg p.Obj S`, so
-synthesis could not select one. -/
+/-- Every dynamical system is an F-coalgebra of its interface's extension functor. -/
 abbrev coalg (s : DynSystem S p) : Coalg p.Obj S := ⟨s.out⟩
 
 /-! ## Concrete steps and step relations -/

@@ -47,10 +47,12 @@ have `MonadAttach` instances — quantifying existentially over the initial stat
 supports are canonical, so the elimination theory applies. They do not admit a general
 `ExactMonadAttach` instance: flattened premises may choose unrelated indices on the sides of a
 `bind`. For `StateT` this can let the continuation observe a state the prefix did not
-produce; for `ReaderT` it can let the two premises use different environments. Reason about
-those per run instead, via
-`mem_support_stateT_iff` / `mem_support_readerT_iff`; `PolyFunTest` pins the failure with a
-counterexample. Oracle- and state-relative supports belong at the specification layer
+produce. For `ReaderT` the premises can use different environments. For a fixed initial state
+or environment, use
+`MonadAttach.StateT.supportFrom` or `MonadAttach.ReaderT.supportAt` in
+`PolyFun.Control.Monad.Support.Indexed`. The lemmas `mem_support_stateT_iff` and
+`mem_support_readerT_iff` describe ordinary support by quantifying over the initial index.
+Oracle- and state-relative supports belong at the specification layer
 (`PolyFun.PFunctor.Free.WP`), which indexes the notion by a per-operation answer assignment.
 
 A second limitation is inherited from `MonadAttach`: an instance must supply `attach`.

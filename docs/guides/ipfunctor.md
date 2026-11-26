@@ -528,6 +528,16 @@ procedures are Boolean folds, related to `heads` by `fold_rel`. `Head` is a stru
 the sigma type `(a : S) × σ.Op a`: through the sigma type, instance search would not find these
 instances for a concrete signature.
 
+A step class can specify which local computations are admissible. Fix a
+representation for every semantic sort. If each constructor preserves admissibility
+for arguments evaluated at fresh bindings computed admissibly from the input, and each
+variable of the context is an admissible function of the input, then so is the denotation
+of the whole fixed term. For binary operations on a represented pair, `Binary.fst` and `Binary.snd`
+read its two fields, and `Binary.app` combines subterms. If the class has products and every
+operation is admissible on the represented pair, `Binary.denote_admissible` applies to every
+fixed term in the two variables, including nested operations and repeated uses of either variable.
+See [scoped-term admissibility](../../PolyFun/Realizability/Scoped.lean).
+
 [`Scoped.DomainInterpretation`](../../PolyFun/IPFunctor/Scoped/DomainInterpretation.lean)
 interprets a binding signature continuously. A `DomainInterpretation σ V` receives each
 argument as a continuous function of only the variables that argument binds, over an

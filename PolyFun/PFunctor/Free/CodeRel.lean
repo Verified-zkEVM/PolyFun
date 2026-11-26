@@ -30,6 +30,9 @@ by one, and gives the signature relation `CodeRel.toSigRel` between their polyno
 * `hFreeRel_iff_freeRel` — over an identity signature relation the heterogeneous lift is
   `FreeRel`;
 * `HFreeRel.mono`, `HFreeRel.bind` — monotonicity and compatibility with bind;
+* `hFreeRel_pure_iff`, `hFreeRel_liftBind_iff`, `not_hFreeRel_pure_liftBind`,
+  `not_hFreeRel_liftBind_pure` — inversion at two leaves, at two nodes, and at a leaf and a node,
+  the heterogeneous forms of `freeRel_pure_iff` and `freeRel_liftBind_iff`;
 * `CodeRel.refl_isId`, `Code.hRel_refl_iff` — the reflexive relation of a code is an identity
   signature relation, and the lift along it is `Code.Rel`.
 -/
@@ -109,6 +112,29 @@ theorem HFreeRel.bind {γ : Type w} {γ' : Type w'} {R : α → β → Prop} {R'
   induction hxy with
   | pure hab => exact hfg _ _ hab
   | liftBind hpos _ ih => exact .liftBind hpos ih
+
+/-- Leaves are related by the heterogeneous lift exactly when their results are. -/
+theorem hFreeRel_pure_iff {R : α → β → Prop} {a : α} {b : β} :
+    HFreeRel S R (.pure a : P.FreeM α) (.pure b : Q.FreeM β) ↔ R a b :=
+  ⟨fun h => by cases h; assumption, HFreeRel.pure⟩
+
+/-- Two nodes are related by the heterogeneous lift exactly when their positions are related and
+their continuations are related at related directions. -/
+theorem hFreeRel_liftBind_iff {R : α → β → Prop} {a : P.A} {a' : Q.A}
+    {k : P.B a → P.FreeM α} {k' : Q.B a' → Q.FreeM β} :
+    HFreeRel S R (.liftBind a k) (.liftBind a' k') ↔
+      S.pos a a' ∧ ∀ d d', S.dir a a' d d' → HFreeRel S R (k d) (k' d') :=
+  ⟨fun h => by cases h; grind, fun h => .liftBind h.1 h.2⟩
+
+/-- A leaf and a node are not related by the heterogeneous lift. -/
+theorem not_hFreeRel_pure_liftBind {R : α → β → Prop} {a : α} {a' : Q.A}
+    {k' : Q.B a' → Q.FreeM β} : ¬ HFreeRel S R (.pure a : P.FreeM α) (.liftBind a' k') :=
+  nofun
+
+/-- A node and a leaf are not related by the heterogeneous lift. -/
+theorem not_hFreeRel_liftBind_pure {R : α → β → Prop} {a : P.A} {k : P.B a → P.FreeM α}
+    {b : β} : ¬ HFreeRel S R (.liftBind a k) (.pure b : Q.FreeM β) :=
+  nofun
 
 end HFreeRel
 

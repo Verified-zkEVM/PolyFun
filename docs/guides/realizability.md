@@ -33,6 +33,7 @@ asymptotic resource bound.
 | Realize a non-returning dynamical system | [DynSystem](../../PolyFun/Realizability/DynSystem.lean) |
 | Compose qualitative realizations | [Closure](../../PolyFun/Realizability/Closure.lean), [DynSystemClosure](../../PolyFun/Realizability/DynSystemClosure.lean) |
 | Use finite, computable, or word-function instances | [Instances](../../PolyFun/Realizability/Instances.lean) |
+| Prove that terms over a binding signature denote admissible functions | [Scoped](../../PolyFun/Realizability/Scoped.lean), [scoped programs](ipfunctor.md#binding-signatures-and-native-ir) |
 | Change an encoding without changing admissibility | [Representation](../../PolyFun/Realizability/Representation.lean) |
 | Retain executable evidence and exact local costs | [Quantitative](../../PolyFun/Realizability/Quantitative.lean), [prefixes](../../PolyFun/Realizability/Quantitative/Prefix.lean) |
 | Prove resource bounds and bounded iteration | [Resource](../../PolyFun/Realizability/Quantitative/Resource.lean), [Iteration](../../PolyFun/Realizability/Quantitative/Iteration.lean) |

@@ -244,8 +244,9 @@ groupoid). A predicate, never a field (Niu–Spivak Ex 7.22).
 
 Reference API: exercised in `PolyFunTest/PFunctor/Comonoid.lean`, staged for
 downstream state-system consumers. -/
-def IsStateSystem (C : Comonoid.{uA, uB}) : Prop :=
-  ∀ a : C.carrier.A, Function.Bijective (C.comul.toFunA a).2
+class IsStateSystem (C : Comonoid.{uA, uB}) : Prop where
+  /-- Each source has exactly one direction to each target. -/
+  bijective : ∀ a : C.carrier.A, Function.Bijective (C.comul.toFunA a).2
 
 end Comonoid
 
@@ -345,8 +346,8 @@ end Comonoid.Hom
 
 /-- The state comonoid is a state system: its codomain map `s₁ ↦ s₁` is the
 identity, hence bijective (Niu–Spivak Ex 7.22). -/
-theorem isStateSystem_stateComonoid (S : Type u) :
+instance isStateSystem_stateComonoid (S : Type u) :
     (stateComonoid S).IsStateSystem :=
-  fun _ => Function.bijective_id
+  ⟨fun _ => Function.bijective_id⟩
 
 end PFunctor
