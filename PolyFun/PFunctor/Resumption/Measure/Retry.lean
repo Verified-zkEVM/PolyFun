@@ -158,7 +158,7 @@ theorem expectedCharge_tree_le_div_of_retry_mass_le (hI : Preserves K I) {p : �
     using mul_le_mul_right h C
 
 /-- Each finite lossless execution has either succeeded or exhausted its trial limit. -/
-theorem success_add_tail (K : Kernel S (Bool × S)) [IsMarkovKernel K] (n : ℕ) (s : S) :
+private theorem success_add_tail (K : Kernel S (Bool × S)) [IsMarkovKernel K] (n : ℕ) (s : S) :
     observe K 0 1 0 n s + observe K 0 0 1 n s = 1 := by
   induction n generalizing s with
   | zero => simp [observe]
@@ -175,7 +175,7 @@ theorem success_add_tail (K : Kernel S (Bool × S)) [IsMarkovKernel K] (n : ℕ)
 
 /-- For a Markov trial kernel, a uniform bound `q < 1` on the conditional retry mass gives
 eventual success of mass one. -/
-theorem iSup_success_eq_one [IsMarkovKernel K] (hI : Preserves K I)
+private theorem iSup_success_eq_one [IsMarkovKernel K] (hI : Preserves K I)
     (hq : ∀ s, I s → K s {z | z.1 = false} ≤ q) (hq' : q < 1) (s : S) (hs : I s) :
     (⨆ n, observe K 0 1 0 n s) = 1 := by
   apply le_antisymm
