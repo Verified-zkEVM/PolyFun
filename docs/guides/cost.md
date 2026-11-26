@@ -373,10 +373,12 @@ subprobability kernel. If the kernel returns an answer with total mass one,
 
 A fresh fair coin at unit cost gives two attempts in expectation. A service that caches the
 first coin can reach a state in which every retry fails. Its chance of ever succeeding is
-one half, and its expected cost is infinite. For a service that can abort, supply a bound of
-`1 - p` on the mass of the retry branch to `Retry.expectedCharge_tree_le_div_of_retry_mass_le`.
-The same `C / p` bound holds because the current request incurs its charge and only returned
-failures incur the cost of another trial. The [retry module](../../PolyFun/PFunctor/Resumption/Measure/Retry.lean)
+one half, and its expected cost is infinite. The success form counts aborted mass as if it
+retried. A service that can abort may retry with much less mass than one minus its success
+mass: supply a bound of `1 - p` on the mass of the retry branch alone to
+`Retry.expectedCharge_tree_le_div_of_retry_mass_le`, which assumes nothing about the total mass
+of the kernel. The same `C / p` bound holds because the current request incurs its charge and
+only returned failures incur the cost of another trial. The [retry module](../../PolyFun/PFunctor/Resumption/Measure/Retry.lean)
 states these bounds, and its [regressions](../../PolyFunTest/Probability/Retry.lean) compute both
 coin examples and the boundary cases.
 
