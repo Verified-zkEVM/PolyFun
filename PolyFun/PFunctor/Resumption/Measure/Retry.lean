@@ -117,7 +117,7 @@ private theorem lintegral_retry_le (μ : Measure (Bool × S)) (f : S → ℝ≥0
 
 variable {K : Kernel S (Bool × S)} {I : S → Prop} {q C : ℝ≥0∞} {c : S → ℝ≥0∞}
 
-/-- The probability that all of the first `n` trials return retry is at most `q ^ n`. -/
+/-- The mass on which all of the first `n` trials return retry is at most `q ^ n`. -/
 theorem tail_le_pow (hI : Preserves K I)
     (hq : ∀ s, I s → K s {z | z.1 = false} ≤ q) (n : ℕ) (s : S) (hs : I s) :
     observe K 0 0 1 n s ≤ q ^ n := by
@@ -128,7 +128,8 @@ theorem tail_le_pow (hI : Preserves K I)
     exact (lintegral_retry_le _ _ ((hI s hs).mono fun z hz hb => ih _ (hz hb))).trans
       (mul_le_mul_right (hq s hs) _)
 
-/-- Expected cost through `n` trials, when each trial costs at most `C` in invariant states. -/
+/-- If each trial in an invariant state costs at most `C` and retries with mass at most `q`,
+the expected cost through `n` trials is at most `C * ∑ i ∈ Finset.range n, q ^ i`. -/
 theorem observe_cost_le_geom_sum (hI : Preserves K I)
     (hq : ∀ s, I s → K s {z | z.1 = false} ≤ q) (hc : ∀ s, I s → c s ≤ C)
     (n : ℕ) (s : S) (hs : I s) :
@@ -172,7 +173,8 @@ theorem success_add_tail (K : Kernel S (Bool × S)) [IsMarkovKernel K] (n : ℕ)
     · exact Measurable.ite (measurable_fst (measurableSet_singleton true)) measurable_const
         ((measurable_observe K measurable_const 1 0 n).comp measurable_snd)
 
-/-- A positive uniform lower bound on conditional success gives eventual success of mass one. -/
+/-- For a Markov trial kernel, a uniform bound `q < 1` on the conditional retry mass gives
+eventual success of mass one. -/
 theorem iSup_success_eq_one [IsMarkovKernel K] (hI : Preserves K I)
     (hq : ∀ s, I s → K s {z | z.1 = false} ≤ q) (hq' : q < 1) (s : S) (hs : I s) :
     (⨆ n, observe K 0 1 0 n s) = 1 := by
