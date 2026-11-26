@@ -13,7 +13,9 @@ public import PolyFun.IPFunctor.Scoped.Basic
 
 `Env.rename ρ η` reads the environment `η` through the renaming `ρ`. Renamings and
 substitutions are environments, so the same operation composes a renaming with either:
-`Env.rename ρ τ` applies `ρ` and then `τ`.
+`Env.rename ρ τ` applies `ρ` and then `τ`. Reading through `Renaming.swapBlocks`, the
+exchange of two blocks of positions, exchanges those blocks of an environment
+(`Env.rename_swapBlocks`).
 -/
 
 public section
@@ -55,6 +57,38 @@ theorem rename_append (ρ : Renaming Γ Δ) {Ξ : List S} (ξ : Env V Ξ) (η : 
       change rename (Renaming.lift (ρ.liftMany Ξ) a) (cons _ _) = _
       rw [rename_cons, ih]
       rfl
+
+/-! ## Blocks of positions -/
+
+/-- Reading an appended environment at the positions of its first block gives that block. -/
+@[simp] theorem rename_appendLeft_append {Ξ : List S} (ξ : Env V Ξ) (η : Env V Γ) :
+    rename (fun _ x => x.appendLeft Γ) (append ξ η) = ξ :=
+  funext fun _ => funext fun x => append_appendLeft ξ η x
+
+/-- Reading an appended environment past its first block gives the older positions. -/
+@[simp] theorem rename_weakenMany_append {Ξ : List S} (ξ : Env V Ξ) (η : Env V Γ) :
+    rename (fun _ x => x.weakenMany Ξ) (append ξ η) = η :=
+  funext fun _ => funext fun x => append_weakenMany ξ η x
+
+/-- Reading through an appended pair of renamings reads each block through its own. -/
+theorem rename_append_renaming {Ξ : List S} (ρ₁ : Renaming Ξ Δ) (ρ₂ : Renaming Γ Δ)
+    (η : Env V Δ) : rename (append ρ₁ ρ₂) η = append (rename ρ₁ η) (rename ρ₂ η) := by
+  induction Ξ with
+  | nil => rfl
+  | cons a Ξ ih =>
+    funext b x
+    cases x with
+    | zero => rfl
+    | succ x => exact congrFun (congrFun (ih fun _ y => ρ₁ _ y.succ) b) x
+
+/-- Reading through the exchange of two blocks exchanges their values. -/
+@[simp] theorem rename_swapBlocks {Ξ Δ₁ Δ₂ : List S} (ξ : Env V Ξ) (η₁ : Env V Δ₁)
+    (η₂ : Env V Δ₂) :
+    rename (Renaming.swapBlocks Ξ Δ₁ Δ₂) (append (append ξ η₂) η₁) =
+      append (append ξ η₁) η₂ := by
+  rw [Renaming.swapBlocks, rename_append_renaming, rename_append_renaming,
+    rename_weakenMany_append]
+  refine congrArg₂ append (congrArg (append · η₁) ?_) ?_ <;> funext a x <;> simp
 
 end Env
 

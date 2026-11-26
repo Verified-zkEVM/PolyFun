@@ -13,6 +13,7 @@ lake env lean Examples/Tutorials/Requests.lean
 | [Machines](Tutorials/Machines.lean) | A counter's state, outputs, trace, and composition of finite runs |
 | [Indexed programs](Tutorials/IndexedPrograms.lean) | Two protocol phases, indexed sequencing, and forgetting indices |
 | [Scoped programs](Tutorials/ScopedPrograms.lean) | Native polynomial syntax, capture-avoiding substitution, bounded loops, and proved let elimination |
+| [An effectful scoped language](Tutorials/ScopedEffects.lean) | A sum of two binding signatures, an oracle query read call by value into a free program, adequacy under a handler that answers by a function, and terms without queries that give the same answer under every handler |
 | [Scoped execution](Tutorials/ScopedExecution.lean) | Strict arithmetic/let/loop execution, all-input semantic correspondence and machine adapters |
 | [Polymorphic scoped families](Tutorials/ScopedFamily.lean) | Finite syntax with changing type-parameter scopes, parameter renaming, and erasure preservation by generic traversal |
 | [A lazy language with recursion](Tutorials/ScopedDomains.lean) | Continuous meanings of a binding signature, recursion as a least fixed point, a fundamental lemma relating the lazy meaning to a call-by-value evaluator, certified programs with a decoder into native results, a fuel-bounded evaluator that approximates the lazy meaning and certifies a recursive program, and adequacy for a call-by-name evaluator |

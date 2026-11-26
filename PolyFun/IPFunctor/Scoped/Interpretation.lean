@@ -60,6 +60,14 @@ theorem denote_rename (alg : Interpretation σ V) {a : S} (t : σ.Term Γ a)
     funext p ξ
     rw [ih p, Env.rename_append]
 
+/-- A term renamed by the exchange of two blocks, read in an environment whose blocks are
+exchanged, means what the original term means. -/
+theorem denote_rename_swapBlocks (alg : Interpretation σ V) {Ξ Δ₁ Δ₂ : List S} {a : S}
+    (t : σ.Term (Ξ ++ Δ₁ ++ Δ₂) a) (ξ : Env V Ξ) (η₁ : Env V Δ₁) (η₂ : Env V Δ₂) :
+    (t.rename (Renaming.swapBlocks Ξ Δ₁ Δ₂)).denote alg (Env.append (Env.append ξ η₂) η₁) =
+      t.denote alg (Env.append (Env.append ξ η₁) η₂) := by
+  rw [denote_rename, Env.rename_swapBlocks]
+
 /-- Interpret every substitution image in the same environment. -/
 @[expose] def substitutionEnv (alg : Interpretation σ V) (θ : σ.Substitution Γ Δ)
     (η : Env V Δ) : Env V Γ := fun a x => (θ a x).denote alg η

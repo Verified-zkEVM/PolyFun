@@ -17,7 +17,9 @@ leaves, and constructor children carry their extended typing judgments.
 
 An environment `Env V Γ` assigns a value to each binding position of `Γ`. Renamings
 and substitutions are the environments whose values are variables and terms. They
-lift under each argument's binders.
+lift under each argument's binders. A context has finitely many positions, so a
+decidable property of every variable, or of every entry of an environment, is decidable
+(`ScopedVar.decidableForall`).
 -/
 
 public section
@@ -79,6 +81,50 @@ theorem ScopedVar.sigma_eq_of_index_eq {S : Type u} {Γ : List S} {a b : S}
     change (x.weakenMany Ξ).index + 1 = _
     rw [ih, List.length_cons, Nat.add_assoc]
 
+/-- Keep a variable of a block at its position in front of an ambient context. This is the
+counterpart of `weakenMany`, as `List.mem_append_left` is of `List.mem_append_right`. -/
+@[expose] def ScopedVar.appendLeft {S : Type u} (Γ : List S) :
+    {Ξ : List S} → {a : S} → ScopedVar Ξ a → ScopedVar (Ξ ++ Γ) a
+  | _ :: _, _, .zero => .zero
+  | _ :: _, _, .succ x => .succ (appendLeft Γ x)
+
+@[simp] theorem ScopedVar.index_appendLeft {S : Type u} (Γ : List S) {Ξ : List S} {a : S}
+    (x : ScopedVar Ξ a) : (x.appendLeft Γ).index = x.index := by
+  induction x with
+  | zero => rfl
+  | succ x ih => exact congrArg (· + 1) ih
+
+/-- A variable's sort occurs in its context. -/
+theorem ScopedVar.mem {S : Type u} : {Γ : List S} → {a : S} → ScopedVar Γ a → a ∈ Γ
+  | _, _, .zero => List.mem_cons_self
+  | _, _, .succ x => List.mem_cons_of_mem _ x.mem
+
+private theorem ScopedVar.nonempty_of_mem {S : Type u} {a : S} :
+    {Γ : List S} → a ∈ Γ → Nonempty (ScopedVar Γ a)
+  | _, .head _ => ⟨.zero⟩
+  | _, .tail _ h => (nonempty_of_mem h).map .succ
+
+/-- A context has a variable of a sort exactly when the sort occurs in it. -/
+theorem nonempty_scopedVar_iff {S : Type u} {Γ : List S} {a : S} :
+    Nonempty (ScopedVar Γ a) ↔ a ∈ Γ :=
+  ⟨fun ⟨x⟩ => x.mem, ScopedVar.nonempty_of_mem⟩
+
+/-- A property of every variable of a context is decidable when it is decidable at each
+variable: the positions are checked from the nearest outwards. A property of every entry of an
+environment `η`, `∀ a x, q a (η a x)`, is the case `p a x := q a (η a x)`. -/
+instance ScopedVar.decidableForall {S : Type u} :
+    {Γ : List S} → {p : ∀ a, ScopedVar Γ a → Prop} → [∀ a x, Decidable (p a x)] →
+      Decidable (∀ a x, p a x)
+  | [], _, _ => isTrue fun _ x => nomatch x
+  | _ :: _, p, _ =>
+    haveI := decidableForall (p := fun a x => p a (.succ x))
+    decidable_of_iff (p _ .zero ∧ ∀ a x, p a (.succ x))
+      ⟨fun h a x => by
+        cases x with
+        | zero => exact h.1
+        | succ x => exact h.2 a x,
+        fun h => ⟨h _ .zero, fun a x => h a x.succ⟩⟩
+
 /-- Constructor shapes with explicit binding information for every argument. -/
 structure ScopedSignature (S : Type u) where
   /-- Constructors producing the given sort. -/
@@ -137,6 +183,11 @@ theorem eq_empty (η : Env V []) : η = empty := by
 @[simp] theorem cons_succ {a b : S} (x : V a) (η : Env V Γ) (v : ScopedVar Γ b) :
     cons x η b (.succ v) = η b v := rfl
 
+/-- An environment of a non-empty context is its nearest value followed by the others. -/
+theorem cons_eta {a : S} (η : Env V (a :: Γ)) : cons (η a .zero) (fun b x => η b x.succ) = η := by
+  funext b x
+  cases x <;> rfl
+
 /-- The environment of a context with one variable. -/
 @[expose] def single {a : S} (x : V a) : Env V [a] := cons x empty
 
@@ -153,6 +204,28 @@ theorem eq_empty (η : Env V []) : η = empty := by
   induction Ξ with
   | nil => rfl
   | cons b Ξ ih => exact ih (fun c y => ξ c (.succ y))
+
+/-- The positions of a fresh block keep their values. -/
+@[simp] theorem append_appendLeft : {Ξ : List S} → (ξ : Env V Ξ) → (η : Env V Γ) → {a : S} →
+    (x : ScopedVar Ξ a) → append ξ η a (x.appendLeft Γ) = ξ a x
+  | _ :: _, _, _, _, .zero => rfl
+  | _ :: _, ξ, η, _, .succ x => append_appendLeft (fun _ y => ξ _ y.succ) η x
+
+/-- A property holds at every position of an appended environment exactly when it holds at
+every position of each block. -/
+theorem forall_append {p : ∀ a, V a → Prop} {Ξ : List S} {ξ : Env V Ξ} {η : Env V Γ} :
+    (∀ a x, p a (append ξ η a x)) ↔ (∀ a x, p a (ξ a x)) ∧ ∀ a x, p a (η a x) := by
+  constructor
+  · intro h
+    exact ⟨fun a x => by simpa only [append_appendLeft] using h a (x.appendLeft Γ),
+      fun a x => by simpa only [append_weakenMany] using h a (x.weakenMany Ξ)⟩
+  · rintro ⟨hξ, hη⟩
+    induction Ξ with
+    | nil => exact hη
+    | cons b Ξ ih =>
+      rintro a (_ | x)
+      · exact hξ _ .zero
+      · exact ih (fun c y => hξ c y.succ) a x
 
 /-- Assemble an environment from its values listed by position. -/
 @[expose] def ofFin : {Ξ : List S} → ((i : Fin Ξ.length) → V Ξ[i]) → Env V Ξ
@@ -190,6 +263,14 @@ namespace Renaming
 @[simp] theorem liftMany_cons {Γ Δ : List S} (ρ : Renaming Γ Δ)
     (b : S) (Ξ : List S) {a : S} (x : ScopedVar (b :: Ξ ++ Γ) a) :
     ρ.liftMany (b :: Ξ) a x = lift (liftMany ρ Ξ) b a x := rfl
+
+/-- Exchange two adjacent blocks `Δ₁` and `Δ₂` of positions behind a block `Ξ` of nearer ones,
+which keep their places. With `Ξ = []` it exchanges the two blocks of a context, and with
+singleton blocks it exchanges the two outermost positions. -/
+@[expose] def swapBlocks (Ξ Δ₁ Δ₂ : List S) : Renaming (Ξ ++ Δ₁ ++ Δ₂) (Ξ ++ Δ₂ ++ Δ₁) :=
+  Env.append
+    (Env.append (fun _ x => (x.appendLeft Δ₂).appendLeft Δ₁) fun _ x => x.weakenMany (Ξ ++ Δ₂))
+    fun _ x => (x.weakenMany Ξ).appendLeft Δ₁
 
 end Renaming
 

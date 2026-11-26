@@ -20,9 +20,11 @@ public import ToCslib.Data.ENNReal.AddSupDistrib
 public import ToCslib.Data.Fin.Cases
 public import ToCslib.Data.Fin.Lattice
 public import ToCslib.Data.Fin.MOfFn
+public import ToCslib.Data.Fintype.Sum
 public import ToCslib.Data.PFunctor.Free.Basic
 public import ToCslib.Data.PFunctor.Free.Loops
 public import ToCslib.MeasureTheory.Function.AEMeasurable
+public import ToCslib.MeasureTheory.Integral.Marginal
 public import ToCslib.MeasureTheory.MeasurableSpace.Except
 public import ToCslib.MeasureTheory.MeasurableSpace.Instances
 public import ToCslib.MeasureTheory.MeasurableSpace.Option
