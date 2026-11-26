@@ -13,8 +13,9 @@ public import PolyFun.PFunctor.Free.Cost.Count
 
 Checks for `PolyFun.PFunctor.Free.Cost.Count`:
 
-* Natural numbers, finitely supported counts over infinitely many kinds and pointwise counts over
-  finitely many kinds are counting cost types. Their totals are sums.
+* Natural numbers, finitely supported counts over infinitely many kinds, pointwise counts over
+  finitely many kinds and pairs are counting cost types. Their totals are sums. Each of these
+  types is also canonically ordered.
 * In `ℕ∞`, every program meets the budget `⊤`. The equation `⊤ + ⊤ = ⊤` excludes a counting
   instance under any partial order.
 * The natural numbers other than `1`, `{n : ℕ // n ≠ 1}`, have a counting instance. They are not
@@ -39,6 +40,8 @@ Checks for `PolyFun.PFunctor.Free.Cost.Count`:
   price on every completed path of every member. When every price is nonzero, it bounds all
   calls.
 * Inputs, results and costs live in independent universes.
+* A bound on one path gives the call bound on that path. Every measured program can answer each
+  of its calls.
 
 `PolyFunTest/PFunctor/Charge/Basic.lean` rejects the other contract hazards next to the examples
 that show them.
@@ -57,6 +60,14 @@ example : Nonempty (CountCost ℕ) := ⟨inferInstance⟩
 example : Nonempty (CountCost (ℕ →₀ ℕ)) := ⟨inferInstance⟩
 
 example : Nonempty (CountCost (Fin 3 → ℕ)) := ⟨inferInstance⟩
+
+example : Nonempty (CountCost (ℕ × (Bool → ℕ))) := ⟨inferInstance⟩
+
+example : CountCost.total ((2, 3) : ℕ × ℕ) = 5 := by simp
+
+example : CountCost.total ((2, fun b => if b then 1 else 4) : ℕ × (Bool → ℕ)) = 7 := by simp
+
+example : CanonicallyOrderedAdd (ℕ × (ℕ →₀ ℕ) × (Fin 3 → ℕ)) := inferInstance
 
 example : CountCost.total (5 : ℕ) = 5 := by simp
 
@@ -236,8 +247,8 @@ example (order : PartialOrder ℕ) (_ : @CountCost ℕ _ order) : CountCost.tota
 /-- Under any partial order, a pair of a count and a signed integer is not a counting cost type:
 the integer component cancels. -/
 example (order : PartialOrder (ℕ × ℤ)) : IsEmpty (@CountCost (ℕ × ℤ) _ order) :=
-  ⟨fun _ => absurd (CountCost.eq_zero_of_add_eq_zero
-    (show ((0 : ℕ), (1 : ℤ)) + (0, -1) = 0 by decide)) (by decide)⟩
+  ⟨fun _ => absurd (CountCost.add_eq_zero.1
+    (show ((0 : ℕ), (1 : ℤ)) + (0, -1) = 0 by decide)).1 (by decide)⟩
 
 /-- A coarse partial order on `ℕ`: `a ≤ b` when `a = b` or `b = 0`. -/
 @[instance_reducible]
@@ -352,5 +363,18 @@ example {Input : Type 1} {Result : Type 2} {ω : Type 3} [AddMonoid ω] [Partial
     (hcost : ∀ o, M.cost o ≠ 0) (v : M.View) (p : Path (M.program v)) :
     Path.length (M.program v) p ≤ CountCost.total B :=
   h.length_le_total hcost v p
+
+/-! ## Bounds on one path -/
+
+/-- A bound on the charge of one path bounds the calls of that path, for any free program. -/
+example {P : PFunctor} {α : Type} {c : P.A → ℕ} {B : ℕ} {x : FreeM P α} {p : Path x}
+    (h : Path.charge c x p ≤ B) (hc : ∀ a, c a ≠ 0) : Path.length x p ≤ B := by
+  simpa using Path.length_le_total hc h
+
+/-- Every measured program can answer each of its calls. -/
+example {Input Result : Type} {ω : Type} (M : MeasuredProgram Input Result ω) (v : M.View) :
+    (M.program v).ProgramProgress :=
+  haveI : ∀ o, Nonempty (M.spec v o) := fun o => ⟨M.answer v o⟩
+  programProgress_of_nonempty _
 
 end PolyFunTest.ChargeCount

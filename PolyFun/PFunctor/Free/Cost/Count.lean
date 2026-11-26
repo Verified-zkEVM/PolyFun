@@ -23,21 +23,22 @@ A counting cost type, `CountCost ω`, excludes these valuations. It gives an add
 from `ω` into finitely supported natural-number counts, one count per kind. The map preserves and
 reflects the order of `ω`, which is a partial order, so it is an order embedding
 (`CountCost.count_le_count_iff`, `CountCost.count_injective`). So `ω` has the addition and the
-order of a submonoid of natural-number counts. Instances cover `ℕ`, `K →₀ ℕ` for any `K`, and
-`K → ℕ` for finite `K` (`nonempty_countCost_pi_iff`). In a counting cost type, adding a cost
-never decreases it (`CountCost.le_self_add`). If a sum of two costs is `0`, the first cost is `0`
-(`CountCost.eq_zero_of_add_eq_zero`). The total of a cost, `CountCost.total`, is the
+order of a submonoid of natural-number counts. Instances cover `ℕ`, `K →₀ ℕ` for any `K`, `K → ℕ`
+for finite `K` (`nonempty_countCost_pi_iff`), and pairs of counting cost types. In a counting cost
+type, adding a cost never decreases it (`CountCost.le_self_add`). A sum of two costs is `0` only
+when both costs are `0` (`CountCost.add_eq_zero`). The total of a cost, `CountCost.total`, is the
 `Finsupp.degree` of its counts. It is a natural number that is zero only at zero
 (`CountCost.total_eq_zero_iff`).
 
 `MeasuredProgram.CountAtMost B` is the contract form of `CostAtMost B`. On every completed path of
 every view's program, the count of each kind is at most its count in `B`. It is equivalent to
-`CostAtMost B` (`countAtMost_iff_costAtMost`), so the laws of `CostAtMost` transfer. Under it,
-every completed path makes at most `total B` calls of nonzero price
-(`CountAtMost.charge_indicator_le_total`). When every price is nonzero, this bounds the number of
-calls (`CountAtMost.length_le_total`). The operations of the program can form an infinite type,
-such as the queries to a random oracle on an infinite domain. Only the kinds of count must be
-finite or finitely supported.
+`CostAtMost B` (`countAtMost_iff_costAtMost`), so the laws of `CostAtMost` transfer. A completed
+path whose charge is at most `B` makes at most `total B` calls of nonzero price
+(`Path.charge_indicator_le_total`). When every price is nonzero, this bounds the number of calls
+(`Path.length_le_total`). Under `CountAtMost B`, both bounds hold on every completed path
+(`CountAtMost.charge_indicator_le_total`, `CountAtMost.length_le_total`). The operations of the
+program can form an infinite type, such as the queries to a random oracle on an infinite domain.
+The type of kinds may be infinite. Each cost has finitely supported counts.
 
 The contract bounds only the charges of the program's declared operations. The view, the answering
 function and the code between calls are not charged, and an operation of price `0` is free. So
@@ -50,7 +51,7 @@ budgets bounds the calls of nonzero price on every completed path of every membe
 
 @[expose] public section
 
-universe u w uI uI'
+universe uA uB v u w uI uI'
 
 namespace PFunctor
 
@@ -81,12 +82,12 @@ protected theorem le_self_add (a b : ω) : a ≤ a + b := by
   rw [← count_le_count_iff, map_add]
   exact _root_.le_self_add
 
-/-- If a sum of two costs is `0`, the first cost is `0`. -/
-protected theorem eq_zero_of_add_eq_zero {a b : ω} (h : a + b = 0) : a = 0 := by
-  refine count_injective ?_
+/-- A sum of two costs is `0` only when both costs are `0`. -/
+protected theorem add_eq_zero {a b : ω} : a + b = 0 ↔ a = 0 ∧ b = 0 := by
+  refine ⟨fun h => ?_, fun ⟨ha, hb⟩ => by rw [ha, hb, add_zero]⟩
   have hc : count a + count b = 0 := by rw [← map_add, h, map_zero]
-  rw [map_zero]
-  exact (Finsupp.add_eq_zero_iff _ _).1 hc |>.1
+  obtain ⟨ha, hb⟩ := (Finsupp.add_eq_zero_iff _ _).1 hc
+  exact ⟨count_injective (ha.trans (map_zero _).symm), count_injective (hb.trans (map_zero _).symm)⟩
 
 /-- The total count of all kinds is the degree of the counts. It depends on the chosen
 `CountCost` instance. For every instance, the total of a nonzero cost is positive. -/
@@ -144,6 +145,20 @@ noncomputable instance instPi {K : Type u} [Finite K] : CountCost (K → ℕ) wh
   count := Finsupp.addEquivFunOnFinite.symm.toAddMonoidHom
   count_le_count_iff := Finsupp.coe_le_coe
 
+/-- Pairs of costs count the kinds of both components. -/
+noncomputable instance instProd {α : Type u} {β : Type w} [AddZeroClass α] [PartialOrder α]
+    [CountCost α] [AddZeroClass β] [PartialOrder β] [CountCost β] : CountCost (α × β) where
+  Kind := Kind α ⊕ Kind β
+  count := Finsupp.sumFinsuppAddEquivProdFinsupp.symm.toAddMonoidHom.comp
+    (AddMonoidHom.prodMap count count)
+  count_le_count_iff {a b} := by
+    rw [Prod.le_def, ← count_le_count_iff (a := a.1) (b := b.1),
+      ← count_le_count_iff (a := a.2) (b := b.2)]
+    simp only [AddMonoidHom.coe_comp, Function.comp_apply, AddMonoidHom.coe_prodMap,
+      AddEquiv.coe_toAddMonoidHom, Finsupp.le_def, Sum.forall,
+      Finsupp.sumFinsuppAddEquivProdFinsupp_symm_inl,
+      Finsupp.sumFinsuppAddEquivProdFinsupp_symm_inr, Prod.map_fst, Prod.map_snd]
+
 /-- The total of a natural number is itself. -/
 @[simp]
 theorem total_nat (n : ℕ) : total n = n :=
@@ -158,6 +173,15 @@ theorem total_finsupp {K : Type u} (f : K →₀ ℕ) : total f = f.degree :=
 @[simp]
 theorem total_pi {K : Type u} [Fintype K] (v : K → ℕ) : total v = ∑ k, v k :=
   Finsupp.degree_eq_sum _
+
+/-- Under the product counting instance, the total of a pair is the sum of its component totals. -/
+@[simp]
+theorem total_prod {α : Type u} {β : Type w} [AddZeroClass α] [PartialOrder α] [CountCost α]
+    [AddZeroClass β] [PartialOrder β] [CountCost β] (a : α) (b : β) :
+    total (a, b) = total a + total b := by
+  change Finsupp.degree (Finsupp.sumElim (count a) (count b)) = _
+  rw [Finsupp.sumElim_eq_add, map_add, Finsupp.degree_mapDomain, Finsupp.degree_mapDomain,
+    ← total_apply, ← total_apply]
 
 /-- Pointwise counts form a counting cost type exactly over finitely many kinds. Over infinitely
 many kinds, the budget `1` of every kind bounds no total. -/
@@ -179,6 +203,31 @@ theorem nonempty_countCost_pi_iff {K : Type u} : Nonempty (CountCost (K → ℕ)
 
 end CountCost
 
+namespace FreeM.Path
+
+variable {P : PFunctor.{uA, uB}} {α : Type v} {ω : Type w} [AddMonoid ω] [PartialOrder ω]
+  [CountCost ω] {c : P.A → ω} {B : ω} {x : FreeM P α} {p : Path x}
+
+/-- A completed path whose charge is at most `B` makes at most `total B` calls of nonzero price. -/
+theorem charge_indicator_le_total (h : charge c x p ≤ B) :
+    charge ({a | c a ≠ 0}.indicator 1) x p ≤ CountCost.total B := by
+  refine (charge_mono (fun a => ?_) x p).trans
+    ((charge_map_addMonoidHom CountCost.total x p).trans_le (CountCost.total_le_total h))
+  by_cases ha : c a = 0
+  · simp [ha]
+  · simpa [ha] using CountCost.one_le_total_iff.2 ha
+
+/-- With nonzero prices, a completed path whose charge is at most `B` makes at most `total B`
+calls. -/
+theorem length_le_total (hc : ∀ a, c a ≠ 0) (h : charge c x p ≤ B) :
+    length x p ≤ CountCost.total B := by
+  have hcalls := charge_indicator_le_total h
+  rw [show {a | c a ≠ 0} = Set.univ from Set.eq_univ_of_forall hc, Set.indicator_univ] at hcalls
+  rw [length_eq_charge_one]
+  exact hcalls
+
+end FreeM.Path
+
 namespace FreeM.MeasuredProgram
 
 variable {Input : Type uI} {Mid Result : Type u} {ω : Type w}
@@ -186,12 +235,15 @@ variable {Input : Type uI} {Mid Result : Type u} {ω : Type w}
 /-- On every completed path of every view's program, the count of each kind is at most its count
 in `B`. The contract bounds only the charges of the program's declared operations. The view, the
 answering function and the code between calls are not charged. -/
-def CountAtMost [AddMonoid ω] [PartialOrder ω] [CountCost ω] (M : MeasuredProgram Input Result ω)
+def CountAtMost [AddZeroClass ω] [PartialOrder ω] [CountCost ω] (M : MeasuredProgram Input Result ω)
     (B : ω) : Prop :=
   ∀ v (p : Path (M.program v)),
     CountCost.count (Path.charge M.cost (M.program v) p) ≤ CountCost.count B
 
-variable [AddMonoid ω] [PartialOrder ω] [CountCost ω] {M : MeasuredProgram Input Result ω} {B : ω}
+section AddZeroClass
+
+variable [AddZeroClass ω] [PartialOrder ω] [CountCost ω] {M : MeasuredProgram Input Result ω}
+  {B : ω}
 
 /-- A counting contract is a cost bound, and conversely. -/
 theorem countAtMost_iff_costAtMost : M.CountAtMost B ↔ M.CostAtMost B :=
@@ -213,6 +265,17 @@ theorem CountAtMost.contramap {Input' : Type uI'} (h : M.CountAtMost B) (g : Inp
     (M.contramap g).CountAtMost B :=
   h
 
+/-- Under a counting contract, the total count of every completed path is at most the total of
+the budget. -/
+theorem CountAtMost.total_charge_le (h : M.CountAtMost B) (v : M.View)
+    (p : Path (M.program v)) :
+    CountCost.total (Path.charge M.cost (M.program v) p) ≤ CountCost.total B :=
+  CountCost.total_le_total (CountCost.count_le_count_iff.1 (h v p))
+
+end AddZeroClass
+
+variable [AddMonoid ω] [PartialOrder ω] [CountCost ω] {M : MeasuredProgram Input Result ω} {B : ω}
+
 /-- Composite counting contracts add: the inner budget, then the outer one. -/
 theorem CountAtMost.comp {outer : MeasuredProgram Mid Result ω}
     {inner : MeasuredProgram Input Mid ω} {outerBudget innerBudget : ω}
@@ -222,34 +285,19 @@ theorem CountAtMost.comp {outer : MeasuredProgram Mid Result ω}
   haveI := CountCost.addRightMono (ω := ω)
   (ho.costAtMost.comp hi.costAtMost).countAtMost
 
-/-- Under a counting contract, the total count of every completed path is at most the total of
-the budget. -/
-theorem CountAtMost.total_charge_le (h : M.CountAtMost B) (v : M.View)
-    (p : Path (M.program v)) :
-    CountCost.total (Path.charge M.cost (M.program v) p) ≤ CountCost.total B :=
-  CountCost.total_le_total (CountCost.count_le_count_iff.1 (h v p))
-
 /-- Under a counting contract, every completed path makes at most `total B` calls of nonzero
 price. -/
 theorem CountAtMost.charge_indicator_le_total (h : M.CountAtMost B) (v : M.View)
     (p : Path (M.program v)) :
-    Path.charge ({o | M.cost o ≠ 0}.indicator 1) (M.program v) p ≤ CountCost.total B := by
-  refine (Path.charge_mono (fun o => ?_) _ p).trans
-    ((Path.charge_map_addMonoidHom CountCost.total _ p).trans_le (h.total_charge_le v p))
-  by_cases ho : M.cost o = 0
-  · simp [ho]
-  · simpa [ho] using CountCost.one_le_total_iff.2 ho
+    Path.charge ({o | M.cost o ≠ 0}.indicator 1) (M.program v) p ≤ CountCost.total B :=
+  Path.charge_indicator_le_total (h.costAtMost v p)
 
 /-- Under a counting contract with nonzero prices, every completed path makes at most `total B`
 calls. -/
 theorem CountAtMost.length_le_total (h : M.CountAtMost B) (hcost : ∀ o, M.cost o ≠ 0)
     (v : M.View) (p : Path (M.program v)) :
-    Path.length (M.program v) p ≤ CountCost.total B := by
-  have hcalls := h.charge_indicator_le_total v p
-  rw [show {o | M.cost o ≠ 0} = Set.univ from Set.eq_univ_of_forall hcost,
-    Set.indicator_univ] at hcalls
-  rw [Path.length_eq_charge_one]
-  exact hcalls
+    Path.length (M.program v) p ≤ CountCost.total B :=
+  Path.length_le_total hcost (h.costAtMost v p)
 
 end FreeM.MeasuredProgram
 

@@ -238,8 +238,8 @@ example : refundThenWork.IsChargeBound refundPrice 0 := by
 /-- Under any partial order, integers are not a counting cost type: the refund cancels the work.
 This also rejects the signed weights of `PolyFunTest/PFunctor/Charge/Paths.lean`. -/
 example (order : PartialOrder ℤ) : IsEmpty (@CountCost ℤ _ order) :=
-  ⟨fun _ => absurd (CountCost.eq_zero_of_add_eq_zero
-    (show refundPrice true + refundPrice false = 0 by decide)) (by decide)⟩
+  ⟨fun _ => absurd (CountCost.add_eq_zero.1
+    (show refundPrice true + refundPrice false = 0 by decide)).1 (by decide)⟩
 
 /-- Under the reversed order, every program meets the budget `0`: `≤` no longer bounds use. -/
 example (x : FreeM Coin Bool) (s : ℕᵒᵈ) :

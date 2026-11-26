@@ -19,7 +19,7 @@ Checks for `PolyFun.PFunctor.Free.Path.Charge`:
   completed-path reading is not derived from the structural bound;
 * a zero charge costs nothing along a path, including at a signed cost type;
 * a larger charge at every call gives a larger charge along a path, including at a signed cost
-  type, and the comparison is needed at every call;
+  type. A charge that is smaller at one call can give a smaller charge;
 * a call with no answers ends no completed path, so the worst-case cost is the supremum of path
   charges only when every call has an answer;
 * the completed-path bound transfers through a free handler, keeping the output;
@@ -63,7 +63,8 @@ example (p : Path upDown) :
     Path.charge signed upDown p ≤ Path.charge (fun b => if b then 2 else -1) upDown p :=
   Path.charge_mono (fun b => by cases b <;> decide) upDown p
 
-/-- A larger charge at the refund alone is not enough. -/
+/-- A charge that is larger at the refund but smaller at the first call can give a smaller charge
+along a path. -/
 example : ¬ ∀ p : Path upDown,
     Path.charge signed upDown p ≤ Path.charge (fun b => if b then -1 else 0) upDown p := fun h =>
   absurd (h (Path.ofHandler (fun _ => PUnit.unit) upDown)) (by decide)
