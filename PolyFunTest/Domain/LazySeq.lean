@@ -174,6 +174,10 @@ example (d : DomainResult String Entry) (x : ℕ) :
 
 /-! ## Productivity over a well-founded order -/
 
+/-- A step that always yields bottom satisfies the prefix condition at every length. -/
+example (n : ℕ∞) : LazySeq.Productive n (fun _ (_ : ℕ → Entry) => ⊥) :=
+  fun _ _ _ _ _ => rfl
+
 /-- A step that reads its own position is not productive. -/
 example : ¬LazySeq.Productive (1 : ℕ∞) (fun i (xs : ℕ → Entry) => xs i) := by
   intro h

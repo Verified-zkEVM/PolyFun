@@ -12,11 +12,15 @@ public import Mathlib.Order.Fin.Basic
 /-!
 # Recurrences depending on earlier coordinates
 
-Each coordinate may inspect only its strict prefix. Over a well-founded order of coordinates,
-such equations have at most one solution (`Function.UsesPrefix.fixedPoint_unique`); the
-coordinates can be `Fin n`, or `ℕ` for a stream. Over `Fin n` the solution is computed by
-well-founded recursion. When the coordinate operations are continuous, this solution is also
-their least fixed point. The values may themselves contain partial information or errors.
+Two input families that agree before `i` give the same result at `i` for a map satisfying
+`Function.UsesPrefix`. If `<` is well-founded, induction on `i` then shows that any two fixed
+points agree (`Function.UsesPrefix.fixedPoint_unique`). This applies to finite arrays and to
+streams indexed by `ℕ`, with arbitrary entry types.
+
+For an array of length `n`, `Function.prefixRecursion` constructs a solution by giving step `i`
+access to entries indexed by `Fin i.val`. If the entries form an omega-CPO with bottom and
+each step is continuous, `ContinuousHom.prefixMap_fix` identifies the least fixed point of the
+simultaneous equations with this recursive solution.
 -/
 
 public section
@@ -25,7 +29,8 @@ namespace Function
 
 variable {n : Nat} {ι α : Type*}
 
-/-- Compute a finite recurrence using only already computed coordinates. -/
+/-- Compute entry `i` of a finite recurrence. The lookup supplied to `step i` accepts only
+indices below `i`. -/
 @[expose] def prefixRecursion (step : (i : Fin n) → (Fin i.val → α) → α) (i : Fin n) : α :=
   step i (fun j => prefixRecursion step ⟨j.val, j.isLt.trans i.isLt⟩)
 termination_by i.val
