@@ -362,6 +362,26 @@ a finite program, `Resumption.expectedCharge_toResumption` then reduces the calc
 `FreeM.wpFold`. The almost-sure invariant and local potential inequality used for a finite client
 also bound a resumption through `Resumption.expectedCharge_le_of_potential`.
 
+### Expected cost of retrying
+
+A service can remember previous attempts. Suppose that after each failed attempt its state
+still satisfies an invariant almost surely. If every state in the invariant has success
+probability at least `p > 0` and per-attempt price at most `C`, then the expected cost from
+such a state is at most `C / p`. `Retry.expectedCharge_tree_le_div` proves this bound for a
+subprobability kernel. If the kernel returns an answer with total mass one,
+`Retry.expectedCharge_tree_success` proves that the client eventually succeeds with probability one.
+
+A fresh fair coin at unit cost gives two attempts in expectation. A service that caches the
+first coin can reach a state in which every retry fails. Its chance of ever succeeding is
+one half, and its expected cost is infinite. The success form counts aborted mass as if it
+retried. A service that can abort may retry with much less mass than one minus its success
+mass: supply a bound of `1 - p` on the mass of the retry branch alone to
+`Retry.expectedCharge_tree_le_div_of_retry_mass_le`, which assumes nothing about the total mass
+of the kernel. The same `C / p` bound holds because the current request incurs its charge and
+only returned failures incur the cost of another trial. The [retry module](../../PolyFun/PFunctor/Resumption/Measure/Retry.lean)
+states these bounds, and its [regressions](../../PolyFunTest/Probability/Retry.lean) compute both
+coin examples and the boundary cases.
+
 ## Layers and costed implementations
 
 A cost argument usually spans layers. A specification is priced by its calls, an algorithm

@@ -16,7 +16,7 @@ import Examples.Tutorials.VersionedRequests
 import Examples.Tutorials.UpdatePolicies
 import PolyFun.PFunctor.Free.Measure.FiniteKernel
 import PolyFun.PFunctor.Handler.Sum
-import PolyFun.PFunctor.Resumption.Measure.ExpectedCharge
+import PolyFun.PFunctor.Resumption.Measure.Retry
 import Examples.Tutorials.ScopedPrograms
 import Examples.Tutorials.ScopedExecution
 import Examples.Tutorials.ScopedFamily
@@ -290,5 +290,22 @@ example {P : PFunctor} {S α β : Type*} [MeasurableSpace S]
     expectedCharge_toResumption replies price hprice setup _
       (fun x => measurable_expectedCharge replies price hprice (serve x) reward hreward)]
   exact FreeM.wpFold_mono (OpSpec.statefulExpectedCharge_mono replies price) setup hbudget
+
+/-- A service with per-attempt price at most `C` and a conditional chance of success at least
+`p` can charge a retrying client at most `C / p` in expectation. -/
+example {S : Type*} [MeasurableSpace S] (K : ProbabilityTheory.Kernel S (Bool × S))
+    [ProbabilityTheory.IsSubprobabilityKernel K] (c : S → ℝ≥0∞) (I : S → Prop) (p C : ℝ≥0∞)
+    (hI : Retry.Preserves K I) (hsucc : ∀ s, I s → p ≤ K s {z | z.1 = true})
+    (hc : ∀ s, I s → c s ≤ C) (s : S) (hs : I s) :
+    expectedCharge (fun _ => K) (fun _ => c) Retry.tree (fun _ _ => 0) s ≤ C / p :=
+  Retry.expectedCharge_tree_le_div hI hsucc hc s hs
+
+/-- An aborting service can bound its expected bill directly from its retry mass. -/
+example {S : Type*} [MeasurableSpace S] (K : ProbabilityTheory.Kernel S (Bool × S))
+    (c : S → ℝ≥0∞) (I : S → Prop) (p C : ℝ≥0∞) (hp : p ≤ 1) (hI : Retry.Preserves K I)
+    (hretry : ∀ s, I s → K s {z | z.1 = false} ≤ 1 - p) (hc : ∀ s, I s → c s ≤ C)
+    (s : S) (hs : I s) :
+    expectedCharge (fun _ => K) (fun _ => c) Retry.tree (fun _ _ => 0) s ≤ C / p :=
+  Retry.expectedCharge_tree_le_div_of_retry_mass_le hI hp hretry hc s hs
 
 end ResumptionChargeConsumer
