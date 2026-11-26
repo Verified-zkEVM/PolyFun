@@ -125,7 +125,7 @@ theorem epi_iff {P Q : LensCat.{uA, uB}} (l : P ⟶ Q) :
 theorem mono_iff_injective_of_isCartesian {P Q : LensCat.{uA, uB}} (l : P ⟶ Q)
     (hl : Lens.IsCartesian l) : Mono l ↔ Function.Injective (Lens.toFunA l) := by
   rw [mono_iff]
-  exact ⟨And.left, fun h => ⟨h, fun a => (hl a).2⟩⟩
+  exact ⟨And.left, fun h => ⟨h, fun a => (hl.bijective a).2⟩⟩
 
 /-- `LensCat` is balanced: a lens that is both a monomorphism and an epimorphism is an
 isomorphism. -/
@@ -134,7 +134,8 @@ instance : Balanced LensCat.{uA, uB} where
     obtain ⟨hA, hB⟩ := (mono_iff l).1 inferInstance
     obtain ⟨hA', hB'⟩ := (epi_iff l).1 inferInstance
     exact (isIso_iff_isVertical_and_isCartesian l).2
-      ⟨⟨hA, hA'⟩, fun a => ⟨Lens.injective_toFunB_of_fiberJoint l hA hB' a, hB a⟩⟩
+      ⟨{ bijective := ⟨hA, hA'⟩ },
+        { bijective := fun a => ⟨Lens.injective_toFunB_of_fiberJoint l hA hB' a, hB a⟩ }⟩
 
 end LensCat
 end PFunctor

@@ -44,11 +44,11 @@ The measure interpretation of a construction lives in a `Measure` companion besi
 measure home of its area. An area is a directory that holds one kind of construction, together with
 its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
 interfaces), `PFunctor/Free/` (free programs), `PFunctor/Wiring/` (polynomial wiring),
-`Control/Monad/` (monads), `Control/Domain/` (partial results), `Control/Semantics/`
-(correspondences) and `IPFunctor/Scoped/` (scoped syntax). A measure interpretation of another kind
-of construction starts a new area. Each area whose constructions get a measure interpretation has
-one measure home: `<area>/Measure.lean` holds the area's main measure module, and `<area>/Measure/`
-holds the others.
+`Control/Monad/` (monads), `Control/Domain/` (partial results), `Control/Semantics/` (correspondences),
+`Interaction/Multiparty/` (observations) and `IPFunctor/Scoped/` (scoped syntax). A measure
+interpretation of another kind of construction starts a new area. Each such area has one measure
+home: `<area>/Measure.lean` holds the area's main measure module, and `<area>/Measure/` holds the
+others.
 
 A subdirectory of an area uses the area's home, unless it is an area itself. Free programs
 therefore have one home: a measure reading of their paths, weakest preconditions or costs
@@ -69,6 +69,20 @@ measure theory that the measure modules already import, and `Monad` one more, wh
 imports it and passes the check. The script takes a module for a bridge when its path is
 `<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does not check that `<M>.lean` is a
 measure module.
+
+## Decisions on terminal observations
+
+A terminal report is a kernel on the result and final state produced by `FreeM.runKernel`.
+If `coarse = g ∘ₖ fine`, a decision `d` on the coarse report has the same action law as
+`d ∘ₖ g` on the fine report, at every initial state (`FreeM.comp_runKernel_of_factor`).
+This uses the same `g` for every handler. For deterministic displays,
+[`Observation.Refines.exists_comp_runKernel`](../../PolyFun/Interaction/Multiparty/Measure.lean)
+obtains the processing function from `coarse.Refines fine` when the fine report space is discrete.
+
+The statistical comparison is described by
+[Fritz, Gonda, Perrone and Rischel, §5](https://doi.org/10.1016/j.tcs.2023.113896).
+[Robert Hawkins’s Lean formalization](https://github.com/linglib-community/linglib/blob/6745836b0510fd75285d72f605961b26b8dcd0eb/Linglib/Core/Probability/Decision/Blackwell.lean#L417)
+relates kernel comparison to function factorization for deterministic experiments.
 
 ## Contents
 

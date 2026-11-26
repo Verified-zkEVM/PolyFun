@@ -24,12 +24,18 @@ abbrev Output (tr : PFunctor.FreeM.Path spec) : Type :=
 def counterpart : StrategyOver (counterpartSyntax Option) PUnit.unit spec roles Output :=
   (none, fun b => match b with | false => false | true => (7 : Nat))
 
-example : replay counterpart ⟨true, ⟨⟩⟩ = some 7 := rfl
+example : replay counterpart ⟨true, ⟨⟩⟩ = 7 := rfl
 
-example : replay counterpart ⟨false, ⟨⟩⟩ = some false := rfl
+example : replay counterpart ⟨false, ⟨⟩⟩ = false := rfl
 
 example : toCounterpart counterpart = none := by
   rw [counterpart, toCounterpart_receiver]
   rfl
+
+-- An observer computing privately after a message cannot inhabit this sender node.
+example : StrategyOver (counterpartSyntax Option) PUnit.unit spec
+    ⟨.sender, fun _ => PUnit.unit⟩ (fun _ => Nat) := by
+  fail_if_success exact fun _ => (none : Option Nat)
+  exact fun b => (if b then 7 else 0 : Nat)
 
 end Interaction.TwoParty.PublicCoinCounterpart.Test
