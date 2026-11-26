@@ -58,8 +58,9 @@ variable {P : PFunctor.{uA, uB}}
 
 /-- `P` is a **pure power** if it is isomorphic to `y^A` for some `A`: a representable polynomial in
 the sense of Niu–Spivak §2.2, whose action is the corepresentable functor `Hom(A, −)`. -/
-def IsPurePower (P : PFunctor.{uA, uB}) : Prop :=
-  ∃ A : Type uB, Nonempty (P ≃ₚ (y^A : PFunctor.{uA, uB}))
+class IsPurePower (P : PFunctor.{uA, uB}) : Prop where
+  /-- An exponent whose pure power is equivalent to this polynomial. -/
+  exists_equiv : ∃ A : Type uB, Nonempty (P ≃ₚ (y^A : PFunctor.{uA, uB}))
 
 /-- `P` is **constant** if it is isomorphic to the constant polynomial `C I` for some `I`
 (Niu–Spivak §2.2). -/
@@ -76,9 +77,9 @@ Def 2.15). -/
 def IsMonomial (P : PFunctor.{uA, uB}) : Prop :=
   ∃ (I : Type uA) (A : Type uB), Nonempty (P ≃ₚ (I y^ A : PFunctor.{uA, uB}))
 
-theorem isPurePower_purePower (A : Type uB) :
-    IsPurePower (y^A : PFunctor.{uA, uB}) :=
-  ⟨A, ⟨Equiv.refl _⟩⟩
+instance isPurePower_purePower (A : Type uB) :
+    IsPurePower (y^A : PFunctor.{uA, uB}) where
+  exists_equiv := ⟨A, ⟨Equiv.refl _⟩⟩
 
 theorem isConstant_C (I : Type uA) : IsConstant (C I : PFunctor.{uA, uB}) :=
   ⟨I, ⟨Equiv.refl _⟩⟩
@@ -94,9 +95,11 @@ theorem isMonomial_monomial (I : Type uA) (A : Type uB) :
 Ex 2.13). -/
 theorem isPurePower_iff : IsPurePower P ↔ Nonempty (Unique P.A) := by
   constructor
-  · rintro ⟨A, ⟨e⟩⟩
+  · intro h
+    obtain ⟨A, ⟨e⟩⟩ := h.exists_equiv
     exact ⟨e.equivA.unique⟩
   · rintro ⟨h⟩
+    constructor
     exact ⟨P.B default, ⟨
       { equivA := _root_.Equiv.equivPUnit P.A
         equivB := fun a => _root_.Equiv.cast (congrArg P.B (Subsingleton.elim a default)) }⟩⟩

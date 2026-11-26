@@ -79,15 +79,35 @@ example : run challengeTree challengeProver (challengeCounterpart true) =
   rfl
 
 /-- Replay follows a recorded challenge although its sampler has no result. -/
-abbrev failingSampler : PublicCoinCounterpart protocolLens Option challengeTree (fun _ => Bool) :=
-  (none, fun b => some b)
+abbrev failingSampler : PublicCoinCounterpart protocolLens Option challengeTree ChallengeOutput :=
+  (none, fun b => match b with | true => (7 : Nat) | false => false)
 
-example : PublicCoinCounterpart.replay failingSampler (challengePath true) = some true := rfl
+example : PublicCoinCounterpart.replay failingSampler (challengePath true) = 7 := rfl
+
+example : PublicCoinCounterpart.replay failingSampler (challengePath false) = false := rfl
 
 example : PublicCoinCounterpart.toCounterpart failingSampler = none := rfl
 
 /-- A public message genuinely changes the suffix tree. -/
 abbrev messageTree : FreeM protocolPoly PUnit.{1} := .liftBind .message (fun _ => .pure ⟨⟩)
+
+-- Neither the sender's observation function nor the terminal value has an effect slot.
+example : PublicCoinCounterpart protocolLens Option messageTree (fun _ => Bool) := by
+  fail_if_success exact (none : Option (Bool → Bool))
+  exact fun b => b
+
+example : PublicCoinCounterpart protocolLens Option (.pure PUnit.unit) (fun _ => Bool) := by
+  fail_if_success exact (none : Option Bool)
+  exact true
+
+/-- The public challenge draw increments the counter once. -/
+def countedSampler : PublicCoinCounterpart protocolLens (StateM Nat) challengeTree
+    (fun _ => Bool) :=
+  (do modify (· + 1); pure true, fun b => b)
+
+example : ((do
+    let ⟨_, finish⟩ ← (countedSampler.toCounterpart : StateM Nat ((_ : Bool) × StateM Nat Bool))
+    finish : StateM Nat Bool).run 0) = (true, 1) := rfl
 
 abbrev suffix : Path messageTree → FreeM protocolPoly PUnit.{1}
   | ⟨false, _⟩ => .pure ⟨⟩

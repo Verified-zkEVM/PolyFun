@@ -254,13 +254,13 @@ theorem support_eq_liftM_univ {γ : Type uB} (x : FreeM P γ) :
       simp only [Set.mem_univ, Set.iUnion_true]
       exact iSup_congr ih
 
-/-- Every possible output is witnessed by a path, and conversely. -/
+/-- Every possible output satisfies `p` iff the output of every root-to-leaf path satisfies `p`. -/
 theorem allOutputs_iff_forall_path (p : α → Prop) (s : FreeM P α) :
     AllOutputs p s ↔ ∀ path : FreeM.Path s, p (FreeM.output s path) := by
   rw [allOutputs_iff_forall_support, support_eq_range_output]
   simp
 
-/-- Some possible output is witnessed by a path, and conversely. -/
+/-- Some possible output satisfies `p` iff the output of some root-to-leaf path satisfies `p`. -/
 theorem someOutput_iff_exists_path (p : α → Prop) (s : FreeM P α) :
     SomeOutput p s ↔ ∃ path : FreeM.Path s, p (FreeM.output s path) := by
   rw [someOutput_iff_exists_support, support_eq_range_output]
