@@ -68,12 +68,14 @@ example (q : Empty → Unit → ℝ≥0∞) :
 
 private def tick : FreeM Tick Unit := FreeM.lift ()
 
-private def twice : Handler.Stateful (FreeM Tick) Nat Tick := fun _ => StateT.mk fun n => do
+private def twice : Handler.Stateful (FreeM Tick) Nat Tick where
+  toFun _ := StateT.mk fun n => do
   let _ ← tick
   let _ ← tick
   pure ((), n + 1)
 
-private def inner : Handler.Stateful (FreeM Tick) Nat Tick := fun _ => StateT.mk fun n => do
+private def inner : Handler.Stateful (FreeM Tick) Nat Tick where
+  toFun _ := StateT.mk fun n => do
   let _ ← tick
   pure ((), n + 1)
 

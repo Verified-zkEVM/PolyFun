@@ -214,9 +214,9 @@ def openHandler : IO Unit := do
     send (.propose 1 (.main ["plant", "trees"]))
   let .ok (_, run) := setup.run {} | throw (IO.userError "setup failed")
   let allowed := answerInput rules run.state
-    (m := Id) (fun _ => pure ⟨⟨true, "human accepts"⟩⟩)
+    (m := Id) ⟨fun _ => pure ⟨⟨true, "human accepts"⟩⟩⟩
   let denied := answerInput rules run.state
-    (m := Id) (fun _ => pure ⟨⟨false, "human rejects"⟩⟩)
+    (m := Id) ⟨fun _ => pure ⟨⟨false, "human rejects"⟩⟩⟩
   match allowed, denied with
   | .ok yes, .ok no =>
     unless yes.next.ruling.any (fun r => r.answer.allowed) &&

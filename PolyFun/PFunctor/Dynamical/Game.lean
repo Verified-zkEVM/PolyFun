@@ -158,7 +158,7 @@ theorem iterateWith_succ (h : Handler (StateT σ m) q) (A : DynSystem S q) (n : 
 /-- A stateless handler lifted into the state monad steps the system as
 `kleisliStep` does and carries the handler state unchanged. -/
 theorem stepWith_lift [LawfulMonad m] (h₀ : Handler m q) (A : DynSystem S q) (p : σ × S) :
-    stepWith (fun a => StateT.lift (h₀ a)) A p
+    stepWith ⟨fun a => StateT.lift (h₀ a)⟩ A p
       = (fun s' => (p.1, s')) <$> kleisliStep h₀ A p.2 := by
   simp [stepWith, kleisliStep, StateT.lift]
 
@@ -166,7 +166,7 @@ theorem stepWith_lift [LawfulMonad m] (h₀ : Handler m q) (A : DynSystem S q) (
 handler state unchanged. -/
 theorem iterateWith_lift [LawfulMonad m] (h₀ : Handler m q) (A : DynSystem S q) (n : ℕ)
     (p : σ × S) :
-    iterateWith (fun a => StateT.lift (h₀ a)) A n p
+    iterateWith ⟨fun a => StateT.lift (h₀ a)⟩ A n p
       = (fun s' => (p.1, s')) <$> kleisliIterate h₀ A n p.2 := by
   induction n generalizing p with
   | zero => simp

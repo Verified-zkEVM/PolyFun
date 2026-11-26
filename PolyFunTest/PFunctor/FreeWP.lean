@@ -135,8 +135,8 @@ example (Φ : OpSpec coinP Prop) (x : FreeM coinP Bool) (post : Bool → ULift.{
 /-! ## Handler semantics -/
 
 /-- Interpret every query as the concrete answer `true`. -/
-def chooseTrueHandler : Handler Id coinP :=
-  fun _ => true
+def chooseTrueHandler : Handler Id coinP where
+  toFun _ := true
 
 /-- The semantic WP, core's `wp` of the interpreted program, observes the handler rather than
 quantifying over every syntactic response. -/

@@ -291,6 +291,7 @@ public import PolyFun.Interaction.TwoParty.Role
 public import PolyFun.Interaction.TwoParty.Strategy
 public import PolyFun.Interaction.TwoParty.Swap
 public import PolyFun.Interaction.TwoParty.Syntax
+public import PolyFun.Lint.HandlerApply
 public import PolyFun.Logic.HEq
 public import PolyFun.Logic.KernelRfl
 public import PolyFun.PFunctor.Adjunctions

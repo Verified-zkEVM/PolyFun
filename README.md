@@ -123,7 +123,8 @@ def twoRequests : PFunctor.FreeM Request (Nat × Nat) := do
   return (first, second)
 
 /-- This handler answers a request by incrementing it. -/
-def increment : PFunctor.Handler Id Request := fun n => n + 1
+def increment : PFunctor.Handler Id Request where
+  toFun n := n + 1
 
 example : twoRequests.liftM increment = (4, 5) := rfl
 ```

@@ -35,6 +35,9 @@ The checks serve different purposes:
 
 - Build-time linters include Mathlib's standard set and core's `checkUnivs`.
   `--wfail` makes their warnings fail the build.
+- `handlerApply` (`PolyFun/Lint/HandlerApply.lean`) reports handlers that have no application lemma
+  or are reducible. Tag a handler defined with `where toFun` with `@[simps]`; use
+  `@[simps -isSimp]` when the equation competes with a preferred lemma.
 - The environment linters use Batteries' runner over the production roots and tutorial modules
   listed in `lintDriverArgs`, one root per process (below). `--trace` shows which checks actually
   run.

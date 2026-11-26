@@ -50,6 +50,7 @@ boundary. Imports flow downward and must remain acyclic.
 | `PolyFun/Control/` | Monad/comonad/coalgebra infrastructure, LTS and program-logic kernel |
 | `PolyFun/Realizability/` | Represented types, admissible state machines, representation invariance and quantitative resource certificates |
 | `PolyFun/Complexity/`, `PolyFun/Logic/` | Generic resource-bound syntax and small logic helpers |
+| `PolyFun/Lint/` | Environment linters that enforce the library's API conventions |
 | `ToCslib/` | Lowest production layer: upstream staging for free-monad, loop, order, bitvector and polynomial lemmas |
 | `ComplexityBackends/` | Optional concrete complexity backends, one subdirectory per machine model (`CslibSingleTape/`), outside the generic umbrella |
 | `Examples/` | Tutorials and the Parliament case study, target `PolyFunExamples` |

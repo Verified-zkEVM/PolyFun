@@ -36,8 +36,7 @@ variable {Boxes : Type uBoxes} {Inputs : Type uInputs} {Arity : Boxes → Type u
 
 /-- Run a recursive wiring against shared external kernel services. -/
 noncomputable def runKernel
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (services : KernelHandler (PFunctor.sigma inputInterface) S)
     {output : PFunctor.{uA, uB}}
     (wiring : Wiring Boxes Arity Dom Cod Inputs inputInterface output)
@@ -46,8 +45,7 @@ noncomputable def runKernel
 
 /-- Kernel evaluation is the stateful interpretation of the wiring's free handler. -/
 theorem runKernel_eq
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (services : KernelHandler (PFunctor.sigma inputInterface) S)
     {output : PFunctor.{uA, uB}}
     (wiring : Wiring Boxes Arity Dom Cod Inputs inputInterface output)
@@ -57,8 +55,7 @@ theorem runKernel_eq
 
 /-- A box may be interpreted after its children, with no change to its result or state law. -/
 theorem runKernel_box
-    (implementation : (b : Boxes) →
-      (a : (Cod b).A) → FreeM (PFunctor.sigma (Dom b)) ((Cod b).B a))
+    (implementation : (b : Boxes) → PFunctor.Handler (FreeM (PFunctor.sigma (Dom b))) (Cod b))
     (services : KernelHandler (PFunctor.sigma inputInterface) S) (b : Boxes)
     [∀ a, MeasurableSpace ((PFunctor.sigma (Dom b)).B a)]
     [∀ a, Countable ((PFunctor.sigma (Dom b)).B a)]

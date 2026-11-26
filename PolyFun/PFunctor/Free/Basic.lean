@@ -273,15 +273,17 @@ theorem liftMHom_comp (φ : m →ᵐ n) :
   MonadHom.ext' fun β x => by simp
 
 /-- Interpreting a relabelled program pulls the handler back along the lens: the handler
-answers at the relabelled position and the lens's backward map translates the direction. -/
+answers at the relabelled position and the lens's backward map translates the direction. At a
+`Handler` the right-hand side is interpretation through `Handler.comapLens`, by definition. -/
 theorem liftM_mapLens {Q : PFunctor.{uA₂, uB}} (l : Lens P Q) (h : (a : Q.A) → m (Q.B a)) :
-    ∀ x : FreeM P α, (x.mapLens l).liftM h = x.liftM (Handler.comapLens h l)
+    ∀ x : FreeM P α,
+      (x.mapLens l).liftM h = x.liftM fun a => l.toFunB a <$> h (l.toFunA a)
   | .pure _ => rfl
   | .liftBind a rest => by
     rw [FreeM.mapLens_liftBind]
     change (h (l.toFunA a) >>= fun d => ((rest (l.toFunB a d)).mapLens l).liftM h) =
       (l.toFunB a <$> h (l.toFunA a)) >>= fun d =>
-        (rest d).liftM (Handler.comapLens h l)
+        (rest d).liftM fun a => l.toFunB a <$> h (l.toFunA a)
     rw [bind_map_left]
     exact bind_congr fun d => liftM_mapLens l h (rest (l.toFunB a d))
 
@@ -289,7 +291,8 @@ theorem liftM_mapLens {Q : PFunctor.{uA₂, uB}} (l : Lens P Q) (h : (a : Q.A) �
 handler pulled back along the lens. -/
 theorem liftMHom_comp_mapLensHom {Q : PFunctor.{uA₂, uB}} (l : Lens P Q)
     (h : (a : Q.A) → m (Q.B a)) :
-    FreeM.liftMHom h ∘ᵐ FreeM.mapLensHom l = FreeM.liftMHom (Handler.comapLens h l) :=
+    FreeM.liftMHom h ∘ᵐ FreeM.mapLensHom l =
+      FreeM.liftMHom fun a => l.toFunB a <$> h (l.toFunA a) :=
   MonadHom.ext' fun _ x => liftM_mapLens l h x
 
 end liftM

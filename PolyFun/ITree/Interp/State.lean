@@ -35,7 +35,8 @@ namespace StateE
 variable {σ : Type u} {m : Type u → Type v} [Monad m]
 
 /-- Answer state events in the state transformer. -/
-def handler : PFunctor.Handler (StateT σ m) (StateE σ)
+def handler : PFunctor.Handler (StateT σ m) (StateE σ) where
+  toFun
   | .get => MonadState.get
   | .put s => set s
 
@@ -45,7 +46,8 @@ def handler : PFunctor.Handler (StateT σ m) (StateE σ)
 
 /-- Answer state events through `handler` and leave the remaining events in place. -/
 def stateHandler {E : PFunctor.{u, u}} :
-    PFunctor.Handler (StateT σ (ITree E)) (StateE σ + E : PFunctor.{u, u})
+    PFunctor.Handler (StateT σ (ITree E)) (StateE σ + E : PFunctor.{u, u}) where
+  toFun
   | .inl e => handler e
   | .inr e => liftHandler e
 

@@ -31,8 +31,9 @@ namespace PolyFunTest.SettledRuns
 abbrev Key : PFunctor := ⟨ℕ, fun _ => ℕ⟩
 
 /-- A cache holding keys `0` and `7`. -/
-def cache : Handler Option Key := fun k =>
-  if k = 0 then some 10 else if k = 7 then some 70 else none
+def cache : Handler Option Key where
+  toFun k :=
+    if k = 0 then some 10 else if k = 7 then some 70 else none
 
 /-- Read `0`, `7` and `0` again. -/
 def warmReads : FreeM Key ℕ := do
@@ -51,7 +52,8 @@ example : coldRead.liftM cache = none := rfl
 /-! ## Extension -/
 
 /-- The cache after key `3` is added. -/
-def grown : Handler Option Key := fun k => if k = 3 then some 30 else cache k
+def grown : Handler Option Key where
+  toFun k := if k = 3 then some 30 else cache k
 
 example : warmReads.liftM grown = some 90 :=
   FreeM.liftM_eq_some_of_le cache grown
@@ -65,8 +67,9 @@ example : warmReads.liftM grown = some 90 :=
 
 /-- Answer cached keys from the cache at the same state; on a miss, answer with the state and
 count the miss. -/
-def counting : Handler (StateT ℕ Id) Key := fun k =>
-  StateT.mk fun s => match cache k with
+def counting : Handler (StateT ℕ Id) Key where
+  toFun k :=
+    StateT.mk fun s => match cache k with
     | some v => (v, s)
     | none => (s, s + 1)
 
@@ -111,11 +114,12 @@ example : FreeM.output warmReads (FreeM.Path.ofHandler fallback warmReads) = 90 
 abbrev AtZero : PFunctor := ⟨ℕ → ℕ, fun _ => ℕ⟩
 
 /-- A stateful handler that evaluates at `0` and keeps its state. -/
-def evalAtZero : Handler (StateT Bool Id) AtZero := fun f => StateT.mk fun s => (f 0, s)
+def evalAtZero : Handler (StateT Bool Id) AtZero where
+  toFun f := StateT.mk fun s => (f 0, s)
 
 example : ((FreeM.lift (P := AtZero) (· + 1)).liftM evalAtZero).run true = pure (1, true) :=
-  FreeM.run_liftM_eq_pure_of_liftM_eq_some (fun f => some (f 0) : Handler Option AtZero) evalAtZero
-    true
+  FreeM.run_liftM_eq_pure_of_liftM_eq_some (⟨fun f => some (f 0)⟩ : Handler Option AtZero)
+    evalAtZero true
     (fun f b h => by cases h; rfl) rfl
 
 end PolyFunTest.SettledRuns

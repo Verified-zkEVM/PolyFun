@@ -60,12 +60,14 @@ abbrev counter : PFunctor.{0, 0} := ⟨Unit, fun _ => Nat⟩
 abbrev flag : PFunctor.{0, 0} := ⟨Unit, fun _ => Bool⟩
 
 /-- Answer the counter request with the current state and increment it. -/
-def tick : Handler (StateM Nat) counter := fun _ =>
-  (modifyGet fun n : Nat => (n, n + 1) : StateM Nat Nat)
+def tick : Handler (StateM Nat) counter where
+  toFun _ :=
+    (modifyGet fun n : Nat => (n, n + 1) : StateM Nat Nat)
 
 /-- Answer the flag request by whether the state is even. -/
-def isEven : Handler (StateM Nat) flag := fun _ =>
-  ((fun n : Nat => n % 2 == 0) <$> get : StateM Nat Bool)
+def isEven : Handler (StateM Nat) flag where
+  toFun _ :=
+    ((fun n : Nat => n % 2 == 0) <$> get : StateM Nat Bool)
 
 /-- Read the counter twice, then the flag. -/
 def program : FreeM (counter + flag) (Nat × Nat × Bool) := do

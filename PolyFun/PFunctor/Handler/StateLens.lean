@@ -103,8 +103,10 @@ theorem toResumption_mapFreeM (L : StatefulLens p r σ) {β : Type u} (program :
       exact ih _ _
 
 /-- A stateful lens as a stateful handler into free programs: one inner query per outer query. -/
-def toStateful (L : StatefulLens p r σ) : Handler.Stateful (FreeM r) σ p := fun position state ↦
-  FreeM.liftBind (L.pos (position, state)) fun answer ↦
+@[simps]
+def toStateful (L : StatefulLens p r σ) : Handler.Stateful (FreeM r) σ p where
+  toFun position state :=
+    FreeM.liftBind (L.pos (position, state)) fun answer ↦
     FreeM.pure (L.answer (position, state) answer, L.update (position, state) answer)
 
 /-- Stateful substitution along a stateful lens is `Handler.Stateful.run` of its handler. -/

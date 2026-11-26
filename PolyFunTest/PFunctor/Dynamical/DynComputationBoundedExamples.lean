@@ -320,9 +320,11 @@ example : ¬(firstMachine.seqComp secondMachine).ResolvesIn 1
     exact (implements_ofFreeM firstProgram).seqComp
       (implements_ofFreeM secondProgram) ()
 
-def positionHandler : Handler Option branchP := fun position => some position
+def positionHandler : Handler Option branchP where
+  toFun position := some position
 
-def failingHandler : Handler Option branchP := fun _ => none
+def failingHandler : Handler Option branchP where
+  toFun _ := none
 
 example : (firstMachine.seqComp secondMachine).runWithInput positionHandler 2 () =
     some (some 21) := by
@@ -359,14 +361,14 @@ example : (firstMachine.seqComp immediateNat).runWithInput positionHandler 1 () 
 
 /-! ## Stateful handler branch order -/
 
-def answerOppositeState : Handler (StateT Bool Option) branchP :=
-  fun _ state => some (!state, state)
+def answerOppositeState : Handler (StateT Bool Option) branchP where
+  toFun _ state := some (!state, state)
 
 example : (firstMachine.runWith answerOppositeState 1 (firstMachine.init ())).run false =
     some (some true, false) := rfl
 
-def failingStateHandler : Handler (StateT Bool Option) branchP :=
-  fun _ _ => none
+def failingStateHandler : Handler (StateT Bool Option) branchP where
+  toFun _ _ := none
 
 example : (immediateBool.runWith failingStateHandler 5 (immediateBool.init ())).run false =
     some (some true, false) := rfl

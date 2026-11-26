@@ -202,7 +202,7 @@ inductive Phase where
 
 /-- The echo network has no effect operations to interpret. -/
 def echoImpl (N : ℕ) : (node : Bool) → Handler (StateT Unit Id) ((echo N).effect node) :=
-  fun _ operation => operation.elim
+  fun _ => ⟨fun operation => operation.elim⟩
 
 attribute [local implicit_reducible] natPort natPorts echo counterStep echoStep phaseStep
   phaseInit

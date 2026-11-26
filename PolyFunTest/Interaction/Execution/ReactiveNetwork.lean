@@ -46,7 +46,7 @@ def echo : FreeM (signature noEffect ports) (Outcome Bool) :=
 
 def impl (value : Bool) :
     (id : Bool) → Handler (StateT Unit Id) ((echoNetwork value).effect id) :=
-  fun _ operation => operation.elim
+  fun _ => ⟨fun operation => operation.elim⟩
 
 def fifoSchedule : List (Activation Bool) :=
   [.node false, .deliver, .node true, .node true, .deliver, .node false]

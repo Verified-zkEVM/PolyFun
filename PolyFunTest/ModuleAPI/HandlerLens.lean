@@ -77,8 +77,8 @@ def collapse : Lens pair counter :=
   (fun _ => ()) ⇆ fun b n => if b then n else n + 100
 
 /-- A counter in the state monad: answer with the count, then increment it. -/
-def tick : Handler (StateM Nat) counter :=
-  fun _ => modifyGet fun n => (n, n + 1)
+def tick : Handler (StateM Nat) counter where
+  toFun _ := modifyGet fun n => (n, n + 1)
 
 /-- Ask `true`, then `false`, and return both answers in order. -/
 def twoRequests : FreeM pair (Nat × Nat) :=
@@ -93,6 +93,6 @@ example : ((twoRequests.mapLens collapse).liftM tick).run 0 = ((0, 101), 2) := r
 /-- The same run, through the pulled-back handler. -/
 example : ((twoRequests.mapLens collapse).liftM tick).run 0 =
     (twoRequests.liftM (tick.comapLens collapse)).run 0 := by
-  rw [FreeM.liftM_mapLens]
+  rw [Handler.liftM_mapLens]
 
 end PolyFunTest.ModuleAPI.HandlerLens

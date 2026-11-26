@@ -33,7 +33,7 @@ def sigma {I : Type uI} {P : I → PFunctor.{uA, uB}}
     {Q : PFunctor.{uA', uB'}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i))
     (T : Display.{uA', uB', uC', uD'} Q)
-    {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
+    {f : (i : I) → PFunctor.Handler (FreeM Q) (P i)}
     (df : (i : I) → Display.Handler (S i) T (f i)) :
     Display.Handler (Display.sigma S) T (PFunctor.Handler.sigma f) :=
   fun a c => df (PFunctor.sigma.fst a) (PFunctor.sigma.snd a) c
@@ -43,7 +43,7 @@ theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, uB}}
     {Q : PFunctor.{uA', uB'}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i))
     (T : Display.{uA', uB', uC', uD'} Q)
-    {f : (i : I) → (a : (P i).A) → FreeM Q ((P i).B a)}
+    {f : (i : I) → PFunctor.Handler (FreeM Q) (P i)}
     (df : (i : I) → Display.Handler (S i) T (f i))
     (i : I) (a : (P i).A) (c : (S i).position a) :
     sigma S T df (PFunctor.sigma.mk i a) c = df i a c :=
@@ -53,7 +53,7 @@ theorem sigma_apply {I : Type uI} {P : I → PFunctor.{uA, uB}}
 def sigmaInj {I : Type uI} {P : I → PFunctor.{uA, uB}}
     (S : (i : I) → Display.{uA, uB, uC, uD} (P i)) (i : I) :
     Display.Handler (S i) (Display.sigma S)
-      (fun a => FreeM.lift (P := PFunctor.sigma P) (PFunctor.sigma.mk i a)) :=
+      ⟨fun a => FreeM.lift (P := PFunctor.sigma P) (PFunctor.sigma.mk i a)⟩ :=
   fun a c => Display.Handler.id (Display.sigma S) (PFunctor.sigma.mk i a) c
 
 @[simp]

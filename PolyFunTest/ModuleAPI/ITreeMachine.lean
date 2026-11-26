@@ -28,7 +28,7 @@ open _root_.PFunctor
 variable {F : PFunctor.{uA, uB}} {m : Type uB → Type uM} [Monad m] (handler : Handler m F)
 
 /-- The body is part of the public contract: a sum with a unit acknowledgement. -/
-example : ITree.withSilentSteps handler = Handler.sum handler fun _ => pure PUnit.unit := rfl
+example : ITree.withSilentSteps handler = Handler.sum handler ⟨fun _ => pure PUnit.unit⟩ := rfl
 
 example (operation : F.A) :
     ITree.withSilentSteps handler (.inl operation) = handler operation := by

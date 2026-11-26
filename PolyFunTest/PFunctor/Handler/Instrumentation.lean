@@ -49,7 +49,8 @@ instance : Monoid EventLog where
     congrArg EventLog.mk (List.append_assoc left middle right)
 
 /-- A writer-valued handler whose two branches have distinguishable answers. -/
-def writerHandler : Handler (Writer EventLog) Q
+def writerHandler : Handler (Writer EventLog) Q where
+  toFun
   | true => do
       tell ⟨[Event.handled true 2]⟩
       return 2
@@ -81,7 +82,8 @@ example :
   rfl
 
 /-- A failing base handler for transformer-order canaries. -/
-def failingHandler : Handler Option Q := fun _ => none
+def failingHandler : Handler Option Q where
+  toFun _ := none
 
 /-- `WriterT` over `Option` discards a pre-inserted log when the handler
 fails, because the entire writer result is absent. -/
@@ -98,8 +100,8 @@ example :
 
 /-- With `OptionT` over `Writer`, the outer writer retains a pre-inserted event
 even when the inner optional result fails. -/
-def failingLoggedHandler : Handler (OptionT (Writer EventLog)) Q :=
-  fun _ => failure
+def failingLoggedHandler : Handler (OptionT (Writer EventLog)) Q where
+  toFun _ := failure
 
 def beforeLoggedOption (operation : Bool) :
     OptionT (Writer EventLog) PUnit :=
@@ -114,7 +116,8 @@ example :
 
 /-- A pure handler used to test writer instrumentation over a complete free
 program. -/
-def answerHandler : Handler Id Q
+def answerHandler : Handler Id Q where
+  toFun
   | true => 2
   | false => 5
 
@@ -145,7 +148,8 @@ lemma instrumentedHandler_false : instrumentedHandler false =
   unfold answerHandler afterWriter
   rfl
 
-def expectedInstrumentedHandler : Handler (Writer EventLog) Q
+def expectedInstrumentedHandler : Handler (Writer EventLog) Q where
+  toFun
   | true => WriterT.mk ((2, ⟨[Event.before true, Event.after true 2]⟩) :
       Id (Nat × EventLog))
   | false => WriterT.mk ((5, ⟨[Event.before false, Event.after false 5]⟩) :
@@ -163,7 +167,7 @@ lemma expectedInstrumentedHandler_false : expectedInstrumentedHandler false =
 
 lemma instrumentedHandler_eq_expected :
     instrumentedHandler = expectedInstrumentedHandler := by
-  funext operation
+  ext operation : 1
   cases operation
   · exact instrumentedHandler_false
   · exact instrumentedHandler_true
@@ -204,7 +208,8 @@ a higher result universe. -/
 @[reducible]
 def UniverseQ : PFunctor.{1, 0} := { A := Type 0, B := fun _ => Nat }
 
-def universeHandler : Handler Option UniverseQ := fun _ => some 7
+def universeHandler : Handler Option UniverseQ where
+  toFun _ := some 7
 
 example : universeHandler.liftTarget Option = universeHandler := by
   simp

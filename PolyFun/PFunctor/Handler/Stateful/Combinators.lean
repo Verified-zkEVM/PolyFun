@@ -81,8 +81,8 @@ theorem fst_map_run_eq_self (h : Stateful (FreeM P) S P)
 
 /-- Interpret the base free monad of a stateful handler through an outer handler. -/
 def mapBase [Monad m] (outer : Handler m Q) (inner : Stateful (FreeM Q) S P) :
-    Stateful m S P :=
-  fun a => StateT.mk fun s => ((inner a).run s).liftM outer
+    Stateful m S P where
+  toFun a := StateT.mk fun s => ((inner a).run s).liftM outer
 
 /-- Answering a request through `mapBase outer inner` runs the inner handler at the state and
 interprets the resulting free program through the outer handler. -/
@@ -105,7 +105,8 @@ theorem run_mapBase [Monad m] [LawfulMonad m] (outer : Handler m Q)
 /-- Run two stateful handlers on the two summands of `P + Q`, each on its own component of a
 product state. -/
 def sum [Functor m] (f : Stateful m S P) (g : Stateful m T Q) :
-    Stateful m (S × T) (P + Q : PFunctor.{max uA uA', u})
+    Stateful m (S × T) (P + Q : PFunctor.{max uA uA', u}) where
+  toFun
   | .inl a => StateT.mk fun st => Prod.map _root_.id (·, st.2) <$> (f a).run st.1
   | .inr b => StateT.mk fun st => Prod.map _root_.id (st.1, ·) <$> (g b).run st.2
 
@@ -125,8 +126,8 @@ component and leaves the first component unchanged. -/
 component of a dependent product state. -/
 def sigma {I : Type u} [DecidableEq I] [Functor m] {P : I → PFunctor.{uA, u}} {S : I → Type u}
     (f : (i : I) → Stateful m (S i) (P i)) :
-    Stateful m ((i : I) → S i) (PFunctor.sigma P) :=
-  fun x => StateT.mk fun s =>
+    Stateful m ((i : I) → S i) (PFunctor.sigma P) where
+  toFun x := StateT.mk fun s =>
     Prod.map _root_.id (Function.update s (PFunctor.sigma.fst x)) <$>
       (f (PFunctor.sigma.fst x) (PFunctor.sigma.snd x)).run (s (PFunctor.sigma.fst x))
 
@@ -141,8 +142,8 @@ state component and updates only that component. -/
 
 /-- Reassociate a stateful handler over a stateful base into one product state; the outer state
 is the first component. -/
-def flatten [Monad m] (h : Stateful (StateT T m) S P) : Stateful m (S × T) P :=
-  fun a => StateT.mk fun st =>
+def flatten [Monad m] (h : Stateful (StateT T m) S P) : Stateful m (S × T) P where
+  toFun a := StateT.mk fun st =>
     (fun r : (P.B a × S) × T => (r.1.1, (r.1.2, r.2))) <$> ((h a).run st.1).run st.2
 
 /-- Answering a request through a flattened handler runs the handler at the first state
@@ -177,8 +178,8 @@ theorem run_flatten [Monad m] [LawfulMonad m] (h : Stateful (StateT T m) S P) {�
 inspect the request, the previous state, the answer, the next state, and the previous
 auxiliary value. -/
 def extend [Monad m] (h : Stateful m S P) (aux : (a : P.A) → S → P.B a → S → T → T) :
-    Stateful m (S × T) P :=
-  fun a => StateT.mk fun st => do
+    Stateful m (S × T) P where
+  toFun a := StateT.mk fun st => do
     let r ← (h a).run st.1
     pure (r.1, (r.2, aux a st.1 r.1 r.2 st.2))
 
@@ -191,8 +192,8 @@ and updates the auxiliary second component with `aux`. -/
 
 /-- Extend a stateful handler with a passive auxiliary component on the left. -/
 def extendLeft [Monad m] (h : Stateful m S P) (aux : (a : P.A) → S → P.B a → S → T → T) :
-    Stateful m (T × S) P :=
-  fun a => StateT.mk fun ts => do
+    Stateful m (T × S) P where
+  toFun a := StateT.mk fun ts => do
     let r ← (h a).run ts.2
     pure (r.1, (aux a ts.2 r.1 r.2 ts.1, r.2))
 
@@ -218,8 +219,8 @@ theorem run_extendLeft_map_snd [Monad m] [LawfulMonad m] (h : Stateful m S P)
     (fun a ts => by simp [Functor.map_map]) x (t, s)
 
 /-- Fix the second component of a product state and project a stateful handler to the first. -/
-def fixSnd [Functor m] (h : Stateful m (S × T) P) (t₀ : T) : Stateful m S P :=
-  fun a => StateT.mk fun s => Prod.map _root_.id Prod.fst <$> (h a).run (s, t₀)
+def fixSnd [Functor m] (h : Stateful m (S × T) P) (t₀ : T) : Stateful m S P where
+  toFun a := StateT.mk fun s => Prod.map _root_.id Prod.fst <$> (h a).run (s, t₀)
 
 /-- Answering a request through `fixSnd h t₀` runs `h` from the state paired with `t₀` and keeps
 the first component of the final state. -/

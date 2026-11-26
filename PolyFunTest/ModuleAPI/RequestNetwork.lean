@@ -29,7 +29,8 @@ abbrev Counter : PFunctor.{0, 0} := ⟨Unit, fun _ => Nat⟩
 def ask : FreeM Counter Nat := .liftBind () fun n => .pure n
 
 /-- Answer with the current counter and increment it. -/
-def counter : Handler (StateT Nat Id) Counter := fun _ n => (n, n + 1)
+def counter : Handler (StateT Nat Id) Counter where
+  toFun _ n := (n, n + 1)
 
 /-- Two ready clients sharing a service whose counter starts at `5`. -/
 def start : RequestNetwork.State Bool Counter Nat Nat :=

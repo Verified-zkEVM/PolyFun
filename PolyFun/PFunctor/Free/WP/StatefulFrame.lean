@@ -71,7 +71,7 @@ theorem triple_sum_inl_frame (f : Stateful m S P) (g : Stateful m T Q) {x : Free
     (h : Triple (x.liftM f) A B epost) :
     Triple ((x.mapLens Lens.inl).liftM (sum f g)) (fun st => A st.1 ∧ F st.2)
       (fun a st => B a st.1 ∧ F st.2) epost := by
-  rw [Handler.liftM_mapLens_inl_eq_of_apply _ _ (fun _ => rfl) x]
+  rw [Handler.liftM_mapLens_inl_eq_of_apply _ ⟨fun a => sum f g (.inl a)⟩ (fun _ => rfl) x]
   constructor
   intro st hst
   exact wp_run_frame_of_apply_map_eq f _ (fun t s => (s, t)) (fun _ _ _ => rfl)
@@ -85,7 +85,7 @@ theorem triple_sum_inr_frame (f : Stateful m S P) (g : Stateful m T Q) {x : Free
     (h : Triple (x.liftM g) A B epost) :
     Triple ((x.mapLens Lens.inr).liftM (sum f g)) (fun st => F st.1 ∧ A st.2)
       (fun a st => F st.1 ∧ B a st.2) epost := by
-  rw [Handler.liftM_mapLens_inr_eq_of_apply _ _ (fun _ => rfl) x]
+  rw [Handler.liftM_mapLens_inr_eq_of_apply _ ⟨fun b => sum f g (.inr b)⟩ (fun _ => rfl) x]
   constructor
   intro st hst
   exact wp_run_frame_of_apply_map_eq g _ (fun s t => (s, t)) (fun _ _ _ => rfl)
@@ -152,12 +152,12 @@ instance instPreservesSupFrameSnd (F : S → Prop) : PreservesSup (frameSnd (T :
 theorem frames_sum_inl (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM P α)
     (F : T → Prop) (guard : S × T → Prop := Lean.Order.top) :
     WP.Frames frameFst (opE := FrameOp.ignore) ((x.mapLens Lens.inl).liftM (sum f g)) F guard := by
-  rw [Handler.liftM_mapLens_inl_eq_of_apply _ _ (fun _ => rfl) x]
+  rw [Handler.liftM_mapLens_inl_eq_of_apply _ ⟨fun a => sum f g (.inl a)⟩ (fun _ => rfl) x]
   constructor
   intro post epost
   apply PartialOrder.rel_trans (meet_le_right _ _)
-  exact wp_run_frame_of_apply_map_eq (fun a => sum f g (.inl a))
-    (fun a => sum f g (.inl a)) (fun t st => (st.1, t))
+  exact wp_run_frame_of_apply_map_eq ⟨fun a => sum f g (.inl a)⟩
+    ⟨fun a => sum f g (.inl a)⟩ (fun t st => (st.1, t))
     (fun _ _ _ => by
       dsimp only [sum, StateT.run, StateT.mk]
       rw [Functor.map_map]
@@ -172,12 +172,12 @@ theorem frames_sum_inl (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM P α
 theorem frames_sum_inr (f : Stateful m S P) (g : Stateful m T Q) (x : FreeM Q α)
     (F : S → Prop) (guard : S × T → Prop := Lean.Order.top) :
     WP.Frames frameSnd (opE := FrameOp.ignore) ((x.mapLens Lens.inr).liftM (sum f g)) F guard := by
-  rw [Handler.liftM_mapLens_inr_eq_of_apply _ _ (fun _ => rfl) x]
+  rw [Handler.liftM_mapLens_inr_eq_of_apply _ ⟨fun b => sum f g (.inr b)⟩ (fun _ => rfl) x]
   constructor
   intro post epost
   apply PartialOrder.rel_trans (meet_le_right _ _)
-  exact wp_run_frame_of_apply_map_eq (fun a => sum f g (.inr a))
-    (fun a => sum f g (.inr a)) (fun s st => (s, st.2))
+  exact wp_run_frame_of_apply_map_eq ⟨fun a => sum f g (.inr a)⟩
+    ⟨fun a => sum f g (.inr a)⟩ (fun s st => (s, st.2))
     (fun _ _ _ => by
       dsimp only [sum, StateT.run, StateT.mk]
       rw [Functor.map_map]

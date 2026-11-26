@@ -46,12 +46,14 @@ inductive Event where
   deriving DecidableEq, Repr
 
 /-- A read-only row source with explicit audit output. -/
-def rowsHandler : Handler (StateM (List Event)) Rows := fun index => do
+def rowsHandler : Handler (StateM (List Event)) Rows where
+  toFun index := do
   modify (· ++ [.row index])
   return ["Ada", "Grace"][index]?.getD "missing"
 
 /-- A separate source; no row state or row operations are available here. -/
-def limitHandler : Handler (StateM (List Event)) Limit := fun _ => do
+def limitHandler : Handler (StateM (List Event)) Limit where
+  toFun _ := do
   modify (· ++ [.limit])
   return 5
 

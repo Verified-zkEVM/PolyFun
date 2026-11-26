@@ -69,7 +69,7 @@ def toDynComputation :
 handler for `F` runs `toDynComputation`. -/
 def withSilentSteps {m : Type uB → Type uM} [Monad m] (handler : PFunctor.Handler m F) :
     PFunctor.Handler m (F + PFunctor.y.{uA, uB}) :=
-  PFunctor.Handler.sum handler fun _ => Pure.pure PUnit.unit
+  PFunctor.Handler.sum handler ⟨fun _ => Pure.pure PUnit.unit⟩
 
 /-- Visible operations go to `handler`. The position is stated at the reduced type
 `F.A ⊕ PUnit`, the form `simp` leaves the implicit arguments of `Sum.inl` in, so the lemma fires

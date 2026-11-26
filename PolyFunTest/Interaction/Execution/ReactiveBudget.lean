@@ -40,7 +40,7 @@ open PFunctor ReactiveProcess DynSystem MonadAttach
 
 def countdownImpl (n : ℕ) :
     (node : Unit) → Handler (StateT Unit Id) ((countdown n).effect node) :=
-  fun _ operation => operation.elim
+  fun _ => ⟨fun operation => operation.elim⟩
 
 attribute [local implicit_reducible] countdown countdownStep noEffect signature Response
 
@@ -89,7 +89,7 @@ example (n : ℕ) :
   environment := false
 
 def feedbackImpl : (node : Bool) → Handler (StateT Unit Id) (feedback.effect node) :=
-  fun _ operation => operation.elim
+  fun _ => ⟨fun operation => operation.elim⟩
 
 attribute [local implicit_reducible] feedback loopStep loopPorts unitPort
 
@@ -150,7 +150,7 @@ theorem feedback_has_no_budget (invariant : State feedback Unit → Prop)
 
 def failingImpl :
     (node : Unit) → Handler (StateT Unit Option) (failingNetwork.effect node) :=
-  fun _ _ _ => none
+  fun _ => ⟨fun _ _ => none⟩
 
 /-- An interpreter with no possible next state cannot inhabit the progress-bearing certificate. -/
 example : ¬ Nonempty (TokenBudgetCertificate failingImpl (fun _ => True)) := by

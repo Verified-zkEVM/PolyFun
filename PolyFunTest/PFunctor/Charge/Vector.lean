@@ -81,8 +81,9 @@ example : prog.IsChargeBound (fun a => ∑ i, prices i * count a i) 7 := by
 @[expose] def stepDemand : Bool → Unit → ℕ := fun i _ => if i then 3 else 2
 
 /-- The implementation of each call by steps. -/
-def bySteps : Handler (FreeM Step) Ops := fun a =>
-  if a then
+def bySteps : Handler (FreeM Step) Ops where
+  toFun a :=
+    if a then
     FreeM.liftBind () fun _ => FreeM.liftBind () fun _ => FreeM.liftBind () FreeM.pure
   else
     FreeM.liftBind () fun _ => FreeM.liftBind () FreeM.pure
@@ -105,8 +106,9 @@ example : (prog.liftM bySteps).IsChargeBound (fun (_ : Unit) (_ : Unit) => 1) fu
 @[expose] def gateDemand : Unit → Unit → ℕ := fun _ _ => 4
 
 /-- The implementation of each step by gates. -/
-def byGates : Handler (FreeM Gate) Step := fun _ =>
-  FreeM.liftBind () fun _ => FreeM.liftBind () fun _ => FreeM.liftBind () fun _ =>
+def byGates : Handler (FreeM Gate) Step where
+  toFun _ :=
+    FreeM.liftBind () fun _ => FreeM.liftBind () fun _ => FreeM.liftBind () fun _ =>
     FreeM.liftBind () FreeM.pure
 
 theorem byGates_isChargeBound (b : Unit) :

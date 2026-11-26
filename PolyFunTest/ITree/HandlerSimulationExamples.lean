@@ -158,10 +158,12 @@ inductive FinalEvent where
 
 @[reducible] def FinalSpec : PFunctor := ⟨FinalEvent, fun | .tick => Bool⟩
 
-def readHandler : ITree.Handler ReadSpec FinalSpec
+def readHandler : ITree.Handler ReadSpec FinalSpec where
+  toFun
   | .bit => ITree.pure true
 
-def countHandler : ITree.Handler CountSpec FinalSpec
+def countHandler : ITree.Handler CountSpec FinalSpec where
+  toFun
   | .amount => ITree.pure 7
 
 example :
@@ -176,11 +178,13 @@ example :
 example : countHandler .amount = ITree.pure (7 : Nat) := rfl
 
 /-- The first handler negates the answer supplied by its target event. -/
-def negateHandler : ITree.Handler ReadSpec ChoiceSpec
+def negateHandler : ITree.Handler ReadSpec ChoiceSpec where
+  toFun
   | .bit => ITree.query .choose (fun answer => ITree.pure (!answer))
 
 /-- The second handler resolves that target event with `true`. -/
-def chooseTrueHandler : ITree.Handler ChoiceSpec FinalSpec
+def chooseTrueHandler : ITree.Handler ChoiceSpec FinalSpec where
+  toFun
   | .choose => ITree.pure true
 
 /-- Composition order and answer flow are observable: `true` is selected by

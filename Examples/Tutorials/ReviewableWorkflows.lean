@@ -104,7 +104,8 @@ theorem presentation_natural (reword : Source → Source) :
   Decoration.restrict_map _ _ _
 
 /-- Testable interpretation records exactly the edits acknowledged by the application effect. -/
-def reviewer (approve : Edit → Bool) : Handler.Stateful Id (List Edit) Effects
+def reviewer (approve : Edit → Bool) : Handler.Stateful Id (List Edit) Effects where
+  toFun
   | .review edit, applied => (approve edit, applied)
   | .apply edit, applied => ((), applied ++ [edit])
 

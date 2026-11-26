@@ -30,20 +30,20 @@ abbrev flag : PFunctor.{0, 0} := ⟨Unit, fun _ => Bool⟩
 
 /-- A package over `counter`: ask the import once, add the own offset, and raise the offset
 by ten. -/
-def offset : Handler.Stateful (FreeM counter) Nat counter :=
-  fun _ k => FreeM.liftBind () fun n => pure (n + k, k + 10)
+def offset : Handler.Stateful (FreeM counter) Nat counter where
+  toFun _ k := FreeM.liftBind () fun n => pure (n + k, k + 10)
 
 /-- An implementation of `counter`: answer with the count and increment it, failing at three. -/
-def ticker : Handler.Stateful Option Nat counter :=
-  fun _ n => if n = 3 then none else some (n, n + 1)
+def ticker : Handler.Stateful Option Nat counter where
+  toFun _ n := if n = 3 then none else some (n, n + 1)
 
 /-- A package over `flag`: forward the request and count how often it was asked. -/
-def forwardFlag : Handler.Stateful (FreeM flag) Nat flag :=
-  fun _ k => FreeM.liftBind () fun b => pure (b, k + 1)
+def forwardFlag : Handler.Stateful (FreeM flag) Nat flag where
+  toFun _ k := FreeM.liftBind () fun b => pure (b, k + 1)
 
 /-- An implementation of `flag`: answer with the flag and toggle it. -/
-def toggler : Handler.Stateful Option Bool flag :=
-  fun _ b => some (b, !b)
+def toggler : Handler.Stateful Option Bool flag where
+  toFun _ b := some (b, !b)
 
 /-- Ask for two answers and return both, in order. -/
 def twoQueries : FreeM counter (Nat × Nat) :=
@@ -93,8 +93,8 @@ example : (sumMap offset forwardFlag).link (sum ticker toggler) =
 /-! ### Reindexing is linking a stateless package -/
 
 /-- Answer a request by asking the counter twice and adding the two answers. -/
-def twice : Handler (FreeM counter) counter :=
-  fun _ => FreeM.liftBind () fun a => FreeM.liftBind () fun b => FreeM.pure (a + b)
+def twice : Handler (FreeM counter) counter where
+  toFun _ := FreeM.liftBind () fun a => FreeM.liftBind () fun b => FreeM.pure (a + b)
 
 /-- One reindexed request reads the counter twice. -/
 example : (ticker.reindex twice).run (FreeM.lift ()) 0 = some (1, 2) := rfl

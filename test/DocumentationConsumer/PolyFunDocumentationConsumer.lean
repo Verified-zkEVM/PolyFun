@@ -211,7 +211,8 @@ open scoped ENNReal
 
 private abbrev Tick : PFunctor.{0, 0} := ⟨Unit, fun _ => Unit⟩
 
-private def cached : Handler.Stateful (FreeM Tick) Bool Tick := fun _ => StateT.mk fun warm =>
+private def cached : Handler.Stateful (FreeM Tick) Bool Tick where
+  toFun _ := StateT.mk fun warm =>
   if warm then pure ((), true) else FreeM.liftBind () (fun _ => pure ((), true))
 
 private noncomputable def law (_ : Tick.A) : Measure Unit := Measure.dirac ()

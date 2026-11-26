@@ -68,7 +68,8 @@ example (t : ITree (StateE Nat + Tick : PFunctor.{0, 0}) Nat) (s : Nat) :
 
 /-- Answering the tick by failure: interpreting into an option transformer over a tree. The
 option transformer is iterative, so `interp` targets it; its loop step asks the handler. -/
-def failingTick : PFunctor.Handler (OptionT (ITree Tick)) Tick := fun _ => failure
+def failingTick : PFunctor.Handler (OptionT (ITree Tick)) Tick where
+  toFun _ := failure
 
 example : OptionT (ITree Tick) Unit := interp failingTick (lift ())
 

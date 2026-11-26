@@ -22,10 +22,9 @@ back along an injection gives that component. Coproduct injections retain the re
 unchanged, so their specialized laws need only `Monad`. Changing the target monad acts on
 each component handler (`mapTarget_sum`).
 
-No `HAdd` instance is registered here. `Handler` is a reducible function type, so an instance
-keyed on it would compete with the pointwise addition of function types whenever the answer
-types carry `Add`. A downstream layer that wraps its handlers in a dedicated type may register
-the notation there and unfold it to `Handler.sum`.
+`f + g` is notation for `Handler.sum f g`. `Handler` is a structure, so the instance is keyed on
+it and leaves the pointwise addition of plain functions alone. At an expected function type the
+elaborator coerces the summands first, so there `f + g` is the pointwise sum of their answers.
 -/
 
 @[expose] public section
@@ -39,9 +38,22 @@ namespace Handler
 variable {P : PFunctor.{uA₁, u}} {Q : PFunctor.{uA₂, u}} {m : Type u → Type v}
 
 /-- Route the positions of `P + Q` to a handler for `P` or a handler for `Q`. -/
-def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max uA₁ uA₂, u})
+def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max uA₁ uA₂, u}) where
+  toFun
   | .inl a => f a
   | .inr b => g b
+
+instance : HAdd (Handler m P) (Handler m Q) (Handler m (P + Q : PFunctor.{max uA₁ uA₂, u})) where
+  hAdd := sum
+
+/-- `f + g` is the sum handler. -/
+theorem add_def (f : Handler m P) (g : Handler m Q) : f + g = sum f g := rfl
+
+@[simp, grind =] theorem add_inl (f : Handler m P) (g : Handler m Q) (a : P.A) :
+    (f + g) (.inl a) = f a := rfl
+
+@[simp, grind =] theorem add_inr (f : Handler m P) (g : Handler m Q) (b : Q.A) :
+    (f + g) (.inr b) = g b := rfl
 
 /-- The sum handler answers a left position with the left handler. -/
 @[simp] theorem sum_inl (f : Handler m P) (g : Handler m Q) (a : P.A) :
@@ -54,20 +66,20 @@ def sum (f : Handler m P) (g : Handler m Q) : Handler m (P + Q : PFunctor.{max u
 /-- Pulling a sum handler back along the left injection gives the left handler. -/
 @[simp] theorem sum_comapLens_inl [Functor m] [LawfulFunctor m] (f : Handler m P)
     (g : Handler m Q) : (sum f g).comapLens Lens.inl = f := by
-  funext a
+  ext a
   exact id_map (f a)
 
 /-- Pulling a sum handler back along the right injection gives the right handler. -/
 @[simp] theorem sum_comapLens_inr [Functor m] [LawfulFunctor m] (f : Handler m P)
     (g : Handler m Q) : (sum f g).comapLens Lens.inr = g := by
-  funext b
+  ext b
   exact id_map (g b)
 
 /-- Changing the target monad acts independently on both component handlers. -/
 theorem mapTarget_sum {n : Type u → Type w} (transform : ∀ {α : Type u}, m α → n α)
     (f : Handler m P) (g : Handler m Q) :
     mapTarget transform (sum f g) = sum (mapTarget transform f) (mapTarget transform g) := by
-  funext operation
+  ext operation
   cases operation <;> rfl
 
 section SumLift

@@ -78,8 +78,8 @@ def displayedTarget :
 
 /-- Two target calls; both the returned answers and displayed evidence flow
 into the source leaf. -/
-def twoCalls : Handler (FreeM Interface) Interface :=
-  fun _ => .liftBind () fun first =>
+def twoCalls : Handler (FreeM Interface) Interface where
+  toFun _ := .liftBind () fun first =>
     .liftBind () fun second =>
       .pure (Bool.xor first second)
 
@@ -124,8 +124,8 @@ def displayedTwoCalls : Display.Handler contract contract twoCalls :=
               directionVal first second secondEvidence))⟩⟩
 
 /-- A separate nonidentity handler for composition-law canaries. -/
-def negateCall : Handler (FreeM Interface) Interface :=
-  fun _ => .liftBind () fun answer => .pure (!answer)
+def negateCall : Handler (FreeM Interface) Interface where
+  toFun _ := .liftBind () fun answer => .pure (!answer)
 
 def displayedNegateCall : Display.Handler contract contract negateCall :=
   fun _ sourcePrecondition =>

@@ -110,7 +110,8 @@ structure ConsoleMemory where
   deriving Inhabited, Repr
 
 /-- Deterministic interpretation of the same console used by the executable. -/
-def consoleMemoryHandler : PFunctor.Handler (StateM ConsoleMemory) Console
+def consoleMemoryHandler : PFunctor.Handler (StateM ConsoleMemory) Console where
+  toFun
   | .write message => modify fun state ↦ { state with output := state.output.push message }
   | .readLine prompt => do
     modify fun state ↦ { state with output := state.output.push prompt }
@@ -121,7 +122,8 @@ def consoleMemoryHandler : PFunctor.Handler (StateM ConsoleMemory) Console
       pure (some value)
 
 /-- Interpret through explicit streams; acquiring ambient streams is a separate IO boundary. -/
-def consoleIOHandler (stdin stdout : IO.FS.Stream) : PFunctor.Handler IO Console
+def consoleIOHandler (stdin stdout : IO.FS.Stream) : PFunctor.Handler IO Console where
+  toFun
   | .write text => do
     stdout.putStr text
     stdout.flush

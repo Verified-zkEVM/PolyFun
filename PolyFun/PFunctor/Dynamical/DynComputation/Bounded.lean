@@ -8,6 +8,7 @@ module
 public import PolyFun.PFunctor.Dynamical.DynComputation
 public import PolyFun.PFunctor.Resumption.Truncate
 public import PolyFun.PFunctor.Handler
+public import PolyFun.PFunctor.Handler.Free
 
 /-!
 # Bounded execution of returning dynamical computations
@@ -857,12 +858,12 @@ def runWithInput (M : DynComputation.{u} q α β) (handler : Handler m q)
 
 @[simp] theorem runWith_lift (M : DynComputation.{u} q α β)
     (k : ℕ) (state : M.State) :
-    M.runWith (m := FreeM q) FreeM.lift k state = M.unroll k state :=
+    M.runWith (Handler.id q) k state = M.unroll k state :=
   FreeM.liftM_lift_eq_self (M.unroll k state)
 
 @[simp] theorem runWithInput_lift (M : DynComputation.{u} q α β)
     (k : ℕ) (input : α) :
-    M.runWithInput (m := FreeM q) FreeM.lift k input = M.run k input :=
+    M.runWithInput (Handler.id q) k input = M.run k input :=
   M.runWith_lift k (M.init input)
 
 theorem runWith_return (M : DynComputation.{u} q α β)
@@ -918,7 +919,7 @@ theorem ImplementsWithin.runWithInput_eq [LawfulMonad m]
 theorem implementsWithin_iff_runWithInput_lift
     (M : DynComputation.{u} q α β) (program : α → FreeM q β) (k : ℕ) :
     M.ImplementsWithin program k ↔
-      ∀ input, M.runWithInput (m := FreeM q) FreeM.lift k input =
+      ∀ input, M.runWithInput (Handler.id q) k input =
         FreeM.map some (program input) := by
   simp only [ImplementsWithin, runWithInput_lift]
 

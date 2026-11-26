@@ -26,8 +26,8 @@ abbrev Q : PFunctor.{0, 0} := Bool y^ Nat
 
 /-- On `true`, answer with `state + 10` and advance by one; on `false`, answer
 with `state + 20` and advance by two. -/
-def answerAndAdvance : Handler.Stateful Option Nat Q :=
-  fun query state =>
+def answerAndAdvance : Handler.Stateful Option Nat Q where
+  toFun query state :=
     Bool.rec (some (state + 20, state + 2))
       (some (state + 10, state + 1)) query
 
@@ -41,16 +41,16 @@ example : answerAndAdvance.run twoQueries 3 = some ((13, 24), 6) := by
   rfl
 
 /-- A handler whose `false` branch fails in the base effect. -/
-def failOnFalse : Handler.Stateful Option Nat Q :=
-  fun query state =>
+def failOnFalse : Handler.Stateful Option Nat Q where
+  toFun query state :=
     Bool.rec none (some (state + 10, state + 1)) query
 
 example : failOnFalse.run twoQueries 3 = none := by
   rfl
 
 /-- A stateless effectful handler for the lifting canary. -/
-def constantAnswer : Handler Option Q :=
-  fun query => Prod.fst <$> (answerAndAdvance query).run 0
+def constantAnswer : Handler Option Q where
+  toFun query := Prod.fst <$> (answerAndAdvance query).run 0
 
 /-- Lifting preserves both the base effect and the state. -/
 example : ((Handler.Stateful.lift constantAnswer :
@@ -60,8 +60,8 @@ example : ((Handler.Stateful.lift constantAnswer :
 /-- A source query implemented by the two-query target program. -/
 abbrev P : PFunctor.{0, 0} := PUnit y^ (Nat × Nat)
 
-def implementP : Handler (FreeM Q) P :=
-  fun _ => twoQueries
+def implementP : Handler (FreeM Q) P where
+  toFun _ := twoQueries
 
 /-- Reindexing exposes the same effectful answer and final state as running the
 implementing target program directly. -/
@@ -96,6 +96,6 @@ example (R : Responder Nat Q) (program : FreeM Q Nat) (state : Nat) :
 
 /-- Query positions may live in a higher universe than directions and state. -/
 example : Handler.Stateful Option Nat ((Type 0) y^ Nat) :=
-  fun _ state => some (state, state + 1)
+  ⟨fun _ state => some (state, state + 1)⟩
 
 end PFunctor.Handler.Stateful.Examples

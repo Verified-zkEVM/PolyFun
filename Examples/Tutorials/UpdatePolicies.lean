@@ -62,7 +62,8 @@ theorem proposed_run_safe (handler : Handler Id Proposal)
     ((FreeM.lift (P := Proposal) maximum).liftM handler).run ≤ maximum := compliant maximum
 
 /-- One deliberately noncompliant handler; checking still protects the result. -/
-def oversized : Handler Id Proposal := fun maximum => maximum + 7
+def oversized : Handler Id Proposal where
+  toFun maximum := maximum + 7
 
 example : (checked 10).liftM oversized = 10 := rfl
 example : (FreeM.lift (P := Proposal) 10).liftM oversized = 17 := rfl
