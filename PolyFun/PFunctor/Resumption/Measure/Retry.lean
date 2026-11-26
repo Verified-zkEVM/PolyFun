@@ -199,10 +199,12 @@ private theorem retryMass_le_one_sub (K : Kernel S (Bool × S)) [IsSubprobabilit
 
 /-- A lower bound on success and an upper bound on the price of each trial give a bound on
 the unbounded resumption, from each invariant state. -/
-theorem expectedCharge_tree_le_div [IsSubprobabilityKernel K] {p : ℝ≥0∞} (hp : p ≤ 1)
-    (hI : Preserves K I) (hsucc : ∀ s, I s → p ≤ K s {z | z.1 = true})
+theorem expectedCharge_tree_le_div [IsSubprobabilityKernel K] (hI : Preserves K I) {p : ℝ≥0∞}
+    (hsucc : ∀ s, I s → p ≤ K s {z | z.1 = true})
     (hc : ∀ s, I s → c s ≤ C) (s : S) (hs : I s) :
     expectedCharge (fun _ => K) (fun _ => c) tree (fun _ _ => 0) s ≤ C / p := by
+  have hp : p ≤ 1 :=
+    (hsucc s hs).trans ((measure_mono (Set.subset_univ _)).trans (K.measure_univ_le s))
   exact expectedCharge_tree_le_div_of_retry_mass_le hI hp
     (fun t ht => (retryMass_le_one_sub K t).trans (tsub_le_tsub_left (hsucc t ht) _)) hc s hs
 

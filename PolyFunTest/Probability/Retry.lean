@@ -160,7 +160,7 @@ example (price reward : ℝ≥0∞) :
 
 /-- The success-form bound at `p = 1/2` gives two, which `fresh_unit_cost` attains. -/
 example : expectedCharge (fun _ => fresh) (fun _ _ => 1) tree (fun _ _ => 0) 0 ≤ 1 / 2⁻¹ :=
-  expectedCharge_tree_le_div (I := fun _ => True) (by norm_num)
+  expectedCharge_tree_le_div (I := fun _ => True)
     (fun _ _ => Filter.Eventually.of_forall (by simp))
     (fun _ _ => by simp [fresh_apply, coin, Measure.dirac_apply_of_mem]) (fun _ _ => le_rfl) 0
     trivial
@@ -227,7 +227,7 @@ theorem always_cost :
 
 /-- The success-form bound at `p = 1` gives seven, which `always_cost` attains. -/
 example : expectedCharge (fun _ => always) (fun _ _ => 7) tree (fun _ _ => 0) () ≤ 7 / 1 :=
-  expectedCharge_tree_le_div (I := fun _ => True) le_rfl
+  expectedCharge_tree_le_div (I := fun _ => True)
     (fun _ _ => ae_of_all _ fun _ _ => trivial)
     (fun _ _ => by simp [always, Measure.dirac_apply_of_mem]) (fun _ _ => le_rfl) () trivial
 
@@ -288,7 +288,7 @@ theorem sticky_preserves : Preserves sticky (· = false) := by
 /-- The success-form bound applies from `false`, although `true` is a trap. -/
 example : expectedCharge (fun _ => sticky) (fun _ _ => 1) tree (fun _ _ => 0) false ≤ 2 := by
   have h := expectedCharge_tree_le_div (K := sticky) (c := fun _ => 1) (C := 1) (p := 2⁻¹)
-    (by norm_num) sticky_preserves (fun s hs => ?_) (fun _ _ => le_rfl) false rfl
+    sticky_preserves (fun s hs => ?_) (fun _ _ => le_rfl) false rfl
   · simpa using h
   · subst hs
     simp [sticky_false, coin, Measure.dirac_apply_of_mem]

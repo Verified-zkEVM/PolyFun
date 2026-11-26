@@ -295,10 +295,10 @@ example {P : PFunctor} {S α β : Type*} [MeasurableSpace S]
 `p` can charge a retrying client at most `C / p` in expectation. -/
 example {S : Type*} [MeasurableSpace S] (K : ProbabilityTheory.Kernel S (Bool × S))
     [ProbabilityTheory.IsSubprobabilityKernel K] (c : S → ℝ≥0∞) (I : S → Prop) (p C : ℝ≥0∞)
-    (hp : p ≤ 1) (hI : Retry.Preserves K I) (hsucc : ∀ s, I s → p ≤ K s {z | z.1 = true})
+    (hI : Retry.Preserves K I) (hsucc : ∀ s, I s → p ≤ K s {z | z.1 = true})
     (hc : ∀ s, I s → c s ≤ C) (s : S) (hs : I s) :
     expectedCharge (fun _ => K) (fun _ => c) Retry.tree (fun _ _ => 0) s ≤ C / p :=
-  Retry.expectedCharge_tree_le_div hp hI hsucc hc s hs
+  Retry.expectedCharge_tree_le_div hI hsucc hc s hs
 
 /-- An aborting service can bound its expected bill directly from its retry mass. -/
 example {S : Type*} [MeasurableSpace S] (K : ProbabilityTheory.Kernel S (Bool × S))
