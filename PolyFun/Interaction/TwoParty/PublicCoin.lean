@@ -30,22 +30,22 @@ namespace Interaction.TwoParty.PublicCoinCounterpart
 
 open PFunctor.FreeM
 
-variable {m : Type u → Type u} [Monad m]
+variable {m : Type u → Type u}
 
 /-- Replay at a terminal protocol node returns its output. -/
 @[simp]
 theorem replay_done {Output : Path TypeTree.done → Type u} (out : Output ⟨⟩) :
-    replay (spec := .done) (roles := PUnit.unit) out ⟨⟩ = (pure out : m (Output ⟨⟩)) := rfl
+    replay (m := m) (Output := Output) (spec := .done) (roles := PUnit.unit) out ⟨⟩ = out := rfl
 
 /-- Replay observes the sender's recorded message before continuing. -/
 theorem replay_sender {X : Type u} {rest : X → TypeTree}
     {roles : (x : X) → RoleDecoration (rest x)}
     {Output : Path (TypeTree.node X rest) → Type u}
-    (observe : (x : X) → m (StrategyOver (counterpartSyntax m) PUnit.unit
-      (rest x) (roles x) (fun tr => Output ⟨x, tr⟩)))
+    (observe : (x : X) → StrategyOver (counterpartSyntax m) PUnit.unit
+      (rest x) (roles x) (fun tr => Output ⟨x, tr⟩))
     (x : X) (tr : Path (rest x)) :
     replay (spec := TypeTree.node X rest) (roles := ⟨.sender, roles⟩) observe ⟨x, tr⟩ =
-      (do let next ← observe x; replay next tr) := rfl
+      replay (observe x) tr := rfl
 
 /-- Replay uses the continuation indexed by the recorded challenge. -/
 theorem replay_receiver {X : Type u} {rest : X → TypeTree}
@@ -58,20 +58,22 @@ theorem replay_receiver {X : Type u} {rest : X → TypeTree}
     replay (spec := TypeTree.node X rest) (roles := ⟨.receiver, roles⟩)
       (sample, next) ⟨x, tr⟩ = replay (next x) tr := rfl
 
+variable [Monad m]
+
 /-- Forgetting the public-coin structure preserves terminal outputs. -/
 @[simp]
 theorem toCounterpart_done {Output : Path TypeTree.done → Type u} (out : Output ⟨⟩) :
     toCounterpart (spec := .done) (roles := PUnit.unit) (m := m) out = out := by
   simp [toCounterpart, StrategyOver.map]
 
-/-- Sender observations are unchanged by forgetting the public-coin structure. -/
+/-- Conversion returns the continuation selected by the observed sender move. -/
 theorem toCounterpart_sender {X : Type u} {rest : X → TypeTree}
     {roles : (x : X) → RoleDecoration (rest x)}
     {Output : Path (TypeTree.node X rest) → Type u}
-    (observe : (x : X) → m (StrategyOver (counterpartSyntax m) PUnit.unit
-      (rest x) (roles x) (fun tr => Output ⟨x, tr⟩))) :
+    (observe : (x : X) → StrategyOver (counterpartSyntax m) PUnit.unit
+      (rest x) (roles x) (fun tr => Output ⟨x, tr⟩)) :
     toCounterpart (spec := TypeTree.node X rest) (roles := ⟨.sender, roles⟩) observe =
-      (fun x => toCounterpart <$> observe x) := by
+      (fun x => pure (toCounterpart (observe x))) := by
   simp [toCounterpart, StrategyOver.map, toCounterpartHom,
     StrategyOver.TwoParty.PublicCoinCounterpart.toCounterpartHom]
   rfl

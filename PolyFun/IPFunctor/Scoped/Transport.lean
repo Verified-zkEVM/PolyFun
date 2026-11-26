@@ -82,8 +82,6 @@ variable {S : Type u} {T : Type v}
   | _ :: _, η, _, .zero => η _ .zero
   | _ :: _, η, _, .succ x => reindex f (fun a x => η a (.succ x)) _ x
 
-@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup := reindex
-
 /-- Looking up an explicitly mapped variable retrieves its original value. -/
 @[simp] theorem reindex_map (f : S → T) {V : T → Type w} {Γ : List S}
     (η : Env (fun a => V (f a)) Γ) {a : S} (x : ScopedVar Γ a) :
@@ -91,9 +89,6 @@ variable {S : Type u} {T : Type v}
   induction x with
   | zero => rfl
   | succ x ih => exact ih _
-
-@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_map :=
-  reindex_map
 
 /-- Reindexing the empty environment gives the empty environment. -/
 @[simp] theorem reindex_empty (f : S → T) {V : T → Type w} :
@@ -115,9 +110,6 @@ theorem reindex_postcomp (f : S → T) {V : T → Type w} {U : T → Type x}
   induction x using ScopedVar.map_inductionOn f with
   | h a x => simp only [reindex_map]
 
-@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_postcomp :=
-  reindex_postcomp
-
 /-- Lookup through two sort maps is lookup through their composite. -/
 theorem reindex_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
     {Γ : List S} (η : Env (fun a => V (g (f a))) Γ)
@@ -130,9 +122,6 @@ theorem reindex_comp {U : Type w} (f : S → T) (g : T → U) {V : U → Type x}
       | h a x =>
           rw [reindex_map, reindex_map, ScopedVar.map_map]
           exact (reindex_map (g ∘ f) η x).symm
-
-@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_comp :=
-  reindex_comp
 
 /-- Equal sort maps and positionwise equal values give the same lookup. -/
 theorem reindex_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
@@ -147,9 +136,6 @@ theorem reindex_heq {f g : S → T} {V U : T → Type w} {Γ : List S}
     exact eq_of_heq (h a x)
   cases he
   rfl
-
-@[deprecated (since := "2026-11-07")] alias _root_.IPFunctor.ScopedVar.mapLookup_heq :=
-  reindex_heq
 
 /-- Context transport preserves lookup at the corresponding binding position. -/
 theorem cast_apply {V : S → Type z} {Γ Δ : List S} (h : Γ = Δ) (η : Env V Γ)

@@ -11,7 +11,7 @@ and cryptographic interpretations belong to their consumers.
 |---|---|---|
 | External source to scoped syntax | `IPFunctor.ScopedSignature`, `ScopedFamily` | Validate binding, types, constraints and the supported fragment; state parser/exporter trust |
 | Scoped syntax to meaning | Algebraic folds and semantic substitution; `Control.Domain.Result` for partial carriers | Give primitive and recursion equations, retaining distinctions between failure, divergence and partial values |
-| Represented meaning to implementation | `Control.Semantics.CorrespondsOn`, `CertifiedMeaning`; `ScopedSignature.Term.certifiedMeaning` and `Stacked.Model.certifiedMeaning` for scoped syntax | Supply injective input/output encodings and prove agreement on the stated admissible inputs, or relate encodings to native representatives and show the evaluator returns them |
+| Represented meaning to implementation | `Control.Semantics.CorrespondsOn`, `Correspondence`; `ScopedSignature.Term.correspondence` and `Stacked.Model.correspondence` for scoped syntax | Supply injective input/output encodings and prove agreement on the stated admissible inputs, or relate encodings to native representatives and show the evaluator returns them |
 | Partial representations to native values | Mathlib `Relator.LiftFun`, `Control.Semantics.RelationalContract` | Cover admissible inputs and prove output right-uniqueness (a semantic output determines its native result); irrelevant tails need not have unique representations |
 | Deterministic execution | `Control.Transition`, `Executes`, `Terminates`; `ScopedSignature.Term.denoteDomain_relatedSyntax` for adequacy | Define states/results and prove preservation or adequacy for the language; for adequacy, relate each constructor's meaning to its closed node |
 | Execution to existing machines | `Transition.tree`, `toMachine`, `runChunk_toMachine` | Choose observations and preserve any effects or errors encoded by the frontend |
@@ -40,11 +40,11 @@ A frontend usually proves agreement through its fundamental lemma.
 
 The last premise is totality, stated input by input, so a frontend with bounded inputs states it
 only where it holds. For scoped syntax,
-`ScopedSignature.Term.certifiedMeaning` and `Term.correspondsOn_denoteDomain` supply the
+`ScopedSignature.Term.correspondence` and `Term.correspondsOn_denoteDomain` supply the
 relator from `Term.denoteDomain_related`. A decoder into results over native values, such as
 `DomainResult ε β`, is a certificate into `DomainResult.valueEmbedding` and composes with the
 others. A meaning whose results at encoded inputs are all encoded outputs needs no evaluator:
-`CertifiedMeaning.ofDecode` certifies it, with the meaning read back by a left inverse of the
+`Correspondence.ofDecode` certifies it, with the meaning read back by a left inverse of the
 output encoding as its implementation.
 
 `RelationalContract.iff_of_liftFun` handles representation relations. Like every relation

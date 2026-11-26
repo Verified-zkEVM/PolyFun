@@ -113,17 +113,17 @@ theorem triple_liftM_id_withCharge_iff [AddMonoid ω] (c : P.A → ω) {α : Typ
       ∀ p : FreeM.Path x, post (FreeM.output x p) (s + FreeM.Path.charge c x p) := by
   rw [Triple.iff]
   have key : ∀ t, wp (x.liftM ((Handler.id P).withCharge c)) post ⊥ t ↔
-      ∀ z ∈ FreeM.supp ((x.liftM ((Handler.id P).withCharge c)).run t), post z.1 z.2 := by
+      ∀ z ∈ MonadAttach.support ((x.liftM ((Handler.id P).withCharge c)).run t), post z.1 z.2 := by
     intro t
     rw [StateT.wp_apply_eq, FreeM.DemonicWP.wp_eq_allOutputs,
-      MonadAttach.allOutputs_iff_forall_support, FreeM.support_eq_supp]
+      MonadAttach.allOutputs_iff_forall_support]
   constructor
   · intro h p
-    exact (key s).1 (h s rfl) _ (by rw [supp_run_liftM_id_withCharge]; exact ⟨p, rfl⟩)
+    exact (key s).1 (h s rfl) _ (by rw [support_run_liftM_id_withCharge]; exact ⟨p, rfl⟩)
   · intro h t ht
     subst ht
     refine (key t).2 fun z hz => ?_
-    rw [supp_run_liftM_id_withCharge] at hz
+    rw [support_run_liftM_id_withCharge] at hz
     obtain ⟨p, rfl⟩ := hz
     exact h p
 

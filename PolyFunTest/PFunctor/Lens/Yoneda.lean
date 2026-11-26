@@ -93,7 +93,7 @@ example : (Equiv.sigmaPurePower qBool).equivA.symm false = sigma.mk false PUnit.
 
 /-! ## Special classes, with counterexamples -/
 
-example : IsPurePower (y^Bool : PFunctor.{0, 0}) := isPurePower_purePower Bool
+example : IsPurePower (y^Bool : PFunctor.{0, 0}) := inferInstance
 example : IsConstant (C Bool : PFunctor.{0, 0}) := isConstant_C Bool
 example : IsLinear (linear Bool : PFunctor.{0, 0}) := isLinear_linear Bool
 example : IsMonomial qBool := isMonomial_monomial Bool Bool

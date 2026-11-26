@@ -107,6 +107,4 @@ theorem denote_eq_ωSup (ret : α → D) (alg : ContinuousAlgebra P D) :
       (le_ωSup (truncationChain ret alg) n tree)
   · exact ωSup_le _ _ (fun n tree => foldTruncate_le_denote ret alg n tree)
 
-@[deprecated (since := "2026-10-19")] alias denote_eq_sup_truncations := denote_eq_ωSup
-
 end PFunctor.Resumption

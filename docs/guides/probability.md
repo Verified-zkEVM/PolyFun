@@ -44,10 +44,10 @@ The measure interpretation of a construction lives in a `Measure` companion besi
 measure home of its area. An area is a directory that holds one kind of construction, together with
 its subdirectories. In `PolyFun/`, the areas with measure modules are `PFunctor/` (polynomial
 interfaces), `PFunctor/Free/` (free programs), `PFunctor/Wiring/` (polynomial wiring),
-`Control/Monad/` (monads), `Control/Domain/` (partial results) and `Control/Semantics/` (certified
-meanings). A measure interpretation of another kind of construction starts a new area. Each area
-whose constructions get a measure interpretation has one measure home: `<area>/Measure.lean` holds
-the area's main measure module, and `<area>/Measure/` holds the others.
+`Control/Monad/` (monads), `Control/Domain/` (partial results), `Control/Semantics/` (correspondences),
+and `Interaction/Multiparty/` (observations). A measure interpretation of another kind of
+construction starts a new area. Each such area has one measure home: `<area>/Measure.lean`
+holds the area's main measure module, and `<area>/Measure/` holds the others.
 
 A subdirectory of an area uses the area's home, unless it is an area itself. Free programs
 therefore have one home: a measure reading of their paths, weakest preconditions or costs
@@ -68,6 +68,20 @@ measure theory that the measure modules already import, and `Monad` one more, wh
 imports it and passes the check. The script takes a module for a bridge when its path is
 `<M>/PMF.lean` and a module `<M>.lean` sits beside it, and does not check that `<M>.lean` is a
 measure module.
+
+## Decisions on terminal observations
+
+A terminal report is a kernel on the result and final state produced by `FreeM.runKernel`.
+If `coarse = g ∘ₖ fine`, a decision `d` on the coarse report has the same action law as
+`d ∘ₖ g` on the fine report, at every initial state (`FreeM.comp_runKernel_of_factor`).
+This uses the same `g` for every handler. For deterministic displays,
+[`Observation.Refines.exists_comp_runKernel`](../../PolyFun/Interaction/Multiparty/Measure.lean)
+obtains the processing function from `coarse.Refines fine` when the fine report space is discrete.
+
+The statistical comparison is described by
+[Fritz, Gonda, Perrone and Rischel, §5](https://doi.org/10.1016/j.tcs.2023.113896).
+[Robert Hawkins’s Lean formalization](https://github.com/linglib-community/linglib/blob/6745836b0510fd75285d72f605961b26b8dcd0eb/Linglib/Core/Probability/Decision/Blackwell.lean#L417)
+relates kernel comparison to function factorization for deterministic experiments.
 
 ## Contents
 
@@ -357,20 +371,20 @@ measure module.
   (`evalDistEq_iff_relWP_eq`). `ExpectationWP.couplingAlgebra m₁ m₂` presents `RelWP`, read in the
   discrete structures, as a `MAlgRelOrdered m₁ m₂ Prop`, so PolyFun's relational triple rules apply
   to coupling judgments. It is a definition, not an instance, and its outputs live in `Type`.
-- **Certified meanings**
+- **Correspondences**
   ([`Semantics/Measure`](../../PolyFun/Control/Semantics/Measure.lean)).
-  A certified meaning `f : Control.Semantics.CertifiedMeaning input output` agrees with its native
+  A correspondence `f : Control.Semantics.Correspondence input output` agrees with its native
   implementation on every encoded input. Pushing a measure on native inputs forward along the
   encoded meaning `f.meaning ∘ input` therefore gives the encoding of the implementation's
-  pushforward (`CertifiedMeaning.map_meaning`). A correspondence on an admissible set gives the
+  pushforward (`Correspondence.map_meaning`). A `CorrespondsOn` fact on an admissible set gives the
   same equation when almost every input is admissible (`CorrespondsOn.map_meaning_ae`). For a
   computation `mx`, the meaning's pushforward of its output measure is the encoding of the output
-  measure of `f.implementation <$> mx` (`CertifiedMeaning.evalDist_map_meaning`,
+  measure of `f.implementation <$> mx` (`Correspondence.evalDist_map_meaning`,
   `CorrespondsOn.evalDist_map_meaning_ae`). The statements need measurability of the output
-  encoding and of the implementation only. A decoded certificate, whose output encoding is
+  encoding and of the implementation only. A decoded correspondence, whose output encoding is
   `DomainResult.valueEmbedding`, pushes a measure on native inputs to a measure whose values are
   the implementation's pushforward and whose failure mass is zero
-  (`CertifiedMeaning.success_map_meaning`, `CertifiedMeaning.failureMass_map_meaning`, and the
+  (`Correspondence.success_map_meaning`, `Correspondence.failureMass_map_meaning`, and the
   correspondence forms `CorrespondsOn.success_map_meaning_ae` and
   `CorrespondsOn.failureMass_map_meaning_ae`). These forms need the implementation to be
   measurable only almost everywhere. The `ScopedDomains` tutorial's decoded `addTwo`, `pred` and

@@ -77,21 +77,15 @@ def equivFreeLens {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}} :
       (.mk (lens.toFunA operation) (lens.toFunB operation) :
         (FreeP Q).Obj (P.B operation))
 
-@[deprecated (since := "2026-10-19")] alias freeLensEquiv := equivFreeLens
-
 @[simp]
 theorem equivFreeLens_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (f : Handler (FreeM Q) P) : equivFreeLens f = toFreeLens f :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias freeLensEquiv_apply := equivFreeLens_apply
-
 @[simp]
 theorem equivFreeLens_symm_apply {P : PFunctor.{uA, u}} {Q : PFunctor.{uA', u'}}
     (lens : Lens P (FreeP Q)) : equivFreeLens.symm lens = ofFreeLens lens :=
   rfl
-
-@[deprecated (since := "2026-10-19")] alias freeLensEquiv_symm_apply := equivFreeLens_symm_apply
 
 @[simp]
 theorem toFreeLens_id (P : PFunctor.{uA, u}) :

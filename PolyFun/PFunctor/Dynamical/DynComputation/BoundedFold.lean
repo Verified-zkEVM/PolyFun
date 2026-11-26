@@ -45,8 +45,6 @@ theorem isTotalRollBound_foldr (position : p.A)
       simp only [← FreeM.liftBind_eq]
       exact ⟨Nat.succ_pos rounds, fun answer ↦ induction (step accumulator rounds answer)⟩
 
-@[deprecated (since := "2026-10-19")] alias isTotalRollBound_foldr_lift := isTotalRollBound_foldr
-
 end FreeM
 
 namespace DynSystem.DynComputation

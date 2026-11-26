@@ -60,8 +60,6 @@ variable {σ} {w : W} {Γ Δ : List (S w)}
     θ.reindex A op p _ ((σ.ambient op p).var x) = A op p (θ b x) :=
   Ambient.env_var _ _ x
 
-@[deprecated (since := "2026-11-07")] alias reindex_map := reindex_var
-
 /-- A lifted substitution weakens the image of each older variable. -/
 theorem rename_succ_lift (θ : σ.Substitution Γ Δ) (b : S w) :
     ScopedSignature.Env.rename (fun _ => ScopedVar.succ) (lift θ b) =
@@ -292,12 +290,6 @@ theorem reindex_comp (A : σ.ReindexAction) (hA : A.PreservesSubstitution σ)
   funext b x
   induction x using Ambient.var_inductionOn (σ.ambient op p) with
   | h b x => rw [reindex_var, reindex_var, hA]
-
-/-- Extend a substitution by an image for the nearest binding position. -/
-@[deprecated ScopedSignature.Env.cons +typeChanged (since := "2026-11-07")]
-abbrev cons {a : S w} (θ : σ.Substitution Γ Δ) (value : σ.Term w Δ a) :
-    σ.Substitution (a :: Γ) Δ :=
-  ScopedSignature.Env.cons value θ
 
 end Substitution
 

@@ -5,7 +5,7 @@ Authors: Bas Spitters
 -/
 module
 
-public import PolyFun.PFunctor.Handler.CertifiedVec
+public import PolyFun.PFunctor.Handler.Demand
 public import PolyFun.PFunctor.Lens.BangLE
 
 /-!
@@ -16,25 +16,25 @@ polynomial with one position. Its backward map sends each `i : ι` to a finite m
 and at finite `ι'` it is determined by its count matrix `ι → ι' → ℕ` (`Lens.ofCountMat`,
 `Lens.countMat_ofCountMat`, `Lens.ofCountMat_countMat`). Read with `ι` the resources of an
 interface `P` and `ι'` the resources of an interface `Q`, the entry at `(i, j)` is the number of
-units of `j` that one unit of `i` demands: the demands `d` of `Handler.Certified.ofDemand`, at
+units of `j` that one unit of `i` demands: the demands `d` of `Handler.Costed.ofDemand`, at
 natural-number values.
 
-A handler `P → FreeM Q` certified by such a morphism (`Handler.CountCertified`) is a certified
-handler whose exchange is the demand map of the cast count matrix (`CountCertified.toCertified`),
-which is the vector–matrix product (`CountCertified.toCertified_exchange_apply`). The lens points
+A handler `P → FreeM Q` certified by such a morphism (`Handler.Counted`) is a costed
+handler whose exchange is the demand map of the cast count matrix (`Counted.toCosted`),
+which is the vector–matrix product (`Counted.toCosted_exchange_apply`). The lens points
 from the resources of `Q` to those of `P`: the assignment is contravariant. The identity handler
-is certified by the counit (`CountCertified.id`), and handlers compose with the co-Kleisli
-composite of their lenses in the opposite order (`CountCertified.comp`). The assignment
-`toCertified` preserves identities and composition (`CountCertified.toCertified_id`,
-`CountCertified.toCertified_comp`): the composition of exchanges of `Handler.Certified.comp` at
+is certified by the counit (`Counted.id`), and handlers compose with the co-Kleisli
+composite of their lenses in the opposite order (`Counted.comp`). The assignment
+`toCosted` preserves identities and composition (`Counted.toCosted_id`,
+`Counted.toCosted_comp`): the composition of exchanges of `Handler.Costed.comp` at
 demand maps is the product of count matrices of `Lens.countMat_bangComp`
 (`Lens.demand_bangComp`). A program with use vector `u` runs through a composite with use vector
-`u` times the product of the two count matrices (`CountCertified.isChargeBound_liftM_comp`).
+`u` times the product of the two count matrices (`Counted.isChargeBound_liftM_comp`).
 
 The correspondence covers demand maps with natural-number entries, which are the count matrices
-of one-shape morphisms (`CountCertified.ofNatDemand`). A demand map with entries outside the image
+of one-shape morphisms (`Counted.ofNatDemand`). A demand map with entries outside the image
 of `ℕ`, such as an expected demand in `ℝ≥0` or an unbounded demand `⊤` in `ℕ∞`, is not a count
-matrix, and a certified handler whose exchange is not a demand map has no count matrix at all.
+matrix, and a costed handler whose exchange is not a demand map has no count matrix at all.
 -/
 
 @[expose] public section
@@ -139,7 +139,7 @@ variable {P : PFunctor.{uA, uB}} {Q : PFunctor.{uA₂, uB₂}} {R : PFunctor.{uA
 /-- A handler implementing `P` by programs over `Q`, certified by a one-shape Diller–Nahm morphism
 from the resources `ι'` of `Q` to the resources `ι` of `P`: each call at `a` is implemented with
 use vector at most `∑ i, c a i • lens.demand ω i`. -/
-structure CountCertified (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂}) (c : P.A → ι → ω)
+structure Counted (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂}) (c : P.A → ι → ω)
     (e : Q.A → ι' → ω) where
   /-- The implementation of each call. -/
   handler : Handler (FreeM Q) P
@@ -148,26 +148,26 @@ structure CountCertified (P : PFunctor.{uA, uB}) (Q : PFunctor.{uA₂, uB₂}) (
   /-- Each call is implemented within its demand. -/
   certificate : ∀ a, (handler a).IsChargeBound e (∑ i, c a i • lens.demand ω i)
 
-namespace CountCertified
+namespace Counted
 
 variable {c : P.A → ι → ω} {e : Q.A → ι' → ω}
 
-/-- The certified handler with the demand map of the count matrix as its exchange. -/
-def toCertified (D : CountCertified P Q c e) : Certified P Q c e :=
-  Certified.ofDemand D.handler (D.lens.demand ω) D.lens.demand_nonneg D.certificate
+/-- The costed handler with the demand map of the count matrix as its exchange. -/
+def toCosted (D : Counted P Q c e) : Costed P Q c e :=
+  Costed.ofDemand D.handler (D.lens.demand ω) D.lens.demand_nonneg D.certificate
 
 @[simp]
-theorem toCertified_handler (D : CountCertified P Q c e) : D.toCertified.handler = D.handler :=
+theorem toCosted_handler (D : Counted P Q c e) : D.toCosted.handler = D.handler :=
   rfl
 
 /-- The exchange of a handler certified by a count matrix is the vector–matrix product. -/
-theorem toCertified_exchange_apply (D : CountCertified P Q c e) (u : ι → ω) :
-    D.toCertified.exchange u = Matrix.vecMul u (Matrix.of (D.lens.demand ω)) :=
+theorem toCosted_exchange_apply (D : Counted P Q c e) (u : ι → ω) :
+    D.toCosted.exchange u = Matrix.vecMul u (Matrix.of (D.lens.demand ω)) :=
   D.lens.demandHom_demand u
 
 /-- **Use bounds through a handler certified by a count matrix.** A program with use vector `u`
 runs with use vector `u` times the demand matrix. -/
-theorem isChargeBound_liftM (D : CountCertified P Q c e) {α : Type uB} {x : FreeM P α}
+theorem isChargeBound_liftM (D : Counted P Q c e) {α : Type uB} {x : FreeM P α}
     {u : ι → ω} (hx : x.IsChargeBound c u) :
     (x.liftM D.handler).IsChargeBound e (Matrix.vecMul u (Matrix.of (D.lens.demand ω))) := by
   rw [← D.lens.demandHom_demand u]
@@ -177,7 +177,7 @@ theorem isChargeBound_liftM (D : CountCertified P Q c e) {α : Type uB} {x : Fre
 Diller–Nahm morphism of that matrix. -/
 def ofNatDemand [Fintype ι'] (h : Handler (FreeM Q) P) (d : ι → ι' → ℕ)
     (hh : ∀ a, (h a).IsChargeBound e (∑ i, c a i • fun j => (d i j : ω))) :
-    CountCertified P Q c e where
+    Counted P Q c e where
   handler := h
   lens := Lens.ofCountMat d
   certificate a := by
@@ -195,7 +195,7 @@ theorem countMat_ofNatDemand [Fintype ι'] (h : Handler (FreeM Q) P) (d : ι →
   Lens.countMat_ofCountMat d
 
 /-- The identity handler, certified by the counit. -/
-def id [DecidableEq ι] (P : PFunctor.{uA, uB}) (c : P.A → ι → ω) : CountCertified P P c c where
+def id [DecidableEq ι] (P : PFunctor.{uA, uB}) (c : P.A → ι → ω) : Counted P P c c where
   handler := Handler.id P
   lens := Lens.bangCounit _
   certificate a := by
@@ -207,9 +207,9 @@ def id [DecidableEq ι] (P : PFunctor.{uA, uB}) (c : P.A → ι → ω) : CountC
     exact withinCharge_id c a
 
 /-- The identity handler's certificate is the identity certificate. -/
-theorem toCertified_id [DecidableEq ι] (P : PFunctor.{uA, uB}) (c : P.A → ι → ω) :
-    (id P c).toCertified = Certified.id P c := by
-  simp only [toCertified, id, Certified.ofDemand, Certified.id]
+theorem toCosted_id [DecidableEq ι] (P : PFunctor.{uA, uB}) (c : P.A → ι → ω) :
+    (id P c).toCosted = Costed.id P c := by
+  simp only [toCosted, id, Costed.ofDemand, Costed.id]
   congr 1
   refine OrderAddMonoidHom.ext fun u => ?_
   rw [demandHom_apply, Lens.demand_bangCounit]
@@ -221,39 +221,39 @@ variable [Fintype ι'] {f : R.A → ι'' → ω}
 /-- Handlers certified by count matrices compose, with the co-Kleisli composite of their lenses in
 the opposite order. -/
 def comp [DecidableEq ι''] {Q : PFunctor.{uA₂, uB}} {e : Q.A → ι' → ω}
-    (D₂ : CountCertified Q R e f) (D₁ : CountCertified P Q c e) : CountCertified P R c f where
+    (D₂ : Counted Q R e f) (D₁ : Counted P Q c e) : Counted P R c f where
   handler := D₂.handler.comp D₁.handler
   lens := Lens.bangComp D₁.lens D₂.lens
   certificate a := by
-    have h := (D₂.toCertified.comp D₁.toCertified).certificate a
-    have hx : (D₂.toCertified.comp D₁.toCertified).exchange (c a) =
+    have h := (D₂.toCosted.comp D₁.toCosted).certificate a
+    have hx : (D₂.toCosted.comp D₁.toCosted).exchange (c a) =
         ∑ i, c a i • (Lens.bangComp D₁.lens D₂.lens).demand ω i := by
-      rw [Certified.comp_exchange, OrderAddMonoidHom.comp_apply]
-      simp only [toCertified, Certified.ofDemand]
+      rw [Costed.comp_exchange, OrderAddMonoidHom.comp_apply]
+      simp only [toCosted, Costed.ofDemand]
       rw [demandHom_demandHom, Lens.demand_bangComp]
     rw [← hx]
     exact h
 
-/-- **Composition agrees.** The certified handler of a composite is the composite of the certified
+/-- **Composition agrees.** The costed handler of a composite is the composite of the costed
 handlers: composing exchanges of demand maps is the product of count matrices. -/
-theorem toCertified_comp [DecidableEq ι''] {Q : PFunctor.{uA₂, uB}} {e : Q.A → ι' → ω}
-    (D₂ : CountCertified Q R e f) (D₁ : CountCertified P Q c e) :
-    (D₂.comp D₁).toCertified = D₂.toCertified.comp D₁.toCertified := by
-  simp only [toCertified, comp, Certified.ofDemand, Certified.comp, Certified.mk.injEq, true_and]
+theorem toCosted_comp [DecidableEq ι''] {Q : PFunctor.{uA₂, uB}} {e : Q.A → ι' → ω}
+    (D₂ : Counted Q R e f) (D₁ : Counted P Q c e) :
+    (D₂.comp D₁).toCosted = D₂.toCosted.comp D₁.toCosted := by
+  simp only [toCosted, comp, Costed.ofDemand, Costed.comp, Costed.mk.injEq, true_and]
   refine OrderAddMonoidHom.ext fun u => ?_
   rw [OrderAddMonoidHom.comp_apply, demandHom_demandHom, demandHom_apply, Lens.demand_bangComp]
 
 /-- **Use bounds through two handlers.** A program with use vector `u` runs through the composite
 with use vector `u` times the product of the two demand matrices. -/
 theorem isChargeBound_liftM_comp [DecidableEq ι''] {Q : PFunctor.{uA₂, uB}} {e : Q.A → ι' → ω}
-    (D₂ : CountCertified Q R e f) (D₁ : CountCertified P Q c e) {α : Type uB} {x : FreeM P α}
+    (D₂ : Counted Q R e f) (D₁ : Counted P Q c e) {α : Type uB} {x : FreeM P α}
     {u : ι → ω} (hx : x.IsChargeBound c u) :
     (x.liftM (D₂.handler.comp D₁.handler)).IsChargeBound f
       (Matrix.vecMul u (Matrix.of (D₁.lens.demand ω) * Matrix.of (D₂.lens.demand ω))) := by
   rw [← Lens.demand_bangComp_eq_mul]
   exact (D₂.comp D₁).isChargeBound_liftM hx
 
-end CountCertified
+end Counted
 
 end Handler
 

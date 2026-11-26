@@ -68,8 +68,6 @@ theorem mapTarget_mapTarget {m : Type u → Type v} {n : Type u → Type w}
       mapTarget (fun computation => second (first computation)) handler :=
   rfl
 
-@[deprecated (since := "2026-10-19")] alias mapTarget_comp := mapTarget_mapTarget
-
 /-! ## Pulling a handler back along a lens -/
 
 section comapLens

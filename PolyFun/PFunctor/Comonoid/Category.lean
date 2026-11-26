@@ -84,8 +84,6 @@ theorem comul_toFunA_fst (c : C.carrier.A) :
     (C.comul.toFunA c).1 = c :=
   congrArg (fun lens => lens.toFunA c) C.comul_counit
 
-@[deprecated (since := "2026-10-19")] alias comultOuter_eq := comul_toFunA_fst
-
 /-! ## Outgoing-arrow operations -/
 
 /-- The identity outgoing arrow at an object, selected by the comonoid
@@ -114,8 +112,10 @@ theorem isStateSystem_iff_target_bijective :
     let e := _root_.Equiv.cast
       (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
     change Function.Bijective ((C.comul.toFunA c).2 ∘ e)
-    exact Function.Bijective.comp (h c) e.bijective
-  · intro h c
+    exact Function.Bijective.comp (h.bijective c) e.bijective
+  · intro h
+    constructor
+    intro c
     let e := _root_.Equiv.cast
       (congrArg C.carrier.B (comul_toFunA_fst C c).symm)
     have hTarget := h c
@@ -133,8 +133,6 @@ theorem comul_toFunA (c : C.carrier.A) :
   apply heq_of_eq
   unfold target
   exact congrArg ((C.comul.toFunA c).2) ((cast_eq_iff_heq).2 hDirection.symm).symm
-
-@[deprecated (since := "2026-10-19")] alias comultPosition_eq := comul_toFunA
 
 /-- Compose an arrow `d` leaving `c` with an arrow `e` leaving the target of
 `d`, in path order. -/
@@ -218,8 +216,6 @@ theorem compose_identity (c : C.carrier.A) (d : C.carrier.B c) :
       normalizedComul C).toFunB c d = d
   exact lens_toFunB_apply_eq_of_eq (normalized_comul_counit C) c d
 
-@[deprecated (since := "2026-10-19")] alias compose_identity_right := compose_identity
-
 /-- Composing the identity at `c` with an arrow leaving its propositionally
 equal target returns that arrow in the canonical fiber over `c`. -/
 theorem identity_compose_eq_cast (c : C.carrier.A)
@@ -249,8 +245,6 @@ theorem identity_compose_eq_cast (c : C.carrier.A)
     (fun direction => direction) e
     (cast (congrArg C.carrier.B (target_identity C c)) e)
     hFunctions hInput
-
-@[deprecated (since := "2026-10-19")] alias compose_identity_left := identity_compose_eq_cast
 
 /-- Canonical-fiber form of left identity. -/
 @[simp]

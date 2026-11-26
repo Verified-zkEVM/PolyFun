@@ -115,8 +115,6 @@ def plug (occ : Occurrence target program n) (answer : P.B target)
         (FreeMonoid.of (α := P.Idx) ⟨_, answer⟩ * tail.before) = _
       rwa [occurrences_cons_of_ne hne]
 
-@[deprecated (since := "2026-10-19")] alias before_count := occurrences_before
-
 @[simp] theorem trace_plug (occ : Occurrence target program n)
     (answer : P.B target) (suffix : Path (occ.resume answer)) :
     Path.trace program (occ.plug answer suffix) = occ.before *

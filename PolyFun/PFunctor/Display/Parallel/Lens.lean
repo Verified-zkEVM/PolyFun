@@ -451,8 +451,6 @@ polynomials. -/
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSumMap_id_total := parallelSumMap_id_totalEq
-
 @[simp] theorem parallelSumMap_id
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -491,9 +489,6 @@ theorem parallelSumMap_comp_parallelSumMap_totalEq
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp_total :=
-  parallelSumMap_comp_parallelSumMap_totalEq
-
 theorem parallelSumMap_comp_parallelSumMap
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
@@ -524,9 +519,6 @@ theorem parallelSumMap_comp_parallelSumMap
       firstLeftBase firstRightBase) _ _
     (parallelSumMap_comp_parallelSumMap_totalEq secondLeft secondRight firstLeft firstRight)
 
-@[deprecated (since := "2026-10-19")] alias parallelSumMap_comp :=
-  parallelSumMap_comp_parallelSumMap
-
 /-- The displayed braiding is involutive on total polynomials. -/
 @[simp] theorem parallelSumComm_comp_parallelSumComm_totalEq
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -539,9 +531,6 @@ theorem parallelSumMap_comp_parallelSumMap
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive_total :=
-  parallelSumComm_comp_parallelSumComm_totalEq
-
 @[simp] theorem parallelSumComm_comp_parallelSumComm
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     (S : Display.{uA₁, uB, uC₁, uD₁} P)
@@ -551,9 +540,6 @@ theorem parallelSumMap_comp_parallelSumMap
       id (Display.parallelSum S T) :=
   transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_comp_parallelSumComm P Q)
     _ _ (parallelSumComm_comp_parallelSumComm_totalEq S T)
-
-@[deprecated (since := "2026-10-19")] alias parallelSumComm_involutive :=
-  parallelSumComm_comp_parallelSumComm
 
 /-- Naturality of the displayed braiding on total polynomials. -/
 theorem parallelSumComm_natural_totalEq
@@ -572,9 +558,6 @@ theorem parallelSumComm_natural_totalEq
   apply PFunctor.Lens.ext_mapObj
   rintro ⟨operation, contract⟩
   cases operation <;> rfl
-
-@[deprecated (since := "2026-10-19")] alias parallelSumComm_natural_total :=
-  parallelSumComm_natural_totalEq
 
 theorem parallelSumComm_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -610,9 +593,6 @@ theorem parallelSumZero_natural_totalEq
   | right impossible => exact impossible.elim
   | both _ impossible => exact impossible.elim
 
-@[deprecated (since := "2026-10-19")] alias parallelSumZero_natural_total :=
-  parallelSumZero_natural_totalEq
-
 theorem parallelSumZero_natural
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
     {S : Display.{uA₁, uB, uC₁, uD₁} P}
@@ -641,9 +621,6 @@ theorem zeroParallelSum_natural_totalEq
   | left impossible => exact impossible.elim
   | right _ => rfl
   | both impossible _ => exact impossible.elim
-
-@[deprecated (since := "2026-10-19")] alias zeroParallelSum_natural_total :=
-  zeroParallelSum_natural_totalEq
 
 theorem zeroParallelSum_natural
     {P : PFunctor.{uA₁, uB}} {R : PFunctor.{uA₂, uB}}
@@ -686,9 +663,6 @@ theorem parallelSumAssoc_natural_totalEq
   | left operation => cases operation <;> rfl
   | right _ => rfl
   | both operation _ => cases operation <;> rfl
-
-@[deprecated (since := "2026-10-19")] alias parallelSumAssoc_natural_total :=
-  parallelSumAssoc_natural_totalEq
 
 theorem parallelSumAssoc_natural
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
@@ -747,9 +721,6 @@ theorem parallelSumAssoc_pentagon_totalEq
       | right _ => rfl
       | both pq _ => cases pq <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSumAssoc_pentagon_total :=
-  parallelSumAssoc_pentagon_totalEq
-
 theorem parallelSumAssoc_pentagon
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}} {V : PFunctor.{uA₄, uB}}
@@ -788,9 +759,6 @@ theorem parallelSumComm_hexagon_forward_totalEq
   | right _ => rfl
   | both operation _ => cases operation <;> rfl
 
-@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon_total :=
-  parallelSumComm_hexagon_forward_totalEq
-
 theorem parallelSumComm_hexagon_forward
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
     {R : PFunctor.{uA₃, uB}}
@@ -806,8 +774,6 @@ theorem parallelSumComm_hexagon_forward
           (parallelSumMap (parallelSumComm S T) (id U))) :=
   transport_eq_of_totalEq (PFunctor.Lens.parallelSumComm_hexagon_forward P Q R) _ _
     (parallelSumComm_hexagon_forward_totalEq S T U)
-
-@[deprecated (since := "2026-10-19")] alias parallelSum_hexagon := parallelSumComm_hexagon_forward
 
 /-- Triangle coherence for the displayed unitors and associator. -/
 theorem parallelSum_triangle_totalEq
@@ -843,9 +809,6 @@ theorem parallelSum_triangle_totalEq
       | left _ => rfl
       | right impossible => exact impossible.elim
       | both _ impossible => exact impossible.elim
-
-@[deprecated (since := "2026-10-19")] alias parallelSum_triangle_total :=
-  parallelSum_triangle_totalEq
 
 theorem parallelSum_triangle
     {P : PFunctor.{uA₁, uB}} {Q : PFunctor.{uA₂, uB}}
