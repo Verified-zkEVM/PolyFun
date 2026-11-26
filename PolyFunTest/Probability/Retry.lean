@@ -21,6 +21,13 @@ with probability one and makes two attempts in expectation. With a cached coin i
 success probability stays at one half and its expected number of attempts is infinite.
 
 A kernel that aborts on the first trial incurs that trial’s charge and has zero return mass.
+
+The boundary cases test each bound at its extremes. A trial that retries with mass one half
+and otherwise aborts costs exactly two at unit price, the retry-mass bound with `p = 1/2`,
+and never succeeds. A trial that succeeds at once with price seven attains the success-form
+bound at `p = 1`, so the retry-mass form needs `p ≤ 1`. A trial that succeeds with mass one
+half satisfies every hypothesis of eventual success except losslessness, and succeeds with
+mass one half.
 -/
 
 public section
@@ -145,5 +152,100 @@ example (price reward : ℝ≥0∞) :
   rw [tree_eq_query, expectedCharge_query (P := Trial) _ _ (fun _ => measurable_const) _ _ _
     (fun _ => measurable_const)]
   simp
+
+/-! ## Boundary cases of the bounds -/
+
+/-- Retry with mass one half and abort otherwise. -/
+noncomputable def halfAbort : Kernel Unit (Bool × Unit) :=
+  Kernel.const Unit ((2⁻¹ : ℝ≥0∞) • Measure.dirac (false, ()))
+
+private theorem halfAbort_succ (c : Unit → ℝ≥0∞) (done cut : ℝ≥0∞) (n : ℕ) :
+    observe halfAbort c done cut (n + 1) () =
+      c () + 2⁻¹ * observe halfAbort c done cut n () := by
+  rw [observe_succ, halfAbort, Kernel.const_apply, lintegral_smul_measure, lintegral_dirac]
+  rfl
+
+private theorem halfAbort_unit_observe (n : ℕ) :
+    observe halfAbort 1 0 0 n () = ∑ j ∈ Finset.range n, (2⁻¹ : ℝ≥0∞) ^ j := by
+  induction n with
+  | zero => simp [observe_zero]
+  | succ n ih =>
+    rw [halfAbort_succ, ih, Finset.sum_range_succ', Finset.mul_sum]
+    simp [pow_succ, add_comm, mul_comm]
+
+/-- Retrying with mass one half and aborting otherwise costs exactly two at unit price. -/
+theorem halfAbort_unit_cost :
+    expectedCharge (fun _ => halfAbort) (fun _ _ => 1) tree (fun _ _ => 0) () = 2 := by
+  rw [expectedCharge_tree]
+  simp_rw [show (fun _ : Unit => (1 : ℝ≥0∞)) = 1 from rfl, halfAbort_unit_observe]
+  rw [← ENNReal.tsum_eq_iSup_nat, ENNReal.tsum_geometric_two]
+
+/-- The retry-mass bound with `p = 1/2` gives two, which `halfAbort_unit_cost` attains. -/
+theorem halfAbort_cost_le :
+    expectedCharge (fun _ => halfAbort) (fun _ _ => 1) tree (fun _ _ => 0) () ≤ 2 := by
+  have h := expectedCharge_tree_le_div_of_retry_mass_le (K := halfAbort) (I := fun _ => True)
+    (c := fun _ => 1) (C := 1) (p := 2⁻¹) (fun _ _ => ae_of_all _ fun _ _ => trivial)
+    (by norm_num) (fun _ _ => ?_) (fun _ _ => le_rfl) () trivial
+  · simpa using h
+  · simp [halfAbort, Measure.dirac_apply_of_mem, ENNReal.one_sub_inv_two]
+
+/-- The aborting trial never succeeds, although its expected cost is finite. -/
+theorem halfAbort_success :
+    expectedCharge (fun _ => halfAbort) (fun _ _ => 0) tree (fun _ _ => 1) () = 0 := by
+  rw [expectedCharge_tree]
+  change (⨆ n, observe halfAbort 0 1 0 n ()) = 0
+  have h (n : ℕ) : observe halfAbort 0 1 0 n () = 0 := by
+    induction n with
+    | zero => simp [observe_zero]
+    | succ n ih => simp [halfAbort_succ, ih]
+  simp [h]
+
+/-- Succeed at once. -/
+noncomputable def always : Kernel Unit (Bool × Unit) :=
+  Kernel.const Unit (Measure.dirac (true, ()))
+
+private instance : IsMarkovKernel always := by
+  unfold always
+  infer_instance
+
+/-- A trial that succeeds at once pays its price once. -/
+theorem always_cost :
+    expectedCharge (fun _ => always) (fun _ _ => 7) tree (fun _ _ => 0) () = 7 := by
+  rw [tree_eq_query, expectedCharge_query (P := Trial) _ _ (fun _ => measurable_const) _ _ _
+    (fun _ => measurable_const)]
+  simp [always]
+
+/-- The success-form bound at `p = 1` gives seven, which `always_cost` attains. -/
+example : expectedCharge (fun _ => always) (fun _ _ => 7) tree (fun _ _ => 0) () ≤ 7 / 1 :=
+  expectedCharge_tree_le_div (I := fun _ => True) le_rfl
+    (fun _ _ => ae_of_all _ fun _ _ => trivial)
+    (fun _ _ => by simp [always, Measure.dirac_apply_of_mem]) (fun _ _ => le_rfl) () trivial
+
+/-- Without `p ≤ 1` the retry-mass form fails at `p = 2`. The trial's retry mass is at most
+`1 - 2 = 0`, but it costs seven, more than `7 / 2`. -/
+example : always () {z | z.1 = false} ≤ 1 - 2 ∧
+    ¬ expectedCharge (fun _ => always) (fun _ _ => 7) tree (fun _ _ => 0) () ≤ 7 / 2 := by
+  refine ⟨by simp [always], ?_⟩
+  rw [always_cost, not_le]
+  exact ENNReal.half_lt_self (by norm_num) (by norm_num)
+
+/-- Succeed with mass one half and abort otherwise. -/
+noncomputable def halfSucceed : Kernel Unit (Bool × Unit) :=
+  Kernel.const Unit ((2⁻¹ : ℝ≥0∞) • Measure.dirac (true, ()))
+
+example : IsSubprobabilityKernel halfSucceed :=
+  ⟨fun _ => by simp [halfSucceed]⟩
+
+/-- The conditional success mass is one half in the only state. -/
+theorem halfSucceed_success_mass : halfSucceed () {z | z.1 = true} = 2⁻¹ := by
+  simp [halfSucceed, Measure.dirac_apply_of_mem]
+
+/-- A lossy trial with a positive success bound still has success mass below one, so
+`expectedCharge_tree_success` needs a Markov kernel. -/
+theorem halfSucceed_success :
+    expectedCharge (fun _ => halfSucceed) (fun _ _ => 0) tree (fun _ _ => 1) () = 2⁻¹ := by
+  rw [tree_eq_query, expectedCharge_query (P := Trial) _ _ (fun _ => measurable_const) _ _ _
+    (fun _ => measurable_const)]
+  simp [halfSucceed, lintegral_smul_measure]
 
 end PolyFunTest.Probability.Retry
