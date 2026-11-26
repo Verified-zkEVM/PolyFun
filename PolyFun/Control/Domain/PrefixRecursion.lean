@@ -12,15 +12,15 @@ public import ToCslib.Order.PrefixRecursion
 /-!
 # Recursively generated partial arrays and streams
 
-A lazy language can define a sequence by recursion on itself, with each entry
-reading earlier ones. This module computes the meaning of such a definition,
-for finite arrays indexed by `Fin n` and for lazy sequences of any length `n : ℕ∞`.
-Both rest on `Function.UsesPrefix`: equations in which each coordinate reads only
-earlier ones have at most one solution, even when entries are bottom or errors.
+A lazy language can define a sequence by allowing each entry to depend on earlier ones.
+`Function.UsesPrefix` makes the resulting equations determine at most one sequence, even
+when some entries are bottom or errors. The finite array and stream results use this
+uniqueness to identify a recursive definition with a solution of its coordinate equations.
 
-A generator exposes an array constructor before its elements are demanded.
-If every element uses only the strict prefix, its least fixed point agrees
-with finite prefix recursion. Exposing the constructor is an explicit hypothesis.
+`DomainResult.generateStep body` wraps the array from `body` in `DomainResult.value`, so its
+fixed point exposes the array even when an entry is bottom or an error. To identify its entries
+by finite prefix recursion, it suffices to give their equations on inputs of the form `value xs`
+(`DomainResult.generateStep_fix_eq_prefixRecursion`).
 
 A recursive lazy sequence is a fixed point `X = mk n fun i => step i fun j => index j X`
 in stream form. Its step is *productive* below `n` (`LazySeq.Productive`) when, at each position
@@ -45,7 +45,8 @@ namespace DomainResult
 
 variable {n : Nat} {ε D : Type*} [OmegaCompletePartialOrder D]
 
-/-- The equations for a recursively generated array, retaining partial entries. -/
+/-- Apply `body` to the recursive input and wrap the resulting array in `value`.
+This exposes the array constructor even when individual entries are partial. -/
 @[expose] noncomputable def generateStep
     (body : DomainResult ε (Fin n → D) →𝒄 (Fin n → D)) :
     DomainResult ε (Fin n → D) →𝒄 DomainResult ε (Fin n → D) :=
@@ -68,7 +69,8 @@ theorem generateStep_fix_eq
   have hfix : body (value xs) = xs := by rw [← hx]
   exact hx.trans (congrArg value (hprefix.fixedPoint_unique hfix hresult))
 
-/-- A constructor-producing, prefix-dependent recurrence has its finite tabulated meaning. -/
+/-- If `body (value xs)` follows `step` on each strict prefix of `xs`, the least fixed point
+returns the array computed by finite prefix recursion. -/
 theorem generateStep_fix_eq_prefixRecursion
     (body : DomainResult ε (Fin n → D) →𝒄 (Fin n → D))
     (step : (i : Fin n) → (Fin i.val → D) →𝒄 D)
@@ -88,8 +90,9 @@ namespace LazySeq
 
 variable {ε X : Type*} [OmegaCompletePartialOrder X]
 
-/-- A stream step is productive below `n` when, at every position `i` below `n`, it returns the
-same element for any two streams that agree at the positions before `i`. -/
+/-- A stream step is productive below `n` when two streams that agree before `i` give the
+same result at `i`, for every `i` below `n`. That result may be a value, an error, or bottom.
+For example, a step that always returns bottom is productive at every length. -/
 @[expose] def Productive (n : ℕ∞) (step : ℕ → (ℕ → DomainResult ε X) → DomainResult ε X) :
     Prop :=
   ∀ i, below n i → ∀ p q, (∀ j < i, p j = q j) → step i p = step i q
