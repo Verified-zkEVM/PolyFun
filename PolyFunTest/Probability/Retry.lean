@@ -22,12 +22,14 @@ success probability stays at one half and its expected number of attempts is inf
 
 A kernel that aborts on the first trial incurs that trial’s charge and has zero return mass.
 
-The boundary cases test each bound at its extremes. A trial that retries with mass one half
-and otherwise aborts costs exactly two at unit price, the retry-mass bound with `p = 1/2`,
-and never succeeds. A trial that succeeds at once with price seven attains the success-form
-bound at `p = 1`, so the retry-mass form needs `p ≤ 1`. A trial that succeeds with mass one
-half satisfies every hypothesis of eventual success except losslessness, and succeeds with
-mass one half.
+The boundary cases test each bound at its extremes. The fresh coin attains the success-form
+bound at `p = 1/2`. A trial that retries with mass one half and otherwise aborts costs exactly
+two at unit price, the retry-mass bound with `p = 1/2`, and never succeeds. A trial that
+succeeds at once with price seven attains the success-form bound at `p = 1`. At `p = 2` it
+meets the retry-mass hypothesis but costs more than `7 / 2`, so that form needs `p ≤ 1`. A
+trial that succeeds with mass one half satisfies every hypothesis of eventual success except
+losslessness, and succeeds with mass one half. A last kernel leaves its invariant on success
+and is trapped outside it, so the invariant is needed only on retries from invariant states.
 -/
 
 public section
@@ -92,7 +94,8 @@ private theorem cached_none : cached none = coin (true, some true) (false, some 
 
 private theorem cached_some (b : Bool) : cached (some b) = Measure.dirac (b, some b) := rfl
 
-/-- A cached false answer makes a positive lower bound on conditional success impossible. -/
+/-- A cached false answer has success mass zero, so no positive lower bound on conditional
+success holds in every state the cache reaches. -/
 theorem cached_false_success_mass :
     cached (some false) {z | z.1 = true} = 0 := by
   simp [cached_some]
@@ -154,6 +157,13 @@ example (price reward : ℝ≥0∞) :
   simp
 
 /-! ## Boundary cases of the bounds -/
+
+/-- The success-form bound at `p = 1/2` gives two, which `fresh_unit_cost` attains. -/
+example : expectedCharge (fun _ => fresh) (fun _ _ => 1) tree (fun _ _ => 0) 0 ≤ 1 / 2⁻¹ :=
+  expectedCharge_tree_le_div (I := fun _ => True) (by norm_num)
+    (fun _ _ => Filter.Eventually.of_forall (by simp))
+    (fun _ _ => by simp [fresh_apply, coin, Measure.dirac_apply_of_mem]) (fun _ _ => le_rfl) 0
+    trivial
 
 /-- Retry with mass one half and abort otherwise. -/
 noncomputable def halfAbort : Kernel Unit (Bool × Unit) :=
@@ -247,5 +257,40 @@ theorem halfSucceed_success :
   rw [tree_eq_query, expectedCharge_query (P := Trial) _ _ (fun _ => measurable_const) _ _ _
     (fun _ => measurable_const)]
   simp [halfSucceed, lintegral_smul_measure]
+
+/-- From `false`, a fair trial, whose success moves the state to `true`. From `true`, every
+trial retries and stays in `true`. -/
+noncomputable def sticky : Kernel Bool (Bool × Bool) :=
+  Kernel.ofFunOfCountable fun s => if s then Measure.dirac (false, true)
+    else coin (true, true) (false, false)
+
+private theorem sticky_false : sticky false = coin (true, true) (false, false) := rfl
+
+private theorem sticky_true : sticky true = Measure.dirac (false, true) := rfl
+
+private instance : IsMarkovKernel sticky where
+  isProbabilityMeasure s := ⟨by
+    cases s
+    · simp [sticky_false, coin, ENNReal.inv_two_add_inv_two]
+    · simp [sticky_true]⟩
+
+/-- The invariant `s = false` holds after every retry from `false`. It fails after a success
+from `false`, and after a retry from `true`, which is outside it. -/
+theorem sticky_preserves : Preserves sticky (· = false) := by
+  rintro s rfl
+  rw [ae_iff]
+  have : {z : Bool × Bool | ¬(z.1 = false → z.2 = false)} = {(false, true)} := by
+    ext ⟨a, b⟩
+    cases a <;> cases b <;> simp
+  rw [this]
+  simp [sticky_false, coin]
+
+/-- The success-form bound applies from `false`, although `true` is a trap. -/
+example : expectedCharge (fun _ => sticky) (fun _ _ => 1) tree (fun _ _ => 0) false ≤ 2 := by
+  have h := expectedCharge_tree_le_div (K := sticky) (c := fun _ => 1) (C := 1) (p := 2⁻¹)
+    (by norm_num) sticky_preserves (fun s hs => ?_) (fun _ _ => le_rfl) false rfl
+  · simpa using h
+  · subst hs
+    simp [sticky_false, coin, Measure.dirac_apply_of_mem]
 
 end PolyFunTest.Probability.Retry
