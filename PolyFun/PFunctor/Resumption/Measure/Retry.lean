@@ -17,8 +17,9 @@ its answer and the private state for the next trial. Bounding the conditional re
 in every invariant state bounds the probability of needing more trials and the expected
 cost already incurred. The current trial pays its charge even if its kernel loses mass.
 
-The geometric cost bound applies to subprobability trials. Almost-sure success additionally
-assumes a Markov trial kernel, which returns an answer with total probability one.
+The geometric cost bound from a retry-mass bound holds for every trial kernel. Its form stated
+through a lower bound on success assumes a subprobability kernel. Almost-sure success assumes a
+Markov trial kernel, which returns an answer with total probability one.
 -/
 
 public section
@@ -194,7 +195,7 @@ private theorem retryMass_le_one_sub (K : Kernel S (Bool × S)) [IsSubprobabilit
   rw [heq, measure_compl hm (measure_ne_top _ _)]
   exact tsub_le_tsub_right (K.measure_univ_le s) _
 
-/-- A lower bound on success and an upper bound on per-trial expected charge give a bound on
+/-- A lower bound on success and an upper bound on the price of each trial give a bound on
 the unbounded resumption, from each invariant state. -/
 theorem expectedCharge_tree_le_div [IsSubprobabilityKernel K] {p : ℝ≥0∞} (hp : p ≤ 1)
     (hI : Preserves K I) (hsucc : ∀ s, I s → p ≤ K s {z | z.1 = true})

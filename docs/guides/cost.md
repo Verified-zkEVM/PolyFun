@@ -376,7 +376,9 @@ first coin can reach a state in which every retry fails. Its chance of ever succ
 one half, and its expected cost is infinite. For a service that can abort, supply a bound of
 `1 - p` on the mass of the retry branch to `Retry.expectedCharge_tree_le_div_of_retry_mass_le`.
 The same `C / p` bound holds because the current request incurs its charge and only returned
-failures incur the cost of another trial. [Retry bounds](../../PolyFun/PFunctor/Resumption/Measure/Retry.lean)
+failures incur the cost of another trial. The [retry module](../../PolyFun/PFunctor/Resumption/Measure/Retry.lean)
+states these bounds, and its [regressions](../../PolyFunTest/Probability/Retry.lean) compute both
+coin examples and the boundary cases.
 
 ## Layers and costed implementations
 
